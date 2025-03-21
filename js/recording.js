@@ -1,18 +1,16 @@
 // recording.js
 // Updated recording module with API key validation, file encryption, request signing, and sending device_token.
 
-//
-// Simple hash function used to generate markers.
-// (This mimics the function from noteGeneration.js.)
-//
+// Updated hash function: now returns an unsigned 32-bit integer string.
 function hashString(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash |= 0; // Convert to 32bit integer
+    hash |= 0; // Convert to 32-bit signed integer
   }
-  return hash.toString();
+  // Convert to an unsigned 32-bit integer and return as string.
+  return (hash >>> 0).toString();
 }
 
 const DEBUG = true;
@@ -30,7 +28,7 @@ function logError(message, ...optionalParams) {
 
 const MIN_CHUNK_DURATION = 45000; // 45 seconds
 const MAX_CHUNK_DURATION = 45000; // 45 seconds
-const watchdogThreshold = 1500;   // 1,5 seconds with no frame
+const watchdogThreshold = 1500;   // 1.5 seconds with no frame
 const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net/";
 
 let mediaStream = null;
@@ -207,7 +205,7 @@ async function encryptFileBlob(blob) {
   );
   const encryptedBlob = new Blob([encryptedBuffer], { type: blob.type });
   
-  // Generate markers using our hashString() function.
+  // Generate markers using our updated hashString() function.
   const apiKeyMarker = hashString(apiKey);
   const deviceMarker = hashString(deviceToken);
 
