@@ -31,7 +31,7 @@ function logError(message, ...optionalParams) {
 const MIN_CHUNK_DURATION = 45000; // 45 seconds
 const MAX_CHUNK_DURATION = 45000; // 45 seconds
 const watchdogThreshold = 1500;   // 1,5 seconds with no frame
-const backendUrl = "https://transcribe-notes.azurewebsites.net";
+const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net/";
 
 let mediaStream = null;
 let audioReader = null;
