@@ -4,17 +4,16 @@ FROM python:3.9-slim
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy requirements.txt first to leverage Docker cache
-COPY requirements.txt .
-
-# Install dependencies
+# Copy the requirements file from the backend folder and install dependencies
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
-COPY . .
+# Copy the entire backend folder into the container
+COPY backend/ ./backend
 
-# Expose port 8080 for the Flask app (as expected by fly.toml)
+# Expose port 8080 for the Flask app
 EXPOSE 8080
 
-# Use Gunicorn to serve the Flask app, binding to port 8080
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "app:app"]
+# Run the Flask app using Gunicorn
+# The module path is set to "backend.app" because your app.py is in the backend folder and exposes "app"
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "backend.app:app"]
