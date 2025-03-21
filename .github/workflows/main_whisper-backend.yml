@@ -26,8 +26,9 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t ghcr.io/${{ github.repository }}:${{ github.sha }} .
-          docker push ghcr.io/${{ github.repository }}:${{ github.sha }}
+          IMAGE_NAME=ghcr.io/${{ toLower(github.repository) }}:${{ github.sha }}
+          docker build -t $IMAGE_NAME .
+          docker push $IMAGE_NAME
 
       - name: Login to Azure using Publish Profile
         uses: azure/login@v2
@@ -39,4 +40,4 @@ jobs:
         with:
           app-name: 'Transcribe-notes'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          images: 'ghcr.io/${{ github.repository }}:${{ github.sha }}'
+          images: 'ghcr.io/${{ toLower(github.repository) }}:${{ github.sha }}'
