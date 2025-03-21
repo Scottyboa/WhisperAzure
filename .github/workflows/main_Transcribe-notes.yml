@@ -1,6 +1,3 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy container app to Azure Web App - Transcribe-notes
 
 on:
@@ -11,41 +8,39 @@ on:
 
 jobs:
   build:
-    runs-on: 'ubuntu-latest'
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-    - name: Log in to registry
-      uses: docker/login-action@v2
-      with:
-        registry: https://mcr.microsoft.com/
-        username: ${{ secrets.AzureAppService_ContainerUsername_54c0f6f832634ee381d5554fca964095 }}
-        password: ${{ secrets.AzureAppService_ContainerPassword_1cbc86430bf0452ea59dc12157e568ed }}
+      - name: Log in to Azure Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
 
-    - name: Build and push container image to registry
-      uses: docker/build-push-action@v3
-      with:
-        push: true
-        tags: mcr.microsoft.com/${{ secrets.AzureAppService_ContainerUsername_54c0f6f832634ee381d5554fca964095 }}/appsvc/staticsite:${{ github.sha }}
-        file: ./Dockerfile
+      - name: Build and push container image to ACR
+        uses: docker/build-push-action@v3
+        with:
+          push: true
+          tags: ${{ secrets.ACR_LOGIN_SERVER }}/appsvc/staticsite:${{ github.sha }}
+          file: ./Dockerfile
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     environment:
-      name: 'production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-
+      name: production
     steps:
-    - name: Deploy to Azure Web App
-      id: deploy-to-webapp
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: 'Transcribe-notes'
-        slot-name: 'production'
-        publish-profile: ${{ secrets.AzureAppService_PublishProfile_3d3fc126e69a4326b77ed419d0bc54cc }}
-        images: 'mcr.microsoft.com/${{ secrets.AzureAppService_ContainerUsername_54c0f6f832634ee381d5554fca964095 }}/appsvc/staticsite:${{ github.sha }}'
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'Transcribe-notes'
+          slot-name: 'production'
+          publish-profile: ${{ secrets.AzureAppService_PublishProfile }}
+          images: ${{ secrets.ACR_LOGIN_SERVER }}/appsvc/staticsite:${{ github.sha }}
