@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title-transcribe">Transcription Tool with Ads and Guide Overlay</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=Merriweather:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    /* Base Styles */
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f8f8f8;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    /* Grid Layout */
+    .grid-container {
+      display: grid;
+      grid-template-columns: 250px 1fr 250px;
+      height: 100vh;
+    }
+    /* Left Sidebar */
+    .sidebar {
+      background-color: #e0e0e0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+    }
+    .sidebar button {
+      font-size: 18px;
+      padding: 15px;
+    }
+    /* Main Content Area */
+    .main-content {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+    }
+    /* Recording Area (Top Half) */
+    .recording-area {
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 20px;
+    }
+    .recording-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .timer {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    /* Style the cost overview hyperlink */
+    #openaiUsageLink {
+      font-size: inherit;
+      font-family: inherit;
+      text-decoration: underline;
+      color: blue;
+      margin: 0;
+    }
+    #openaiUsageLink:hover {
+      color: darkblue;
+    }
+    /* Auto-resizing Textareas */
+    #transcription, #generatedNote, #customPrompt {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+      font-family: 'Roboto', sans-serif;
+      resize: none;
+    }
+    #transcription { resize: vertical; }
+    #transcription, #generatedNote { min-height: 150px; }
+    #customPrompt { min-height: 200px; }
+    /* Button Styles */
+    button {
+      background-color: #5a9;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.1s;
+      margin: 10px;
+    }
+    button:hover { background-color: #489; }
+    button:active { transform: scale(0.98); }
+    /* Custom style for disabled buttons */
+    button:disabled {
+      background-color: #ccc;
+      color: #666;
+      cursor: not-allowed;
+      opacity: 0.6;
+      transition: none;
+      transform: none;
+    }
+    /* Bottom Half: Two Columns */
+    .bottom-half {
+      display: flex;
+      gap: 20px;
+      flex: 1;
+    }
+    .column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    /* Right Sidebar (Ad Area) */
+    .ad-sidebar {
+      background-color: #e0e0e0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #adUnit {
+      width: 100%;
+      height: 200px;
+      background-color: #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    /* Guide Overlay */
+    #guideView {
+      display: none;
+      position: fixed;
+      top: 10%;
+      left: 10%;
+      width: 80%;
+      height: 80%;
+      background: white;
+      border: 2px solid #ccc;
+      padding: 20px;
+      overflow-y: auto;
+      z-index: 2000;
+    }
+    #guideView.active { display: block; }
+    /* Language Dropdown in Sidebar */
+    #lang-container-transcribe {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    /* Increased size for language icon */
+    #lang-icon-transcribe { width: 36px; height: 36px; }
+    /* Increased font-size for language select */
+    #lang-select-transcribe {
+      font-size: 18px;
+      padding: 4px;
+    }
+    /* Consent Banner */
+    #cmp-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #f8f8f8;
+      border-top: 1px solid #ccc;
+      padding: 20px;
+      text-align: center;
+      font-size: 16px;
+      z-index: 1000;
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    }
+    #cmp-banner button { margin-left: 10px; padding: 8px 16px; }
+  </style>
+</head>
+<body>
+  <div class="grid-container">
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+      <button id="btnFunctions">Functions</button>
+      <button id="btnGuide">Guide</button>
+      <!-- Language dropdown -->
+      <div id="lang-container-transcribe">
+        <img src="language-icon.png" alt="Language Icon" id="lang-icon-transcribe">
+        <select id="lang-select-transcribe">
+          <option value="en">English</option>
+          <option value="no">Norsk</option>
+          <option value="sv">Svenska</option>
+          <option value="de">Deutsch</option>
+          <option value="fr">Français</option>
+          <option value="it">Italiano</option>
+        </select>
+      </div>
+    </aside>
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Recording Area -->
+      <div class="recording-area">
+        <div class="recording-header">
+          <h3 id="recordingAreaTitle">Recording Area</h3>
+          <a id="openaiUsageLink" href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer">Cost usage overview</a>
+        </div>
+        <div id="recordTimer" class="timer">Recording Timer: 0 sec</div>
+        <div id="transcribeTimer" class="timer">Completion Timer: 0 sec</div>
+        <textarea id="transcription" placeholder="Transcription result will appear here..."></textarea>
+        <div>
+          <button id="startButton">Start Recording</button>
+          <button id="stopButton" disabled>Stop/Complete</button>
+          <button id="pauseResumeButton" disabled>Pause Recording</button>
+        </div>
+        <div id="statusMessage">Welcome! Click "Start Recording" to begin.</div>
+      </div>
+      <!-- Note Generation & Custom Prompt -->
+      <div class="bottom-half">
+        <div class="column">
+          <h3 id="noteGenerationTitle">Note Generation</h3>
+          <button id="generateNoteButton">Generate Note</button>
+          <div id="noteTimer" class="timer">Note Generation Timer: 0 sec</div>
+          <textarea id="generatedNote" readonly placeholder="Generated note will appear here..."></textarea>
+        </div>
+        <div class="column">
+          <h3 id="customPromptTitle">Custom Prompt</h3>
+          <label for="promptSlot" id="promptSlotLabel">Prompt Slot:</label>
+          <select id="promptSlot">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+          </select>
+          <textarea id="customPrompt" placeholder="Enter custom prompt here" rows="1"></textarea>
+        </div>
+      </div>
+    </main>
+    <!-- Right Sidebar (Ad Area) -->
+    <aside class="ad-sidebar">
+      <div id="adArea">
+        <div id="adUnit">Your Ad Here</div>
+      </div>
+    </aside>
+  </div>
+  <!-- Guide Overlay -->
+  <div id="guideView">
+    <h3 id="guideHeading">Guide & Instructions</h3>
+    <p id="guideText">
+  </div>
+  <!-- Consent Banner -->
+  <div id="cmp-banner">
+    <span id="consent-text">This website is free to use because we rely solely on ad revenue. We use cookies to personalize ads and improve your experience. By clicking "Accept", you consent to the use of cookies.</span>
+    <button id="cmp-accept">Accept</button>
+    <button id="cmp-manage">Manage</button>
+  </div>
+  <!-- Inline script to toggle the guide overlay on the transcribe page -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const btnGuide = document.getElementById("btnGuide");
+      const btnFunctions = document.getElementById("btnFunctions");
+      const guideView = document.getElementById("guideView");
+      
+      if (btnGuide && guideView) {
+        btnGuide.addEventListener("click", function() {
+          guideView.style.display = "block";
+        });
+      }
+      
+      if (btnFunctions && guideView) {
+        btnFunctions.addEventListener("click", function() {
+          guideView.style.display = "none";
+        });
+      }
+    });
+  </script>
+  <!-- Import the main module to initialize language, recording, note generation, and UI functionalities -->
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">Secure Medical Transcription</title>
+  <!-- Import Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=Merriweather:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    /* Base styles */
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f8f8f8;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      position: relative;
+    }
+    header {
+      background: linear-gradient(135deg, #5a9 0%, #489 100%);
+      color: #fff;
+      padding: 40px 20px;
+      text-align: center;
+      position: relative;
+    }
+    header h1 {
+      font-family: 'Merriweather', serif;
+      font-weight: 300;
+      font-size: 48px;
+      margin: 0;
+    }
+    header p {
+      font-size: 20px;
+      margin-top: 10px;
+    }
+    /* Language Icon & Dropdown */
+    #lang-container {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      z-index: 1000;
+    }
+    #lang-container img {
+      width: 36px;
+      height: 36px;
+      margin-right: 8px;
+    }
+    #lang-select {
+      padding: 5px;
+      font-size: 18px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    p {
+      font-size: 16px;
+    }
+    input[type="text"] {
+      width: 300px;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+    }
+    input[type="text"]:focus {
+      border-color: #66afe9;
+      box-shadow: 0 0 8px rgba(102,175,233,0.6);
+      outline: none;
+    }
+    button {
+      background-color: #5a9;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.1s;
+      margin: 10px;
+    }
+    button:hover {
+      background-color: #489;
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    .ad-revenue-message {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #555;
+    }
+    /* Consent Banner */
+    #cmp-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #f8f8f8;
+      border-top: 1px solid #ccc;
+      padding: 20px;
+      text-align: center;
+      font-size: 16px;
+      z-index: 1000;
+      box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    }
+    #cmp-banner button {
+      margin-left: 10px;
+      padding: 8px 16px;
+    }
+    /* Modal Overlay Styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .modal-content {
+      background: #fff;
+      width: 80%;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: left;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .closeModalButton {
+      background: #d33;
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    /* Button Group Styles */
+    .button-group {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Language Dropdown -->
+  <div id="lang-container">
+    <img src="language-icon.png" alt="Language Icon">
+    <select id="lang-select">
+      <option value="en">English</option>
+      <option value="no">Norsk</option>
+      <option value="sv">Svenska</option>
+      <option value="de">Deutsch</option>
+      <option value="fr">Français</option>
+      <option value="it">Italiano</option>
+    </select>
+  </div>
+
+  <header>
+    <h1 id="header-title">Secure Medical Transcription</h1>
+    <p id="header-subtitle">Advanced AI-Powered Speech-to-Text & Clinical Note Generation for Patient-Doctor Consultations</p>
+  </header>
+
+  <div class="container">
+    <p id="start-text">To get started, please enter your OpenAI API key:</p>
+    <input type="text" id="apiKeyInput" placeholder="Enter API Key here" autocomplete="off">
+    <br>
+    <button id="enterTranscriptionBtn">Enter Transcription Tool</button>
+    <!-- New Beta Test Button -->
+    <br>
+    <button id="betaTestButton">Beta Test - Transcription Tool</button>
+    <br>
+    <div class="button-group">
+      <button id="openSecurityButton">Security</button>
+      <button id="openGuideButton">API guide - How to use</button>
+      <button id="openPriceButton">Price</button>
+      <button id="openAboutButton">About</button>
+    </div>
+    <p class="ad-revenue-message" id="ad-revenue-message">
+      As this website is free to use and relies solely on ad revenue, please consent to personalized ads to help support the service.
+    </p>
+  </div>
+
+  <!-- API Guide Modal Overlay -->
+  <div id="apiKeyGuideOverlay" class="modal-overlay">
+    <div id="apiKeyGuideModal" class="modal-content">
+      <h2 id="guide-heading">How to Set Up Your OpenAI API for Whisper Clinical Transcription</h2>
+      <div id="guide-p1">
+        <!-- The API guide content will be populated by language.js -->
+      </div>
+      <button id="closeGuideBtn" class="closeModalButton">Close</button>
+    </div>
+  </div>
+
+  <!-- Price Modal Overlay -->
+  <div id="priceModalOverlay" class="modal-overlay">
+    <div id="priceModal" class="modal-content">
+      <h2 id="priceModalHeading">Cost Information for Whisper Clinical Transcription</h2>
+      <div id="priceModalText">
+        <!-- The cost information content will be populated by language.js -->
+      </div>
+      <button id="closePriceModalButton" class="closeModalButton">Close</button>
+    </div>
+  </div>
+
+  <!-- Security Modal Overlay -->
+  <div id="securityModalOverlay" class="modal-overlay">
+    <div id="securityModal" class="modal-content">
+      <h2 id="securityModalHeading">Security Information</h2>
+      <div id="securityModalText"></div>
+      <button id="closeSecurityModalButton" class="closeModalButton">Close</button>
+    </div>
+  </div>
+
+  <!-- About Modal Overlay -->
+  <div id="aboutModalOverlay" class="modal-overlay">
+    <div id="aboutModal" class="modal-content">
+      <h2 id="aboutModalHeading">About This Project</h2>
+      <div id="aboutModalText"></div>
+      <button id="closeAboutModalButton" class="closeModalButton">Close</button>
+    </div>
+  </div>
+
+  <!-- Consent Banner -->
+  <div id="cmp-banner">
+    <span id="consent-text">This website is free to use because it relies solely on ad revenue. Cookies are used to personalize ads and improve the experience. By clicking "Accept", you consent to the use of cookies.</span>
+    <button id="cmp-accept">Accept</button>
+    <button id="cmp-manage">Manage</button>
+  </div>
+
+  <!-- Script Section: Encryption, Modal, and Consent Logic -->
+  <script>
+    // --- Encryption Helper Functions ---
+    function arrayBufferToBase64(buffer) {
+      let binary = "";
+      const bytes = new Uint8Array(buffer);
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return window.btoa(binary);
+    }
+    function base64ToArrayBuffer(base64) {
+      const binary = window.atob(base64);
+      const len = binary.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes;
+    }
+    function getDeviceToken() {
+      let token = localStorage.getItem("device_token");
+      if (!token) {
+        token = crypto.randomUUID();
+        localStorage.setItem("device_token", token);
+      }
+      return token;
+    }
+    async function deriveKey(password, salt) {
+      const encoder = new TextEncoder();
+      const keyMaterial = await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(password),
+        "PBKDF2",
+        false,
+        ["deriveKey"]
+      );
+      return crypto.subtle.deriveKey(
+        {
+          name: "PBKDF2",
+          salt: salt,
+          iterations: 100000,
+          hash: "SHA-256"
+        },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+      );
+    }
+    async function encryptAPIKey(apiKey) {
+      const deviceToken = getDeviceToken();
+      const encoder = new TextEncoder();
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const key = await deriveKey(deviceToken, salt);
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const ciphertextBuffer = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv: iv },
+        key,
+        encoder.encode(apiKey)
+      );
+      return {
+        ciphertext: arrayBufferToBase64(ciphertextBuffer),
+        iv: arrayBufferToBase64(iv),
+        salt: arrayBufferToBase64(salt)
+      };
+    }
+    async function storeEncryptedAPIKey(apiKey) {
+      const encrypted = await encryptAPIKey(apiKey);
+      sessionStorage.setItem("encrypted_api_key", JSON.stringify(encrypted));
+    }
+
+    // --- Modal Logic & API Key Handling ---
+    document.addEventListener("DOMContentLoaded", function() {
+      // API Guide Modal
+      const apiOverlay = document.getElementById("apiKeyGuideOverlay");
+      const closeGuideBtn = document.getElementById("closeGuideBtn");
+      const openGuideButton = document.getElementById("openGuideButton");
+      if (openGuideButton && apiOverlay) {
+        openGuideButton.addEventListener("click", () => {
+          apiOverlay.style.display = "flex";
+          apiOverlay.style.flexDirection = "column";
+          apiOverlay.style.alignItems = "center";
+          console.log("Guide overlay opened.");
+        });
+      } else {
+        console.error("Guide overlay or openGuideButton element missing.");
+      }
+      if (closeGuideBtn && apiOverlay) {
+        closeGuideBtn.addEventListener("click", () => {
+          apiOverlay.style.display = "none";
+          console.log("Guide overlay closed.");
+        });
+      } else {
+        console.error("Close guide button element missing.");
+      }
+      // Price Modal
+      const priceOverlay = document.getElementById("priceModalOverlay");
+      const openPriceButton = document.getElementById("openPriceButton");
+      const closePriceBtn = document.getElementById("closePriceModalButton");
+      if (openPriceButton && priceOverlay) {
+        openPriceButton.addEventListener("click", () => {
+          priceOverlay.style.display = "flex";
+          priceOverlay.style.flexDirection = "column";
+          priceOverlay.style.alignItems = "center";
+        });
+      }
+      if (closePriceBtn && priceOverlay) {
+        closePriceBtn.addEventListener("click", () => {
+          priceOverlay.style.display = "none";
+        });
+      }
+      // Security Modal
+      const securityOverlay = document.getElementById("securityModalOverlay");
+      const openSecurityButton = document.getElementById("openSecurityButton");
+      const closeSecurityBtn = document.getElementById("closeSecurityModalButton");
+      if (openSecurityButton && securityOverlay) {
+        openSecurityButton.addEventListener("click", () => {
+          securityOverlay.style.display = "flex";
+          securityOverlay.style.flexDirection = "column";
+          securityOverlay.style.alignItems = "center";
+        });
+      }
+      if (closeSecurityBtn && securityOverlay) {
+        closeSecurityBtn.addEventListener("click", () => {
+          securityOverlay.style.display = "none";
+        });
+      }
+      // About Modal
+      const aboutOverlay = document.getElementById("aboutModalOverlay");
+      const openAboutButton = document.getElementById("openAboutButton");
+      const closeAboutBtn = document.getElementById("closeAboutModalButton");
+      if (openAboutButton && aboutOverlay) {
+        openAboutButton.addEventListener("click", () => {
+          aboutOverlay.style.display = "flex";
+          aboutOverlay.style.flexDirection = "column";
+          aboutOverlay.style.alignItems = "center";
+        });
+      }
+      if (closeAboutBtn && aboutOverlay) {
+        closeAboutBtn.addEventListener("click", () => {
+          aboutOverlay.style.display = "none";
+        });
+      }
+      // API Key and Enter Button Logic
+      const enterTranscriptionBtn = document.getElementById("enterTranscriptionBtn");
+      const apiKeyInput = document.getElementById("apiKeyInput");
+      if (enterTranscriptionBtn && apiKeyInput) {
+        enterTranscriptionBtn.addEventListener("click", async () => {
+          const apiKey = apiKeyInput.value.trim();
+          if (apiKey) {
+            await storeEncryptedAPIKey(apiKey);
+            window.location.href = "transcribe.html";
+          } else {
+            alert("Please enter a valid API key.");
+          }
+        });
+      } else {
+        console.error("API key input or enter button element is missing.");
+      }
+      
+      // --- Beta Test Button Logic ---
+      const betaTestButton = document.getElementById("betaTestButton");
+      if (betaTestButton) {
+        betaTestButton.addEventListener("click", function () {
+          window.location.href = "transcribe.html";
+        });
+      }
+      
+      // Consent Banner & Cookie Management
+      function setCookie(name, value, days) {
+        let expires = "";
+        if (days) {
+          const date = new Date();
+          date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+          expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "") + expires + "; path=/";
+      }
+      function getCookie(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(";");
+        for (let c of ca) {
+          c = c.trim();
+          if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length);
+        }
+        return null;
+      }
+      function loadAdSense() {
+        const script = document.createElement("script");
+        script.async = true;
+        script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";
+        document.head.appendChild(script);
+        (adsbygoogle = window.adsbygoogle || []).push({});
+      }
+      document.getElementById("cmp-accept").addEventListener("click", function() {
+        setCookie("user_consent", "accepted", 365);
+        document.getElementById("cmp-banner").style.display = "none";
+        loadAdSense();
+      });
+      document.getElementById("cmp-manage").addEventListener("click", function() {
+        alert("Here you can manage your cookie and ad preferences.");
+      });
+      if (getCookie("user_consent") === "accepted") {
+        document.getElementById("cmp-banner").style.display = "none";
+        loadAdSense();
+        document.getElementById("ad-revenue-message").style.display = "none";
+      }
+    });
+  </script>
+  <script type="module" src="./js/main-index.js"></script>
+</body>
+</html>
