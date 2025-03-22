@@ -28,7 +28,7 @@ function logError(message, ...optionalParams) {
 
 const MIN_CHUNK_DURATION = 45000; // 45 seconds
 const MAX_CHUNK_DURATION = 45000; // 45 seconds
-const watchdogThreshold = 1500;   // 1.5 seconds with no frame
+const watchdogThreshold = 1500;   // 1.5 seconds with no new frame
 const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net/";
 
 let mediaStream = null;
@@ -527,6 +527,16 @@ function resetRecordingState() {
   chunkNumber = 1;
 }
 
+// Adaptive final wait: wait 2 sec, then keep waiting until no new frame for watchdogThreshold
+async function waitForFinalFrames() {
+  // Wait for at least 2 seconds.
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  // Then wait until the time since the last frame is >= watchdogThreshold.
+  while (Date.now() - lastFrameTime < watchdogThreshold) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+}
+
 function initRecording() {
   const startButton = document.getElementById("startButton");
   const stopButton = document.getElementById("stopButton");
@@ -610,9 +620,8 @@ function initRecording() {
     manualStop = true;
     clearTimeout(chunkTimeoutId);
     clearInterval(recordingTimerInterval);
-    // Instead of stopping the microphone immediately,
-    // wait for 2 seconds to capture any remaining audio frames.
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Wait for a fixed 2 seconds and then adaptively wait until no new frame has been received for at least watchdogThreshold ms.
+    await waitForFinalFrames();
     // Now stop the microphone so no further frames are added.
     stopMicrophone();
     chunkStartTime = 0;
