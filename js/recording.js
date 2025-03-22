@@ -53,6 +53,9 @@ let finalChunkProcessed = false;
 let recordingPaused = false;
 let audioFrames = []; // Buffer for audio frames
 
+// We'll use this variable to override the normal chunk duration when stopping manually.
+let finalChunkThreshold = MAX_CHUNK_DURATION; // default
+
 // --- Utility Functions ---
 function updateStatusMessage(message, color = "#333") {
   const statusElem = document.getElementById("statusMessage");
@@ -494,11 +497,34 @@ function encodeWAV(samples, sampleRate, numChannels) {
   return new Blob([view], { type: 'audio/wav' });
 }
 
+// --- Modified Scheduler ---
+// In automatic mode, chunks are sliced at 45 sec. However, when manualStop is true,
+// we want to override the thresholds. When the user clicks Stop, we calculate the elapsed time since the last slice,
+// then set finalChunkThreshold = elapsed + 2000ms. The scheduler will then trigger the final slice when that time is reached.
 function scheduleChunk() {
-  if (manualStop || recordingPaused) {
-    logDebug("Scheduler suspended due to manual stop or pause.");
+  // If recording is paused, simply suspend scheduling.
+  if (recordingPaused) {
+    logDebug("Scheduler suspended due to pause.");
     return;
   }
+  
+  // If manualStop is active, use the finalChunkThreshold for slicing.
+  if (manualStop) {
+    const elapsed = Date.now() - chunkStartTime;
+    if (elapsed >= finalChunkThreshold) {
+      logInfo("Final chunk threshold reached; processing final chunk.");
+      safeProcessAudioChunk(true);
+      finalChunkProcessed = true;
+      stopMicrophone();
+      finalizeStop();
+      return;
+    } else {
+      chunkTimeoutId = setTimeout(scheduleChunk, 200);
+      return;
+    }
+  }
+  
+  // Normal automatic slicing logic:
   const elapsed = Date.now() - chunkStartTime;
   const timeSinceLast = Date.now() - lastFrameTime;
   if (elapsed >= MAX_CHUNK_DURATION || (elapsed >= MIN_CHUNK_DURATION && timeSinceLast >= watchdogThreshold)) {
@@ -525,6 +551,7 @@ function resetRecordingState() {
   recordingPaused = false;
   groupId = Date.now().toString();
   chunkNumber = 1;
+  finalChunkThreshold = MAX_CHUNK_DURATION; // reset to default
 }
 
 function initRecording() {
@@ -605,36 +632,19 @@ function initRecording() {
     }
   });
 
-  // --- Modified Stop Button Handler for Manual Stop ---
+  // --- Modified Stop Button Handler ---
   stopButton.addEventListener("click", async () => {
     updateStatusMessage("Finishing transcription...", "blue");
     manualStop = true;
     clearTimeout(chunkTimeoutId);
     clearInterval(recordingTimerInterval);
-    
-    // Record the time when stop is initiated.
-    const stopTime = Date.now();
-    const maxFlushTime = 5000;      // Maximum flush time: 5 seconds
-    const inactivityThreshold = watchdogThreshold;  // 1.5 seconds inactivity
-    
-    async function flushFinalChunk() {
-      // If no new frames for at least inactivityThreshold or max flush time reached, then finalize.
-      if ((Date.now() - lastFrameTime) >= inactivityThreshold || (Date.now() - stopTime) >= maxFlushTime) {
-        logInfo("Flush condition met; finalizing chunk.");
-        if (audioReader) {
-          audioReader.cancel();
-        }
-        await safeProcessAudioChunk(true);
-        finalChunkProcessed = true;
-        stopMicrophone();
-        finalizeStop();
-        logInfo("Manual stop processed; final chunk handled.");
-      } else {
-        // Wait 200ms and check again.
-        setTimeout(flushFinalChunk, 200);
-      }
-    }
-    flushFinalChunk();
+    // Calculate elapsed time since the last chunk was started.
+    const elapsedSinceLast = Date.now() - chunkStartTime;
+    // Set the final chunk threshold to be the current elapsed time plus an extra 2 seconds.
+    finalChunkThreshold = elapsedSinceLast + 2000;
+    logInfo("Manual stop triggered. Final chunk threshold set to " + finalChunkThreshold + " ms.");
+    // The scheduler (scheduleChunk) will now detect when elapsed time reaches finalChunkThreshold,
+    // slice the final chunk as if by automatic slicing, and then stop the microphone.
   });
 }
 
