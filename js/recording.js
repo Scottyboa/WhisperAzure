@@ -1,6 +1,6 @@
 // recording.js
 // Updated recording module with API key validation, file encryption, request signing, sending device_token,
-// and with a synthesized one second of silence added to each audio chunk.
+// and with a flush mechanism to ensure all pending audio data is processed before finalizing a recording.
 
 function hashString(str) {
   let hash = 0;
@@ -81,13 +81,15 @@ function updateRecordingTimer() {
   }
 }
 
-function stopMicrophone() {
+// --- Stop Microphone without immediately canceling the reader ---
+function stopMicrophone(flush = false) {
   if (mediaStream) {
     mediaStream.getTracks().forEach(track => track.stop());
     mediaStream = null;
     logInfo("Microphone stopped.");
   }
-  if (audioReader) {
+  // When flushing, we want the reader to drain naturally.
+  if (!flush && audioReader) {
     audioReader.cancel();
     audioReader = null;
   }
@@ -303,8 +305,28 @@ async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast
   }
 }
 
+// --- Flush Pending Audio Frames ---
+// This function reads from the audio reader until the stream is done,
+// ensuring that any pending audio data is pushed into the audioFrames buffer.
+async function flushAudioFrames() {
+  if (!audioReader) return;
+  while (true) {
+    try {
+      const { done, value } = await audioReader.read();
+      if (done) break;
+      if (value) {
+        audioFrames.push(value);
+      }
+    } catch (err) {
+      logError("Error flushing audio frames:", err);
+      break;
+    }
+  }
+  logInfo("Flushed all pending audio frames.");
+}
+
 // --- Audio Chunk Processing ---
-// In this function, we add a one-second silence (synthesized from zeros) after processing recorded frames.
+// This function processes the buffered audio frames into a single WAV blob for upload.
 async function processAudioChunkInternal(force = false) {
   if (audioFrames.length === 0) {
     logDebug("No audio frames to process.");
@@ -346,15 +368,8 @@ async function processAudioChunkInternal(force = false) {
     pcmFloat32.set(arr, offset);
     offset += arr.length;
   }
-  // Synthesize one second of silence and append it.
-  const silenceLength = sampleRate * numChannels; // one second of samples (interleaved)
-  const silenceArray = new Float32Array(silenceLength); // defaults to zeros
-  const combinedLength = pcmFloat32.length + silenceArray.length;
-  const combinedPCM = new Float32Array(combinedLength);
-  combinedPCM.set(pcmFloat32);
-  combinedPCM.set(silenceArray, pcmFloat32.length);
-  
-  const pcmInt16 = floatTo16BitPCM(combinedPCM);
+  // Now convert the final Float32Array to 16-bit PCM without appending silence.
+  const pcmInt16 = floatTo16BitPCM(pcmFloat32);
   const wavBlob = encodeWAV(pcmInt16, sampleRate, numChannels);
   const mimeType = "audio/wav";
   const extension = "wav";
@@ -611,9 +626,13 @@ function initRecording() {
     manualStop = true;
     clearTimeout(chunkTimeoutId);
     clearInterval(recordingTimerInterval);
-    stopMicrophone();
+    // Stop the tracks but keep the audioReader active for flushing.
+    stopMicrophone(true);
+    // Flush any pending audio frames from the stream.
+    await flushAudioFrames();
     chunkStartTime = 0;
     lastFrameTime = 0;
+    // Wait briefly to ensure flush is complete.
     await new Promise(resolve => setTimeout(resolve, 200));
     if (chunkProcessingLock) {
       pendingStop = true;
