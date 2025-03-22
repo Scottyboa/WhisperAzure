@@ -75,30 +75,25 @@ function initConsentBanner() {
 // Initializes the API key guide overlay and the enter button event listener.
 function initGuideOverlay() {
   const overlay = document.getElementById("apiKeyGuideOverlay");
-  const closeGuide = document.getElementById("closeGuideBtn");
   const openGuideButton = document.getElementById("openGuideButton");
   const enterTranscriptionBtn = document.getElementById("enterTranscriptionBtn");
   const apiKeyInput = document.getElementById("apiKeyInput");
 
-  // Check if overlay and openGuideButton exist
   if (openGuideButton && overlay) {
     openGuideButton.addEventListener("click", () => {
-      overlay.style.display = "flex";
-      overlay.style.flexDirection = "column";
-      overlay.style.alignItems = "center";
-      console.log("Guide overlay opened.");
+      // Toggle the overlay display
+      if (overlay.style.display === "flex") {
+        overlay.style.display = "none";
+        console.log("Guide overlay closed.");
+      } else {
+        overlay.style.display = "flex";
+        overlay.style.flexDirection = "column";
+        overlay.style.alignItems = "center";
+        console.log("Guide overlay opened.");
+      }
     });
   } else {
     console.error("Guide overlay or openGuideButton element missing.");
-  }
-
-  if (closeGuide && overlay) {
-    closeGuide.addEventListener("click", () => {
-      overlay.style.display = "none";
-      console.log("Guide overlay closed.");
-    });
-  } else {
-    console.error("Close guide button element missing.");
   }
 
   // Attach event listener to enter button.
