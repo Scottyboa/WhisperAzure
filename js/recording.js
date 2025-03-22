@@ -1,7 +1,7 @@
 // recording.js
 // Updated recording module with API key validation, file encryption, request signing, and sending device_token.
-// (Modifications: When the stop button is clicked, record the stop time, let the reader drain only frames up to that time,
-// process the final chunk (which may be shorter than 45 sec) just like an automatic slice, and then stop the media stream only after the final chunk upload has been initiated.)
+// (Modifications: When stop is clicked, record stop time using performance.now(), wait a short delay,
+// then cancel the audio reader so that only frames up to the stop time are retained and processed as the final chunk.)
 
 function hashString(str) {
   let hash = 0;
@@ -31,7 +31,7 @@ const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azur
 
 let mediaStream = null;
 let audioReader = null;
-let recordingStartTime = 0;
+let recordingStartTime = 0; // we'll use Date.now() for UI timer
 let recordingTimerInterval;
 let completionTimerInterval = null;
 let completionStartTime = 0;
@@ -43,20 +43,19 @@ let pollingIntervals = {};
 
 let chunkStartTime = 0;
 let lastFrameTime = 0;
-let chunkTimeoutId;
+let chunkTimeoutId = null;
 
 let chunkProcessingLock = false;
 let pendingStop = false;
 let finalChunkProcessed = false;
 let recordingPaused = false;
-// We'll now store each audio frame along with a timestamp
-// Each element is an object: { frame: <frame>, ts: <timestamp> }
+// Each audio frame is stored as an object: { frame: <AudioFrame>, ts: <performance.now()> }
 let audioFrames = [];
 
-// Global variable to record the exact stop time (in ms). Null means not stopping yet.
+// Global stop timestamp (from performance.now()). When set, frames with ts > stopTimestamp will be discarded.
 let stopTimestamp = null;
 
-// Promise tracking the read loop completion.
+// Promise to track the read loop completion.
 let readLoopPromise;
 
 // --- Utility Functions ---
@@ -82,14 +81,14 @@ function updateRecordingTimer() {
   if (timerElem) timerElem.innerText = "Recording Timer: " + formatTime(elapsed);
 }
 
-// Modified: On manual stop we no longer cancel the reader immediately.
+// Modified: Stop only the media tracks so that the stream can drain naturally.
 function stopMicrophone() {
   if (mediaStream) {
     mediaStream.getTracks().forEach(track => track.stop());
     mediaStream = null;
     logInfo("Microphone stopped.");
   }
-  // Do not cancel audioReader here; we let it drain naturally.
+  // We do not cancel audioReader immediately here.
 }
 
 // --- Base64 Helper Functions ---
@@ -105,7 +104,9 @@ function base64ToArrayBuffer(base64) {
   const binary = window.atob(base64);
   const len = binary.length;
   const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
   return bytes;
 }
 
@@ -254,7 +255,7 @@ async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast
 }
 
 // --- Overlap Handling ---
-// For automatic chunks, retain the most recent frames whose total duration is at least the desired overlap.
+// For automatic chunk slicing, retain the most recent frames whose total duration is at least the desired overlap.
 function getOverlapFrames() {
   let overlap = [];
   let totalDuration = 0;
@@ -271,13 +272,9 @@ function getOverlapFrames() {
 
 // --- Audio Chunk Processing ---
 async function processAudioChunkInternal(force = false) {
-  if (audioFrames.length === 0) {
-    logDebug("No audio frames to process.");
-    return;
-  }
   let framesToProcess;
   if (manualStop && stopTimestamp !== null) {
-    // Final chunk: only process frames captured up to the stop time.
+    // For the final chunk, only include frames with a timestamp <= stopTimestamp.
     framesToProcess = audioFrames.filter(item => item.ts <= stopTimestamp).map(item => item.frame);
     audioFrames = []; // Discard any frames after stop time.
   } else {
@@ -291,7 +288,7 @@ async function processAudioChunkInternal(force = false) {
     audioFrames = overlap;
   }
   if (framesToProcess.length === 0) {
-    logDebug("No frames to process after filtering.");
+    logDebug("No audio frames to process.");
     return;
   }
   logInfo(`Processing ${framesToProcess.length} audio frames for chunk ${chunkNumber}.`);
@@ -502,7 +499,7 @@ function resetRecordingState() {
 }
 
 // --- Modified Read Loop Implementation ---
-// Each read frame is stored with a timestamp; if stopTimestamp is set, we only retain frames with ts <= stopTimestamp.
+// Each read frame is stored with a timestamp (using performance.now())
 async function readLoop() {
   try {
     while (true) {
@@ -511,11 +508,14 @@ async function readLoop() {
         logInfo("Audio track reading complete.");
         break;
       }
-      const now = Date.now();
+      const now = performance.now();
       if (stopTimestamp === null || now <= stopTimestamp) {
         audioFrames.push({ frame: value, ts: now });
       } else {
-        logDebug("Discarding frame after stop time.");
+        // To avoid log flooding, log discard only occasionally.
+        if (audioFrames.length % 50 === 0) {
+          logDebug("Discarding frame after stop time.");
+        }
       }
       lastFrameTime = now;
     }
@@ -592,23 +592,30 @@ function initRecording() {
   stopButton.addEventListener("click", async () => {
     updateStatusMessage("Finishing transcription...", "blue");
     manualStop = true;
-    // Record the exact stop time.
-    stopTimestamp = Date.now();
+    // Record the exact stop time using performance.now()
+    stopTimestamp = performance.now();
     clearTimeout(chunkTimeoutId);
     clearInterval(recordingTimerInterval);
-    // Do not immediately stop the media stream; let the read loop drain,
-    // but it will now only capture frames up to stopTimestamp.
+    // Do not immediately stop the media stream; let the read loop drain.
     if (audioReader && audioReader.closed) {
       await audioReader.closed;
     } else if (readLoopPromise) {
       await readLoopPromise;
     }
-    // Extra delay to allow any trailing frames to arrive.
+    // Extra delay to allow trailing frames to arrive.
     await new Promise(resolve => setTimeout(resolve, 500));
-    // Process final chunk (only frames up to stopTimestamp will be processed).
+    // Cancel the reader to stop further frame processing.
+    if (audioReader) {
+      try {
+        await audioReader.cancel();
+      } catch(e) {
+        logError("Error canceling audio reader:", e);
+      }
+    }
+    // Process final chunk (only frames with ts <= stopTimestamp will be used).
     await safeProcessAudioChunk(true);
     finalChunkProcessed = true;
-    // Now that the final chunk upload has been initiated, stop the media stream.
+    // Now stop the media stream.
     stopMicrophone();
     finalizeStop();
     logInfo("Stop button processed; final chunk handled and media stream stopped.");
