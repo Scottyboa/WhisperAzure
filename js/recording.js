@@ -53,6 +53,9 @@ let finalChunkProcessed = false;
 let recordingPaused = false;
 let audioFrames = []; // Buffer for audio frames
 
+// Promise to track the async read loop completion.
+let readLoopPromise;
+
 // --- Utility Functions ---
 function updateStatusMessage(message, color = "#333") {
   const statusElem = document.getElementById("statusMessage");
@@ -88,8 +91,9 @@ function stopMicrophone() {
     logInfo("Microphone stopped.");
   }
   if (audioReader) {
+    // Cancel the reader so that the async loop eventually terminates.
     audioReader.cancel();
-    audioReader = null;
+    // audioReader remains set; the read loop will handle its closure.
   }
 }
 
@@ -527,6 +531,27 @@ function resetRecordingState() {
   chunkNumber = 1;
 }
 
+// --- Modified Read Loop Implementation ---
+async function readLoop() {
+  try {
+    while (true) {
+      const { done, value } = await audioReader.read();
+      if (done) {
+        logInfo("Audio track reading complete.");
+        break;
+      }
+      lastFrameTime = Date.now();
+      audioFrames.push(value);
+      if (manualStop) {
+        // When manualStop is set, exit after pushing the current frame.
+        break;
+      }
+    }
+  } catch (err) {
+    logError("Error reading audio frames", err);
+  }
+}
+
 function initRecording() {
   const startButton = document.getElementById("startButton");
   const stopButton = document.getElementById("stopButton");
@@ -555,20 +580,9 @@ function initRecording() {
       const processor = new MediaStreamTrackProcessor({ track: track });
       audioReader = processor.readable.getReader();
       
-      function readLoop() {
-        audioReader.read().then(({ done, value }) => {
-          if (done) {
-            logInfo("Audio track reading complete.");
-            return;
-          }
-          lastFrameTime = Date.now();
-          audioFrames.push(value);
-          readLoop();
-        }).catch(err => {
-          logError("Error reading audio frames", err);
-        });
-      }
-      readLoop();
+      // Start the async read loop and store its promise.
+      readLoopPromise = readLoop();
+      
       scheduleChunk();
       logInfo("MediaStreamTrackProcessor started, reading audio frames.");
       startButton.disabled = true;
@@ -613,7 +627,10 @@ function initRecording() {
     stopMicrophone();
     chunkStartTime = 0;
     lastFrameTime = 0;
-    await new Promise(resolve => setTimeout(resolve, 200));
+    // Await the read loop to finish reading all pending frames
+    if (readLoopPromise) {
+      await readLoopPromise;
+    }
     if (chunkProcessingLock) {
       pendingStop = true;
       logDebug("Chunk processing locked at stop; setting pendingStop.");
