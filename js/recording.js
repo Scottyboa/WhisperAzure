@@ -610,11 +610,13 @@ function initRecording() {
     manualStop = true;
     clearTimeout(chunkTimeoutId);
     clearInterval(recordingTimerInterval);
+    // Instead of stopping the microphone immediately,
+    // wait for 2 seconds to capture any remaining audio frames.
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Now stop the microphone so no further frames are added.
     stopMicrophone();
     chunkStartTime = 0;
     lastFrameTime = 0;
-    // Delay increased to 2000ms (2 seconds) to allow remaining audio frames to be captured.
-    await new Promise(resolve => setTimeout(resolve, 2000));
     if (chunkProcessingLock) {
       pendingStop = true;
       logDebug("Chunk processing locked at stop; setting pendingStop.");
