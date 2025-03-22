@@ -1,5 +1,6 @@
 // recording.js
-// Updated recording module with API key validation, file encryption, request signing, and sending device_token.
+// Updated recording module with API key validation, file encryption, request signing, and sending device_token,
+// and with a modified WAV encoder that appends one second of silence at the end of each chunk.
 
 // Updated hash function: now returns an unsigned 32-bit integer string.
 function hashString(str) {
@@ -353,6 +354,7 @@ async function processAudioChunkInternal(force = false) {
     offset += arr.length;
   }
   const pcmInt16 = floatTo16BitPCM(pcmFloat32);
+  // Modified WAV encoding: Append 1 second of silence at the end.
   const wavBlob = encodeWAV(pcmInt16, sampleRate, numChannels);
   const mimeType = "audio/wav";
   const extension = "wav";
@@ -466,8 +468,16 @@ function floatTo16BitPCM(input) {
   return output;
 }
 
+// Modified encodeWAV: Append one second of silence (zeros) to the audio.
 function encodeWAV(samples, sampleRate, numChannels) {
-  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  // Calculate number of samples for 1 second of silence.
+  const silenceSamples = sampleRate * numChannels;
+  const totalSamples = samples.length + silenceSamples;
+  const newSamples = new Int16Array(totalSamples);
+  newSamples.set(samples);
+  // The remaining samples are 0 (silence) by default.
+  
+  const buffer = new ArrayBuffer(44 + newSamples.length * 2);
   const view = new DataView(buffer);
   function writeString(offset, string) {
     for (let i = 0; i < string.length; i++) {
@@ -475,7 +485,7 @@ function encodeWAV(samples, sampleRate, numChannels) {
     }
   }
   writeString(0, 'RIFF');
-  view.setUint32(4, 36 + samples.length * 2, true);
+  view.setUint32(4, 36 + newSamples.length * 2, true);
   writeString(8, 'WAVE');
   writeString(12, 'fmt ');
   view.setUint32(16, 16, true);
@@ -486,10 +496,10 @@ function encodeWAV(samples, sampleRate, numChannels) {
   view.setUint16(32, numChannels * 2, true);
   view.setUint16(34, 16, true);
   writeString(36, 'data');
-  view.setUint32(40, samples.length * 2, true);
+  view.setUint32(40, newSamples.length * 2, true);
   let offset = 44;
-  for (let i = 0; i < samples.length; i++, offset += 2) {
-    view.setInt16(offset, samples[i], true);
+  for (let i = 0; i < newSamples.length; i++, offset += 2) {
+    view.setInt16(offset, newSamples[i], true);
   }
   return new Blob([view], { type: 'audio/wav' });
 }
@@ -527,11 +537,11 @@ function resetRecordingState() {
   chunkNumber = 1;
 }
 
-// Adaptive final wait: wait 2 sec, then keep waiting until no new frame for watchdogThreshold
+// Adaptive final wait: wait 2 sec, then keep waiting until no new frame for watchdogThreshold ms.
 async function waitForFinalFrames() {
-  // Wait for at least 2 seconds.
+  // Fixed wait of 2 seconds.
   await new Promise(resolve => setTimeout(resolve, 2000));
-  // Then wait until the time since the last frame is >= watchdogThreshold.
+  // Then wait until no new frames for at least watchdogThreshold.
   while (Date.now() - lastFrameTime < watchdogThreshold) {
     await new Promise(resolve => setTimeout(resolve, 100));
   }
@@ -620,7 +630,7 @@ function initRecording() {
     manualStop = true;
     clearTimeout(chunkTimeoutId);
     clearInterval(recordingTimerInterval);
-    // Wait for a fixed 2 seconds and then adaptively wait until no new frame has been received for at least watchdogThreshold ms.
+    // Wait 2 seconds, then adaptively wait until no new frame for watchdogThreshold ms.
     await waitForFinalFrames();
     // Now stop the microphone so no further frames are added.
     stopMicrophone();
