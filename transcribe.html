@@ -188,7 +188,6 @@
   <div class="grid-container">
     <!-- Left Sidebar -->
     <aside class="sidebar">
-      <button id="btnFunctions">Functions</button>
       <button id="btnGuide">Guide</button>
       <!-- Language dropdown -->
       <div id="lang-container-transcribe">
@@ -270,18 +269,11 @@
   <script>
     document.addEventListener("DOMContentLoaded", function() {
       const btnGuide = document.getElementById("btnGuide");
-      const btnFunctions = document.getElementById("btnFunctions");
       const guideView = document.getElementById("guideView");
       
       if (btnGuide && guideView) {
         btnGuide.addEventListener("click", function() {
-          guideView.style.display = "block";
-        });
-      }
-      
-      if (btnFunctions && guideView) {
-        btnFunctions.addEventListener("click", function() {
-          guideView.style.display = "none";
+          guideView.classList.toggle("active");
         });
       }
     });
