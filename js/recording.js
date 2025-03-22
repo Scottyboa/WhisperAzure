@@ -1,23 +1,20 @@
 // recording.js
 // Updated recording module with API key validation, file encryption, request signing, and sending device_token.
+// (Modifications: Adjust stop handling to let the stream close naturally so that all pending frames are captured.)
 
-// Updated hash function: now returns an unsigned 32-bit integer string.
 function hashString(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash |= 0; // Convert to 32-bit signed integer
+    hash |= 0;
   }
-  // Convert to an unsigned 32-bit integer and return as string.
   return (hash >>> 0).toString();
 }
 
 const DEBUG = true;
 function logDebug(message, ...optionalParams) {
-  if (DEBUG) {
-    console.debug(new Date().toISOString(), "[DEBUG]", message, ...optionalParams);
-  }
+  if (DEBUG) console.debug(new Date().toISOString(), "[DEBUG]", message, ...optionalParams);
 }
 function logInfo(message, ...optionalParams) {
   console.info(new Date().toISOString(), "[INFO]", message, ...optionalParams);
@@ -51,9 +48,8 @@ let chunkProcessingLock = false;
 let pendingStop = false;
 let finalChunkProcessed = false;
 let recordingPaused = false;
-let audioFrames = []; // Buffer for audio frames
+let audioFrames = [];
 
-// Promise to track the async read loop completion.
 let readLoopPromise;
 
 // --- Utility Functions ---
@@ -67,34 +63,26 @@ function updateStatusMessage(message, color = "#333") {
 
 function formatTime(ms) {
   const totalSec = Math.floor(ms / 1000);
-  if (totalSec < 60) {
-    return totalSec + " sec";
-  } else {
-    const minutes = Math.floor(totalSec / 60);
-    const seconds = totalSec % 60;
-    return minutes + " min" + (seconds > 0 ? " " + seconds + " sec" : "");
-  }
+  if (totalSec < 60) return totalSec + " sec";
+  const minutes = Math.floor(totalSec / 60);
+  const seconds = totalSec % 60;
+  return minutes + " min" + (seconds > 0 ? " " + seconds + " sec" : "");
 }
 
 function updateRecordingTimer() {
   const elapsed = Date.now() - recordingStartTime;
   const timerElem = document.getElementById("recordTimer");
-  if (timerElem) {
-    timerElem.innerText = "Recording Timer: " + formatTime(elapsed);
-  }
+  if (timerElem) timerElem.innerText = "Recording Timer: " + formatTime(elapsed);
 }
 
+// Modified: Stop only the media tracks and let the stream close naturally.
 function stopMicrophone() {
   if (mediaStream) {
     mediaStream.getTracks().forEach(track => track.stop());
     mediaStream = null;
     logInfo("Microphone stopped.");
   }
-  if (audioReader) {
-    // Cancel the reader so that the async loop eventually terminates.
-    audioReader.cancel();
-    // audioReader remains set; the read loop will handle its closure.
-  }
+  // Do not cancel the audioReader; this allows the stream to close and drain pending frames.
 }
 
 // --- Base64 Helper Functions ---
@@ -110,9 +98,7 @@ function base64ToArrayBuffer(base64) {
   const binary = window.atob(base64);
   const len = binary.length;
   const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
+  for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
   return bytes;
 }
 
@@ -127,23 +113,11 @@ function getDeviceToken() {
 }
 
 // --- API Key Encryption/Decryption Helpers ---
-// These functions assume that the API key is stored in sessionStorage as an encrypted JSON object.
 async function deriveKey(password, salt) {
   const encoder = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password),
-    "PBKDF2",
-    false,
-    ["deriveKey"]
-  );
+  const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
   return crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: salt,
-      iterations: 100000,
-      hash: "SHA-256"
-    },
+    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
     keyMaterial,
     { name: "AES-GCM", length: 256 },
     false,
@@ -152,64 +126,40 @@ async function deriveKey(password, salt) {
 }
 
 async function decryptAPIKey(encryptedData) {
-  // encryptedData is an object: { ciphertext, iv, salt } (all Base64-encoded)
   const { ciphertext, iv, salt } = encryptedData;
   const deviceToken = getDeviceToken();
   const key = await deriveKey(deviceToken, base64ToArrayBuffer(salt));
-  const decryptedBuffer = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: base64ToArrayBuffer(iv) },
-    key,
-    base64ToArrayBuffer(ciphertext)
-  );
-  const decoder = new TextDecoder();
-  return decoder.decode(decryptedBuffer);
+  const decryptedBuffer = await crypto.subtle.decrypt({ name: "AES-GCM", iv: base64ToArrayBuffer(iv) }, key, base64ToArrayBuffer(ciphertext));
+  return new TextDecoder().decode(decryptedBuffer);
 }
 
 async function getDecryptedAPIKey() {
   const encryptedStr = sessionStorage.getItem("encrypted_api_key");
   if (!encryptedStr) return null;
-  const encryptedData = JSON.parse(encryptedStr);
-  return await decryptAPIKey(encryptedData);
+  return await decryptAPIKey(JSON.parse(encryptedStr));
 }
 
 // --- File Blob Encryption ---
-// Encrypts the audio file blob using a key derived from the decrypted API key and device token.
 async function encryptFileBlob(blob) {
   const apiKey = await getDecryptedAPIKey();
   if (!apiKey) throw new Error("API key not available for encryption");
   const deviceToken = getDeviceToken();
   const password = apiKey + ":" + deviceToken;
   const encoder = new TextEncoder();
-  const salt = crypto.getRandomValues(new Uint8Array(16)); // 16-byte salt
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password),
-    "PBKDF2",
-    false,
-    ["deriveKey"]
-  );
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
   const key = await crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: salt,
-      iterations: 100000,
-      hash: "SHA-256"
-    },
+    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
     keyMaterial,
     { name: "AES-GCM", length: 256 },
     false,
     ["encrypt", "decrypt"]
   );
-  const iv = crypto.getRandomValues(new Uint8Array(12)); // 12-byte IV
+  const iv = crypto.getRandomValues(new Uint8Array(12));
   const buffer = await blob.arrayBuffer();
-  const encryptedBuffer = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv: iv },
-    key,
-    buffer
-  );
+  const encryptedBuffer = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, buffer);
   const encryptedBlob = new Blob([encryptedBuffer], { type: blob.type });
   
-  // Generate markers using our updated hashString() function.
   const apiKeyMarker = hashString(apiKey);
   const deviceMarker = hashString(deviceToken);
 
@@ -223,25 +173,13 @@ async function encryptFileBlob(blob) {
 }
 
 // --- HMAC and Request Signing ---
-// Computes an HMAC-SHA256 signature for a given message and secret.
 async function computeHMAC(message, secret) {
   const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const signatureBuffer = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    encoder.encode(message)
-  );
+  const key = await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const signatureBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(message));
   return arrayBufferToBase64(signatureBuffer);
 }
 
-// Generates a signature for the upload request based on group ID and chunk number.
 async function signUploadRequest(groupId, chunkNumber) {
   const apiKey = await getDecryptedAPIKey();
   const deviceToken = getDeviceToken();
@@ -250,7 +188,7 @@ async function signUploadRequest(groupId, chunkNumber) {
   return await computeHMAC(message, secret);
 }
 
-// --- Upload Chunk Function (with Encryption, Request Signing, and sending device_token) ---
+// --- Upload Chunk Function ---
 async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast = false, currentGroup) {
   let encryptionResult;
   try {
@@ -278,23 +216,17 @@ async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast
   formData.append("salt", encryptionResult.salt);
   formData.append("api_key_marker", encryptionResult.apiKeyMarker);
   formData.append("device_marker", encryptionResult.deviceMarker);
-  // Now send the device_token
   formData.append("device_token", getDeviceToken());
   formData.append("signature", signature);
-  if (isLast) {
-    formData.append("last_chunk", "true");
-  }
+  if (isLast) formData.append("last_chunk", "true");
   
   let attempts = 0;
-  const retryDelay = 4000; // 4 seconds
-  const maxRetryTime = 60000; // 1 minute
+  const retryDelay = 4000;
+  const maxRetryTime = 60000;
   const startTime = Date.now();
   while (true) {
     try {
-      const response = await fetch(`${backendUrl}/upload`, {
-        method: "POST",
-        body: formData
-      });
+      const response = await fetch(`${backendUrl}/upload`, { method: "POST", body: formData });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Server responded with status ${response.status}: ${errorText}`);
@@ -314,15 +246,38 @@ async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast
   }
 }
 
+// --- Overlap Handling ---
+// Retain the most recent frames whose total duration is at least the desired overlap (in ms).
+function getOverlapFrames() {
+  let overlap = [];
+  let totalDuration = 0;
+  const desiredOverlap = 200; // ms
+  for (let i = audioFrames.length - 1; i >= 0; i--) {
+    const frame = audioFrames[i];
+    const duration = (frame.numberOfFrames / frame.sampleRate) * 1000;
+    overlap.unshift(frame);
+    totalDuration += duration;
+    if (totalDuration >= desiredOverlap) break;
+  }
+  return overlap;
+}
+
 // --- Audio Chunk Processing ---
 async function processAudioChunkInternal(force = false) {
   if (audioFrames.length === 0) {
     logDebug("No audio frames to process.");
     return;
   }
-  logInfo(`Processing ${audioFrames.length} audio frames for chunk ${chunkNumber}.`);
-  const framesToProcess = audioFrames;
-  audioFrames = []; // Clear the buffer
+  // Retain a small overlap to catch boundary audio.
+  let overlap = getOverlapFrames();
+  let framesToProcess = audioFrames.slice(0, audioFrames.length - overlap.length);
+  if (framesToProcess.length === 0) {
+    framesToProcess = audioFrames;
+    overlap = [];
+  }
+  logInfo(`Processing ${framesToProcess.length} audio frames for chunk ${chunkNumber}.`);
+  audioFrames = overlap; // Keep overlapping frames for next chunk.
+  
   const sampleRate = framesToProcess[0].sampleRate;
   const numChannels = framesToProcess[0].numberOfChannels;
   let pcmDataArray = [];
@@ -397,9 +352,7 @@ function finalizeStop() {
   completionStartTime = Date.now();
   completionTimerInterval = setInterval(() => {
     const timerElem = document.getElementById("transcribeTimer");
-    if (timerElem) {
-      timerElem.innerText = "Completion Timer: " + formatTime(Date.now() - completionStartTime);
-    }
+    if (timerElem) timerElem.innerText = "Completion Timer: " + formatTime(Date.now() - completionStartTime);
   }, 1000);
   const startButton = document.getElementById("startButton");
   const stopButton = document.getElementById("stopButton");
@@ -451,9 +404,7 @@ function updateTranscriptionOutput() {
     combinedTranscript += transcriptChunks[key] + " ";
   });
   const transcriptionElem = document.getElementById("transcription");
-  if (transcriptionElem) {
-    transcriptionElem.value = combinedTranscript.trim();
-  }
+  if (transcriptionElem) transcriptionElem.value = combinedTranscript.trim();
   if (manualStop && Object.keys(transcriptChunks).length >= (chunkNumber - 1)) {
     clearInterval(completionTimerInterval);
     updateStatusMessage("Transcription finished!", "green");
@@ -543,7 +494,6 @@ async function readLoop() {
       lastFrameTime = Date.now();
       audioFrames.push(value);
       if (manualStop) {
-        // When manualStop is set, exit after pushing the current frame.
         break;
       }
     }
@@ -559,7 +509,6 @@ function initRecording() {
   if (!startButton || !stopButton || !pauseResumeButton) return;
 
   startButton.addEventListener("click", async () => {
-    // Retrieve and decrypt the API key before starting.
     const decryptedApiKey = await getDecryptedAPIKey();
     if (!decryptedApiKey || !decryptedApiKey.startsWith("sk-")) {
       alert("Please enter a valid OpenAI API key before starting the recording.");
@@ -580,7 +529,6 @@ function initRecording() {
       const processor = new MediaStreamTrackProcessor({ track: track });
       audioReader = processor.readable.getReader();
       
-      // Start the async read loop and store its promise.
       readLoopPromise = readLoop();
       
       scheduleChunk();
@@ -627,8 +575,10 @@ function initRecording() {
     stopMicrophone();
     chunkStartTime = 0;
     lastFrameTime = 0;
-    // Await the read loop to finish reading all pending frames
-    if (readLoopPromise) {
+    // Instead of canceling the reader abruptly, wait for the stream to close naturally.
+    if (audioReader && audioReader.closed) {
+      await audioReader.closed;
+    } else if (readLoopPromise) {
       await readLoopPromise;
     }
     if (chunkProcessingLock) {
