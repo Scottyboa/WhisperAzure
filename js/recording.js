@@ -53,9 +53,6 @@ let finalChunkProcessed = false;
 let recordingPaused = false;
 let audioFrames = []; // Buffer for audio frames
 
-// We'll use this variable to override the normal chunk duration when stopping manually.
-let finalChunkThreshold = MAX_CHUNK_DURATION; // default
-
 // --- Utility Functions ---
 function updateStatusMessage(message, color = "#333") {
   const statusElem = document.getElementById("statusMessage");
@@ -497,34 +494,11 @@ function encodeWAV(samples, sampleRate, numChannels) {
   return new Blob([view], { type: 'audio/wav' });
 }
 
-// --- Modified Scheduler ---
-// In automatic mode, chunks are sliced at 45 sec. However, when manualStop is true,
-// we want to override the thresholds. When the user clicks Stop, we calculate the elapsed time since the last slice,
-// then set finalChunkThreshold = elapsed + 2000ms. The scheduler will then trigger the final slice when that time is reached.
 function scheduleChunk() {
-  // If recording is paused, simply suspend scheduling.
-  if (recordingPaused) {
-    logDebug("Scheduler suspended due to pause.");
+  if (manualStop || recordingPaused) {
+    logDebug("Scheduler suspended due to manual stop or pause.");
     return;
   }
-  
-  // If manualStop is active, use the finalChunkThreshold for slicing.
-  if (manualStop) {
-    const elapsed = Date.now() - chunkStartTime;
-    if (elapsed >= finalChunkThreshold) {
-      logInfo("Final chunk threshold reached; processing final chunk.");
-      safeProcessAudioChunk(true);
-      finalChunkProcessed = true;
-      stopMicrophone();
-      finalizeStop();
-      return;
-    } else {
-      chunkTimeoutId = setTimeout(scheduleChunk, 200);
-      return;
-    }
-  }
-  
-  // Normal automatic slicing logic:
   const elapsed = Date.now() - chunkStartTime;
   const timeSinceLast = Date.now() - lastFrameTime;
   if (elapsed >= MAX_CHUNK_DURATION || (elapsed >= MIN_CHUNK_DURATION && timeSinceLast >= watchdogThreshold)) {
@@ -551,7 +525,6 @@ function resetRecordingState() {
   recordingPaused = false;
   groupId = Date.now().toString();
   chunkNumber = 1;
-  finalChunkThreshold = MAX_CHUNK_DURATION; // reset to default
 }
 
 function initRecording() {
@@ -632,19 +605,25 @@ function initRecording() {
     }
   });
 
-  // --- Modified Stop Button Handler ---
   stopButton.addEventListener("click", async () => {
     updateStatusMessage("Finishing transcription...", "blue");
     manualStop = true;
     clearTimeout(chunkTimeoutId);
     clearInterval(recordingTimerInterval);
-    // Calculate elapsed time since the last chunk was started.
-    const elapsedSinceLast = Date.now() - chunkStartTime;
-    // Set the final chunk threshold to be the current elapsed time plus an extra 2 seconds.
-    finalChunkThreshold = elapsedSinceLast + 2000;
-    logInfo("Manual stop triggered. Final chunk threshold set to " + finalChunkThreshold + " ms.");
-    // The scheduler (scheduleChunk) will now detect when elapsed time reaches finalChunkThreshold,
-    // slice the final chunk as if by automatic slicing, and then stop the microphone.
+    stopMicrophone();
+    chunkStartTime = 0;
+    lastFrameTime = 0;
+    // Delay increased to 2000ms (2 seconds) to allow remaining audio frames to be captured.
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    if (chunkProcessingLock) {
+      pendingStop = true;
+      logDebug("Chunk processing locked at stop; setting pendingStop.");
+    } else {
+      await safeProcessAudioChunk(true);
+      finalChunkProcessed = true;
+      finalizeStop();
+      logInfo("Stop button processed; final chunk handled.");
+    }
   });
 }
 
