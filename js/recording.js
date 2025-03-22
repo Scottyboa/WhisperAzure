@@ -1,6 +1,6 @@
 // recording.js
 // Updated recording module with API key validation, file encryption, request signing, and sending device_token.
-// (Modifications: Let the read loop drain naturally by removing the manualStop break so that all pending frames are captured.)
+// (Modifications: Instead of breaking immediately on stop, wait for the stream to fully drain and then wait an extra 500ms before processing the final chunk.)
 
 function hashString(str) {
   let hash = 0;
@@ -14,9 +14,7 @@ function hashString(str) {
 
 const DEBUG = true;
 function logDebug(message, ...optionalParams) {
-  if (DEBUG) {
-    console.debug(new Date().toISOString(), "[DEBUG]", message, ...optionalParams);
-  }
+  if (DEBUG) console.debug(new Date().toISOString(), "[DEBUG]", message, ...optionalParams);
 }
 function logInfo(message, ...optionalParams) {
   console.info(new Date().toISOString(), "[INFO]", message, ...optionalParams);
@@ -66,31 +64,26 @@ function updateStatusMessage(message, color = "#333") {
 
 function formatTime(ms) {
   const totalSec = Math.floor(ms / 1000);
-  if (totalSec < 60) {
-    return totalSec + " sec";
-  } else {
-    const minutes = Math.floor(totalSec / 60);
-    const seconds = totalSec % 60;
-    return minutes + " min" + (seconds > 0 ? " " + seconds + " sec" : "");
-  }
+  if (totalSec < 60) return totalSec + " sec";
+  const minutes = Math.floor(totalSec / 60);
+  const seconds = totalSec % 60;
+  return minutes + " min" + (seconds > 0 ? " " + seconds + " sec" : "");
 }
 
 function updateRecordingTimer() {
   const elapsed = Date.now() - recordingStartTime;
   const timerElem = document.getElementById("recordTimer");
-  if (timerElem) {
-    timerElem.innerText = "Recording Timer: " + formatTime(elapsed);
-  }
+  if (timerElem) timerElem.innerText = "Recording Timer: " + formatTime(elapsed);
 }
 
-// Modified: Stop only the media tracks so that the stream can close naturally.
+// Modified: Stop only the media tracks so the stream can close naturally.
 function stopMicrophone() {
   if (mediaStream) {
     mediaStream.getTracks().forEach(track => track.stop());
     mediaStream = null;
     logInfo("Microphone stopped.");
   }
-  // Do not cancel the audioReader here; this allows the stream to drain pending frames.
+  // We do not cancel the audioReader here so that it can naturally drain any pending frames.
 }
 
 // --- Base64 Helper Functions ---
@@ -106,9 +99,7 @@ function base64ToArrayBuffer(base64) {
   const binary = window.atob(base64);
   const len = binary.length;
   const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
+  for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
   return bytes;
 }
 
@@ -125,20 +116,9 @@ function getDeviceToken() {
 // --- API Key Encryption/Decryption Helpers ---
 async function deriveKey(password, salt) {
   const encoder = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password),
-    "PBKDF2",
-    false,
-    ["deriveKey"]
-  );
+  const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
   return crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: salt,
-      iterations: 100000,
-      hash: "SHA-256"
-    },
+    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
     keyMaterial,
     { name: "AES-GCM", length: 256 },
     false,
@@ -150,11 +130,7 @@ async function decryptAPIKey(encryptedData) {
   const { ciphertext, iv, salt } = encryptedData;
   const deviceToken = getDeviceToken();
   const key = await deriveKey(deviceToken, base64ToArrayBuffer(salt));
-  const decryptedBuffer = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: base64ToArrayBuffer(iv) },
-    key,
-    base64ToArrayBuffer(ciphertext)
-  );
+  const decryptedBuffer = await crypto.subtle.decrypt({ name: "AES-GCM", iv: base64ToArrayBuffer(iv) }, key, base64ToArrayBuffer(ciphertext));
   return new TextDecoder().decode(decryptedBuffer);
 }
 
@@ -172,20 +148,9 @@ async function encryptFileBlob(blob) {
   const password = apiKey + ":" + deviceToken;
   const encoder = new TextEncoder();
   const salt = crypto.getRandomValues(new Uint8Array(16));
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password),
-    "PBKDF2",
-    false,
-    ["deriveKey"]
-  );
+  const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
   const key = await crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: salt,
-      iterations: 100000,
-      hash: "SHA-256"
-    },
+    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
     keyMaterial,
     { name: "AES-GCM", length: 256 },
     false,
@@ -193,11 +158,7 @@ async function encryptFileBlob(blob) {
   );
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const buffer = await blob.arrayBuffer();
-  const encryptedBuffer = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv: iv },
-    key,
-    buffer
-  );
+  const encryptedBuffer = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, buffer);
   const encryptedBlob = new Blob([encryptedBuffer], { type: blob.type });
   
   const apiKeyMarker = hashString(apiKey);
@@ -215,18 +176,8 @@ async function encryptFileBlob(blob) {
 // --- HMAC and Request Signing ---
 async function computeHMAC(message, secret) {
   const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const signatureBuffer = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    encoder.encode(message)
-  );
+  const key = await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const signatureBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(message));
   return arrayBufferToBase64(signatureBuffer);
 }
 
@@ -268,9 +219,7 @@ async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast
   formData.append("device_marker", encryptionResult.deviceMarker);
   formData.append("device_token", getDeviceToken());
   formData.append("signature", signature);
-  if (isLast) {
-    formData.append("last_chunk", "true");
-  }
+  if (isLast) formData.append("last_chunk", "true");
   
   let attempts = 0;
   const retryDelay = 4000;
@@ -278,10 +227,7 @@ async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast
   const startTime = Date.now();
   while (true) {
     try {
-      const response = await fetch(`${backendUrl}/upload`, {
-        method: "POST",
-        body: formData
-      });
+      const response = await fetch(`${backendUrl}/upload`, { method: "POST", body: formData });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Server responded with status ${response.status}: ${errorText}`);
@@ -407,9 +353,7 @@ function finalizeStop() {
   completionStartTime = Date.now();
   completionTimerInterval = setInterval(() => {
     const timerElem = document.getElementById("transcribeTimer");
-    if (timerElem) {
-      timerElem.innerText = "Completion Timer: " + formatTime(Date.now() - completionStartTime);
-    }
+    if (timerElem) timerElem.innerText = "Completion Timer: " + formatTime(Date.now() - completionStartTime);
   }, 1000);
   const startButton = document.getElementById("startButton");
   const stopButton = document.getElementById("stopButton");
@@ -461,9 +405,7 @@ function updateTranscriptionOutput() {
     combinedTranscript += transcriptChunks[key] + " ";
   });
   const transcriptionElem = document.getElementById("transcription");
-  if (transcriptionElem) {
-    transcriptionElem.value = combinedTranscript.trim();
-  }
+  if (transcriptionElem) transcriptionElem.value = combinedTranscript.trim();
   if (manualStop && Object.keys(transcriptChunks).length >= (chunkNumber - 1)) {
     clearInterval(completionTimerInterval);
     updateStatusMessage("Transcription finished!", "green");
@@ -542,7 +484,7 @@ function resetRecordingState() {
 }
 
 // --- Modified Read Loop Implementation ---
-// Removed the "if (manualStop) break;" so that the loop drains all pending frames naturally.
+// No manualStop break so the loop fully drains pending frames.
 async function readLoop() {
   try {
     while (true) {
@@ -553,7 +495,6 @@ async function readLoop() {
       }
       lastFrameTime = Date.now();
       audioFrames.push(value);
-      // No longer break immediately on manualStop; let the stream drain.
     }
   } catch (err) {
     logError("Error reading audio frames", err);
@@ -633,12 +574,14 @@ function initRecording() {
     stopMicrophone();
     chunkStartTime = 0;
     lastFrameTime = 0;
-    // Wait for the reader to drain naturally
+    // Await the read loop to fully drain pending frames.
     if (audioReader && audioReader.closed) {
       await audioReader.closed;
     } else if (readLoopPromise) {
       await readLoopPromise;
     }
+    // Extra delay to allow any trailing frames to arrive.
+    await new Promise(resolve => setTimeout(resolve, 500));
     if (chunkProcessingLock) {
       pendingStop = true;
       logDebug("Chunk processing locked at stop; setting pendingStop.");
