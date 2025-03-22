@@ -1,8 +1,7 @@
 // recording.js
-// Updated recording module with API key validation, file encryption, request signing, and sending device_token,
-// and with a modified WAV encoder that appends one second of silence at the end of each chunk.
+// Updated recording module with API key validation, file encryption, request signing, sending device_token,
+// and with a synthesized one second of silence added to each audio chunk.
 
-// Updated hash function: now returns an unsigned 32-bit integer string.
 function hashString(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -29,7 +28,7 @@ function logError(message, ...optionalParams) {
 
 const MIN_CHUNK_DURATION = 45000; // 45 seconds
 const MAX_CHUNK_DURATION = 45000; // 45 seconds
-const watchdogThreshold = 1500;   // 1.5 seconds with no new frame
+const watchdogThreshold = 1500;   // 1.5 seconds with no frame
 const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net/";
 
 let mediaStream = null;
@@ -124,7 +123,6 @@ function getDeviceToken() {
 }
 
 // --- API Key Encryption/Decryption Helpers ---
-// These functions assume that the API key is stored in sessionStorage as an encrypted JSON object.
 async function deriveKey(password, salt) {
   const encoder = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
@@ -149,7 +147,6 @@ async function deriveKey(password, salt) {
 }
 
 async function decryptAPIKey(encryptedData) {
-  // encryptedData is an object: { ciphertext, iv, salt } (all Base64-encoded)
   const { ciphertext, iv, salt } = encryptedData;
   const deviceToken = getDeviceToken();
   const key = await deriveKey(deviceToken, base64ToArrayBuffer(salt));
@@ -170,14 +167,13 @@ async function getDecryptedAPIKey() {
 }
 
 // --- File Blob Encryption ---
-// Encrypts the audio file blob using a key derived from the decrypted API key and device token.
 async function encryptFileBlob(blob) {
   const apiKey = await getDecryptedAPIKey();
   if (!apiKey) throw new Error("API key not available for encryption");
   const deviceToken = getDeviceToken();
   const password = apiKey + ":" + deviceToken;
   const encoder = new TextEncoder();
-  const salt = crypto.getRandomValues(new Uint8Array(16)); // 16-byte salt
+  const salt = crypto.getRandomValues(new Uint8Array(16));
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
     encoder.encode(password),
@@ -197,7 +193,7 @@ async function encryptFileBlob(blob) {
     false,
     ["encrypt", "decrypt"]
   );
-  const iv = crypto.getRandomValues(new Uint8Array(12)); // 12-byte IV
+  const iv = crypto.getRandomValues(new Uint8Array(12));
   const buffer = await blob.arrayBuffer();
   const encryptedBuffer = await crypto.subtle.encrypt(
     { name: "AES-GCM", iv: iv },
@@ -206,7 +202,6 @@ async function encryptFileBlob(blob) {
   );
   const encryptedBlob = new Blob([encryptedBuffer], { type: blob.type });
   
-  // Generate markers using our updated hashString() function.
   const apiKeyMarker = hashString(apiKey);
   const deviceMarker = hashString(deviceToken);
 
@@ -220,7 +215,6 @@ async function encryptFileBlob(blob) {
 }
 
 // --- HMAC and Request Signing ---
-// Computes an HMAC-SHA256 signature for a given message and secret.
 async function computeHMAC(message, secret) {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
@@ -238,7 +232,6 @@ async function computeHMAC(message, secret) {
   return arrayBufferToBase64(signatureBuffer);
 }
 
-// Generates a signature for the upload request based on group ID and chunk number.
 async function signUploadRequest(groupId, chunkNumber) {
   const apiKey = await getDecryptedAPIKey();
   const deviceToken = getDeviceToken();
@@ -247,7 +240,7 @@ async function signUploadRequest(groupId, chunkNumber) {
   return await computeHMAC(message, secret);
 }
 
-// --- Upload Chunk Function (with Encryption, Request Signing, and sending device_token) ---
+// --- Upload Chunk Function ---
 async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast = false, currentGroup) {
   let encryptionResult;
   try {
@@ -275,7 +268,6 @@ async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast
   formData.append("salt", encryptionResult.salt);
   formData.append("api_key_marker", encryptionResult.apiKeyMarker);
   formData.append("device_marker", encryptionResult.deviceMarker);
-  // Now send the device_token
   formData.append("device_token", getDeviceToken());
   formData.append("signature", signature);
   if (isLast) {
@@ -283,8 +275,8 @@ async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast
   }
   
   let attempts = 0;
-  const retryDelay = 4000; // 4 seconds
-  const maxRetryTime = 60000; // 1 minute
+  const retryDelay = 4000;
+  const maxRetryTime = 60000;
   const startTime = Date.now();
   while (true) {
     try {
@@ -312,6 +304,7 @@ async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast
 }
 
 // --- Audio Chunk Processing ---
+// In this function, we add a one-second silence (synthesized from zeros) after processing recorded frames.
 async function processAudioChunkInternal(force = false) {
   if (audioFrames.length === 0) {
     logDebug("No audio frames to process.");
@@ -353,8 +346,15 @@ async function processAudioChunkInternal(force = false) {
     pcmFloat32.set(arr, offset);
     offset += arr.length;
   }
-  const pcmInt16 = floatTo16BitPCM(pcmFloat32);
-  // Modified WAV encoding: Append 1 second of silence at the end.
+  // Synthesize one second of silence and append it.
+  const silenceLength = sampleRate * numChannels; // one second of samples (interleaved)
+  const silenceArray = new Float32Array(silenceLength); // defaults to zeros
+  const combinedLength = pcmFloat32.length + silenceArray.length;
+  const combinedPCM = new Float32Array(combinedLength);
+  combinedPCM.set(pcmFloat32);
+  combinedPCM.set(silenceArray, pcmFloat32.length);
+  
+  const pcmInt16 = floatTo16BitPCM(combinedPCM);
   const wavBlob = encodeWAV(pcmInt16, sampleRate, numChannels);
   const mimeType = "audio/wav";
   const extension = "wav";
@@ -468,16 +468,8 @@ function floatTo16BitPCM(input) {
   return output;
 }
 
-// Modified encodeWAV: Append one second of silence (zeros) to the audio.
 function encodeWAV(samples, sampleRate, numChannels) {
-  // Calculate number of samples for 1 second of silence.
-  const silenceSamples = sampleRate * numChannels;
-  const totalSamples = samples.length + silenceSamples;
-  const newSamples = new Int16Array(totalSamples);
-  newSamples.set(samples);
-  // The remaining samples are 0 (silence) by default.
-  
-  const buffer = new ArrayBuffer(44 + newSamples.length * 2);
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
   const view = new DataView(buffer);
   function writeString(offset, string) {
     for (let i = 0; i < string.length; i++) {
@@ -485,7 +477,7 @@ function encodeWAV(samples, sampleRate, numChannels) {
     }
   }
   writeString(0, 'RIFF');
-  view.setUint32(4, 36 + newSamples.length * 2, true);
+  view.setUint32(4, 36 + samples.length * 2, true);
   writeString(8, 'WAVE');
   writeString(12, 'fmt ');
   view.setUint32(16, 16, true);
@@ -496,10 +488,10 @@ function encodeWAV(samples, sampleRate, numChannels) {
   view.setUint16(32, numChannels * 2, true);
   view.setUint16(34, 16, true);
   writeString(36, 'data');
-  view.setUint32(40, newSamples.length * 2, true);
+  view.setUint32(40, samples.length * 2, true);
   let offset = 44;
-  for (let i = 0; i < newSamples.length; i++, offset += 2) {
-    view.setInt16(offset, newSamples[i], true);
+  for (let i = 0; i < samples.length; i++, offset += 2) {
+    view.setInt16(offset, samples[i], true);
   }
   return new Blob([view], { type: 'audio/wav' });
 }
@@ -537,16 +529,6 @@ function resetRecordingState() {
   chunkNumber = 1;
 }
 
-// Adaptive final wait: wait 2 sec, then keep waiting until no new frame for watchdogThreshold ms.
-async function waitForFinalFrames() {
-  // Fixed wait of 2 seconds.
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  // Then wait until no new frames for at least watchdogThreshold.
-  while (Date.now() - lastFrameTime < watchdogThreshold) {
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
-}
-
 function initRecording() {
   const startButton = document.getElementById("startButton");
   const stopButton = document.getElementById("stopButton");
@@ -554,7 +536,6 @@ function initRecording() {
   if (!startButton || !stopButton || !pauseResumeButton) return;
 
   startButton.addEventListener("click", async () => {
-    // Retrieve and decrypt the API key before starting.
     const decryptedApiKey = await getDecryptedAPIKey();
     if (!decryptedApiKey || !decryptedApiKey.startsWith("sk-")) {
       alert("Please enter a valid OpenAI API key before starting the recording.");
@@ -630,12 +611,10 @@ function initRecording() {
     manualStop = true;
     clearTimeout(chunkTimeoutId);
     clearInterval(recordingTimerInterval);
-    // Wait 2 seconds, then adaptively wait until no new frame for watchdogThreshold ms.
-    await waitForFinalFrames();
-    // Now stop the microphone so no further frames are added.
     stopMicrophone();
     chunkStartTime = 0;
     lastFrameTime = 0;
+    await new Promise(resolve => setTimeout(resolve, 200));
     if (chunkProcessingLock) {
       pendingStop = true;
       logDebug("Chunk processing locked at stop; setting pendingStop.");
