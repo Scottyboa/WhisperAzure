@@ -1,8 +1,8 @@
 // recording.js
 // Updated recording module with API key validation, file encryption, request signing, and sending device_token.
-// (Modifications: When the stop button is clicked, record the stop request (manualStop),
-// then wait until no new frames are received for 1.5 seconds (or a max of 5 sec) before stopping the media stream.
-// That final chunk is then processed just like an automatic 45‑sec slice.)
+// (Modifications: When stop is clicked, record the stop time, wait until no new frames arrive for 1.5 sec (or max 5 sec),
+// then cancel the reader and process the final chunk using only frames captured at or before the stop time,
+// thereby mimicking the automatic slice. Only after the final chunk is processed is the media stream stopped.)
 
 function hashString(str) {
   let hash = 0;
@@ -27,12 +27,12 @@ function logError(message, ...optionalParams) {
 
 const MIN_CHUNK_DURATION = 45000; // 45 sec
 const MAX_CHUNK_DURATION = 45000; // 45 sec
-const watchdogThreshold = 1500;   // 1.5 sec inactivity
+const watchdogThreshold = 1500;   // 1.5 sec inactivity threshold
 const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net/";
 
 let mediaStream = null;
 let audioReader = null;
-let recordingStartTime = 0; // for UI timer (Date.now())
+let recordingStartTime = 0; // for UI timer using Date.now()
 let recordingTimerInterval;
 let completionTimerInterval = null;
 let completionStartTime = 0;
@@ -50,8 +50,8 @@ let chunkProcessingLock = false;
 let pendingStop = false;
 let finalChunkProcessed = false;
 let recordingPaused = false;
-// Each audio frame is stored along with a timestamp (using performance.now())
-// Each element: { frame: <AudioFrame>, ts: <timestamp> }
+// Each audio frame is stored along with a timestamp using performance.now()
+// Stored items: { frame: <AudioFrame>, ts: <timestamp> }
 let audioFrames = [];
 
 // We'll use a promise to track the read loop completion.
@@ -80,215 +80,43 @@ function updateRecordingTimer() {
   if (timerElem) timerElem.innerText = "Recording Timer: " + formatTime(elapsed);
 }
 
-// In automatic slicing, we let the scheduler run. Here, in manual stop mode we want
-// to wait until no new frames arrive for watchdogThreshold (1.5 sec) or until a max flush time.
+// In automatic slicing, the scheduler runs continuously.
+// Here, for manual stop, we wait for inactivity (no new frames for watchdogThreshold or max 5 sec).
 async function waitForInactivity() {
   const maxFlushTime = 5000; // maximum 5 sec flush if noise persists
-  const startFlush = performance.now();
+  const flushStart = performance.now();
   while ((performance.now() - lastFrameTime) < watchdogThreshold &&
-         (performance.now() - startFlush) < maxFlushTime) {
+         (performance.now() - flushStart) < maxFlushTime) {
     await new Promise(resolve => setTimeout(resolve, 100));
   }
 }
 
-// When stopping manually, we want to mimic the automatic slice—so we wait for inactivity before stopping the stream.
-function stopMicrophone() {
-  if (mediaStream) {
-    mediaStream.getTracks().forEach(track => track.stop());
-    mediaStream = null;
-    logInfo("Microphone stopped.");
-  }
-  // Do not cancel the audioReader immediately.
-}
-
-// --- Base64 Helper Functions ---
-function arrayBufferToBase64(buffer) {
-  let binary = "";
-  const bytes = new Uint8Array(buffer);
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return window.btoa(binary);
-}
-function base64ToArrayBuffer(base64) {
-  const binary = window.atob(base64);
-  const len = binary.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes;
-}
-
-// --- Device Token Management ---
-function getDeviceToken() {
-  let token = localStorage.getItem("device_token");
-  if (!token) {
-    token = crypto.randomUUID();
-    localStorage.setItem("device_token", token);
-  }
-  return token;
-}
-
-// --- API Key Encryption/Decryption Helpers ---
-async function deriveKey(password, salt) {
-  const encoder = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
-  return crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
-    keyMaterial,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["decrypt"]
-  );
-}
-
-async function decryptAPIKey(encryptedData) {
-  const { ciphertext, iv, salt } = encryptedData;
-  const deviceToken = getDeviceToken();
-  const key = await deriveKey(deviceToken, base64ToArrayBuffer(salt));
-  const decryptedBuffer = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: base64ToArrayBuffer(iv) },
-    key,
-    base64ToArrayBuffer(ciphertext)
-  );
-  return new TextDecoder().decode(decryptedBuffer);
-}
-
-async function getDecryptedAPIKey() {
-  const encryptedStr = sessionStorage.getItem("encrypted_api_key");
-  if (!encryptedStr) return null;
-  return await decryptAPIKey(JSON.parse(encryptedStr));
-}
-
-// --- File Blob Encryption ---
-async function encryptFileBlob(blob) {
-  const apiKey = await getDecryptedAPIKey();
-  if (!apiKey) throw new Error("API key not available for encryption");
-  const deviceToken = getDeviceToken();
-  const password = apiKey + ":" + deviceToken;
-  const encoder = new TextEncoder();
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
-  const key = await crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
-    keyMaterial,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt", "decrypt"]
-  );
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const buffer = await blob.arrayBuffer();
-  const encryptedBuffer = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, buffer);
-  const encryptedBlob = new Blob([encryptedBuffer], { type: blob.type });
-  
-  const apiKeyMarker = hashString(apiKey);
-  const deviceMarker = hashString(deviceToken);
-
-  return {
-    encryptedBlob,
-    iv: arrayBufferToBase64(iv),
-    salt: arrayBufferToBase64(salt),
-    apiKeyMarker,
-    deviceMarker
-  };
-}
-
-// --- HMAC and Request Signing ---
-async function computeHMAC(message, secret) {
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const signatureBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(message));
-  return arrayBufferToBase64(signatureBuffer);
-}
-
-async function signUploadRequest(groupId, chunkNumber) {
-  const apiKey = await getDecryptedAPIKey();
-  const deviceToken = getDeviceToken();
-  const secret = apiKey + ":" + deviceToken;
-  const message = "upload:" + groupId + ":" + chunkNumber;
-  return await computeHMAC(message, secret);
-}
-
-// --- Upload Chunk Function ---
-async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast = false, currentGroup) {
-  let encryptionResult;
-  try {
-    encryptionResult = await encryptFileBlob(blob);
-  } catch (err) {
-    console.error("Error encrypting file blob:", err);
-    throw err;
-  }
-  const encryptedBlob = encryptionResult.encryptedBlob;
-
-  let signature;
-  try {
-    signature = await signUploadRequest(currentGroup, currentChunkNumber);
-  } catch (err) {
-    console.error("Error generating signature:", err);
-    throw err;
-  }
-
-  const formData = new FormData();
-  formData.append("file", encryptedBlob, `chunk_${currentChunkNumber}.${extension}`);
-  formData.append("group_id", currentGroup);
-  formData.append("chunk_number", currentChunkNumber);
-  formData.append("api_key", await getDecryptedAPIKey());
-  formData.append("iv", encryptionResult.iv);
-  formData.append("salt", encryptionResult.salt);
-  formData.append("api_key_marker", encryptionResult.apiKeyMarker);
-  formData.append("device_marker", encryptionResult.deviceMarker);
-  formData.append("device_token", getDeviceToken());
-  formData.append("signature", signature);
-  if (isLast) formData.append("last_chunk", "true");
-  
-  let attempts = 0;
-  const retryDelay = 4000;
-  const maxRetryTime = 60000;
-  const startTime = Date.now();
-  while (true) {
+// In automatic slicing, there is no explicit flush delay.
+// For manual stop, we mimic that by waiting for inactivity, then canceling the reader.
+async function finalizeManualStop() {
+  await waitForInactivity();
+  // Cancel the reader to stop further frame processing.
+  if (audioReader) {
     try {
-      const response = await fetch(`${backendUrl}/upload`, { method: "POST", body: formData });
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Server responded with status ${response.status}: ${errorText}`);
-      }
-      const result = await response.json();
-      console.info(`Upload successful for chunk ${currentChunkNumber}`, { session_id: result.session_id });
-      return result;
-    } catch (error) {
-      attempts++;
-      console.error(`Upload error for chunk ${currentChunkNumber} on attempt ${attempts}:`, error);
-      if (Date.now() - startTime >= maxRetryTime) {
-        updateStatusMessage("Failed to upload chunk " + currentChunkNumber + " after maximum retry time", "red");
-        throw new Error("Maximum retry time exceeded for chunk " + currentChunkNumber);
-      }
-      await new Promise(resolve => setTimeout(resolve, retryDelay));
+      await audioReader.cancel();
+    } catch(e) {
+      logError("Error canceling audio reader:", e);
     }
   }
 }
 
-// --- Overlap Handling ---
-// For automatic chunk slicing, retain the most recent frames whose total duration is at least the desired overlap.
-function getOverlapFrames() {
-  let overlap = [];
-  let totalDuration = 0;
-  const desiredOverlap = 200; // in ms
-  for (let i = audioFrames.length - 1; i >= 0; i--) {
-    const item = audioFrames[i];
-    const duration = (item.frame.numberOfFrames / item.frame.sampleRate) * 1000;
-    overlap.unshift(item);
-    totalDuration += duration;
-    if (totalDuration >= desiredOverlap) break;
-  }
-  return overlap;
-}
-
-// --- Audio Chunk Processing ---
-async function processAudioChunkInternal(force = false) {
+// In automatic slicing, we don't filter frames by a stop time.
+// For manual stop, we now process only frames recorded up to the stop time.
+async function processAudioChunkInternal(force = false, finalStopTime = null) {
   let framesToProcess;
-  if (manualStop) {
-    // For manual stop, process all frames currently in the buffer.
-    framesToProcess = audioFrames.map(item => item.frame);
-    audioFrames = [];
+  if (manualStop && finalStopTime !== null) {
+    // Filter frames: only those with ts <= finalStopTime.
+    framesToProcess = audioFrames.filter(item => item.ts <= finalStopTime).map(item => item.frame);
+    if (framesToProcess.length === 0 && audioFrames.length > 0) {
+      logDebug("No frames before stop time; using all frames as fallback.");
+      framesToProcess = audioFrames.map(item => item.frame);
+    }
+    audioFrames = []; // Discard any frames after the stop time.
   } else {
     // Automatic chunk processing: retain overlap.
     let overlap = getOverlapFrames();
@@ -357,7 +185,7 @@ async function processAudioChunkInternal(force = false) {
   chunkNumber++;
 }
 
-async function safeProcessAudioChunk(force = false) {
+async function safeProcessAudioChunk(force = false, finalStopTime = null) {
   if (manualStop && finalChunkProcessed) {
     logDebug("Final chunk already processed; skipping safeProcessAudioChunk.");
     return;
@@ -367,7 +195,7 @@ async function safeProcessAudioChunk(force = false) {
     return;
   }
   chunkProcessingLock = true;
-  await processAudioChunkInternal(force);
+  await processAudioChunkInternal(force, finalStopTime);
   chunkProcessingLock = false;
   if (pendingStop) {
     pendingStop = false;
@@ -596,20 +424,15 @@ function initRecording() {
   stopButton.addEventListener("click", async () => {
     updateStatusMessage("Finishing transcription...", "blue");
     manualStop = true;
-    // Instead of stopping immediately, wait until no new frames arrive for watchdogThreshold (1.5 sec),
-    // or a maximum of 5 seconds.
+    // Record the stop time using performance.now()
+    const finalStopTime = performance.now();
+    // Wait until no new frames arrive for watchdogThreshold (1.5 sec) or max 5 sec.
     const flushStart = performance.now();
     while ((performance.now() - lastFrameTime) < watchdogThreshold &&
            (performance.now() - flushStart) < 5000) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
-    // Now stop the media stream so no new frames are produced.
-    stopMicrophone();
-    // Wait for the read loop to finish.
-    if (readLoopPromise) await readLoopPromise;
-    // Extra flush delay (if needed).
-    await new Promise(resolve => setTimeout(resolve, 500));
-    // Cancel the reader to ensure no further frames are processed.
+    // Cancel the audio reader to stop further frame collection.
     if (audioReader) {
       try {
         await audioReader.cancel();
@@ -617,9 +440,13 @@ function initRecording() {
         logError("Error canceling audio reader:", e);
       }
     }
-    // Process the final chunk using all frames collected so far.
-    await safeProcessAudioChunk(true);
+    // Wait an extra flush delay.
+    await new Promise(resolve => setTimeout(resolve, 500));
+    // Process final chunk using frames with ts <= finalStopTime.
+    await safeProcessAudioChunk(true, finalStopTime);
     finalChunkProcessed = true;
+    // Now stop the media stream.
+    stopMicrophone();
     finalizeStop();
     logInfo("Stop button processed; final chunk handled and media stream stopped.");
   });
