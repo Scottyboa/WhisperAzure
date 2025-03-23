@@ -275,14 +275,15 @@ def delete_audio():
     return jsonify({"error": "Group folder not found"}), 404
 
 # ------------------------------
-# Transcription Functions (with Decryption, sox Conversion, and Fade-In/Out)
+# Transcription Functions (with Decryption, sox Conversion, and Fade-In/Out with Prompt)
 # ------------------------------
 
 def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
     """
     Synchronously decrypts and transcribes an audio chunk using the OpenAI Whisper API.
     Converts the audio to mono, 16kHz, 16-bit PCM WAV using sox and applies a linear fade-in
-    over the first 1 second and a fade-out over the last 1 second.
+    over 1 second and fade-out over 1 second.
+    Includes a prompt instructing the model to handle multiple languages.
     Returns the transcript (or an error message).
     """
     file_path = chunk_info["path"]
@@ -321,7 +322,7 @@ def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
             "sox",
             converted_path,
             final_output_path,
-            "fade", "l", "0.5", "0", "0.5"
+            "fade", "l", "0.6", "0", "0.6"
         ]
         subprocess.run(sox_fade_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         
@@ -340,7 +341,10 @@ def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
             "https://api.openai.com/v1/audio/transcriptions",
             headers={"Authorization": f"Bearer {api_key}"},
             files={"file": (os.path.basename(file_path), final_data, content_type)},
-            data={"model": "gpt-4o-transcribe"}
+            data={
+                "model": "gpt-4o-transcribe",
+                "prompt": "Multilingual audio: transcribe all languages accurately."
+            }
         )
         if response.status_code != 200:
             logger.error(f"OpenAI API error on chunk {chunk_number}: {response.text}")
