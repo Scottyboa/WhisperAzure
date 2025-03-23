@@ -343,7 +343,7 @@ def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
             files={"file": (os.path.basename(file_path), final_data, content_type)},
             data={
                 "model": "gpt-4o-transcribe",
-                "prompt": "Multilingual audio: transcribe all languages accurately."
+                "prompt": "Multilingual audio"
             }
         )
         if response.status_code != 200:
