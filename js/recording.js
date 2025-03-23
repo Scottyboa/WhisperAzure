@@ -31,7 +31,7 @@ const MAX_CHUNK_DURATION = 45000; // 45 sec
 const watchdogThreshold = 1500;   // 1.5 sec with no new frame
 
 // --- Backend URL ---
-// Using your original URL with trailing slash (so endpoints are appended without extra slash)
+// Using your original URL with trailing slash (endpoints appended without extra slash)
 const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net/";
 
 // --- Global Variables for Audio Capture and Chunking ---
@@ -56,6 +56,9 @@ let pendingStop = false;
 let finalChunkProcessed = false;
 let recordingPaused = false;
 let audioFrames = []; // Buffer for audio frames
+
+// New flag to prevent further chunk processing once recording ends
+let recordingEnded = false;
 
 // --- Utility Functions ---
 function updateStatusMessage(message, color = "#333") {
@@ -295,8 +298,8 @@ function encodeWAV(samples, sampleRate, numChannels) {
 
 // --- Chunk Scheduling and Processing ---
 function scheduleChunk() {
-  if (manualStop || recordingPaused) {
-    logDebug("Scheduler suspended due to manual stop or pause.");
+  if (manualStop || recordingPaused || recordingEnded) {
+    logDebug("Scheduler suspended due to manual stop, pause, or recording ended.");
     return;
   }
   const elapsed = Date.now() - chunkStartTime;
@@ -311,13 +314,14 @@ function scheduleChunk() {
   }
 }
 async function safeProcessAudioChunk(force = false) {
-  // If this is the final forced processing and residual audio is very low, skip uploading an extra chunk.
+  // When forcing final processing, if residual frames are low, skip upload
   if (force && audioFrames.length < 50) {
     logInfo("Final residual audio frames below threshold; skipping upload of final chunk.");
     return;
   }
-  if (manualStop && finalChunkProcessed) {
-    logDebug("Final chunk already processed; skipping safeProcessAudioChunk.");
+  // If manual stop is already in effect and we've processed at least one chunk, do not process further.
+  if (manualStop && chunkNumber > 1) {
+    logDebug("Manual stop already processed final chunk; skipping additional chunk processing.");
     return;
   }
   if (chunkProcessingLock) {
@@ -343,6 +347,7 @@ function finalizeStop() {
   document.getElementById("startButton").disabled = false;
   document.getElementById("stopButton").disabled = true;
   document.getElementById("pauseResumeButton").disabled = true;
+  recordingEnded = true; // prevent further processing
   logInfo("Recording stopped by user. Finalizing transcription.");
 }
 async function processAudioChunkInternal(force = false) {
@@ -482,6 +487,7 @@ function resetRecordingState() {
   manualStop = false;
   finalChunkProcessed = false;
   recordingPaused = false;
+  recordingEnded = false;
   groupId = Date.now().toString();
   chunkNumber = 1;
 }
