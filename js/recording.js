@@ -31,7 +31,7 @@ const MAX_CHUNK_DURATION = 45000; // 45 sec
 const watchdogThreshold = 1500;   // 1.5 sec with no new frame
 
 // --- Backend URL ---
-// Using your original URL with trailing slash (endpoints appended without extra slash)
+// Using your original URL with trailing slash
 const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net/";
 
 // --- Global Variables for Audio Capture and Chunking ---
@@ -57,7 +57,7 @@ let finalChunkProcessed = false;
 let recordingPaused = false;
 let audioFrames = []; // Buffer for audio frames
 
-// New flag to prevent further chunk processing once recording ends
+// New flag to prevent further processing after recording ends
 let recordingEnded = false;
 
 // --- Utility Functions ---
@@ -148,7 +148,7 @@ async function getDecryptedAPIKey() {
     const encryptedData = JSON.parse(encryptedStr);
     return await decryptAPIKey(encryptedData);
   }
-  // Fallback: if no encrypted API key, use the plain API key stored in sessionStorage.
+  // Fallback: use the plain API key stored in sessionStorage.
   return sessionStorage.getItem("openai_api_key") || "";
 }
 
@@ -314,14 +314,9 @@ function scheduleChunk() {
   }
 }
 async function safeProcessAudioChunk(force = false) {
-  // When forcing final processing, if residual frames are low, skip upload
+  // For a forced final processing, only proceed if there is significant audio.
   if (force && audioFrames.length < 50) {
-    logInfo("Final residual audio frames below threshold; skipping upload of final chunk.");
-    return;
-  }
-  // If manual stop is already in effect and we've processed at least one chunk, do not process further.
-  if (manualStop && chunkNumber > 1) {
-    logDebug("Manual stop already processed final chunk; skipping additional chunk processing.");
+    logInfo("Final residual audio frames below threshold; not uploading extra chunk.");
     return;
   }
   if (chunkProcessingLock) {
@@ -347,7 +342,7 @@ function finalizeStop() {
   document.getElementById("startButton").disabled = false;
   document.getElementById("stopButton").disabled = true;
   document.getElementById("pauseResumeButton").disabled = true;
-  recordingEnded = true; // prevent further processing
+  recordingEnded = true;
   logInfo("Recording stopped by user. Finalizing transcription.");
 }
 async function processAudioChunkInternal(force = false) {
