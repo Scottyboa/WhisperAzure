@@ -1,8 +1,8 @@
 // recorder.js
 // Self-contained version using an inlined AudioWorklet processor.
 // This version captures audio via an AudioWorklet, slices it into 45‑second chunks,
-// and processes/uploads each chunk for transcription. When you click stop,
-// the final chunk is processed and then the audio stream is shut down.
+// and processes/uploads each chunk for transcription. When you click Stop, the current chunk is processed
+// as the final chunk and then the stream is shut down.
 
 // --- Inlined AudioWorklet Processor Code ---
 const audioProcessorCode = `
@@ -10,9 +10,9 @@ class ChunkProcessor extends AudioWorkletProcessor {
   process(inputs, outputs, parameters) {
     const input = inputs[0];
     if (input && input.length > 0) {
-      // Copy each channel's data (usually 128 samples per block)
+      // Copy each channel's data (typically 128 samples per block)
       const channelData = input.map(channel => channel.slice(0));
-      // Post the data with sample rate and number of channels.
+      // Post the channel data along with sample rate and number of channels.
       this.port.postMessage({
         channelData,
         sampleRate: sampleRate,
@@ -57,7 +57,7 @@ let lastFrameTime = 0;
 let chunkTimeoutId;
 let audioFrames = []; // Array to collect frames from the AudioWorklet
 let recordingPaused = false;
-let finalChunkProcessed = false; // This variable is now declared
+let finalChunkProcessed = false; // Ensure this global is declared
 
 // --- UI Helper Functions ---
 function updateStatusMessage(message, color = "#333") {
@@ -80,7 +80,7 @@ function updateRecordingTimer() {
   if (timerElem) timerElem.innerText = "Recording Timer: " + formatTime(elapsed);
 }
 
-// --- Stop Audio (close stream, node, context) ---
+// --- Stop Audio ---
 function stopAudio() {
   if (mediaStream) {
     mediaStream.getTracks().forEach(track => track.stop());
@@ -190,6 +190,63 @@ async function signUploadRequest(groupId, chunkNumber) {
   return await computeHMAC(message, secret);
 }
 
+// --- Upload Chunk Function ---
+// Defined here so that it is available to processAudioChunkInternal.
+async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast = false, currentGroup) {
+  let encryptionResult;
+  try {
+    encryptionResult = await encryptFileBlob(blob);
+  } catch (err) {
+    console.error("Error encrypting file blob:", err);
+    throw err;
+  }
+  const encryptedBlob = encryptionResult.encryptedBlob;
+  let signature;
+  try {
+    signature = await signUploadRequest(currentGroup, currentChunkNumber);
+  } catch (err) {
+    console.error("Error generating signature:", err);
+    throw err;
+  }
+  const formData = new FormData();
+  formData.append("file", encryptedBlob, `chunk_${currentChunkNumber}.${extension}`);
+  formData.append("group_id", currentGroup);
+  formData.append("chunk_number", currentChunkNumber);
+  formData.append("api_key", await getDecryptedAPIKey());
+  formData.append("iv", encryptionResult.iv);
+  formData.append("salt", encryptionResult.salt);
+  formData.append("api_key_marker", encryptionResult.apiKeyMarker);
+  formData.append("device_marker", encryptionResult.deviceMarker);
+  formData.append("device_token", getDeviceToken());
+  formData.append("signature", signature);
+  if (isLast) formData.append("last_chunk", "true");
+  
+  let attempts = 0;
+  const retryDelay = 4000;
+  const maxRetryTime = 60000;
+  const startTime = Date.now();
+  while (true) {
+    try {
+      const response = await fetch(`${backendUrl}/upload`, { method: "POST", body: formData });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server responded with status ${response.status}: ${errorText}`);
+      }
+      const result = await response.json();
+      logInfo(`Upload successful for chunk ${currentChunkNumber}`, { session_id: result.session_id });
+      return result;
+    } catch (error) {
+      attempts++;
+      console.error(`Upload error for chunk ${currentChunkNumber} on attempt ${attempts}:`, error);
+      if (Date.now() - startTime >= maxRetryTime) {
+        updateStatusMessage("Failed to upload chunk " + currentChunkNumber + " after maximum retry time", "red");
+        throw new Error("Maximum retry time exceeded for chunk " + currentChunkNumber);
+      }
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+    }
+  }
+}
+
 // --- Robust Conversion Process from Frames to WAV ---
 function framesToWav(frames) {
   if (frames.length === 0) return null;
@@ -286,7 +343,7 @@ async function initAudioWorklet() {
     workletNode = new AudioWorkletNode(audioContext, 'chunk-processor');
     workletNode.port.onmessage = (event) => {
       const data = event.data;
-      // Create a frame-like object to mimic the previous structure.
+      // Mimic a frame object similar to previous implementations.
       const frame = {
         numberOfFrames: data.channelData[0].length,
         sampleRate: data.sampleRate,
@@ -444,11 +501,14 @@ function updateTranscriptionOutput() {
     logInfo("Transcription complete.");
   }
 }
+
+// --- Initialize Recording ---
 function initRecording() {
   const startButton = document.getElementById("startButton");
   const stopButton = document.getElementById("stopButton");
   const pauseResumeButton = document.getElementById("pauseResumeButton");
   if (!startButton || !stopButton || !pauseResumeButton) return;
+  
   startButton.addEventListener("click", async () => {
     try {
       const decryptedApiKey = await getDecryptedAPIKey();
@@ -485,6 +545,7 @@ function initRecording() {
       logError("Microphone access error", error);
     }
   });
+  
   pauseResumeButton.addEventListener("click", () => {
     if (!mediaStream) return;
     const track = mediaStream.getAudioTracks()[0];
@@ -507,6 +568,7 @@ function initRecording() {
       logInfo("Recording resumed.");
     }
   });
+  
   stopButton.addEventListener("click", async () => {
     try {
       updateStatusMessage("Finishing transcription...", "blue");
