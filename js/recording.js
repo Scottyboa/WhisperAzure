@@ -1,7 +1,6 @@
 // recording.js
-// Updated recording module with API key validation, file encryption, request signing, sending device_token,
-// and with a dynamic flush mechanism that waits until no new frames arrive before finalizing the recording.
-// The stop handler now cancels the audio reader after inactivity to force the stream to close.
+// Updated recording module with a dynamic flush mechanism that waits until no new frames arrive before finalizing the recording.
+// The stop handler now cancels the audio reader after inactivity and includes extra logging and error handling.
 
 function hashString(str) {
   let hash = 0;
@@ -376,7 +375,7 @@ async function flushAudioFrames() {
 }
 
 // --- Wait Until Inactivity ---
-async function waitForInactivity(thresholdMs = 3000) {
+async function waitForInactivity(thresholdMs = 500) {
   // Loop until no new frames have arrived for thresholdMs.
   while (true) {
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -582,18 +581,18 @@ function initRecording() {
   if (!startButton || !stopButton || !pauseResumeButton) return;
 
   startButton.addEventListener("click", async () => {
-    const decryptedApiKey = await getDecryptedAPIKey();
-    if (!decryptedApiKey || !decryptedApiKey.startsWith("sk-")) {
-      alert("Please enter a valid OpenAI API key before starting the recording.");
-      return;
-    }
-    resetRecordingState();
-    const transcriptionElem = document.getElementById("transcription");
-    if (transcriptionElem) transcriptionElem.value = "";
-    
-    updateStatusMessage("Recording...", "green");
-    logInfo("Recording started.");
     try {
+      const decryptedApiKey = await getDecryptedAPIKey();
+      if (!decryptedApiKey || !decryptedApiKey.startsWith("sk-")) {
+        alert("Please enter a valid OpenAI API key before starting the recording.");
+        return;
+      }
+      resetRecordingState();
+      const transcriptionElem = document.getElementById("transcription");
+      if (transcriptionElem) transcriptionElem.value = "";
+      
+      updateStatusMessage("Recording...", "green");
+      logInfo("Recording started.");
       mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       recordingStartTime = Date.now();
       recordingTimerInterval = setInterval(updateRecordingTimer, 1000);
@@ -653,31 +652,36 @@ function initRecording() {
   });
 
   stopButton.addEventListener("click", async () => {
-    updateStatusMessage("Finishing transcription...", "blue");
-    manualStop = true;
-    clearTimeout(chunkTimeoutId);
-    clearInterval(recordingTimerInterval);
-    // Wait until no new frames have arrived.
-    await waitForInactivity(500);
-    // Cancel the audio reader to force the stream to close.
-    if (audioReader) {
-      audioReader.cancel();
-      audioReader = null;
-      logInfo("Audio reader cancelled after inactivity.");
-    }
-    // Flush any pending audio frames.
-    await flushAudioFrames();
-    chunkStartTime = 0;
-    lastFrameTime = 0;
-    await new Promise(resolve => setTimeout(resolve, 200));
-    if (chunkProcessingLock) {
-      pendingStop = true;
-      logDebug("Chunk processing locked at stop; setting pendingStop.");
-    } else {
-      await safeProcessAudioChunk(true);
-      finalChunkProcessed = true;
-      finalizeStop();
-      logInfo("Stop button processed; final chunk handled.");
+    try {
+      updateStatusMessage("Finishing transcription...", "blue");
+      manualStop = true;
+      clearTimeout(chunkTimeoutId);
+      clearInterval(recordingTimerInterval);
+      logInfo("Stop button clicked. Waiting for inactivity...");
+      // Wait until no new frames have arrived.
+      await waitForInactivity(500);
+      // Cancel the audio reader to force the stream to close.
+      if (audioReader) {
+        audioReader.cancel();
+        audioReader = null;
+        logInfo("Audio reader cancelled after inactivity.");
+      }
+      // Flush any pending audio frames.
+      await flushAudioFrames();
+      chunkStartTime = 0;
+      lastFrameTime = 0;
+      await new Promise(resolve => setTimeout(resolve, 200));
+      if (chunkProcessingLock) {
+        pendingStop = true;
+        logDebug("Chunk processing locked at stop; setting pendingStop.");
+      } else {
+        await safeProcessAudioChunk(true);
+        finalChunkProcessed = true;
+        finalizeStop();
+        logInfo("Stop button processed; final chunk handled.");
+      }
+    } catch (err) {
+      logError("Error in stop event listener:", err);
     }
   });
 }
