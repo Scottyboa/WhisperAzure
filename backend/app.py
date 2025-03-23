@@ -275,14 +275,14 @@ def delete_audio():
     return jsonify({"error": "Group folder not found"}), 404
 
 # ------------------------------
-# Transcription Functions (with Decryption and sox Conversion with Added Silence)
+# Transcription Functions (with Decryption, sox Conversion, and Fade-In/Out)
 # ------------------------------
 
 def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
     """
     Synchronously decrypts and transcribes an audio chunk using the OpenAI Whisper API.
-    Converts the audio to mono, 16kHz, 16-bit PCM WAV using sox, and adds 1.5 seconds of silence
-    at both the beginning and end of the chunk.
+    Converts the audio to mono, 16kHz, 16-bit PCM WAV using sox and applies a linear fade-in
+    over the first 1 second and a fade-out over the last 1 second.
     Returns the transcript (or an error message).
     """
     file_path = chunk_info["path"]
@@ -302,9 +302,8 @@ def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
             temp_in.flush()
             input_path = temp_in.name
 
-        # Prepare a temporary file for the converted audio
+        # Convert audio to mono, 16kHz, 16-bit PCM using sox
         converted_path = input_path + "_converted.wav"
-        # Use sox to convert audio to mono, 16kHz, 16-bit PCM
         sox_convert_cmd = [
             "sox",
             input_path,
@@ -316,31 +315,15 @@ def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
         ]
         subprocess.run(sox_convert_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         
-        # Generate a silence file (1.5 seconds)
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_silence:
-            silence_path = temp_silence.name
-        sox_silence_cmd = [
-            "sox",
-            "-n",
-            "-r", "16000",
-            "-b", "16",
-            "-e", "signed-integer",
-            "-c", "1",
-            silence_path,
-            "trim", "0.0", "1.5"
-        ]
-        subprocess.run(sox_silence_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
-        # Concatenate: silence + converted audio + silence
+        # Apply a linear fade-in of 1 second and fade-out of 1 second using sox's fade effect.
         final_output_path = input_path + "_final.wav"
-        sox_concat_cmd = [
+        sox_fade_cmd = [
             "sox",
-            silence_path,
             converted_path,
-            silence_path,
-            final_output_path
+            final_output_path,
+            "fade", "l", "1", "0", "1"
         ]
-        subprocess.run(sox_concat_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run(sox_fade_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         
         # Read the final output file
         with open(final_output_path, "rb") as f:
@@ -349,12 +332,10 @@ def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
         # Clean up temporary files
         os.remove(input_path)
         os.remove(converted_path)
-        os.remove(silence_path)
         os.remove(final_output_path)
 
         # Set the content type to WAV
         content_type = "audio/wav"
-
         response = requests.post(
             "https://api.openai.com/v1/audio/transcriptions",
             headers={"Authorization": f"Bearer {api_key}"},
