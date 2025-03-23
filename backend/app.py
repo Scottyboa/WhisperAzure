@@ -6,6 +6,8 @@ import queue
 import hmac
 import hashlib
 import base64
+import subprocess  # New import for running FFmpeg
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -119,7 +121,7 @@ def schedule_session_deletion(group_id, delay=120):
     t.start()
 
 # ------------------------------
-# Upload Endpoint with Request Signing and Marker Validation
+# Upload Endpoint with FFmpeg Conversion
 # ------------------------------
 
 @app.route("/upload", methods=["POST"])
@@ -189,20 +191,44 @@ def upload_audio():
     group_folder = os.path.join("uploads", group_id)
     os.makedirs(group_folder, exist_ok=True)
 
-    # Determine a safe filename.
+    # Determine a safe filename for the raw uploaded chunk.
     original_filename = secure_filename(audio_file.filename)
     if not original_filename:
-        original_filename = f"chunk_{chunk_number}.wav"
+        original_filename = f"chunk_{chunk_number}.raw"
     else:
         ext = os.path.splitext(original_filename)[1]
         original_filename = f"chunk_{chunk_number}{ext}"
-    save_path = os.path.join(group_folder, original_filename)
-    audio_file.save(save_path)
-    logger.info(f"Received chunk {chunk_number} for group {group_id} stored at {save_path}")
+    raw_save_path = os.path.join(group_folder, original_filename)
+    audio_file.save(raw_save_path)
+    logger.info(f"Received chunk {chunk_number} for group {group_id} stored at {raw_save_path}")
 
-    # Store chunk info (including encryption metadata) in session.
+    # ------------------------------
+    # FFmpeg Conversion Step
+    # ------------------------------
+    # Convert the raw uploaded file into a fully formatted WAV file.
+    converted_filename = f"chunk_{chunk_number}_converted.wav"
+    converted_save_path = os.path.join(group_folder, converted_filename)
+    
+    # Example FFmpeg command: re-encode to PCM 16-bit, 44100 Hz, mono.
+    ffmpeg_command = [
+        "ffmpeg",
+        "-y",                # Overwrite output files without asking.
+        "-i", raw_save_path, # Input file.
+        "-acodec", "pcm_s16le",  # Use PCM 16-bit little-endian codec.
+        "-ar", "44100",          # Set sample rate to 44100 Hz.
+        "-ac", "1",              # Set number of channels to 1.
+        converted_save_path
+    ]
+    try:
+        subprocess.run(ffmpeg_command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        logger.info(f"FFmpeg conversion successful for chunk {chunk_number}, saved to {converted_save_path}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"FFmpeg conversion failed for chunk {chunk_number}: {e.stderr.decode('utf-8')}")
+        return jsonify({"error": "FFmpeg conversion failed"}), 500
+
+    # Store chunk info with the converted file path.
     sessions[group_id].setdefault("chunks", {})[chunk_number] = {
-        "path": save_path,
+        "path": converted_save_path,
         "iv": iv,
         "salt": salt
     }
@@ -300,11 +326,11 @@ def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
     }
     content_type = mime_mapping.get(ext, "application/octet-stream")
     try:
-        # Read the encrypted file
+        # Read the converted file
         with open(file_path, "rb") as f:
-            encrypted_data = f.read()
+            converted_data = f.read()
         # Decrypt the audio data using the provided salt and iv
-        decrypted_data = decrypt_audio_file(encrypted_data, salt, iv, api_key, device_token)
+        decrypted_data = decrypt_audio_file(converted_data, salt, iv, api_key, device_token)
         
         response = requests.post(
             "https://api.openai.com/v1/audio/transcriptions",
