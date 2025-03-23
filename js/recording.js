@@ -19,8 +19,8 @@ const MIN_CHUNK_DURATION = 45000; // 45 sec
 const MAX_CHUNK_DURATION = 45000; // 45 sec
 const watchdogThreshold = 1500;   // 1.5 sec with no new frame
 
-// Backend URL for uploading chunks (updated to your actual Azure Web App URL)
-const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net/";
+// Backend URL for uploading chunks (corrected: no trailing slash)
+const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net";
 
 // Global variables for audio capture and chunking
 let mediaStream = null;
@@ -342,14 +342,14 @@ function resetRecordingState() {
   chunkNumber = 1;
 }
 
-async function initRecording() {
+function initRecording() {
   const startButton = document.getElementById("startButton");
   const stopButton = document.getElementById("stopButton");
   const pauseResumeButton = document.getElementById("pauseResumeButton");
   if (!startButton || !stopButton || !pauseResumeButton) return;
 
   startButton.addEventListener("click", async () => {
-    const decryptedApiKey = sessionStorage.getItem("openai_api_key");
+    const decryptedApiKey = await getDecryptedAPIKey();
     if (!decryptedApiKey || !decryptedApiKey.startsWith("sk-")) {
       alert("Please enter a valid OpenAI API key before starting the recording.");
       return;
@@ -365,6 +365,7 @@ async function initRecording() {
       recordingStartTime = Date.now();
       recordingTimerInterval = setInterval(updateRecordingTimer, 1000);
       
+      // Initialize AudioWorklet for capturing audio frames.
       await initAudioWorkletCapture();
       
       chunkStartTime = Date.now();
