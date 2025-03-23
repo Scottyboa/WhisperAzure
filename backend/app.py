@@ -310,13 +310,15 @@ def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
             output_temp_filename = temp_out.name
 
         # Run FFmpeg to convert the audio file into a properly formatted WAV file.
-        # Force mono audio (-ac 1) and set the sample rate to 16000 Hz (-ar 16000)
+        # Force mono audio (-ac 1), set the sample rate to 16000 Hz (-ar 16000),
+        # and force 16-bit PCM output using -acodec pcm_s16le.
         ffmpeg_command = [
             "ffmpeg",
             "-y",  # overwrite output file if exists
             "-i", input_temp_filename,
             "-ac", "1",
             "-ar", "16000",
+            "-acodec", "pcm_s16le",
             output_temp_filename
         ]
         subprocess.run(ffmpeg_command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
