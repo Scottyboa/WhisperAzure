@@ -1,5 +1,17 @@
 // recording.js
 
+// --- Updated hash function (returns an unsigned 32-bit integer string) ---
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0; // Convert to 32-bit signed integer
+  }
+  // Convert to an unsigned 32-bit integer and return as string.
+  return (hash >>> 0).toString();
+}
+
 // --- Debug and Logging Functions ---
 const DEBUG = true;
 function logDebug(message, ...optionalParams) {
@@ -20,7 +32,7 @@ const MAX_CHUNK_DURATION = 45000; // 45 sec
 const watchdogThreshold = 1500;   // 1.5 sec with no new frame
 
 // --- Backend URL ---
-// Using your original URL (with trailing slash)
+// Using your original URL with trailing slash
 const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net/";
 
 // --- Global Variables for Audio Capture and Chunking ---
@@ -214,8 +226,8 @@ async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast
   }
   
   let attempts = 0;
-  const retryDelay = 4000;
-  const maxRetryTime = 60000;
+  const retryDelay = 4000; // 4 seconds
+  const maxRetryTime = 60000; // 1 minute
   const startTime = Date.now();
   while (true) {
     try {
