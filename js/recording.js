@@ -206,6 +206,33 @@ async function processAudioChunkInternal(force = false) {
   chunkNumber++;
 }
 
+// --- New: Basic uploadChunk Implementation ---
+// This function sends the WAV blob and associated parameters to the backend.
+async function uploadChunk(blob, chunkNumber, extension, mimeType, force, groupId) {
+  const formData = new FormData();
+  formData.append("file", blob, `chunk_${chunkNumber}.${extension}`);
+  formData.append("group_id", groupId);
+  formData.append("chunk_number", chunkNumber);
+  // Include additional fields as required by your backend (e.g., API key, iv, salt, markers, signature, device_token)
+  // For demonstration, we'll assume these are set in sessionStorage or available globally.
+  const apiKey = sessionStorage.getItem("openai_api_key") || "";
+  formData.append("api_key", apiKey);
+  // You would also need to calculate and append fields like iv, salt, api_key_marker, device_marker, and signature.
+  // For now, these fields are omitted for brevity.
+  try {
+    const response = await fetch(`${backendUrl}/upload`, {
+      method: "POST",
+      body: formData
+    });
+    if (!response.ok) {
+      throw new Error(`Upload failed with status ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+}
+
 // (Placeholder) Function to poll the backend for the transcript of a chunk
 function pollChunkTranscript(chunkNum, currentGroup) {
   const pollStart = Date.now();
@@ -268,7 +295,6 @@ class AudioProcessor extends AudioWorkletProcessor {
   }
   process(inputs, outputs, parameters) {
     if (inputs.length > 0 && inputs[0].length > 0) {
-      // Send the first channel's data as a Float32Array
       this.port.postMessage(inputs[0][0]);
     }
     return true;
@@ -283,14 +309,12 @@ registerProcessor('audio-processor', AudioProcessor);
 async function initAudioWorkletCapture() {
   try {
     audioContext = new AudioContext();
-    // Create a blob URL from the inline processor code
     const blob = new Blob([audioProcessorCode], { type: 'application/javascript' });
     const blobURL = URL.createObjectURL(blob);
     await audioContext.audioWorklet.addModule(blobURL);
     workletNode = new AudioWorkletNode(audioContext, 'audio-processor');
     workletNode.port.onmessage = (event) => {
       lastFrameTime = Date.now();
-      // Assume event.data is a Float32Array of audio samples.
       audioFrames.push(event.data);
     };
     const source = audioContext.createMediaStreamSource(mediaStream);
@@ -343,10 +367,8 @@ async function initRecording() {
       recordingStartTime = Date.now();
       recordingTimerInterval = setInterval(updateRecordingTimer, 1000);
       
-      // Initialize AudioWorklet for capturing audio frames.
       await initAudioWorkletCapture();
       
-      // Start scheduling chunks.
       chunkStartTime = Date.now();
       scheduleChunk();
       
