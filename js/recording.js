@@ -19,8 +19,8 @@ const MIN_CHUNK_DURATION = 45000; // 45 sec
 const MAX_CHUNK_DURATION = 45000; // 45 sec
 const watchdogThreshold = 1500;   // 1.5 sec with no new frame
 
-// Backend URL for uploading chunks
-const backendUrl = "https://your-backend-url.com";
+// Backend URL for uploading chunks (updated to your actual Azure Web App URL)
+const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net";
 
 // Global variables for audio capture and chunking
 let mediaStream = null;
@@ -213,12 +213,10 @@ async function uploadChunk(blob, chunkNumber, extension, mimeType, force, groupI
   formData.append("file", blob, `chunk_${chunkNumber}.${extension}`);
   formData.append("group_id", groupId);
   formData.append("chunk_number", chunkNumber);
-  // Include additional fields as required by your backend (e.g., API key, iv, salt, markers, signature, device_token)
-  // For demonstration, we'll assume these are set in sessionStorage or available globally.
+  // Include additional fields as required by your backend.
   const apiKey = sessionStorage.getItem("openai_api_key") || "";
   formData.append("api_key", apiKey);
-  // You would also need to calculate and append fields like iv, salt, api_key_marker, device_marker, and signature.
-  // For now, these fields are omitted for brevity.
+  // For brevity, additional fields (iv, salt, markers, signature, device_token) are omitted.
   try {
     const response = await fetch(`${backendUrl}/upload`, {
       method: "POST",
