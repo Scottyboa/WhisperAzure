@@ -1,6 +1,6 @@
 // recorder.js
-// Self-contained version using an inlined AudioWorklet processor,
-// a dedicated WavRecorder class for precise timing/frame merging, and header verification/correction.
+// Self-contained version using an inlined AudioWorklet processor with precise timing, frame merging,
+// and header verification/correction—and with continuous streaming (no restart between chunks).
 
 // ===================
 // Utility: hashString
@@ -25,7 +25,7 @@ class ChunkProcessor extends AudioWorkletProcessor {
     if (input && input.length > 0) {
       // Copy each channel's data (typically 128 samples per block)
       const channelData = input.map(channel => channel.slice(0));
-      // Post the data along with sample rate and number of channels.
+      // Post the data with sample rate and number of channels.
       this.port.postMessage({
         channelData,
         sampleRate: sampleRate,
@@ -38,9 +38,9 @@ class ChunkProcessor extends AudioWorkletProcessor {
 registerProcessor('chunk-processor', ChunkProcessor);
 `;
 
-// ==================================================
-// Dedicated Library: WavRecorder Class for Merging
-// ==================================================
+// ===========================
+// Dedicated Class: WavRecorder
+// ===========================
 class WavRecorder {
   constructor() {
     this.frames = [];
@@ -62,7 +62,7 @@ class WavRecorder {
     const lastFrameDuration = lastFrame.numberOfFrames / sampleRate;
     const totalDuration = (lastFrame.timestamp + lastFrameDuration) - firstFrame.timestamp;
     const totalSamples = Math.ceil(totalDuration * sampleRate);
-    // Create an OfflineAudioContext with the calculated length.
+    // Create an OfflineAudioContext to render the entire chunk.
     const offlineContext = new OfflineAudioContext(numChannels, totalSamples, sampleRate);
     const outputBuffer = offlineContext.createBuffer(numChannels, totalSamples, sampleRate);
     const baseTime = firstFrame.timestamp;
@@ -104,7 +104,7 @@ function logError(message, ...optionalParams) {
 // Constants
 // ================
 const CHUNK_DURATION = 45000; // 45 seconds per chunk
-const watchdogThreshold = 1500; // 1.5 seconds without a new frame triggers a slice
+const watchdogThreshold = 1500; // 1.5 seconds with no new frame triggers a slice
 const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net/";
 
 // =====================
@@ -334,9 +334,9 @@ async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast
   }
 }
 
-// ================================
+// =======================================
 // AudioBuffer Conversion Functions
-// ================================
+// =======================================
 function audioBufferToWavFromAudioBuffer(buffer) {
   const numChannels = buffer.numberOfChannels;
   const sampleRate = buffer.sampleRate;
@@ -392,9 +392,9 @@ function encodeWAV(samples, sampleRate, numChannels) {
   return new Blob([view], { type: "audio/wav" });
 }
 
-// ========================================
+// =======================================
 // Header Verification & Correction
-// ========================================
+// =======================================
 async function verifyAndCorrectWavHeader(wavBlob, pcmInt16, sampleRate, numChannels) {
   try {
     const buffer = await wavBlob.arrayBuffer();
@@ -440,9 +440,9 @@ async function verifyAndCorrectWavHeader(wavBlob, pcmInt16, sampleRate, numChann
   }
 }
 
-// ===================================
-// AudioWorklet Integration (Inlined)
-// ===================================
+// =======================================
+// AudioWorklet Integration (Inlined Processor)
+// =======================================
 async function initAudioWorklet() {
   if (!audioContext) {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -475,9 +475,9 @@ async function initAudioWorklet() {
   }
 }
 
-// ===================================
-// Schedule Chunk
-// ===================================
+// =======================================
+// Schedule Chunk (Continuous Stream)
+// =======================================
 function scheduleChunk() {
   if (manualStop || recordingPaused) {
     logDebug("Scheduler suspended due to manual stop or pause.");
@@ -488,12 +488,9 @@ function scheduleChunk() {
   if (elapsed >= CHUNK_DURATION || (elapsed >= CHUNK_DURATION && timeSinceLast >= watchdogThreshold)) {
     logInfo("Chunk boundary reached; processing current chunk.");
     safeProcessAudioChunk().then(() => {
-      if (!manualStop) {
-        restartAudioStream().then(() => {
-          chunkStartTime = Date.now();
-          scheduleChunk();
-        });
-      }
+      // Reset chunk timer without restarting the stream.
+      chunkStartTime = Date.now();
+      scheduleChunk();
     });
   } else {
     chunkTimeoutId = setTimeout(scheduleChunk, 500);
@@ -506,51 +503,23 @@ async function safeProcessAudioChunk(force = false) {
   }
   await processAudioChunkInternal(force);
 }
-async function restartAudioStream() {
-  logInfo("Restarting audio stream for next chunk...");
-  stopAudio();
-  audioFrames = [];
-  await initAudioWorklet();
-  try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const sourceNode = audioContext.createMediaStreamSource(mediaStream);
-    sourceNode.connect(workletNode);
-    logInfo("Audio stream restarted successfully.");
-  } catch (error) {
-    logError("Error restarting audio stream:", error);
-  }
-}
-function finalizeStop() {
-  logInfo("Finalizing transcription...");
-  clearTimeout(chunkTimeoutId);
-  clearInterval(recordingTimerInterval);
-  stopAudio();
-  finalChunkProcessed = true;
-  const startButton = document.getElementById("startButton");
-  const stopButton = document.getElementById("stopButton");
-  const pauseResumeButton = document.getElementById("pauseResumeButton");
-  if (startButton) startButton.disabled = false;
-  if (stopButton) stopButton.disabled = true;
-  if (pauseResumeButton) pauseResumeButton.disabled = true;
-  logInfo("Recording stopped and finalized.");
-  updateStatusMessage("Transcription finished!", "green");
-}
 
-// ===================================
+// =======================================
 // Process Audio Chunk Using WavRecorder
-// ===================================
+// =======================================
 async function processAudioChunkInternal(force = false) {
   if (audioFrames.length === 0) {
     logDebug("No audio frames to process.");
     return;
   }
   logInfo(`Processing ${audioFrames.length} audio frames for chunk ${chunkNumber}.`);
-  // Use a dedicated recorder to merge frames.
+  // Use WavRecorder to merge frames.
   const recorder = new WavRecorder();
   for (const frame of audioFrames) {
     recorder.addFrame(frame);
   }
-  audioFrames = []; // Clear the raw frames
+  // Clear the global frame buffer for the next chunk.
+  audioFrames = [];
   const renderedBuffer = await recorder.mergeFrames();
   if (!renderedBuffer) {
     logError("Rendered buffer is null.");
@@ -581,9 +550,9 @@ async function processAudioChunkInternal(force = false) {
   recorder.clear();
 }
 
-// ===================================
+// =======================================
 // Polling and Transcript Output
-// ===================================
+// =======================================
 function pollChunkTranscript(chunkNum, currentGroup) {
   const pollStart = Date.now();
   pollingIntervals[chunkNum] = setInterval(async () => {
@@ -631,9 +600,9 @@ function updateTranscriptionOutput() {
   }
 }
 
-// ===================================
+// =======================================
 // Initialize Recording (UI Handlers)
-// ===================================
+// =======================================
 function initRecording() {
   const startButton = document.getElementById("startButton");
   const stopButton = document.getElementById("stopButton");
