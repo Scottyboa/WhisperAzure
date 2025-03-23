@@ -309,7 +309,7 @@ def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
             "https://api.openai.com/v1/audio/transcriptions",
             headers={"Authorization": f"Bearer {api_key}"},
             files={"file": (os.path.basename(file_path), decrypted_data, content_type)},
-            data={"model": "whisper-1"}
+            data={"model": "gpt-4o-transcribe"}
         )
         if response.status_code != 200:
             logger.error(f"OpenAI API error on chunk {chunk_number}: {response.text}")
