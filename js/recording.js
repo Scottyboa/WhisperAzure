@@ -1,6 +1,7 @@
 // recording.js
-// Updated recording module with a dynamic flush mechanism that waits until no new frames arrive before finalizing the recording.
-// The stop handler now cancels the audio reader after inactivity and includes extra logging and error handling.
+// Updated recording module with API key validation, file encryption, request signing, and sending device_token.
+// The stop button now simply triggers a final chunk slice (the same as the automatic chunk slice) and then shuts off the stream,
+// discarding any remaining frames.
 
 function hashString(str) {
   let hash = 0;
@@ -80,16 +81,17 @@ function updateRecordingTimer() {
   }
 }
 
-// --- Stop Microphone (with optional flushing) ---
-function stopMicrophone(flush = false) {
+// --- Stop Microphone ---
+function stopMicrophone() {
   if (mediaStream) {
     mediaStream.getTracks().forEach(track => track.stop());
     mediaStream = null;
     logInfo("Microphone stopped.");
   }
-  if (!flush && audioReader) {
+  if (audioReader) {
     audioReader.cancel();
     audioReader = null;
+    logInfo("Audio reader cancelled.");
   }
 }
 
@@ -125,20 +127,9 @@ function getDeviceToken() {
 // --- API Key Encryption/Decryption Helpers ---
 async function deriveKey(password, salt) {
   const encoder = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password),
-    "PBKDF2",
-    false,
-    ["deriveKey"]
-  );
+  const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
   return crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: salt,
-      iterations: 100000,
-      hash: "SHA-256"
-    },
+    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
     keyMaterial,
     { name: "AES-GCM", length: 256 },
     false,
@@ -150,11 +141,7 @@ async function decryptAPIKey(encryptedData) {
   const { ciphertext, iv, salt } = encryptedData;
   const deviceToken = getDeviceToken();
   const key = await deriveKey(deviceToken, base64ToArrayBuffer(salt));
-  const decryptedBuffer = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: base64ToArrayBuffer(iv) },
-    key,
-    base64ToArrayBuffer(ciphertext)
-  );
+  const decryptedBuffer = await crypto.subtle.decrypt({ name: "AES-GCM", iv: base64ToArrayBuffer(iv) }, key, base64ToArrayBuffer(ciphertext));
   const decoder = new TextDecoder();
   return decoder.decode(decryptedBuffer);
 }
@@ -174,20 +161,9 @@ async function encryptFileBlob(blob) {
   const password = apiKey + ":" + deviceToken;
   const encoder = new TextEncoder();
   const salt = crypto.getRandomValues(new Uint8Array(16));
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password),
-    "PBKDF2",
-    false,
-    ["deriveKey"]
-  );
+  const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
   const key = await crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: salt,
-      iterations: 100000,
-      hash: "SHA-256"
-    },
+    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
     keyMaterial,
     { name: "AES-GCM", length: 256 },
     false,
@@ -195,40 +171,18 @@ async function encryptFileBlob(blob) {
   );
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const buffer = await blob.arrayBuffer();
-  const encryptedBuffer = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv: iv },
-    key,
-    buffer
-  );
+  const encryptedBuffer = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, buffer);
   const encryptedBlob = new Blob([encryptedBuffer], { type: blob.type });
-  
   const apiKeyMarker = hashString(apiKey);
   const deviceMarker = hashString(deviceToken);
-
-  return {
-    encryptedBlob,
-    iv: arrayBufferToBase64(iv),
-    salt: arrayBufferToBase64(salt),
-    apiKeyMarker,
-    deviceMarker
-  };
+  return { encryptedBlob, iv: arrayBufferToBase64(iv), salt: arrayBufferToBase64(salt), apiKeyMarker, deviceMarker };
 }
 
 // --- HMAC and Request Signing ---
 async function computeHMAC(message, secret) {
   const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const signatureBuffer = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    encoder.encode(message)
-  );
+  const key = await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const signatureBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(message));
   return arrayBufferToBase64(signatureBuffer);
 }
 
@@ -303,7 +257,6 @@ async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast
     throw err;
   }
   const encryptedBlob = encryptionResult.encryptedBlob;
-
   let signature;
   try {
     signature = await signUploadRequest(currentGroup, currentChunkNumber);
@@ -311,7 +264,6 @@ async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast
     console.error("Error generating signature:", err);
     throw err;
   }
-
   const formData = new FormData();
   formData.append("file", encryptedBlob, `chunk_${currentChunkNumber}.${extension}`);
   formData.append("group_id", currentGroup);
@@ -326,17 +278,13 @@ async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast
   if (isLast) {
     formData.append("last_chunk", "true");
   }
-  
   let attempts = 0;
   const retryDelay = 4000;
   const maxRetryTime = 60000;
   const startTime = Date.now();
   while (true) {
     try {
-      const response = await fetch(`${backendUrl}/upload`, {
-        method: "POST",
-        body: formData
-      });
+      const response = await fetch(`${backendUrl}/upload`, { method: "POST", body: formData });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Server responded with status ${response.status}: ${errorText}`);
@@ -352,36 +300,6 @@ async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast
         throw new Error("Maximum retry time exceeded for chunk " + currentChunkNumber);
       }
       await new Promise(resolve => setTimeout(resolve, retryDelay));
-    }
-  }
-}
-
-// --- Flush Pending Audio Frames ---
-async function flushAudioFrames() {
-  if (!audioReader) return;
-  while (true) {
-    try {
-      const { done, value } = await audioReader.read();
-      if (done) break;
-      if (value) {
-        audioFrames.push(value);
-      }
-    } catch (err) {
-      logError("Error flushing audio frames:", err);
-      break;
-    }
-  }
-  logInfo("Flushed all pending audio frames.");
-}
-
-// --- Wait Until Inactivity ---
-async function waitForInactivity(thresholdMs = 500) {
-  // Loop until no new frames have arrived for thresholdMs.
-  while (true) {
-    await new Promise(resolve => setTimeout(resolve, 100));
-    if (Date.now() - lastFrameTime > thresholdMs) {
-      logInfo(`No new frames received for ${thresholdMs}ms. Assuming flush complete.`);
-      break;
     }
   }
 }
@@ -657,29 +575,15 @@ function initRecording() {
       manualStop = true;
       clearTimeout(chunkTimeoutId);
       clearInterval(recordingTimerInterval);
-      logInfo("Stop button clicked. Waiting for inactivity...");
-      // Wait until no new frames have arrived.
-      await waitForInactivity(500);
-      // Cancel the audio reader to force the stream to close.
-      if (audioReader) {
-        audioReader.cancel();
-        audioReader = null;
-        logInfo("Audio reader cancelled after inactivity.");
-      }
-      // Flush any pending audio frames.
-      await flushAudioFrames();
-      chunkStartTime = 0;
-      lastFrameTime = 0;
-      await new Promise(resolve => setTimeout(resolve, 200));
-      if (chunkProcessingLock) {
-        pendingStop = true;
-        logDebug("Chunk processing locked at stop; setting pendingStop.");
-      } else {
-        await safeProcessAudioChunk(true);
-        finalChunkProcessed = true;
-        finalizeStop();
-        logInfo("Stop button processed; final chunk handled.");
-      }
+      logInfo("Stop button clicked. Triggering final chunk slice.");
+      // Process the current audio frames as a final chunk (using the same mechanism as auto-slicing)
+      await safeProcessAudioChunk(true);
+      finalChunkProcessed = true;
+      // Immediately stop the microphone and cancel the reader; discard any remaining frames.
+      stopMicrophone();
+      audioFrames = [];
+      finalizeStop();
+      logInfo("Stop button processed; final chunk handled and remaining audio discarded.");
     } catch (err) {
       logError("Error in stop event listener:", err);
     }
