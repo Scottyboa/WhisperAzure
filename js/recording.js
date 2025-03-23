@@ -57,7 +57,7 @@ let finalChunkProcessed = false;
 let recordingPaused = false;
 let audioFrames = []; // Buffer for audio frames
 
-// New flag to prevent further chunk processing after stop
+// New flag to prevent further processing after stop
 let recordingEnded = false;
 
 // --- Utility Functions ---
@@ -148,7 +148,6 @@ async function getDecryptedAPIKey() {
     const encryptedData = JSON.parse(encryptedStr);
     return await decryptAPIKey(encryptedData);
   }
-  // Fallback: if no encrypted API key, use the plain API key stored in sessionStorage.
   return sessionStorage.getItem("openai_api_key") || "";
 }
 
@@ -314,7 +313,7 @@ function scheduleChunk() {
   }
 }
 async function safeProcessAudioChunk(force = false) {
-  // For forced final processing, if residual audio is below threshold, skip uploading an extra chunk.
+  // For forced final processing, if residual audio is below threshold, skip uploading extra chunk.
   if (force && audioFrames.length < 50) {
     logInfo("Final residual audio frames below threshold; not uploading extra chunk.");
     return;
@@ -363,7 +362,6 @@ async function processAudioChunkInternal(force = false) {
   const wavBlob = encodeWAV(pcmInt16, 16000, 1);
   audioFrames = [];
   logInfo(`Uploading chunk ${chunkNumber}`);
-  // Only upload and poll for this chunk if there is actual audio data.
   uploadChunk(wavBlob, chunkNumber, "wav", "audio/wav", force, groupId)
     .then(result => {
       if (result && result.session_id) {
@@ -374,7 +372,9 @@ async function processAudioChunkInternal(force = false) {
       }
     })
     .catch(err => logError(`Upload error for chunk ${chunkNumber}:`, err));
-  chunkNumber++;
+  if (!force) {
+    chunkNumber++;
+  }
 }
 
 // --- Polling for Transcript ---
@@ -545,7 +545,6 @@ function initRecording() {
   stopButton.addEventListener("click", async () => {
     updateStatusMessage("Finishing transcription...", "blue");
     manualStop = true;
-    // Immediately mark recording as ended so no further chunks are scheduled.
     recordingEnded = true;
     clearTimeout(chunkTimeoutId);
     clearInterval(recordingTimerInterval);
