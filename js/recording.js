@@ -20,7 +20,7 @@ const MAX_CHUNK_DURATION = 45000; // 45 sec
 const watchdogThreshold = 1500;   // 1.5 sec with no new frame
 
 // Backend URL for uploading chunks (updated to your actual Azure Web App URL)
-const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net";
+const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net/";
 
 // Global variables for audio capture and chunking
 let mediaStream = null;
