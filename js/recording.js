@@ -1,14 +1,13 @@
 // recording.js
-// Updated recording module with API key validation, file encryption, request signing, and sending device_token.
-// The stop button now simply triggers a final chunk slice (the same as the automatic chunk slice) and then shuts off the stream,
-// discarding any remaining frames.
+// New version that restarts the media stream at each chunk boundary so that every chunk
+// is initiated in the same way as the first chunk.
 
 function hashString(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash |= 0; // Convert to 32-bit signed integer
+    hash |= 0; // 32-bit signed integer
   }
   return (hash >>> 0).toString();
 }
@@ -26,17 +25,14 @@ function logError(message, ...optionalParams) {
   console.error(new Date().toISOString(), "[ERROR]", message, ...optionalParams);
 }
 
-const MIN_CHUNK_DURATION = 45000; // 45 seconds
-const MAX_CHUNK_DURATION = 45000; // 45 seconds
-const watchdogThreshold = 1500;   // 1.5 seconds with no frame
+const CHUNK_DURATION = 10000; // 45 seconds per chunk
+const watchdogThreshold = 1500;   // 1.5 seconds without a new frame triggers a slice
 const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net/";
 
 let mediaStream = null;
 let audioReader = null;
 let recordingStartTime = 0;
 let recordingTimerInterval;
-let completionTimerInterval = null;
-let completionStartTime = 0;
 let groupId = null;
 let chunkNumber = 1;
 let manualStop = false;
@@ -64,13 +60,10 @@ function updateStatusMessage(message, color = "#333") {
 
 function formatTime(ms) {
   const totalSec = Math.floor(ms / 1000);
-  if (totalSec < 60) {
-    return totalSec + " sec";
-  } else {
-    const minutes = Math.floor(totalSec / 60);
-    const seconds = totalSec % 60;
-    return minutes + " min" + (seconds > 0 ? " " + seconds + " sec" : "");
-  }
+  if (totalSec < 60) return totalSec + " sec";
+  const minutes = Math.floor(totalSec / 60);
+  const seconds = totalSec % 60;
+  return minutes + " min" + (seconds > 0 ? " " + seconds + " sec" : "");
 }
 
 function updateRecordingTimer() {
@@ -81,7 +74,7 @@ function updateRecordingTimer() {
   }
 }
 
-// --- Stop Microphone ---
+// --- Stop Media Stream and Cancel Reader ---
 function stopMicrophone() {
   if (mediaStream) {
     mediaStream.getTracks().forEach(track => track.stop());
@@ -199,7 +192,6 @@ function framesToWav(frames) {
   if (frames.length === 0) return null;
   const sampleRate = frames[0].sampleRate;
   const numChannels = frames[0].numberOfChannels;
-  // Verify consistency.
   for (let i = 1; i < frames.length; i++) {
     if (frames[i].sampleRate !== sampleRate) {
       logError(`Frame ${i} has different sampleRate: ${frames[i].sampleRate} vs ${sampleRate}`);
@@ -213,8 +205,6 @@ function framesToWav(frames) {
     totalSamples += frame.numberOfFrames;
   }
   logInfo(`Total samples per channel: ${totalSamples}`);
-  
-  // Allocate per-channel buffers.
   let channelData = [];
   for (let c = 0; c < numChannels; c++) {
     channelData[c] = new Float32Array(totalSamples);
@@ -229,8 +219,6 @@ function framesToWav(frames) {
     }
     offset += frame.numberOfFrames;
   }
-  
-  // Interleave channels.
   let interleaved;
   if (numChannels === 1) {
     interleaved = channelData[0];
@@ -247,64 +235,96 @@ function framesToWav(frames) {
   return wavBlob;
 }
 
-// --- Upload Chunk Function ---
-async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast = false, currentGroup) {
-  let encryptionResult;
-  try {
-    encryptionResult = await encryptFileBlob(blob);
-  } catch (err) {
-    console.error("Error encrypting file blob:", err);
-    throw err;
+function floatTo16BitPCM(input) {
+  const output = new Int16Array(input.length);
+  for (let i = 0; i < input.length; i++) {
+    let s = Math.max(-1, Math.min(1, input[i]));
+    output[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
   }
-  const encryptedBlob = encryptionResult.encryptedBlob;
-  let signature;
-  try {
-    signature = await signUploadRequest(currentGroup, currentChunkNumber);
-  } catch (err) {
-    console.error("Error generating signature:", err);
-    throw err;
-  }
-  const formData = new FormData();
-  formData.append("file", encryptedBlob, `chunk_${currentChunkNumber}.${extension}`);
-  formData.append("group_id", currentGroup);
-  formData.append("chunk_number", currentChunkNumber);
-  formData.append("api_key", await getDecryptedAPIKey());
-  formData.append("iv", encryptionResult.iv);
-  formData.append("salt", encryptionResult.salt);
-  formData.append("api_key_marker", encryptionResult.apiKeyMarker);
-  formData.append("device_marker", encryptionResult.deviceMarker);
-  formData.append("device_token", getDeviceToken());
-  formData.append("signature", signature);
-  if (isLast) {
-    formData.append("last_chunk", "true");
-  }
-  let attempts = 0;
-  const retryDelay = 4000;
-  const maxRetryTime = 60000;
-  const startTime = Date.now();
-  while (true) {
-    try {
-      const response = await fetch(`${backendUrl}/upload`, { method: "POST", body: formData });
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Server responded with status ${response.status}: ${errorText}`);
-      }
-      const result = await response.json();
-      console.info(`Upload successful for chunk ${currentChunkNumber}`, { session_id: result.session_id });
-      return result;
-    } catch (error) {
-      attempts++;
-      console.error(`Upload error for chunk ${currentChunkNumber} on attempt ${attempts}:`, error);
-      if (Date.now() - startTime >= maxRetryTime) {
-        updateStatusMessage("Failed to upload chunk " + currentChunkNumber + " after maximum retry time", "red");
-        throw new Error("Maximum retry time exceeded for chunk " + currentChunkNumber);
-      }
-      await new Promise(resolve => setTimeout(resolve, retryDelay));
+  return output;
+}
+
+function encodeWAV(samples, sampleRate, numChannels) {
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+  function writeString(offset, string) {
+    for (let i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i));
     }
+  }
+  writeString(0, 'RIFF');
+  view.setUint32(4, 36 + samples.length * 2, true);
+  writeString(8, 'WAVE');
+  writeString(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * numChannels * 2, true);
+  view.setUint16(32, numChannels * 2, true);
+  view.setUint16(34, 16, true);
+  writeString(36, 'data');
+  view.setUint32(40, samples.length * 2, true);
+  let offset = 44;
+  for (let i = 0; i < samples.length; i++, offset += 2) {
+    view.setInt16(offset, samples[i], true);
+  }
+  return new Blob([view], { type: 'audio/wav' });
+}
+
+// --- Restart Media Stream for Next Chunk ---
+async function restartMediaStream() {
+  logInfo("Restarting media stream for next chunk...");
+  stopMicrophone();
+  audioFrames = []; // Discard any leftover frames
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const track = mediaStream.getAudioTracks()[0];
+    const processor = new MediaStreamTrackProcessor({ track: track });
+    audioReader = processor.readable.getReader();
+    function readLoop() {
+      audioReader.read().then(({ done, value }) => {
+        if (done) {
+          logInfo("Audio track reading complete (restart).");
+          return;
+        }
+        lastFrameTime = Date.now();
+        audioFrames.push(value);
+        readLoop();
+      }).catch(err => {
+        logError("Error reading audio frames after restart", err);
+      });
+    }
+    readLoop();
+    logInfo("Media stream restarted successfully.");
+  } catch (error) {
+    logError("Error restarting media stream:", error);
   }
 }
 
-// --- Audio Chunk Processing ---
+// --- Schedule Chunk ---
+function scheduleChunk() {
+  if (manualStop || recordingPaused) {
+    logDebug("Scheduler suspended due to manual stop or pause.");
+    return;
+  }
+  const elapsed = Date.now() - chunkStartTime;
+  const timeSinceLast = Date.now() - lastFrameTime;
+  if (elapsed >= CHUNK_DURATION || (elapsed >= CHUNK_DURATION && timeSinceLast >= watchdogThreshold)) {
+    logInfo("Chunk boundary reached; processing current chunk.");
+    safeProcessAudioChunk().then(() => {
+      if (!manualStop) {
+        restartMediaStream();
+        chunkStartTime = Date.now();
+        scheduleChunk();
+      }
+    });
+  } else {
+    chunkTimeoutId = setTimeout(scheduleChunk, 500);
+  }
+}
+
+// --- Process Audio Chunk ---
 async function processAudioChunkInternal(force = false) {
   if (audioFrames.length === 0) {
     logDebug("No audio frames to process.");
@@ -312,7 +332,7 @@ async function processAudioChunkInternal(force = false) {
   }
   logInfo(`Processing ${audioFrames.length} audio frames for chunk ${chunkNumber}.`);
   const framesToProcess = audioFrames;
-  audioFrames = []; // Clear the buffer
+  audioFrames = [];
   const wavBlob = framesToWav(framesToProcess);
   if (!wavBlob) {
     logError("Failed to convert frames to WAV blob.");
@@ -355,20 +375,20 @@ async function safeProcessAudioChunk(force = false) {
 }
 
 function finalizeStop() {
-  completionStartTime = Date.now();
-  completionTimerInterval = setInterval(() => {
-    const timerElem = document.getElementById("transcribeTimer");
-    if (timerElem) {
-      timerElem.innerText = "Completion Timer: " + formatTime(Date.now() - completionStartTime);
-    }
-  }, 1000);
+  logInfo("Finalizing transcription...");
+  clearTimeout(chunkTimeoutId);
+  clearInterval(recordingTimerInterval);
+  stopMicrophone();
+  finalChunkProcessed = true;
   const startButton = document.getElementById("startButton");
   const stopButton = document.getElementById("stopButton");
   const pauseResumeButton = document.getElementById("pauseResumeButton");
   if (startButton) startButton.disabled = false;
   if (stopButton) stopButton.disabled = true;
   if (pauseResumeButton) pauseResumeButton.disabled = true;
-  logInfo("Recording stopped by user. Finalizing transcription.");
+  logInfo("Recording stopped and finalized.");
+  // Optionally, update UI (e.g., set a "Transcription finished" message)
+  updateStatusMessage("Transcription finished!", "green");
 }
 
 function pollChunkTranscript(chunkNum, currentGroup) {
@@ -416,80 +436,9 @@ function updateTranscriptionOutput() {
     transcriptionElem.value = combinedTranscript.trim();
   }
   if (manualStop && Object.keys(transcriptChunks).length >= (chunkNumber - 1)) {
-    clearInterval(completionTimerInterval);
     updateStatusMessage("Transcription finished!", "green");
     logInfo("Transcription complete.");
   }
-}
-
-function floatTo16BitPCM(input) {
-  const output = new Int16Array(input.length);
-  for (let i = 0; i < input.length; i++) {
-    let s = Math.max(-1, Math.min(1, input[i]));
-    output[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-  }
-  return output;
-}
-
-function encodeWAV(samples, sampleRate, numChannels) {
-  const buffer = new ArrayBuffer(44 + samples.length * 2);
-  const view = new DataView(buffer);
-  function writeString(offset, string) {
-    for (let i = 0; i < string.length; i++) {
-      view.setUint8(offset + i, string.charCodeAt(i));
-    }
-  }
-  writeString(0, 'RIFF');
-  view.setUint32(4, 36 + samples.length * 2, true);
-  writeString(8, 'WAVE');
-  writeString(12, 'fmt ');
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);
-  view.setUint16(22, numChannels, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * numChannels * 2, true);
-  view.setUint16(32, numChannels * 2, true);
-  view.setUint16(34, 16, true);
-  writeString(36, 'data');
-  view.setUint32(40, samples.length * 2, true);
-  let offset = 44;
-  for (let i = 0; i < samples.length; i++, offset += 2) {
-    view.setInt16(offset, samples[i], true);
-  }
-  return new Blob([view], { type: 'audio/wav' });
-}
-
-function scheduleChunk() {
-  if (manualStop || recordingPaused) {
-    logDebug("Scheduler suspended due to manual stop or pause.");
-    return;
-  }
-  const elapsed = Date.now() - chunkStartTime;
-  const timeSinceLast = Date.now() - lastFrameTime;
-  if (elapsed >= MAX_CHUNK_DURATION || (elapsed >= MIN_CHUNK_DURATION && timeSinceLast >= watchdogThreshold)) {
-    logInfo("Scheduling condition met; processing chunk.");
-    safeProcessAudioChunk();
-    chunkStartTime = Date.now();
-    scheduleChunk();
-  } else {
-    chunkTimeoutId = setTimeout(scheduleChunk, 500);
-  }
-}
-
-function resetRecordingState() {
-  Object.values(pollingIntervals).forEach(interval => clearInterval(interval));
-  pollingIntervals = {};
-  clearTimeout(chunkTimeoutId);
-  clearInterval(recordingTimerInterval);
-  transcriptChunks = {};
-  audioFrames = [];
-  chunkStartTime = Date.now();
-  lastFrameTime = Date.now();
-  manualStop = false;
-  finalChunkProcessed = false;
-  recordingPaused = false;
-  groupId = Date.now().toString();
-  chunkNumber = 1;
 }
 
 function initRecording() {
@@ -505,7 +454,16 @@ function initRecording() {
         alert("Please enter a valid OpenAI API key before starting the recording.");
         return;
       }
-      resetRecordingState();
+      // Reset state and generate a new group ID.
+      groupId = Date.now().toString();
+      chunkNumber = 1;
+      manualStop = false;
+      finalChunkProcessed = false;
+      audioFrames = [];
+      transcriptChunks = {};
+      clearTimeout(chunkTimeoutId);
+      clearInterval(recordingTimerInterval);
+      
       const transcriptionElem = document.getElementById("transcription");
       if (transcriptionElem) transcriptionElem.value = "";
       
@@ -514,6 +472,7 @@ function initRecording() {
       mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       recordingStartTime = Date.now();
       recordingTimerInterval = setInterval(updateRecordingTimer, 1000);
+      chunkStartTime = Date.now();
       
       const track = mediaStream.getAudioTracks()[0];
       const processor = new MediaStreamTrackProcessor({ track: track });
@@ -575,15 +534,14 @@ function initRecording() {
       manualStop = true;
       clearTimeout(chunkTimeoutId);
       clearInterval(recordingTimerInterval);
-      logInfo("Stop button clicked. Triggering final chunk slice.");
-      // Process the current audio frames as a final chunk (using the same mechanism as auto-slicing)
+      logInfo("Stop button clicked; processing final chunk.");
       await safeProcessAudioChunk(true);
       finalChunkProcessed = true;
-      // Immediately stop the microphone and cancel the reader; discard any remaining frames.
+      // Shut down the stream and discard any remaining frames.
       stopMicrophone();
       audioFrames = [];
       finalizeStop();
-      logInfo("Stop button processed; final chunk handled and remaining audio discarded.");
+      logInfo("Stop button processed; final chunk handled.");
     } catch (err) {
       logError("Error in stop event listener:", err);
     }
