@@ -1,5 +1,8 @@
 // recorder.js
-// Self-contained version using an inlined AudioWorklet processor
+// Self-contained version using an inlined AudioWorklet processor.
+// This version captures audio via an AudioWorklet, slices it into 45‑second chunks,
+// and processes/uploads each chunk for transcription. When you click stop,
+// the final chunk is processed and then the audio stream is shut down.
 
 // --- Inlined AudioWorklet Processor Code ---
 const audioProcessorCode = `
@@ -9,7 +12,7 @@ class ChunkProcessor extends AudioWorkletProcessor {
     if (input && input.length > 0) {
       // Copy each channel's data (usually 128 samples per block)
       const channelData = input.map(channel => channel.slice(0));
-      // Post message with the channel data, sample rate, and number of channels.
+      // Post the data with sample rate and number of channels.
       this.port.postMessage({
         channelData,
         sampleRate: sampleRate,
@@ -22,12 +25,10 @@ class ChunkProcessor extends AudioWorkletProcessor {
 registerProcessor('chunk-processor', ChunkProcessor);
 `;
 
-// --- Utility Logging Functions ---
+// --- Logging Functions ---
 const DEBUG = true;
 function logDebug(message, ...optionalParams) {
-  if (DEBUG) {
-    console.debug(new Date().toISOString(), "[DEBUG]", message, ...optionalParams);
-  }
+  if (DEBUG) console.debug(new Date().toISOString(), "[DEBUG]", message, ...optionalParams);
 }
 function logInfo(message, ...optionalParams) {
   console.info(new Date().toISOString(), "[INFO]", message, ...optionalParams);
@@ -38,7 +39,7 @@ function logError(message, ...optionalParams) {
 
 // --- Constants ---
 const CHUNK_DURATION = 45000; // 45 seconds per chunk
-const watchdogThreshold = 1500; // 1.5 seconds with no frame triggers a slice
+const watchdogThreshold = 1500; // 1.5 seconds with no new frame triggers a slice
 const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net/";
 
 // --- Global Variables ---
@@ -54,8 +55,9 @@ let pollingIntervals = {};
 let chunkStartTime = 0;
 let lastFrameTime = 0;
 let chunkTimeoutId;
-let audioFrames = []; // Array to collect frames posted from the AudioWorklet
+let audioFrames = []; // Array to collect frames from the AudioWorklet
 let recordingPaused = false;
+let finalChunkProcessed = false; // This variable is now declared
 
 // --- UI Helper Functions ---
 function updateStatusMessage(message, color = "#333") {
@@ -75,9 +77,7 @@ function formatTime(ms) {
 function updateRecordingTimer() {
   const elapsed = Date.now() - chunkStartTime;
   const timerElem = document.getElementById("recordTimer");
-  if (timerElem) {
-    timerElem.innerText = "Recording Timer: " + formatTime(elapsed);
-  }
+  if (timerElem) timerElem.innerText = "Recording Timer: " + formatTime(elapsed);
 }
 
 // --- Stop Audio (close stream, node, context) ---
@@ -171,7 +171,7 @@ async function encryptFileBlob(blob) {
   const encryptedBuffer = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, buffer);
   const encryptedBlob = new Blob([encryptedBuffer], { type: blob.type });
   const apiKeyMarker = hashString(apiKey);
-  const deviceMarker = hashString(deviceToken);
+  const deviceMarker = hashString(getDeviceToken());
   return { encryptedBlob, iv: arrayBufferToBase64(iv), salt: arrayBufferToBase64(salt), apiKeyMarker, deviceMarker };
 }
 
@@ -286,7 +286,7 @@ async function initAudioWorklet() {
     workletNode = new AudioWorkletNode(audioContext, 'chunk-processor');
     workletNode.port.onmessage = (event) => {
       const data = event.data;
-      // Create a frame-like object to mimic the previous frame structure.
+      // Create a frame-like object to mimic the previous structure.
       const frame = {
         numberOfFrames: data.channelData[0].length,
         sampleRate: data.sampleRate,
