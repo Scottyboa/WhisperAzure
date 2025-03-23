@@ -1,6 +1,6 @@
 // recording.js
 
-// Debug and logging functions
+// --- Debug and Logging Functions ---
 const DEBUG = true;
 function logDebug(message, ...optionalParams) {
   if (DEBUG) {
@@ -14,15 +14,16 @@ function logError(message, ...optionalParams) {
   console.error(new Date().toISOString(), "[ERROR]", message, ...optionalParams);
 }
 
-// Chunk duration constants (45 seconds)
+// --- Chunk Duration Constants (45 seconds) ---
 const MIN_CHUNK_DURATION = 45000; // 45 sec
 const MAX_CHUNK_DURATION = 45000; // 45 sec
 const watchdogThreshold = 1500;   // 1.5 sec with no new frame
 
-// Backend URL for uploading chunks (corrected: no trailing slash)
-const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net";
+// --- Backend URL ---
+// Using your original URL (with trailing slash)
+const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net/";
 
-// Global variables for audio capture and chunking
+// --- Global Variables for Audio Capture and Chunking ---
 let mediaStream = null;
 let audioContext = null;
 let workletNode = null;
@@ -43,9 +44,9 @@ let chunkProcessingLock = false;
 let pendingStop = false;
 let finalChunkProcessed = false;
 let recordingPaused = false;
-let audioFrames = []; // Buffer for audio data (as Float32Array or similar)
+let audioFrames = []; // Buffer for audio frames
 
-// UI update functions
+// --- Utility Functions ---
 function updateStatusMessage(message, color = "#333") {
   const statusElem = document.getElementById("statusMessage");
   if (statusElem) {
@@ -53,26 +54,18 @@ function updateStatusMessage(message, color = "#333") {
     statusElem.style.color = color;
   }
 }
-
 function formatTime(ms) {
   const totalSec = Math.floor(ms / 1000);
-  if (totalSec < 60) {
-    return totalSec + " sec";
-  } else {
-    const minutes = Math.floor(totalSec / 60);
-    const seconds = totalSec % 60;
-    return minutes + " min" + (seconds > 0 ? " " + seconds + " sec" : "");
-  }
+  if (totalSec < 60) return totalSec + " sec";
+  const minutes = Math.floor(totalSec / 60);
+  const seconds = totalSec % 60;
+  return minutes + " min" + (seconds > 0 ? " " + seconds + " sec" : "");
 }
-
 function updateRecordingTimer() {
   const elapsed = Date.now() - recordingStartTime;
   const timerElem = document.getElementById("recordTimer");
-  if (timerElem) {
-    timerElem.innerText = "Recording Timer: " + formatTime(elapsed);
-  }
+  if (timerElem) timerElem.innerText = "Recording Timer: " + formatTime(elapsed);
 }
-
 function stopMicrophone() {
   if (mediaStream) {
     mediaStream.getTracks().forEach(track => track.stop());
@@ -86,7 +79,170 @@ function stopMicrophone() {
   }
 }
 
-// Functions to convert raw audio data into WAV format
+// --- Base64 Helper Functions ---
+function arrayBufferToBase64(buffer) {
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
+}
+function base64ToArrayBuffer(base64) {
+  const binary = window.atob(base64);
+  const len = binary.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+// --- Device Token Management ---
+function getDeviceToken() {
+  let token = localStorage.getItem("device_token");
+  if (!token) {
+    token = crypto.randomUUID();
+    localStorage.setItem("device_token", token);
+  }
+  return token;
+}
+
+// --- API Key Encryption/Decryption Helpers ---
+async function deriveKey(password, salt) {
+  const encoder = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["decrypt"]
+  );
+}
+async function decryptAPIKey(encryptedData) {
+  const { ciphertext, iv, salt } = encryptedData;
+  const deviceToken = getDeviceToken();
+  const key = await deriveKey(deviceToken, base64ToArrayBuffer(salt));
+  const decryptedBuffer = await crypto.subtle.decrypt({ name: "AES-GCM", iv: base64ToArrayBuffer(iv) }, key, base64ToArrayBuffer(ciphertext));
+  const decoder = new TextDecoder();
+  return decoder.decode(decryptedBuffer);
+}
+async function getDecryptedAPIKey() {
+  const encryptedStr = sessionStorage.getItem("encrypted_api_key");
+  if (!encryptedStr) return null;
+  const encryptedData = JSON.parse(encryptedStr);
+  return await decryptAPIKey(encryptedData);
+}
+
+// --- File Blob Encryption ---
+async function encryptFileBlob(blob) {
+  const apiKey = await getDecryptedAPIKey();
+  if (!apiKey) throw new Error("API key not available for encryption");
+  const deviceToken = getDeviceToken();
+  const password = apiKey + ":" + deviceToken;
+  const encoder = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
+  );
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const buffer = await blob.arrayBuffer();
+  const encryptedBuffer = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, buffer);
+  const encryptedBlob = new Blob([encryptedBuffer], { type: blob.type });
+  const apiKeyMarker = hashString(apiKey);
+  const deviceMarker = hashString(deviceToken);
+  return {
+    encryptedBlob,
+    iv: arrayBufferToBase64(iv),
+    salt: arrayBufferToBase64(salt),
+    apiKeyMarker,
+    deviceMarker
+  };
+}
+
+// --- HMAC and Request Signing ---
+async function computeHMAC(message, secret) {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const signatureBuffer = await crypto.subtle.sign("HMAC", key, encoder.encode(message));
+  return arrayBufferToBase64(signatureBuffer);
+}
+async function signUploadRequest(groupId, chunkNumber) {
+  const apiKey = await getDecryptedAPIKey();
+  const deviceToken = getDeviceToken();
+  const secret = apiKey + ":" + deviceToken;
+  const message = "upload:" + groupId + ":" + chunkNumber;
+  return await computeHMAC(message, secret);
+}
+
+// --- Upload Chunk Function (with Encryption, Signing, and sending device_token) ---
+async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast = false, currentGroup) {
+  let encryptionResult;
+  try {
+    encryptionResult = await encryptFileBlob(blob);
+  } catch (err) {
+    console.error("Error encrypting file blob:", err);
+    throw err;
+  }
+  const encryptedBlob = encryptionResult.encryptedBlob;
+  let signature;
+  try {
+    signature = await signUploadRequest(currentGroup, currentChunkNumber);
+  } catch (err) {
+    console.error("Error generating signature:", err);
+    throw err;
+  }
+  const formData = new FormData();
+  formData.append("file", encryptedBlob, `chunk_${currentChunkNumber}.${extension}`);
+  formData.append("group_id", currentGroup);
+  formData.append("chunk_number", currentChunkNumber);
+  formData.append("api_key", await getDecryptedAPIKey());
+  formData.append("iv", encryptionResult.iv);
+  formData.append("salt", encryptionResult.salt);
+  formData.append("api_key_marker", encryptionResult.apiKeyMarker);
+  formData.append("device_marker", encryptionResult.deviceMarker);
+  formData.append("device_token", getDeviceToken());
+  formData.append("signature", signature);
+  if (isLast) {
+    formData.append("last_chunk", "true");
+  }
+  
+  let attempts = 0;
+  const retryDelay = 4000;
+  const maxRetryTime = 60000;
+  const startTime = Date.now();
+  while (true) {
+    try {
+      const response = await fetch(`${backendUrl}upload`, {
+        method: "POST",
+        body: formData
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server responded with status ${response.status}: ${errorText}`);
+      }
+      const result = await response.json();
+      console.info(`Upload successful for chunk ${currentChunkNumber}`, { session_id: result.session_id });
+      return result;
+    } catch (error) {
+      attempts++;
+      console.error(`Upload error for chunk ${currentChunkNumber} on attempt ${attempts}:`, error);
+      if (Date.now() - startTime >= maxRetryTime) {
+        updateStatusMessage("Failed to upload chunk " + currentChunkNumber + " after maximum retry time", "red");
+        throw new Error("Maximum retry time exceeded for chunk " + currentChunkNumber);
+      }
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+    }
+  }
+}
+
+// --- Audio Conversion Functions ---
 function floatTo16BitPCM(input) {
   const output = new Int16Array(input.length);
   for (let i = 0; i < input.length; i++) {
@@ -95,7 +251,6 @@ function floatTo16BitPCM(input) {
   }
   return output;
 }
-
 function encodeWAV(samples, sampleRate, numChannels) {
   const buffer = new ArrayBuffer(44 + samples.length * 2);
   const view = new DataView(buffer);
@@ -124,7 +279,7 @@ function encodeWAV(samples, sampleRate, numChannels) {
   return new Blob([view], { type: 'audio/wav' });
 }
 
-// Chunk scheduling and processing
+// --- Chunk Scheduling and Processing ---
 function scheduleChunk() {
   if (manualStop || recordingPaused) {
     logDebug("Scheduler suspended due to manual stop or pause.");
@@ -141,7 +296,6 @@ function scheduleChunk() {
     chunkTimeoutId = setTimeout(scheduleChunk, 500);
   }
 }
-
 async function safeProcessAudioChunk(force = false) {
   if (manualStop && finalChunkProcessed) {
     logDebug("Final chunk already processed; skipping safeProcessAudioChunk.");
@@ -159,7 +313,6 @@ async function safeProcessAudioChunk(force = false) {
     finalizeStop();
   }
 }
-
 function finalizeStop() {
   completionStartTime = Date.now();
   completionTimerInterval = setInterval(() => {
@@ -173,8 +326,6 @@ function finalizeStop() {
   document.getElementById("pauseResumeButton").disabled = true;
   logInfo("Recording stopped by user. Finalizing transcription.");
 }
-
-// This function processes the buffered audio frames into a WAV blob and triggers the upload.
 async function processAudioChunkInternal(force = false) {
   if (audioFrames.length === 0) {
     logDebug("No audio frames to process.");
@@ -206,32 +357,7 @@ async function processAudioChunkInternal(force = false) {
   chunkNumber++;
 }
 
-// --- New: Basic uploadChunk Implementation ---
-// This function sends the WAV blob and associated parameters to the backend.
-async function uploadChunk(blob, chunkNumber, extension, mimeType, force, groupId) {
-  const formData = new FormData();
-  formData.append("file", blob, `chunk_${chunkNumber}.${extension}`);
-  formData.append("group_id", groupId);
-  formData.append("chunk_number", chunkNumber);
-  // Include additional fields as required by your backend.
-  const apiKey = sessionStorage.getItem("openai_api_key") || "";
-  formData.append("api_key", apiKey);
-  // For brevity, additional fields (iv, salt, markers, signature, device_token) are omitted.
-  try {
-    const response = await fetch(`${backendUrl}/upload`, {
-      method: "POST",
-      body: formData
-    });
-    if (!response.ok) {
-      throw new Error(`Upload failed with status ${response.status}`);
-    }
-    return await response.json();
-  } catch (error) {
-    throw error;
-  }
-}
-
-// (Placeholder) Function to poll the backend for the transcript of a chunk
+// --- Polling for Transcript ---
 function pollChunkTranscript(chunkNum, currentGroup) {
   const pollStart = Date.now();
   pollingIntervals[chunkNum] = setInterval(async () => {
@@ -246,7 +372,7 @@ function pollChunkTranscript(chunkNum, currentGroup) {
       return;
     }
     try {
-      const response = await fetch(`${backendUrl}/fetch_chunk`, {
+      const response = await fetch(`${backendUrl}fetch_chunk`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ session_id: currentGroup, chunk_number: chunkNum })
@@ -265,7 +391,6 @@ function pollChunkTranscript(chunkNum, currentGroup) {
     }
   }, 3000);
 }
-
 function updateTranscriptionOutput() {
   const sortedKeys = Object.keys(transcriptChunks).map(Number).sort((a, b) => a - b);
   let combinedTranscript = "";
@@ -283,9 +408,7 @@ function updateTranscriptionOutput() {
   }
 }
 
-// ------------------------------
-// Inline AudioWorklet Processor
-// ------------------------------
+// --- Inline AudioWorklet Processor ---
 const audioProcessorCode = `
 class AudioProcessor extends AudioWorkletProcessor {
   constructor() {
@@ -301,9 +424,7 @@ class AudioProcessor extends AudioWorkletProcessor {
 registerProcessor('audio-processor', AudioProcessor);
 `;
 
-// ------------------------------
-// AudioWorklet-Based Recording Initialization
-// ------------------------------
+// --- AudioWorklet-Based Recording Initialization ---
 async function initAudioWorkletCapture() {
   try {
     audioContext = new AudioContext();
@@ -323,9 +444,7 @@ async function initAudioWorkletCapture() {
   }
 }
 
-// ------------------------------
-// Initialization of Recording
-// ------------------------------
+// --- Initialization of Recording ---
 function resetRecordingState() {
   Object.values(pollingIntervals).forEach(interval => clearInterval(interval));
   pollingIntervals = {};
@@ -341,13 +460,11 @@ function resetRecordingState() {
   groupId = Date.now().toString();
   chunkNumber = 1;
 }
-
 function initRecording() {
   const startButton = document.getElementById("startButton");
   const stopButton = document.getElementById("stopButton");
   const pauseResumeButton = document.getElementById("pauseResumeButton");
   if (!startButton || !stopButton || !pauseResumeButton) return;
-
   startButton.addEventListener("click", async () => {
     const decryptedApiKey = await getDecryptedAPIKey();
     if (!decryptedApiKey || !decryptedApiKey.startsWith("sk-")) {
@@ -357,20 +474,16 @@ function initRecording() {
     resetRecordingState();
     const transcriptionElem = document.getElementById("transcription");
     if (transcriptionElem) transcriptionElem.value = "";
-    
     updateStatusMessage("Recording...", "green");
     logInfo("Recording started.");
     try {
       mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       recordingStartTime = Date.now();
       recordingTimerInterval = setInterval(updateRecordingTimer, 1000);
-      
       // Initialize AudioWorklet for capturing audio frames.
       await initAudioWorkletCapture();
-      
       chunkStartTime = Date.now();
       scheduleChunk();
-      
       startButton.disabled = true;
       stopButton.disabled = false;
       pauseResumeButton.disabled = false;
@@ -380,7 +493,6 @@ function initRecording() {
       logError("Microphone access error", error);
     }
   });
-
   pauseResumeButton.addEventListener("click", async () => {
     if (!audioContext) return;
     if (audioContext.state === "running") {
@@ -403,7 +515,6 @@ function initRecording() {
       logInfo("Recording resumed.");
     }
   });
-
   stopButton.addEventListener("click", async () => {
     updateStatusMessage("Finishing transcription...", "blue");
     manualStop = true;
@@ -424,5 +535,4 @@ function initRecording() {
     }
   });
 }
-
 export { initRecording };
