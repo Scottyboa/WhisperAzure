@@ -1,130 +1,7 @@
-import os
-import threading
-import time
-import requests
-import queue
-import hmac
-import hashlib
-import base64
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from werkzeug.utils import secure_filename
-import logging
-
-# Import cryptography libraries for decryption
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-app = Flask(__name__)
-CORS(app)
-
-# ------------------------------
-# Root Route (Newly Added)
-# ------------------------------
-@app.route("/")
-def index():
-    return "Hello, world! Your Flask app is running on Azure."
-
-# ------------------------------
-# Helper Functions for Validation
-# ------------------------------
-
-def hash_string(s: str) -> str:
-    """
-    Mimics a simple JavaScript hashString() function.
-    """
-    hash_val = 0
-    for c in s:
-        hash_val = ((hash_val << 5) - hash_val) + ord(c)
-        hash_val &= 0xFFFFFFFF  # emulate 32-bit integer arithmetic
-    return str(hash_val)
-
-def compute_hmac(message: str, secret: str) -> str:
-    """
-    Computes an HMAC-SHA256 signature for a given message and secret.
-    Returns the Base64-encoded signature.
-    """
-    hm = hmac.new(secret.encode('utf-8'), message.encode('utf-8'), hashlib.sha256)
-    return base64.b64encode(hm.digest()).decode('utf-8')
-
-# ------------------------------
-# Decryption Function for Audio
-# ------------------------------
-
-def decrypt_audio_file(encrypted_data: bytes, salt_b64: str, iv_b64: str, api_key: str, device_token: str) -> bytes:
-    """
-    Decrypts the provided encrypted audio using AES-GCM.
-    
-    - salt_b64 and iv_b64 are Base64-encoded strings sent by the client.
-    - The key is derived using PBKDF2HMAC with 100,000 iterations.
-    - The secret for key derivation is: api_key + ":" + device_token.
-    """
-    salt = base64.b64decode(salt_b64)
-    iv = base64.b64decode(iv_b64)
-    password = (api_key + ":" + device_token).encode('utf-8')
-    
-    kdf = PBKDF2HMAC(
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=salt,
-        iterations=100000,
-        backend=default_backend()
-    )
-    key = kdf.derive(password)
-    
-    aesgcm = AESGCM(key)
-    decrypted_data = aesgcm.decrypt(iv, encrypted_data, None)
-    return decrypted_data
-
-# ------------------------------
-# In-Memory Session Storage and Auto-Deletion Logic
-# ------------------------------
-
-sessions = {}
-
-def schedule_session_deletion(group_id, delay=120):
-    """
-    Restarts the deletion timer for the given session.
-    After 'delay' seconds of inactivity, the session folder and in-memory session data are deleted.
-    """
-    def deletion_action():
-        group_folder = os.path.join("uploads", group_id)
-        if os.path.exists(group_folder):
-            try:
-                for f in os.listdir(group_folder):
-                    os.remove(os.path.join(group_folder, f))
-                os.rmdir(group_folder)
-                logger.info(f"Auto-deleted group folder for group {group_id} (inactivity)")
-            except Exception as e:
-                logger.error(f"Error deleting group folder for group {group_id}: {e}")
-        sessions.pop(group_id, None)
-        logger.info(f"Auto-deleted session {group_id} due to inactivity")
-    
-    if group_id in sessions and "deletion_timer" in sessions[group_id]:
-        try:
-            sessions[group_id]["deletion_timer"].cancel()
-        except Exception as e:
-            logger.error(f"Error cancelling previous deletion timer for group {group_id}: {e}")
-    
-    t = threading.Timer(delay, deletion_action)
-    t.daemon = True
-    if group_id in sessions:
-        sessions[group_id]["deletion_timer"] = t
-    t.start()
-
-# ------------------------------
-# Upload Endpoint with Request Signing and Marker Validation
-# ------------------------------
+# app.py (excerpted for clarity; assumes previous logic remains unchanged above)
 
 @app.route("/upload", methods=["POST"])
 def upload_audio():
-    # Ensure the file is provided.
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
 
@@ -137,23 +14,13 @@ def upload_audio():
     salt = request.form.get("salt")
     api_key_marker = request.form.get("api_key_marker")
     device_marker = request.form.get("device_marker")
-    device_token = request.form.get("device_token")  # This field is now required
+    device_token = request.form.get("device_token")
+    mime_type = request.form.get("mime_type", "audio/wav")  # ✅ NEW
 
     missing_fields = []
-    if not group_id:
-        missing_fields.append("group_id")
-    if not chunk_number:
-        missing_fields.append("chunk_number")
-    if not api_key:
-        missing_fields.append("api_key")
-    if not signature:
-        missing_fields.append("signature")
-    if not device_token:
-        missing_fields.append("device_token")
-    if not iv:
-        missing_fields.append("iv")
-    if not salt:
-        missing_fields.append("salt")
+    for field in ["group_id", "chunk_number", "api_key", "signature", "device_token", "iv", "salt"]:
+        if not request.form.get(field):
+            missing_fields.append(field)
     if missing_fields:
         return jsonify({"error": "Missing required fields", "fields": missing_fields}), 400
 
@@ -162,34 +29,28 @@ def upload_audio():
     except Exception:
         return jsonify({"error": "Invalid chunk_number"}), 400
 
-    # Validate markers.
     if hash_string(api_key) != api_key_marker:
         return jsonify({"error": "Invalid API key marker"}), 400
     if hash_string(device_token) != device_marker:
         return jsonify({"error": "Invalid device marker"}), 400
 
-    # Validate the request signature.
-    # The secret is defined as: api_key + ":" + device_token
     secret = api_key + ":" + device_token
     message = f"upload:{group_id}:{chunk_number}"
     expected_signature = compute_hmac(message, secret)
     if not hmac.compare_digest(expected_signature, signature):
         return jsonify({"error": "Invalid signature"}), 400
 
-    # Retrieve or initialize the session.
     if group_id not in sessions:
         sessions[group_id] = {}
     sessions[group_id]["api_key"] = api_key
-    sessions[group_id]["device_token"] = device_token  # Store device token for decryption
+    sessions[group_id]["device_token"] = device_token
 
-    # Initialize transcription queue if necessary.
     if "transcription_queue" not in sessions[group_id]:
         sessions[group_id]["transcription_queue"] = queue.PriorityQueue()
 
     group_folder = os.path.join("uploads", group_id)
     os.makedirs(group_folder, exist_ok=True)
 
-    # Determine a safe filename.
     original_filename = secure_filename(audio_file.filename)
     if not original_filename:
         original_filename = f"chunk_{chunk_number}.wav"
@@ -198,16 +59,15 @@ def upload_audio():
         original_filename = f"chunk_{chunk_number}{ext}"
     save_path = os.path.join(group_folder, original_filename)
     audio_file.save(save_path)
-    logger.info(f"Received chunk {chunk_number} for group {group_id} stored at {save_path}")
+    logger.info(f"Received chunk {chunk_number} for group {group_id}, MIME: {mime_type}, stored at {save_path}")  # ✅ Log MIME
 
-    # Store chunk info (including encryption metadata) in session.
     sessions[group_id].setdefault("chunks", {})[chunk_number] = {
         "path": save_path,
         "iv": iv,
-        "salt": salt
+        "salt": salt,
+        "mime_type": mime_type  # ✅ Store MIME
     }
 
-    # Restart the session deletion timer.
     schedule_session_deletion(group_id)
 
     last_chunk_flag = request.form.get("last_chunk", "false").lower() == "true"
@@ -224,87 +84,19 @@ def upload_audio():
 
     return jsonify({"session_id": group_id})
 
-# ------------------------------
-# Fetch Chunk Endpoint
-# ------------------------------
 
-@app.route("/fetch_chunk", methods=["POST"])
-def fetch_chunk():
-    data = request.get_json()
-    group_id = data.get("session_id")
-    chunk_number = data.get("chunk_number")
-    if not group_id or group_id not in sessions:
-        return jsonify({"error": "Invalid or missing session_id"}), 400
-    try:
-        chunk_number = int(chunk_number)
-    except Exception:
-        return jsonify({"error": "Invalid chunk number"}), 400
-
-    transcript = sessions[group_id].get("chunk_transcripts", {}).get(chunk_number)
-    if transcript is not None:
-        return jsonify({"transcript": transcript})
-    else:
-        return jsonify({"error": "Transcript not ready"}), 202
-
-# ------------------------------
-# Delete Endpoint for Manual Session Deletion
-# ------------------------------
-
-@app.route("/delete", methods=["POST"])
-def delete_audio():
-    data = request.get_json()
-    group_id = data.get("session_id")
-    if not group_id or group_id not in sessions:
-        return jsonify({"error": "Invalid or missing session_id"}), 400
-
-    group_folder = os.path.join("uploads", group_id)
-    if os.path.exists(group_folder):
-        for f in os.listdir(group_folder):
-            try:
-                os.remove(os.path.join(group_folder, f))
-            except Exception as e:
-                logger.error(f"Error deleting file in group {group_id}: {e}")
-        try:
-            os.rmdir(group_folder)
-        except Exception as e:
-            logger.error(f"Error removing group folder {group_id}: {e}")
-        sessions.pop(group_id, None)
-        return jsonify({"message": "Group deleted successfully"})
-    return jsonify({"error": "Group folder not found"}), 404
-
-# ------------------------------
-# Transcription Functions (with Decryption)
-# ------------------------------
-
+# Inside transcribe_chunk_sync()
 def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
-    """
-    Synchronously decrypts and transcribes an audio chunk using the OpenAI Whisper API.
-    Returns the transcript (or an error message).
-    """
     file_path = chunk_info["path"]
     iv = chunk_info["iv"]
     salt = chunk_info["salt"]
+    content_type = chunk_info.get("mime_type", "audio/wav")  # ✅ Use passed MIME type
 
-    # Determine content type based on file extension
-    ext = os.path.splitext(file_path)[1].lower()
-    mime_mapping = {
-        ".mp3": "audio/mp3",
-        ".mp4": "audio/mp4",
-        ".mpeg": "audio/mpeg",
-        ".mpga": "audio/mpga",
-        ".m4a": "audio/m4a",
-        ".wav": "audio/wav",
-        ".webm": "audio/webm",
-        ".ogg": "audio/ogg"
-    }
-    content_type = mime_mapping.get(ext, "application/octet-stream")
     try:
-        # Read the encrypted file
         with open(file_path, "rb") as f:
             encrypted_data = f.read()
-        # Decrypt the audio data using the provided salt and iv
         decrypted_data = decrypt_audio_file(encrypted_data, salt, iv, api_key, device_token)
-        
+
         response = requests.post(
             "https://api.openai.com/v1/audio/transcriptions",
             headers={"Authorization": f"Bearer {api_key}"},
@@ -322,34 +114,3 @@ def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
         transcript = f"[Exception transcribing chunk {chunk_number}]"
     logger.info(f"Stored transcript for chunk {chunk_number}")
     return transcript
-
-def process_transcription_queue(group_id, api_key):
-    q = sessions[group_id]["transcription_queue"]
-    device_token = sessions[group_id].get("device_token", "")
-    while True:
-        try:
-            item = q.get(timeout=30)
-        except queue.Empty:
-            if sessions[group_id].get("last_chunk_received", False):
-                break
-            else:
-                continue
-        chunk_number, chunk_info, is_last = item
-        transcript = transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token)
-        sessions[group_id].setdefault("chunk_transcripts", {})[chunk_number] = transcript
-        schedule_session_deletion(group_id)
-        if is_last:
-            sessions[group_id]["last_chunk_received"] = True
-        q.task_done()
-        if sessions[group_id].get("last_chunk_received") and q.empty():
-            break
-    logger.info(f"Finished processing transcription queue for group {group_id}")
-
-# ------------------------------
-# Main Application Entry Point
-# ------------------------------
-
-if __name__ == "__main__":
-    # Use the port from the environment variable if available, otherwise default to 8080.
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host="0.0.0.0", port=port, debug=True)
