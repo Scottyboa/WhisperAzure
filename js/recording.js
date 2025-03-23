@@ -1,6 +1,6 @@
 // recording.js
 // Updated recording module with API key validation, file encryption, request signing, sending device_token,
-// and with a flush mechanism to ensure all pending audio data is processed before finalizing a recording.
+// and a more robust conversion process for creating high quality, complete audio files.
 
 function hashString(str) {
   let hash = 0;
@@ -9,7 +9,7 @@ function hashString(str) {
     hash = ((hash << 5) - hash) + char;
     hash |= 0; // Convert to 32-bit signed integer
   }
-  // Convert to an unsigned 32-bit integer and return as string.
+  // Convert to unsigned and return as string.
   return (hash >>> 0).toString();
 }
 
@@ -81,14 +81,14 @@ function updateRecordingTimer() {
   }
 }
 
-// --- Stop Microphone without immediately canceling the reader ---
+// --- Stop Microphone (with optional flushing) ---
 function stopMicrophone(flush = false) {
   if (mediaStream) {
     mediaStream.getTracks().forEach(track => track.stop());
     mediaStream = null;
     logInfo("Microphone stopped.");
   }
-  // When flushing, we want the reader to drain naturally.
+  // If not flushing, cancel the reader immediately.
   if (!flush && audioReader) {
     audioReader.cancel();
     audioReader = null;
@@ -242,6 +242,67 @@ async function signUploadRequest(groupId, chunkNumber) {
   return await computeHMAC(message, secret);
 }
 
+// --- New Conversion Process: From Frames to WAV ---
+// This function verifies metadata, allocates per-channel buffers, and interleaves channels robustly.
+function framesToWav(frames) {
+  if (frames.length === 0) return null;
+  const sampleRate = frames[0].sampleRate;
+  const numChannels = frames[0].numberOfChannels;
+  // Verify that all frames have the same sampleRate and number of channels.
+  for (let i = 1; i < frames.length; i++) {
+    if (frames[i].sampleRate !== sampleRate) {
+      logError(`Frame ${i} has a different sampleRate: ${frames[i].sampleRate} vs ${sampleRate}`);
+    }
+    if (frames[i].numberOfChannels !== numChannels) {
+      logError(`Frame ${i} has a different channel count: ${frames[i].numberOfChannels} vs ${numChannels}`);
+    }
+  }
+  let totalFrames = 0;
+  for (const frame of frames) {
+    totalFrames += frame.numberOfFrames;
+  }
+  logInfo(`Total number of samples per channel: ${totalFrames}`);
+  
+  // Allocate per-channel buffers.
+  let channelData = [];
+  for (let c = 0; c < numChannels; c++) {
+    channelData[c] = new Float32Array(totalFrames);
+  }
+  let offset = 0;
+  for (const frame of frames) {
+    const num = frame.numberOfFrames;
+    if (numChannels === 1) {
+      const temp = new Float32Array(num);
+      frame.copyTo(temp, { planeIndex: 0 });
+      channelData[0].set(temp, offset);
+    } else {
+      for (let c = 0; c < numChannels; c++) {
+        const temp = new Float32Array(num);
+        frame.copyTo(temp, { planeIndex: c });
+        channelData[c].set(temp, offset);
+      }
+    }
+    offset += num;
+  }
+  
+  // Interleave channels if more than one.
+  let interleaved;
+  if (numChannels === 1) {
+    interleaved = channelData[0];
+  } else {
+    interleaved = new Float32Array(totalFrames * numChannels);
+    for (let i = 0; i < totalFrames; i++) {
+      for (let c = 0; c < numChannels; c++) {
+        interleaved[i * numChannels + c] = channelData[c][i];
+      }
+    }
+  }
+  // Convert the interleaved Float32Array to 16-bit PCM.
+  const pcmInt16 = floatTo16BitPCM(interleaved);
+  const wavBlob = encodeWAV(pcmInt16, sampleRate, numChannels);
+  return wavBlob;
+}
+
 // --- Upload Chunk Function ---
 async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast = false, currentGroup) {
   let encryptionResult;
@@ -306,8 +367,7 @@ async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast
 }
 
 // --- Flush Pending Audio Frames ---
-// This function reads from the audio reader until the stream is done,
-// ensuring that any pending audio data is pushed into the audioFrames buffer.
+// Reads from the audio reader until the stream is done to ensure all pending frames are captured.
 async function flushAudioFrames() {
   if (!audioReader) return;
   while (true) {
@@ -326,7 +386,7 @@ async function flushAudioFrames() {
 }
 
 // --- Audio Chunk Processing ---
-// This function processes the buffered audio frames into a single WAV blob for upload.
+// Uses the new framesToWav function for robust conversion.
 async function processAudioChunkInternal(force = false) {
   if (audioFrames.length === 0) {
     logDebug("No audio frames to process.");
@@ -335,42 +395,14 @@ async function processAudioChunkInternal(force = false) {
   logInfo(`Processing ${audioFrames.length} audio frames for chunk ${chunkNumber}.`);
   const framesToProcess = audioFrames;
   audioFrames = []; // Clear the buffer
-  const sampleRate = framesToProcess[0].sampleRate;
-  const numChannels = framesToProcess[0].numberOfChannels;
-  let pcmDataArray = [];
-  for (const frame of framesToProcess) {
-    const numFrames = frame.numberOfFrames;
-    if (numChannels === 1) {
-      const channelData = new Float32Array(numFrames);
-      frame.copyTo(channelData, { planeIndex: 0 });
-      pcmDataArray.push(channelData);
-    } else {
-      let channelData = [];
-      for (let c = 0; c < numChannels; c++) {
-        const channelArray = new Float32Array(numFrames);
-        frame.copyTo(channelArray, { planeIndex: c });
-        channelData.push(channelArray);
-      }
-      const interleaved = new Float32Array(numFrames * numChannels);
-      for (let i = 0; i < numFrames; i++) {
-        for (let c = 0; c < numChannels; c++) {
-          interleaved[i * numChannels + c] = channelData[c][i];
-        }
-      }
-      pcmDataArray.push(interleaved);
-    }
-    frame.close();
+  const wavBlob = framesToWav(framesToProcess);
+  if (!wavBlob) {
+    logError("Failed to convert frames to WAV blob.");
+    return;
   }
-  const totalLength = pcmDataArray.reduce((sum, arr) => sum + arr.length, 0);
-  const pcmFloat32 = new Float32Array(totalLength);
-  let offset = 0;
-  for (const arr of pcmDataArray) {
-    pcmFloat32.set(arr, offset);
-    offset += arr.length;
-  }
-  // Now convert the final Float32Array to 16-bit PCM without appending silence.
-  const pcmInt16 = floatTo16BitPCM(pcmFloat32);
-  const wavBlob = encodeWAV(pcmInt16, sampleRate, numChannels);
+  // Log the size of the generated blob for diagnostics.
+  logInfo(`Generated WAV blob size: ${wavBlob.size} bytes`);
+  
   const mimeType = "audio/wav";
   const extension = "wav";
   const currentChunk = chunkNumber;
@@ -628,11 +660,10 @@ function initRecording() {
     clearInterval(recordingTimerInterval);
     // Stop the tracks but keep the audioReader active for flushing.
     stopMicrophone(true);
-    // Flush any pending audio frames from the stream.
+    // Flush any pending audio frames.
     await flushAudioFrames();
     chunkStartTime = 0;
     lastFrameTime = 0;
-    // Wait briefly to ensure flush is complete.
     await new Promise(resolve => setTimeout(resolve, 200));
     if (chunkProcessingLock) {
       pendingStop = true;
