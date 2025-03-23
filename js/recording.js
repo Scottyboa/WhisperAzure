@@ -23,9 +23,7 @@ class ChunkProcessor extends AudioWorkletProcessor {
   process(inputs, outputs, parameters) {
     const input = inputs[0];
     if (input && input.length > 0) {
-      // Copy each channel's data (typically 128 samples per block)
       const channelData = input.map(channel => channel.slice(0));
-      // Post the data with sample rate and number of channels.
       this.port.postMessage({
         channelData,
         sampleRate: sampleRate,
@@ -77,7 +75,6 @@ class WavRecorder {
   }
   async mergeFrames() {
     if (this.frames.length === 0) return null;
-    // Sort frames by timestamp to ensure correct ordering.
     this.frames.sort((a, b) => a.timestamp - b.timestamp);
     const firstFrame = this.frames[0];
     const lastFrame = this.frames[this.frames.length - 1];
@@ -86,11 +83,9 @@ class WavRecorder {
     const lastFrameDuration = lastFrame.numberOfFrames / sampleRate;
     const totalDuration = (lastFrame.timestamp + lastFrameDuration) - firstFrame.timestamp;
     const totalSamples = Math.ceil(totalDuration * sampleRate);
-    // Create an OfflineAudioContext to render the entire chunk.
     const offlineContext = new OfflineAudioContext(numChannels, totalSamples, sampleRate);
     const outputBuffer = offlineContext.createBuffer(numChannels, totalSamples, sampleRate);
     const baseTime = firstFrame.timestamp;
-    // For each frame, calculate where its data belongs in the final buffer.
     for (const frame of this.frames) {
       const startTimeOffset = frame.timestamp - baseTime;
       const startIndex = Math.round(startTimeOffset * sampleRate);
@@ -128,7 +123,7 @@ function logError(message, ...optionalParams) {
 // Constants
 // ================
 const CHUNK_DURATION = 45000; // 45 seconds per chunk
-const watchdogThreshold = 1500; // 1.5 seconds with no new frame triggers a slice
+const watchdogThreshold = 1500; // 1.5 seconds without a new frame triggers a slice
 const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net/";
 
 // =====================
@@ -472,13 +467,10 @@ function addSilenceToBuffer(buffer, silenceDurationMs) {
   const silenceSamples = Math.round(buffer.sampleRate * (silenceDurationMs / 1000));
   const numChannels = buffer.numberOfChannels;
   const newLength = buffer.length + silenceSamples * 2;
-  // Create a new OfflineAudioContext to generate a new buffer with silence.
   const offlineContext = new OfflineAudioContext(numChannels, newLength, buffer.sampleRate);
   const newBuffer = offlineContext.createBuffer(numChannels, newLength, buffer.sampleRate);
   for (let ch = 0; ch < numChannels; ch++) {
     const newData = newBuffer.getChannelData(ch);
-    // newData is already zeroed (silence).
-    // Copy original data into the middle starting at silenceSamples.
     newData.set(buffer.getChannelData(ch), silenceSamples);
   }
   return newBuffer;
@@ -498,7 +490,6 @@ async function initAudioWorklet() {
     workletNode = new AudioWorkletNode(audioContext, "chunk-processor");
     workletNode.port.onmessage = (event) => {
       const data = event.data;
-      // Create a frame-like object with a timestamp.
       const frame = {
         timestamp: audioContext.currentTime,
         numberOfFrames: data.channelData[0].length,
@@ -532,7 +523,6 @@ function scheduleChunk() {
   if (elapsed >= CHUNK_DURATION || (elapsed >= CHUNK_DURATION && timeSinceLast >= watchdogThreshold)) {
     logInfo("Chunk boundary reached; processing current chunk.");
     safeProcessAudioChunk().then(() => {
-      // Reset chunk timer but continue the stream.
       chunkStartTime = Date.now();
       scheduleChunk();
     });
@@ -557,19 +547,16 @@ async function processAudioChunkInternal(force = false) {
     return;
   }
   logInfo(`Processing ${audioFrames.length} audio frames for chunk ${chunkNumber}.`);
-  // Use WavRecorder to merge frames.
   const recorder = new WavRecorder();
   for (const frame of audioFrames) {
     recorder.addFrame(frame);
   }
-  // Clear the global frame buffer.
   audioFrames = [];
   const renderedBuffer = await recorder.mergeFrames();
   if (!renderedBuffer) {
     logError("Rendered buffer is null.");
     return;
   }
-  // Add 200ms silence at beginning and end.
   const bufferWithSilence = addSilenceToBuffer(renderedBuffer, 200);
   const { wavBlob: wavBlobUnverified, pcmInt16, sampleRate: sr, numChannels: nc } = audioBufferToWavFromAudioBuffer(bufferWithSilence);
   const wavBlob = await verifyAndCorrectWavHeader(wavBlobUnverified, pcmInt16, sr, nc);
@@ -578,7 +565,6 @@ async function processAudioChunkInternal(force = false) {
     return;
   }
   logInfo(`Generated WAV blob size: ${wavBlob.size} bytes`);
-  // Dynamically choose the best MIME type and file extension.
   const bestMimeType = getBestSupportedMimeType();
   const extension = getFileExtensionFromMime(bestMimeType);
   logInfo(`Using MIME type: ${bestMimeType}, Extension: ${extension}`);
@@ -646,6 +632,20 @@ function updateTranscriptionOutput() {
     updateStatusMessage("Transcription finished!", "green");
     logInfo("Transcription complete.");
   }
+}
+
+// =======================================
+// finalizeStop Function (Added)
+// =======================================
+function finalizeStop() {
+  logInfo("Recording stopped and finalized.");
+  updateStatusMessage("Transcription finished!", "green");
+  const startButton = document.getElementById("startButton");
+  const stopButton = document.getElementById("stopButton");
+  const pauseResumeButton = document.getElementById("pauseResumeButton");
+  if (startButton) startButton.disabled = false;
+  if (stopButton) stopButton.disabled = true;
+  if (pauseResumeButton) pauseResumeButton.disabled = true;
 }
 
 // =======================================
