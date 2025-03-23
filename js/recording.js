@@ -1,6 +1,6 @@
-// recording.js - Updated to use AudioWorklet for improved chunking and proper export
+// recording.js
 
-// Logging functions
+// Debug and logging functions
 const DEBUG = true;
 function logDebug(message, ...optionalParams) {
   if (DEBUG) {
@@ -14,47 +14,79 @@ function logError(message, ...optionalParams) {
   console.error(new Date().toISOString(), "[ERROR]", message, ...optionalParams);
 }
 
-// Global state variables
-let audioContext = null;
-let audioWorkletNode = null;
+// Chunk duration constants (45 seconds)
+const MIN_CHUNK_DURATION = 45000; // 45 sec
+const MAX_CHUNK_DURATION = 45000; // 45 sec
+const watchdogThreshold = 1500;   // 1.5 sec with no new frame
+
+// Backend URL for uploading chunks
+const backendUrl = "https://your-backend-url.com";
+
+// Global variables for audio capture and chunking
 let mediaStream = null;
+let audioContext = null;
+let workletNode = null;
 let recordingStartTime = 0;
-let recordingTimerInterval = null;
+let recordingTimerInterval;
+let completionTimerInterval = null;
+let completionStartTime = 0;
 let groupId = null;
 let chunkNumber = 1;
 let manualStop = false;
+let transcriptChunks = {};
+let pollingIntervals = {};
+
+let chunkStartTime = 0;
+let lastFrameTime = 0;
+let chunkTimeoutId;
+let chunkProcessingLock = false;
+let pendingStop = false;
+let finalChunkProcessed = false;
 let recordingPaused = false;
+let audioFrames = []; // Buffer for audio data (as Float32Array or similar)
 
-// UI Elements
-const startButton = document.getElementById("startButton");
-const stopButton = document.getElementById("stopButton");
-const pauseResumeButton = document.getElementById("pauseResumeButton");
-const recordTimerElem = document.getElementById("recordTimer");
-const statusElem = document.getElementById("statusMessage");
-const transcriptionElem = document.getElementById("transcription");
-
-// Helper function: format elapsed time
-function formatTime(ms) {
-  const totalSec = Math.floor(ms / 1000);
-  if (totalSec < 60) return totalSec + " sec";
-  const minutes = Math.floor(totalSec / 60);
-  const seconds = totalSec % 60;
-  return minutes + " min" + (seconds > 0 ? " " + seconds + " sec" : "");
-}
-
-function updateRecordingTimer() {
-  const elapsed = Date.now() - recordingStartTime;
-  if (recordTimerElem) recordTimerElem.innerText = "Recording Timer: " + formatTime(elapsed);
-}
-
+// UI update functions
 function updateStatusMessage(message, color = "#333") {
+  const statusElem = document.getElementById("statusMessage");
   if (statusElem) {
     statusElem.innerText = message;
     statusElem.style.color = color;
   }
 }
 
-// Helper functions to convert Float32Array PCM to 16-bit PCM and encode as WAV
+function formatTime(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  if (totalSec < 60) {
+    return totalSec + " sec";
+  } else {
+    const minutes = Math.floor(totalSec / 60);
+    const seconds = totalSec % 60;
+    return minutes + " min" + (seconds > 0 ? " " + seconds + " sec" : "");
+  }
+}
+
+function updateRecordingTimer() {
+  const elapsed = Date.now() - recordingStartTime;
+  const timerElem = document.getElementById("recordTimer");
+  if (timerElem) {
+    timerElem.innerText = "Recording Timer: " + formatTime(elapsed);
+  }
+}
+
+function stopMicrophone() {
+  if (mediaStream) {
+    mediaStream.getTracks().forEach(track => track.stop());
+    mediaStream = null;
+    logInfo("Microphone stopped.");
+  }
+  if (audioContext) {
+    audioContext.close();
+    audioContext = null;
+    workletNode = null;
+  }
+}
+
+// Functions to convert raw audio data into WAV format
 function floatTo16BitPCM(input) {
   const output = new Int16Array(input.length);
   for (let i = 0; i < input.length; i++) {
@@ -92,219 +124,284 @@ function encodeWAV(samples, sampleRate, numChannels) {
   return new Blob([view], { type: 'audio/wav' });
 }
 
-// Simplified uploadChunk function.
-// (Integrate your encryption/signing logic as needed from your original script.)
-async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast = false) {
-  // Assume getDecryptedAPIKey() returns your decrypted API key.
-  const apiKey = await getDecryptedAPIKey();
-  const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net/";
-  const formData = new FormData();
-  formData.append("file", blob, `chunk_${currentChunkNumber}.${extension}`);
-  formData.append("group_id", groupId);
-  formData.append("chunk_number", currentChunkNumber);
-  formData.append("api_key", apiKey);
-  // (Add additional fields: iv, salt, markers, device_token, signature, etc., as in your original upload endpoint.)
-  if (isLast) {
-    formData.append("last_chunk", "true");
+// Chunk scheduling and processing
+function scheduleChunk() {
+  if (manualStop || recordingPaused) {
+    logDebug("Scheduler suspended due to manual stop or pause.");
+    return;
   }
-  try {
-    const response = await fetch(`${backendUrl}/upload`, { method: "POST", body: formData });
-    if (!response.ok) {
-      throw new Error(`Upload failed with status ${response.status}`);
+  const elapsed = Date.now() - chunkStartTime;
+  const timeSinceLast = Date.now() - lastFrameTime;
+  if (elapsed >= MAX_CHUNK_DURATION || (elapsed >= MIN_CHUNK_DURATION && timeSinceLast >= watchdogThreshold)) {
+    logInfo("Chunk scheduling condition met; processing current chunk.");
+    safeProcessAudioChunk();
+    chunkStartTime = Date.now();
+    scheduleChunk();
+  } else {
+    chunkTimeoutId = setTimeout(scheduleChunk, 500);
+  }
+}
+
+async function safeProcessAudioChunk(force = false) {
+  if (manualStop && finalChunkProcessed) {
+    logDebug("Final chunk already processed; skipping safeProcessAudioChunk.");
+    return;
+  }
+  if (chunkProcessingLock) {
+    logDebug("Chunk processing is locked; skipping safeProcessAudioChunk.");
+    return;
+  }
+  chunkProcessingLock = true;
+  await processAudioChunkInternal(force);
+  chunkProcessingLock = false;
+  if (pendingStop) {
+    pendingStop = false;
+    finalizeStop();
+  }
+}
+
+function finalizeStop() {
+  completionStartTime = Date.now();
+  completionTimerInterval = setInterval(() => {
+    const timerElem = document.getElementById("transcribeTimer");
+    if (timerElem) {
+      timerElem.innerText = "Completion Timer: " + formatTime(Date.now() - completionStartTime);
     }
-    const result = await response.json();
-    logInfo(`Upload successful for chunk ${currentChunkNumber}`, result);
-    return result;
-  } catch (err) {
-    logError(`Upload error for chunk ${currentChunkNumber}:`, err);
+  }, 1000);
+  document.getElementById("startButton").disabled = false;
+  document.getElementById("stopButton").disabled = true;
+  document.getElementById("pauseResumeButton").disabled = true;
+  logInfo("Recording stopped by user. Finalizing transcription.");
+}
+
+// This function processes the buffered audio frames into a WAV blob and triggers the upload.
+async function processAudioChunkInternal(force = false) {
+  if (audioFrames.length === 0) {
+    logDebug("No audio frames to process.");
+    return;
+  }
+  logInfo(`Processing ${audioFrames.length} audio frames for chunk ${chunkNumber}.`);
+  let totalLength = 0;
+  audioFrames.forEach(frame => totalLength += frame.length);
+  const pcmFloat32 = new Float32Array(totalLength);
+  let offset = 0;
+  audioFrames.forEach(frame => {
+    pcmFloat32.set(frame, offset);
+    offset += frame.length;
+  });
+  const pcmInt16 = floatTo16BitPCM(pcmFloat32);
+  const wavBlob = encodeWAV(pcmInt16, 16000, 1);
+  audioFrames = [];
+  logInfo(`Uploading chunk ${chunkNumber}`);
+  uploadChunk(wavBlob, chunkNumber, "wav", "audio/wav", force, groupId)
+    .then(result => {
+      if (result && result.session_id) {
+        logInfo(`Chunk ${chunkNumber} uploaded successfully. Starting polling.`);
+        pollChunkTranscript(chunkNumber, groupId);
+      } else {
+        logInfo(`Chunk ${chunkNumber} upload did not return a session ID; skipping polling.`);
+      }
+    })
+    .catch(err => logError(`Upload error for chunk ${chunkNumber}:`, err));
+  chunkNumber++;
+}
+
+// (Placeholder) Function to poll the backend for the transcript of a chunk
+function pollChunkTranscript(chunkNum, currentGroup) {
+  const pollStart = Date.now();
+  pollingIntervals[chunkNum] = setInterval(async () => {
+    if (groupId !== currentGroup) {
+      clearInterval(pollingIntervals[chunkNum]);
+      logDebug(`Polling stopped for chunk ${chunkNum} due to session change.`);
+      return;
+    }
+    if (Date.now() - pollStart > 120000) {
+      logInfo(`Polling timeout for chunk ${chunkNum}`);
+      clearInterval(pollingIntervals[chunkNum]);
+      return;
+    }
+    try {
+      const response = await fetch(`${backendUrl}/fetch_chunk`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: currentGroup, chunk_number: chunkNum })
+      });
+      if (response.status === 200) {
+        const data = await response.json();
+        transcriptChunks[chunkNum] = data.transcript;
+        updateTranscriptionOutput();
+        clearInterval(pollingIntervals[chunkNum]);
+        logInfo(`Transcript received for chunk ${chunkNum}`);
+      } else {
+        logDebug(`Chunk ${chunkNum} transcript not ready yet.`);
+      }
+    } catch (err) {
+      logError(`Error polling for chunk ${chunkNum}:`, err);
+    }
+  }, 3000);
+}
+
+function updateTranscriptionOutput() {
+  const sortedKeys = Object.keys(transcriptChunks).map(Number).sort((a, b) => a - b);
+  let combinedTranscript = "";
+  sortedKeys.forEach(key => {
+    combinedTranscript += transcriptChunks[key] + " ";
+  });
+  const transcriptionElem = document.getElementById("transcription");
+  if (transcriptionElem) {
+    transcriptionElem.value = combinedTranscript.trim();
+  }
+  if (manualStop && Object.keys(transcriptChunks).length >= (chunkNumber - 1)) {
+    clearInterval(completionTimerInterval);
+    updateStatusMessage("Transcription finished!", "green");
+    logInfo("Transcription complete.");
   }
 }
 
-// Dummy getDecryptedAPIKey function (replace with your decryption logic)
-async function getDecryptedAPIKey() {
-  return sessionStorage.getItem("openai_api_key") || "";
-}
-
 // ------------------------------
-// AudioWorklet Processor Code (inline)
+// Inline AudioWorklet Processor
 // ------------------------------
-const recorderProcessorCode = `
-class RecorderProcessor extends AudioWorkletProcessor {
+const audioProcessorCode = `
+class AudioProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
-    this.buffer = [];
-    this.silenceCounter = 0;
-    this.silenceThreshold = 0.01; // Adjust as needed for silence detection
-    this.minimumChunkSamples = sampleRate * 3;  // Minimum 3 seconds of audio
-    this.maximumChunkSamples = sampleRate * 40; // Maximum 40 seconds of audio
   }
-  
   process(inputs, outputs, parameters) {
-    const input = inputs[0];
-    if (input.length > 0) {
-      const channelData = input[0]; // assume mono channel
-      // Store a copy of the current frame
-      this.buffer.push(new Float32Array(channelData));
-      
-      // Calculate RMS of current frame
-      let sum = 0;
-      for (let i = 0; i < channelData.length; i++) {
-        sum += channelData[i] * channelData[i];
-      }
-      const rms = Math.sqrt(sum / channelData.length);
-      
-      // Update silence counter if RMS is low
-      if (rms < this.silenceThreshold) {
-        this.silenceCounter += channelData.length;
-      } else {
-        this.silenceCounter = 0;
-      }
-      
-      // Total samples in buffer
-      const totalSamples = this.buffer.reduce((acc, curr) => acc + curr.length, 0);
-      
-      // Check if conditions to finalize chunk are met:
-      // Either maximum chunk duration reached, or minimum duration met with at least 300ms of silence.
-      if (totalSamples >= this.maximumChunkSamples || 
-         (totalSamples >= this.minimumChunkSamples && this.silenceCounter >= 0.3 * sampleRate)) {
-        // Flatten the buffer
-        const combined = new Float32Array(totalSamples);
-        let offset = 0;
-        for (let chunk of this.buffer) {
-          combined.set(chunk, offset);
-          offset += chunk.length;
-        }
-        // Send the audio chunk (as ArrayBuffer) to the main thread
-        this.port.postMessage({ audioChunk: combined.buffer }, [combined.buffer]);
-        // Reset buffer and silence counter
-        this.buffer = [];
-        this.silenceCounter = 0;
-      }
+    if (inputs.length > 0 && inputs[0].length > 0) {
+      // Send the first channel's data as a Float32Array
+      this.port.postMessage(inputs[0][0]);
     }
     return true;
   }
 }
-registerProcessor('recorder-processor', RecorderProcessor);
+registerProcessor('audio-processor', AudioProcessor);
 `;
 
-// Load the AudioWorklet module from the inline code
-async function loadAudioWorkletModule(context) {
-  const blob = new Blob([recorderProcessorCode], { type: 'application/javascript' });
-  const url = URL.createObjectURL(blob);
+// ------------------------------
+// AudioWorklet-Based Recording Initialization
+// ------------------------------
+async function initAudioWorkletCapture() {
   try {
-    await context.audioWorklet.addModule(url);
-    URL.revokeObjectURL(url);
+    audioContext = new AudioContext();
+    // Create a blob URL from the inline processor code
+    const blob = new Blob([audioProcessorCode], { type: 'application/javascript' });
+    const blobURL = URL.createObjectURL(blob);
+    await audioContext.audioWorklet.addModule(blobURL);
+    workletNode = new AudioWorkletNode(audioContext, 'audio-processor');
+    workletNode.port.onmessage = (event) => {
+      lastFrameTime = Date.now();
+      // Assume event.data is a Float32Array of audio samples.
+      audioFrames.push(event.data);
+    };
+    const source = audioContext.createMediaStreamSource(mediaStream);
+    source.connect(workletNode);
+    logInfo("AudioWorklet initialized and connected.");
   } catch (error) {
-    logError("Failed to load AudioWorklet module", error);
+    logError("Error initializing AudioWorklet:", error);
   }
 }
 
 // ------------------------------
-// Recording Control Functions
+// Initialization of Recording
 // ------------------------------
-async function startRecording() {
-  if (recordingPaused) {
-    // Resume if paused
-    if (mediaStream) {
-      mediaStream.getAudioTracks()[0].enabled = true;
-      recordingPaused = false;
-      pauseResumeButton.innerText = "Pause Recording";
-      updateStatusMessage("Recording resumed", "green");
+function resetRecordingState() {
+  Object.values(pollingIntervals).forEach(interval => clearInterval(interval));
+  pollingIntervals = {};
+  clearTimeout(chunkTimeoutId);
+  clearInterval(recordingTimerInterval);
+  transcriptChunks = {};
+  audioFrames = [];
+  chunkStartTime = Date.now();
+  lastFrameTime = Date.now();
+  manualStop = false;
+  finalChunkProcessed = false;
+  recordingPaused = false;
+  groupId = Date.now().toString();
+  chunkNumber = 1;
+}
+
+async function initRecording() {
+  const startButton = document.getElementById("startButton");
+  const stopButton = document.getElementById("stopButton");
+  const pauseResumeButton = document.getElementById("pauseResumeButton");
+  if (!startButton || !stopButton || !pauseResumeButton) return;
+
+  startButton.addEventListener("click", async () => {
+    const decryptedApiKey = sessionStorage.getItem("openai_api_key");
+    if (!decryptedApiKey || !decryptedApiKey.startsWith("sk-")) {
+      alert("Please enter a valid OpenAI API key before starting the recording.");
       return;
     }
-  }
-  
-  try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  } catch (error) {
-    updateStatusMessage("Microphone access error: " + error, "red");
-    logError("Microphone access error", error);
-    return;
-  }
-  
-  // Create a new AudioContext and load the AudioWorklet
-  audioContext = new AudioContext();
-  await loadAudioWorkletModule(audioContext);
-  
-  const source = audioContext.createMediaStreamSource(mediaStream);
-  audioWorkletNode = new AudioWorkletNode(audioContext, 'recorder-processor');
-  
-  // Listen for audio chunks from the worklet
-  audioWorkletNode.port.onmessage = async (event) => {
-    const { audioChunk } = event.data;
-    if (audioChunk) {
-      const float32Array = new Float32Array(audioChunk);
-      const int16Array = floatTo16BitPCM(float32Array);
-      const wavBlob = encodeWAV(int16Array, audioContext.sampleRate, 1);
-      logInfo(`Uploading chunk ${chunkNumber}`);
-      await uploadChunk(wavBlob, chunkNumber, "wav", "audio/wav");
-      chunkNumber++;
+    resetRecordingState();
+    const transcriptionElem = document.getElementById("transcription");
+    if (transcriptionElem) transcriptionElem.value = "";
+    
+    updateStatusMessage("Recording...", "green");
+    logInfo("Recording started.");
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recordingStartTime = Date.now();
+      recordingTimerInterval = setInterval(updateRecordingTimer, 1000);
+      
+      // Initialize AudioWorklet for capturing audio frames.
+      await initAudioWorkletCapture();
+      
+      // Start scheduling chunks.
+      chunkStartTime = Date.now();
+      scheduleChunk();
+      
+      startButton.disabled = true;
+      stopButton.disabled = false;
+      pauseResumeButton.disabled = false;
+      pauseResumeButton.innerText = "Pause Recording";
+    } catch (error) {
+      updateStatusMessage("Microphone access error: " + error, "red");
+      logError("Microphone access error", error);
     }
-  };
-  
-  // Connect the source to the worklet and to the destination (if you want to hear the audio)
-  source.connect(audioWorkletNode).connect(audioContext.destination);
-  
-  // Initialize state and timers
-  groupId = Date.now().toString();
-  recordingStartTime = Date.now();
-  recordingTimerInterval = setInterval(updateRecordingTimer, 1000);
-  updateStatusMessage("Recording...", "green");
-  logInfo("Recording started using AudioWorklet.");
-  
-  // Update UI button states
-  if (startButton) startButton.disabled = true;
-  if (stopButton) stopButton.disabled = false;
-  if (pauseResumeButton) {
-    pauseResumeButton.disabled = false;
-    pauseResumeButton.innerText = "Pause Recording";
-  }
-}
+  });
 
-async function stopRecording() {
-  updateStatusMessage("Stopping recording...", "blue");
-  manualStop = true;
-  
-  if (mediaStream) {
-    mediaStream.getTracks().forEach(track => track.stop());
-    mediaStream = null;
-  }
-  if (audioContext) {
-    await audioContext.close();
-    audioContext = null;
-  }
-  clearInterval(recordingTimerInterval);
-  updateStatusMessage("Recording stopped. Finalizing transcription.", "green");
-  if (startButton) startButton.disabled = false;
-  if (stopButton) stopButton.disabled = true;
-  if (pauseResumeButton) pauseResumeButton.disabled = true;
-  logInfo("Recording stopped.");
-}
+  pauseResumeButton.addEventListener("click", async () => {
+    if (!audioContext) return;
+    if (audioContext.state === "running") {
+      await audioContext.suspend();
+      recordingPaused = true;
+      clearInterval(recordingTimerInterval);
+      clearTimeout(chunkTimeoutId);
+      pauseResumeButton.innerText = "Resume Recording";
+      updateStatusMessage("Recording paused", "orange");
+      logInfo("Recording paused.");
+    } else {
+      await audioContext.resume();
+      recordingPaused = false;
+      recordingStartTime = Date.now();
+      recordingTimerInterval = setInterval(updateRecordingTimer, 1000);
+      pauseResumeButton.innerText = "Pause Recording";
+      updateStatusMessage("Recording...", "green");
+      chunkStartTime = Date.now();
+      scheduleChunk();
+      logInfo("Recording resumed.");
+    }
+  });
 
-function togglePauseResume() {
-  if (!mediaStream) return;
-  const track = mediaStream.getAudioTracks()[0];
-  if (track.enabled) {
-    track.enabled = false;
-    recordingPaused = true;
-    if (pauseResumeButton) pauseResumeButton.innerText = "Resume Recording";
-    updateStatusMessage("Recording paused", "orange");
+  stopButton.addEventListener("click", async () => {
+    updateStatusMessage("Finishing transcription...", "blue");
+    manualStop = true;
+    clearTimeout(chunkTimeoutId);
     clearInterval(recordingTimerInterval);
-    logInfo("Recording paused.");
-  } else {
-    track.enabled = true;
-    recordingPaused = false;
-    recordingStartTime = Date.now();
-    recordingTimerInterval = setInterval(updateRecordingTimer, 1000);
-    if (pauseResumeButton) pauseResumeButton.innerText = "Pause Recording";
-    updateStatusMessage("Recording resumed", "green");
-    logInfo("Recording resumed.");
-  }
+    stopMicrophone();
+    chunkStartTime = 0;
+    lastFrameTime = 0;
+    await new Promise(resolve => setTimeout(resolve, 200));
+    if (chunkProcessingLock) {
+      pendingStop = true;
+      logDebug("Chunk processing locked at stop; setting pendingStop.");
+    } else {
+      await safeProcessAudioChunk(true);
+      finalChunkProcessed = true;
+      finalizeStop();
+      logInfo("Stop button processed; final chunk handled.");
+    }
+  });
 }
 
-// Exported function to initialize recording functionality and attach UI event listeners
-export function initRecording() {
-  if (startButton) startButton.addEventListener("click", startRecording);
-  if (stopButton) stopButton.addEventListener("click", stopRecording);
-  if (pauseResumeButton) pauseResumeButton.addEventListener("click", togglePauseResume);
-}
+export { initRecording };
