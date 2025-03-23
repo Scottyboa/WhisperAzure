@@ -1,6 +1,6 @@
 // recorder.js
 // Self-contained version using an inlined AudioWorklet processor with precise timing, frame merging,
-// and header verification/correction—and with continuous streaming (no restart between chunks).
+// header verification/correction, and 200ms silence padding at the beginning and end of each chunk.
 
 // ===================
 // Utility: hashString
@@ -10,7 +10,7 @@ function hashString(str) {
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash |= 0; // 32-bit signed integer
+    hash |= 0; // Convert to 32-bit signed integer
   }
   return (hash >>> 0).toString();
 }
@@ -25,7 +25,7 @@ class ChunkProcessor extends AudioWorkletProcessor {
     if (input && input.length > 0) {
       // Copy each channel's data (typically 128 samples per block)
       const channelData = input.map(channel => channel.slice(0));
-      // Post the data with sample rate and number of channels.
+      // Post the data along with sample rate and number of channels.
       this.port.postMessage({
         channelData,
         sampleRate: sampleRate,
@@ -244,11 +244,12 @@ async function encryptFileBlob(blob) {
   const encoder = new TextEncoder();
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
-  const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
-      keyMaterial,
-      { name: "AES-GCM", length: 256 },
-      false,
-      ["encrypt", "decrypt"]
+  const key = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
   );
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const buffer = await blob.arrayBuffer();
@@ -441,6 +442,25 @@ async function verifyAndCorrectWavHeader(wavBlob, pcmInt16, sampleRate, numChann
 }
 
 // =======================================
+// Helper: Add Silence Padding
+// =======================================
+function addSilenceToBuffer(buffer, silenceDurationMs) {
+  const silenceSamples = Math.round(buffer.sampleRate * (silenceDurationMs / 1000));
+  const numChannels = buffer.numberOfChannels;
+  const newLength = buffer.length + silenceSamples * 2;
+  // Create a new buffer using the same AudioContext to maintain consistency.
+  const newBuffer = buffer.context.createBuffer(numChannels, newLength, buffer.sampleRate);
+  for (let ch = 0; ch < numChannels; ch++) {
+    const newData = newBuffer.getChannelData(ch);
+    // First silence remains zeros.
+    // Copy original data into the middle.
+    newData.set(buffer.getChannelData(ch), silenceSamples);
+    // Last silence remains zeros.
+  }
+  return newBuffer;
+}
+
+// =======================================
 // AudioWorklet Integration (Inlined Processor)
 // =======================================
 async function initAudioWorklet() {
@@ -476,7 +496,7 @@ async function initAudioWorklet() {
 }
 
 // =======================================
-// Schedule Chunk (Continuous Stream)
+// Schedule Chunk (Continuous Streaming)
 // =======================================
 function scheduleChunk() {
   if (manualStop || recordingPaused) {
@@ -488,7 +508,7 @@ function scheduleChunk() {
   if (elapsed >= CHUNK_DURATION || (elapsed >= CHUNK_DURATION && timeSinceLast >= watchdogThreshold)) {
     logInfo("Chunk boundary reached; processing current chunk.");
     safeProcessAudioChunk().then(() => {
-      // Reset chunk timer without restarting the stream.
+      // Reset chunk timer but continue the stream.
       chunkStartTime = Date.now();
       scheduleChunk();
     });
@@ -505,7 +525,7 @@ async function safeProcessAudioChunk(force = false) {
 }
 
 // =======================================
-// Process Audio Chunk Using WavRecorder
+// Process Audio Chunk Using WavRecorder and Silence Padding
 // =======================================
 async function processAudioChunkInternal(force = false) {
   if (audioFrames.length === 0) {
@@ -518,14 +538,16 @@ async function processAudioChunkInternal(force = false) {
   for (const frame of audioFrames) {
     recorder.addFrame(frame);
   }
-  // Clear the global frame buffer for the next chunk.
+  // Clear the global frame buffer.
   audioFrames = [];
   const renderedBuffer = await recorder.mergeFrames();
   if (!renderedBuffer) {
     logError("Rendered buffer is null.");
     return;
   }
-  const { wavBlob: wavBlobUnverified, pcmInt16, sampleRate: sr, numChannels: nc } = audioBufferToWavFromAudioBuffer(renderedBuffer);
+  // Add 200ms of silence to the beginning and end.
+  const bufferWithSilence = addSilenceToBuffer(renderedBuffer, 200);
+  const { wavBlob: wavBlobUnverified, pcmInt16, sampleRate: sr, numChannels: nc } = audioBufferToWavFromAudioBuffer(bufferWithSilence);
   const wavBlob = await verifyAndCorrectWavHeader(wavBlobUnverified, pcmInt16, sr, nc);
   if (!wavBlob) {
     logError("Failed to generate corrected WAV blob.");
