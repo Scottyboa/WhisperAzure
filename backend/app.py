@@ -6,8 +6,8 @@ import queue
 import hmac
 import hashlib
 import base64
-import subprocess  # New import for running FFmpeg
-
+import subprocess
+import tempfile
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -27,7 +27,7 @@ app = Flask(__name__)
 CORS(app)
 
 # ------------------------------
-# Root Route (Newly Added)
+# Root Route
 # ------------------------------
 @app.route("/")
 def index():
@@ -36,7 +36,6 @@ def index():
 # ------------------------------
 # Helper Functions for Validation
 # ------------------------------
-
 def hash_string(s: str) -> str:
     """
     Mimics a simple JavaScript hashString() function.
@@ -58,7 +57,6 @@ def compute_hmac(message: str, secret: str) -> str:
 # ------------------------------
 # Decryption Function for Audio
 # ------------------------------
-
 def decrypt_audio_file(encrypted_data: bytes, salt_b64: str, iv_b64: str, api_key: str, device_token: str) -> bytes:
     """
     Decrypts the provided encrypted audio using AES-GCM.
@@ -87,7 +85,6 @@ def decrypt_audio_file(encrypted_data: bytes, salt_b64: str, iv_b64: str, api_ke
 # ------------------------------
 # In-Memory Session Storage and Auto-Deletion Logic
 # ------------------------------
-
 sessions = {}
 
 def schedule_session_deletion(group_id, delay=120):
@@ -121,9 +118,8 @@ def schedule_session_deletion(group_id, delay=120):
     t.start()
 
 # ------------------------------
-# Upload Endpoint with FFmpeg Conversion
+# Upload Endpoint with Request Signing and Marker Validation
 # ------------------------------
-
 @app.route("/upload", methods=["POST"])
 def upload_audio():
     # Ensure the file is provided.
@@ -139,7 +135,7 @@ def upload_audio():
     salt = request.form.get("salt")
     api_key_marker = request.form.get("api_key_marker")
     device_marker = request.form.get("device_marker")
-    device_token = request.form.get("device_token")  # This field is now required
+    device_token = request.form.get("device_token")  # This field is required
 
     missing_fields = []
     if not group_id:
@@ -171,7 +167,6 @@ def upload_audio():
         return jsonify({"error": "Invalid device marker"}), 400
 
     # Validate the request signature.
-    # The secret is defined as: api_key + ":" + device_token
     secret = api_key + ":" + device_token
     message = f"upload:{group_id}:{chunk_number}"
     expected_signature = compute_hmac(message, secret)
@@ -182,7 +177,7 @@ def upload_audio():
     if group_id not in sessions:
         sessions[group_id] = {}
     sessions[group_id]["api_key"] = api_key
-    sessions[group_id]["device_token"] = device_token  # Store device token for decryption
+    sessions[group_id]["device_token"] = device_token
 
     # Initialize transcription queue if necessary.
     if "transcription_queue" not in sessions[group_id]:
@@ -191,44 +186,20 @@ def upload_audio():
     group_folder = os.path.join("uploads", group_id)
     os.makedirs(group_folder, exist_ok=True)
 
-    # Determine a safe filename for the raw uploaded chunk.
+    # Determine a safe filename.
     original_filename = secure_filename(audio_file.filename)
     if not original_filename:
-        original_filename = f"chunk_{chunk_number}.raw"
+        original_filename = f"chunk_{chunk_number}.wav"
     else:
         ext = os.path.splitext(original_filename)[1]
         original_filename = f"chunk_{chunk_number}{ext}"
-    raw_save_path = os.path.join(group_folder, original_filename)
-    audio_file.save(raw_save_path)
-    logger.info(f"Received chunk {chunk_number} for group {group_id} stored at {raw_save_path}")
+    save_path = os.path.join(group_folder, original_filename)
+    audio_file.save(save_path)
+    logger.info(f"Received chunk {chunk_number} for group {group_id} stored at {save_path}")
 
-    # ------------------------------
-    # FFmpeg Conversion Step
-    # ------------------------------
-    # Convert the raw uploaded file into a fully formatted WAV file.
-    converted_filename = f"chunk_{chunk_number}_converted.wav"
-    converted_save_path = os.path.join(group_folder, converted_filename)
-    
-    # Example FFmpeg command: re-encode to PCM 16-bit, 44100 Hz, mono.
-    ffmpeg_command = [
-        "ffmpeg",
-        "-y",                # Overwrite output files without asking.
-        "-i", raw_save_path, # Input file.
-        "-acodec", "pcm_s16le",  # Use PCM 16-bit little-endian codec.
-        "-ar", "44100",          # Set sample rate to 44100 Hz.
-        "-ac", "1",              # Set number of channels to 1.
-        converted_save_path
-    ]
-    try:
-        subprocess.run(ffmpeg_command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        logger.info(f"FFmpeg conversion successful for chunk {chunk_number}, saved to {converted_save_path}")
-    except subprocess.CalledProcessError as e:
-        logger.error(f"FFmpeg conversion failed for chunk {chunk_number}: {e.stderr.decode('utf-8')}")
-        return jsonify({"error": "FFmpeg conversion failed"}), 500
-
-    # Store chunk info with the converted file path.
+    # Store chunk info (including encryption metadata) in session.
     sessions[group_id].setdefault("chunks", {})[chunk_number] = {
-        "path": converted_save_path,
+        "path": save_path,
         "iv": iv,
         "salt": salt
     }
@@ -253,7 +224,6 @@ def upload_audio():
 # ------------------------------
 # Fetch Chunk Endpoint
 # ------------------------------
-
 @app.route("/fetch_chunk", methods=["POST"])
 def fetch_chunk():
     data = request.get_json()
@@ -275,7 +245,6 @@ def fetch_chunk():
 # ------------------------------
 # Delete Endpoint for Manual Session Deletion
 # ------------------------------
-
 @app.route("/delete", methods=["POST"])
 def delete_audio():
     data = request.get_json()
@@ -299,20 +268,18 @@ def delete_audio():
     return jsonify({"error": "Group folder not found"}), 404
 
 # ------------------------------
-# Transcription Functions (with Decryption)
+# Transcription Functions (with FFmpeg Conversion)
 # ------------------------------
-
 def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
     """
-    Synchronously decrypts and transcribes an audio chunk using the OpenAI Whisper API.
-    This function now explicitly requests a plain-text response from gpt-4o-transcribe.
+    Synchronously decrypts, converts, and transcribes an audio chunk using the OpenAI Whisper API.
     Returns the transcript (or an error message).
     """
     file_path = chunk_info["path"]
     iv = chunk_info["iv"]
     salt = chunk_info["salt"]
 
-    # Determine content type based on file extension
+    # Determine content type based on file extension (will be overwritten after conversion)
     ext = os.path.splitext(file_path)[1].lower()
     mime_mapping = {
         ".mp3": "audio/mp3",
@@ -324,19 +291,53 @@ def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
         ".webm": "audio/webm",
         ".ogg": "audio/ogg"
     }
-    content_type = mime_mapping.get(ext, "application/octet-stream")
+    original_content_type = mime_mapping.get(ext, "application/octet-stream")
     try:
-        # Read the converted file
+        # Read the encrypted file
         with open(file_path, "rb") as f:
-            converted_data = f.read()
+            encrypted_data = f.read()
         # Decrypt the audio data using the provided salt and iv
-        decrypted_data = decrypt_audio_file(converted_data, salt, iv, api_key, device_token)
+        decrypted_data = decrypt_audio_file(encrypted_data, salt, iv, api_key, device_token)
         
+        # Write decrypted data to a temporary file
+        with tempfile.NamedTemporaryFile(suffix=".tmp", delete=False) as temp_in:
+            temp_in.write(decrypted_data)
+            temp_in.flush()
+            input_temp_filename = temp_in.name
+
+        # Prepare a temporary output file for the converted audio (WAV format)
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_out:
+            output_temp_filename = temp_out.name
+
+        # Run FFmpeg to convert the audio file into a properly formatted WAV file.
+        # Force mono audio (-ac 1) and set the sample rate to 16000 Hz (-ar 16000)
+        ffmpeg_command = [
+            "ffmpeg",
+            "-y",  # overwrite output file if exists
+            "-i", input_temp_filename,
+            "-ac", "1",
+            "-ar", "16000",
+            output_temp_filename
+        ]
+        subprocess.run(ffmpeg_command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        # Read the converted file data
+        with open(output_temp_filename, "rb") as f:
+            converted_data = f.read()
+
+        # Clean up temporary files
+        os.remove(input_temp_filename)
+        os.remove(output_temp_filename)
+
+        # Set content type for the converted file (WAV)
+        content_type = "audio/wav"
+
+        # Call the transcription API with the converted audio data
         response = requests.post(
             "https://api.openai.com/v1/audio/transcriptions",
             headers={"Authorization": f"Bearer {api_key}"},
-            files={"file": (os.path.basename(file_path), decrypted_data, content_type)},
-            data={"model": "gpt-4o-transcribe", "response_format": "text"}
+            files={"file": (os.path.basename(file_path), converted_data, content_type)},
+            data={"model": "gpt-4o-transcribe"}
         )
         if response.status_code != 200:
             logger.error(f"OpenAI API error on chunk {chunk_number}: {response.text}")
@@ -375,8 +376,6 @@ def process_transcription_queue(group_id, api_key):
 # ------------------------------
 # Main Application Entry Point
 # ------------------------------
-
 if __name__ == "__main__":
-    # Use the port from the environment variable if available, otherwise default to 8080.
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=True)
