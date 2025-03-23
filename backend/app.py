@@ -6,6 +6,8 @@ import queue
 import hmac
 import hashlib
 import base64
+import io
+import wave
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -68,15 +70,12 @@ MIME_MAPPING = {
 }
 
 def get_file_extension_from_mime(mime_type: str) -> str:
-    # For our purposes, if the MIME type is audio/wav, we use "wav"
-    # Otherwise, you might choose to derive it from the mapping.
     if mime_type == "audio/wav":
         return "wav"
-    # Otherwise, try to find the extension from the mapping:
     for ext, mt in MIME_MAPPING.items():
         if mt == mime_type:
-            return ext[1:]  # strip the dot
-    return "wav"  # fallback
+            return ext[1:]
+    return "wav"
 
 # ------------------------------
 # Decryption Function for Audio
@@ -85,10 +84,6 @@ def get_file_extension_from_mime(mime_type: str) -> str:
 def decrypt_audio_file(encrypted_data: bytes, salt_b64: str, iv_b64: str, api_key: str, device_token: str) -> bytes:
     """
     Decrypts the provided encrypted audio using AES-GCM.
-    
-    - salt_b64 and iv_b64 are Base64-encoded strings sent by the client.
-    - The key is derived using PBKDF2HMAC with 100,000 iterations.
-    - The secret for key derivation is: api_key + ":" + device_token.
     """
     salt = base64.b64decode(salt_b64)
     iv = base64.b64decode(iv_b64)
@@ -108,14 +103,35 @@ def decrypt_audio_file(encrypted_data: bytes, salt_b64: str, iv_b64: str, api_ke
     return decrypted_data
 
 # ------------------------------
+# Re-encode Audio to Fix Headers
+# ------------------------------
+def reencode_audio_bytes(audio_bytes: bytes) -> bytes:
+    """
+    Uses the wave module to re-read and re-save the audio data.
+    This should correct any header issues.
+    """
+    try:
+        in_buffer = io.BytesIO(audio_bytes)
+        with wave.open(in_buffer, 'rb') as wf:
+            params = wf.getparams()
+            frames = wf.readframes(wf.getnframes())
+        out_buffer = io.BytesIO()
+        with wave.open(out_buffer, 'wb') as wf_out:
+            wf_out.setparams(params)
+            wf_out.writeframes(frames)
+        out_buffer.seek(0)
+        return out_buffer.read()
+    except Exception as e:
+        logger.error(f"Error re-encoding audio bytes: {e}")
+        return None
+
+# ------------------------------
 # In-Memory Session Storage and Auto-Deletion Logic
 # ------------------------------
-
 sessions = {}
 
 def schedule_session_deletion(group_id, delay=120):
     """
-    Restarts the deletion timer for the given session.
     After 'delay' seconds of inactivity, the session folder and in-memory session data are deleted.
     """
     def deletion_action():
@@ -146,10 +162,8 @@ def schedule_session_deletion(group_id, delay=120):
 # ------------------------------
 # Upload Endpoint with Request Signing and Marker Validation
 # ------------------------------
-
 @app.route("/upload", methods=["POST"])
 def upload_audio():
-    # Ensure the file is provided.
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
 
@@ -162,7 +176,7 @@ def upload_audio():
     salt = request.form.get("salt")
     api_key_marker = request.form.get("api_key_marker")
     device_marker = request.form.get("device_marker")
-    device_token = request.form.get("device_token")  # This field is now required
+    device_token = request.form.get("device_token")
 
     missing_fields = []
     if not group_id:
@@ -187,37 +201,30 @@ def upload_audio():
     except Exception:
         return jsonify({"error": "Invalid chunk_number"}), 400
 
-    # Validate markers.
     if hash_string(api_key) != api_key_marker:
         return jsonify({"error": "Invalid API key marker"}), 400
     if hash_string(device_token) != device_marker:
         return jsonify({"error": "Invalid device marker"}), 400
 
-    # Validate the request signature.
-    # The secret is defined as: api_key + ":" + device_token
     secret = api_key + ":" + device_token
     message = f"upload:{group_id}:{chunk_number}"
     expected_signature = compute_hmac(message, secret)
     if not hmac.compare_digest(expected_signature, signature):
         return jsonify({"error": "Invalid signature"}), 400
 
-    # Retrieve or initialize the session.
     if group_id not in sessions:
         sessions[group_id] = {}
     sessions[group_id]["api_key"] = api_key
-    sessions[group_id]["device_token"] = device_token  # Store device token for decryption
+    sessions[group_id]["device_token"] = device_token
 
-    # Initialize transcription queue if necessary.
     if "transcription_queue" not in sessions[group_id]:
         sessions[group_id]["transcription_queue"] = queue.PriorityQueue()
 
     group_folder = os.path.join("uploads", group_id)
     os.makedirs(group_folder, exist_ok=True)
 
-    # Determine a safe filename.
     original_filename = secure_filename(audio_file.filename)
     if not original_filename:
-        # Use dynamic extension if possible. Here, we default to wav.
         original_filename = f"chunk_{chunk_number}.wav"
     else:
         ext = os.path.splitext(original_filename)[1]
@@ -226,14 +233,12 @@ def upload_audio():
     audio_file.save(save_path)
     logger.info(f"Received chunk {chunk_number} for group {group_id} stored at {save_path}")
 
-    # Store chunk info (including encryption metadata) in session.
     sessions[group_id].setdefault("chunks", {})[chunk_number] = {
         "path": save_path,
         "iv": iv,
         "salt": salt
     }
 
-    # Restart the session deletion timer.
     schedule_session_deletion(group_id)
 
     last_chunk_flag = request.form.get("last_chunk", "false").lower() == "true"
@@ -253,7 +258,6 @@ def upload_audio():
 # ------------------------------
 # Fetch Chunk Endpoint
 # ------------------------------
-
 @app.route("/fetch_chunk", methods=["POST"])
 def fetch_chunk():
     data = request.get_json()
@@ -275,7 +279,6 @@ def fetch_chunk():
 # ------------------------------
 # Delete Endpoint for Manual Session Deletion
 # ------------------------------
-
 @app.route("/delete", methods=["POST"])
 def delete_audio():
     data = request.get_json()
@@ -299,19 +302,29 @@ def delete_audio():
     return jsonify({"error": "Group folder not found"}), 404
 
 # ------------------------------
-# Transcription Functions (with Decryption)
+# Transcription Functions (with Decryption and Re-Encoding)
 # ------------------------------
+def reencode_audio_bytes(audio_bytes: bytes) -> bytes:
+    try:
+        in_buffer = io.BytesIO(audio_bytes)
+        with wave.open(in_buffer, 'rb') as wf:
+            params = wf.getparams()
+            frames = wf.readframes(wf.getnframes())
+        out_buffer = io.BytesIO()
+        with wave.open(out_buffer, 'wb') as wf_out:
+            wf_out.setparams(params)
+            wf_out.writeframes(frames)
+        out_buffer.seek(0)
+        return out_buffer.read()
+    except Exception as e:
+        logger.error(f"Error re-encoding audio bytes: {e}")
+        return None
 
 def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
-    """
-    Synchronously decrypts and transcribes an audio chunk using the OpenAI Whisper API.
-    Returns the transcript (or an error message).
-    """
     file_path = chunk_info["path"]
     iv = chunk_info["iv"]
     salt = chunk_info["salt"]
 
-    # Determine content type based on file extension using the MIME_MAPPING.
     ext = os.path.splitext(file_path)[1].lower()
     mime_mapping = {
         ".mp3": "audio/mp3",
@@ -325,16 +338,17 @@ def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
     }
     content_type = mime_mapping.get(ext, "application/octet-stream")
     try:
-        # Read the encrypted file
         with open(file_path, "rb") as f:
             encrypted_data = f.read()
-        # Decrypt the audio data using the provided salt and iv
         decrypted_data = decrypt_audio_file(encrypted_data, salt, iv, api_key, device_token)
-        
+        reencoded_data = reencode_audio_bytes(decrypted_data)
+        if reencoded_data is None:
+            logger.error("Re-encoding failed, using original decrypted data.")
+            reencoded_data = decrypted_data
         response = requests.post(
             "https://api.openai.com/v1/audio/transcriptions",
             headers={"Authorization": f"Bearer {api_key}"},
-            files={"file": (os.path.basename(file_path), decrypted_data, content_type)},
+            files={"file": (os.path.basename(file_path), reencoded_data, content_type)},
             data={"model": "gpt-4o-transcribe"}
         )
         if response.status_code != 200:
