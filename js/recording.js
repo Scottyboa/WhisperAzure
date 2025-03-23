@@ -1,4 +1,4 @@
-// recording.js - Updated to use AudioWorklet for improved chunking
+// recording.js - Updated to use AudioWorklet for improved chunking and proper export
 
 // Logging functions
 const DEBUG = true;
@@ -93,7 +93,7 @@ function encodeWAV(samples, sampleRate, numChannels) {
 }
 
 // Simplified uploadChunk function.
-// (Integrate your encryption/signing logic as needed from your original script [32].)
+// (Integrate your encryption/signing logic as needed from your original script.)
 async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast = false) {
   // Assume getDecryptedAPIKey() returns your decrypted API key.
   const apiKey = await getDecryptedAPIKey();
@@ -103,7 +103,7 @@ async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast
   formData.append("group_id", groupId);
   formData.append("chunk_number", currentChunkNumber);
   formData.append("api_key", apiKey);
-  // (Add additional fields: iv, salt, markers, device_token, signature, etc., as in your original upload endpoint [42].)
+  // (Add additional fields: iv, salt, markers, device_token, signature, etc., as in your original upload endpoint.)
   if (isLast) {
     formData.append("last_chunk", "true");
   }
@@ -253,10 +253,12 @@ async function startRecording() {
   logInfo("Recording started using AudioWorklet.");
   
   // Update UI button states
-  startButton.disabled = true;
-  stopButton.disabled = false;
-  pauseResumeButton.disabled = false;
-  pauseResumeButton.innerText = "Pause Recording";
+  if (startButton) startButton.disabled = true;
+  if (stopButton) stopButton.disabled = false;
+  if (pauseResumeButton) {
+    pauseResumeButton.disabled = false;
+    pauseResumeButton.innerText = "Pause Recording";
+  }
 }
 
 async function stopRecording() {
@@ -273,9 +275,9 @@ async function stopRecording() {
   }
   clearInterval(recordingTimerInterval);
   updateStatusMessage("Recording stopped. Finalizing transcription.", "green");
-  startButton.disabled = false;
-  stopButton.disabled = true;
-  pauseResumeButton.disabled = true;
+  if (startButton) startButton.disabled = false;
+  if (stopButton) stopButton.disabled = true;
+  if (pauseResumeButton) pauseResumeButton.disabled = true;
   logInfo("Recording stopped.");
 }
 
@@ -285,7 +287,7 @@ function togglePauseResume() {
   if (track.enabled) {
     track.enabled = false;
     recordingPaused = true;
-    pauseResumeButton.innerText = "Resume Recording";
+    if (pauseResumeButton) pauseResumeButton.innerText = "Resume Recording";
     updateStatusMessage("Recording paused", "orange");
     clearInterval(recordingTimerInterval);
     logInfo("Recording paused.");
@@ -294,13 +296,15 @@ function togglePauseResume() {
     recordingPaused = false;
     recordingStartTime = Date.now();
     recordingTimerInterval = setInterval(updateRecordingTimer, 1000);
-    pauseResumeButton.innerText = "Pause Recording";
+    if (pauseResumeButton) pauseResumeButton.innerText = "Pause Recording";
     updateStatusMessage("Recording resumed", "green");
     logInfo("Recording resumed.");
   }
 }
 
-// Attach event listeners to UI buttons
-if (startButton) startButton.addEventListener("click", startRecording);
-if (stopButton) stopButton.addEventListener("click", stopRecording);
-if (pauseResumeButton) pauseResumeButton.addEventListener("click", togglePauseResume);
+// Exported function to initialize recording functionality and attach UI event listeners
+export function initRecording() {
+  if (startButton) startButton.addEventListener("click", startRecording);
+  if (stopButton) stopButton.addEventListener("click", stopRecording);
+  if (pauseResumeButton) pauseResumeButton.addEventListener("click", togglePauseResume);
+}
