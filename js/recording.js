@@ -8,7 +8,6 @@ function hashString(str) {
     hash = ((hash << 5) - hash) + char;
     hash |= 0; // Convert to 32-bit signed integer
   }
-  // Convert to an unsigned 32-bit integer and return as string.
   return (hash >>> 0).toString();
 }
 
@@ -312,6 +311,11 @@ function scheduleChunk() {
   }
 }
 async function safeProcessAudioChunk(force = false) {
+  // If this is the final forced processing and residual audio is very low, skip uploading an extra chunk.
+  if (force && audioFrames.length < 50) {
+    logInfo("Final residual audio frames below threshold; skipping upload of final chunk.");
+    return;
+  }
   if (manualStop && finalChunkProcessed) {
     logDebug("Final chunk already processed; skipping safeProcessAudioChunk.");
     return;
@@ -375,6 +379,7 @@ async function processAudioChunkInternal(force = false) {
 // --- Polling for Transcript ---
 function pollChunkTranscript(chunkNum, currentGroup) {
   const pollStart = Date.now();
+  console.log(`Starting polling for chunk ${chunkNum} with session_id: ${currentGroup}`);
   pollingIntervals[chunkNum] = setInterval(async () => {
     if (groupId !== currentGroup) {
       clearInterval(pollingIntervals[chunkNum]);
@@ -387,19 +392,24 @@ function pollChunkTranscript(chunkNum, currentGroup) {
       return;
     }
     try {
+      const payload = JSON.stringify({ session_id: currentGroup, chunk_number: chunkNum });
+      console.log(`Polling payload for chunk ${chunkNum}: ${payload}`);
       const response = await fetch(`${backendUrl}fetch_chunk`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: currentGroup, chunk_number: chunkNum })
+        body: payload
       });
+      console.log(`Polling response status for chunk ${chunkNum}: ${response.status}`);
       if (response.status === 200) {
         const data = await response.json();
         transcriptChunks[chunkNum] = data.transcript;
         updateTranscriptionOutput();
         clearInterval(pollingIntervals[chunkNum]);
         logInfo(`Transcript received for chunk ${chunkNum}`);
-      } else {
+      } else if (response.status === 202) {
         logDebug(`Chunk ${chunkNum} transcript not ready yet.`);
+      } else {
+        logError(`Unexpected status ${response.status} when polling for chunk ${chunkNum}`);
       }
     } catch (err) {
       logError(`Error polling for chunk ${chunkNum}:`, err);
