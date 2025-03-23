@@ -275,13 +275,13 @@ def delete_audio():
     return jsonify({"error": "Group folder not found"}), 404
 
 # ------------------------------
-# Transcription Functions (with Decryption and ffmpeg Conversion)
+# Transcription Functions (with Decryption and sox Conversion)
 # ------------------------------
 
 def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
     """
     Synchronously decrypts and transcribes an audio chunk using the OpenAI Whisper API.
-    Converts the audio to mono, 16kHz, 16-bit PCM WAV using ffmpeg before sending.
+    Converts the audio to mono, 16kHz, 16-bit PCM WAV using sox before sending.
     Returns the transcript (or an error message).
     """
     file_path = chunk_info["path"]
@@ -301,19 +301,19 @@ def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
             temp_in.flush()
             input_path = temp_in.name
 
-        # Prepare output file path
+        # Prepare output file path for sox conversion
         output_path = input_path + "_converted.wav"
-        # Run ffmpeg to convert audio to mono, 16kHz, 16-bit PCM
-        ffmpeg_command = [
-            "ffmpeg",
-            "-y",  # overwrite output
-            "-i", input_path,
-            "-ac", "1",
-            "-ar", "16000",
-            "-sample_fmt", "s16",
+        # Run sox to convert audio to mono, 16kHz, 16-bit PCM
+        sox_command = [
+            "sox",
+            input_path,
+            "-r", "16000",
+            "-b", "16",
+            "-e", "signed-integer",
+            "-c", "1",
             output_path
         ]
-        subprocess.run(ffmpeg_command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run(sox_command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Read the converted file
         with open(output_path, "rb") as f:
