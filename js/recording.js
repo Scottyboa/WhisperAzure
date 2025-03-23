@@ -1,19 +1,5 @@
 // recorder.js
-// Self-contained version using an inlined AudioWorklet processor.
-// This version captures audio via an AudioWorklet, slices it into 45‑second chunks,
-// and processes/uploads each chunk for transcription. When you click Stop, the current chunk is processed
-// as the final chunk and then the stream is shut down.
-
-// --- Utility: hashString ---
-function hashString(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash |= 0; // Convert to 32-bit signed integer
-  }
-  return (hash >>> 0).toString();
-}
+// Self-contained version using an inlined AudioWorklet processor with precise timing and frame merging.
 
 // --- Inlined AudioWorklet Processor Code ---
 const audioProcessorCode = `
@@ -23,7 +9,8 @@ class ChunkProcessor extends AudioWorkletProcessor {
     if (input && input.length > 0) {
       // Copy each channel's data (typically 128 samples per block)
       const channelData = input.map(channel => channel.slice(0));
-      // Post the data with sample rate and number of channels.
+      // Post message with the channel data, sample rate, and number of channels.
+      // Note: We do not include a timestamp here; the main thread will use audioContext.currentTime.
       this.port.postMessage({
         channelData,
         sampleRate: sampleRate,
@@ -35,6 +22,17 @@ class ChunkProcessor extends AudioWorkletProcessor {
 }
 registerProcessor('chunk-processor', ChunkProcessor);
 `;
+
+// --- Utility: hashString ---
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0; // Convert to 32-bit signed integer
+  }
+  return (hash >>> 0).toString();
+}
 
 // --- Logging Functions ---
 const DEBUG = true;
@@ -263,52 +261,99 @@ async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast
   }
 }
 
-// --- Robust Conversion Process from Frames to WAV ---
-function framesToWav(frames) {
-  if (frames.length === 0) return null;
-  const sampleRate = frames[0].sampleRate;
-  const numChannels = frames[0].numberOfChannels;
-  for (let i = 1; i < frames.length; i++) {
-    if (frames[i].sampleRate !== sampleRate) {
-      logError(`Frame ${i} has different sampleRate: ${frames[i].sampleRate} vs ${sampleRate}`);
+// --- Offline Rendering and Precise Merging ---
+async function processAudioChunkInternal(force = false) {
+  if (audioFrames.length === 0) {
+    logDebug("No audio frames to process.");
+    return;
+  }
+  logInfo(`Processing ${audioFrames.length} audio frames for chunk ${chunkNumber}.`);
+  
+  // Sort frames by timestamp (assumed to be assigned when received)
+  audioFrames.sort((a, b) => a.timestamp - b.timestamp);
+  const firstFrame = audioFrames[0];
+  const lastFrame = audioFrames[audioFrames.length - 1];
+  const sampleRate = firstFrame.sampleRate;
+  const numChannels = firstFrame.numberOfChannels;
+  
+  // Calculate total duration: (timestamp of last frame + its duration) - first frame timestamp.
+  const lastFrameDuration = lastFrame.numberOfFrames / sampleRate;
+  const totalDuration = (lastFrame.timestamp + lastFrameDuration) - firstFrame.timestamp;
+  const totalSamples = Math.ceil(totalDuration * sampleRate);
+  
+  logInfo(`Total duration for chunk: ${totalDuration.toFixed(3)} sec, Total samples: ${totalSamples}`);
+  
+  // Create an OfflineAudioContext to render the entire chunk.
+  const offlineContext = new OfflineAudioContext(numChannels, totalSamples, sampleRate);
+  
+  // Create an empty AudioBuffer from the offline context.
+  const outputBuffer = offlineContext.createBuffer(numChannels, totalSamples, sampleRate);
+  
+  const baseTime = firstFrame.timestamp;
+  // For each frame, calculate its start sample index based on its timestamp.
+  for (const frame of audioFrames) {
+    const startTimeOffset = frame.timestamp - baseTime;
+    const startIndex = Math.round(startTimeOffset * sampleRate);
+    for (let ch = 0; ch < numChannels; ch++) {
+      const channelData = outputBuffer.getChannelData(ch);
+      const temp = new Float32Array(frame.numberOfFrames);
+      frame.copyTo(temp, { planeIndex: ch });
+      channelData.set(temp, startIndex);
     }
-    if (frames[i].numberOfChannels !== numChannels) {
-      logError(`Frame ${i} has different channel count: ${frames[i].numberOfChannels} vs ${numChannels}`);
-    }
   }
-  let totalSamples = 0;
-  for (const frame of frames) {
-    totalSamples += frame.numberOfFrames;
+  
+  // Render the buffer by playing it back through an AudioBufferSourceNode.
+  const source = offlineContext.createBufferSource();
+  source.buffer = outputBuffer;
+  source.connect(offlineContext.destination);
+  source.start();
+  const renderedBuffer = await offlineContext.startRendering();
+  
+  // Convert the rendered AudioBuffer to a WAV blob.
+  const wavBlob = audioBufferToWavFromAudioBuffer(renderedBuffer);
+  if (!wavBlob) {
+    logError("Failed to generate WAV blob from rendered buffer.");
+    return;
   }
-  logInfo(`Total samples per channel: ${totalSamples}`);
-  let channelData = [];
-  for (let c = 0; c < numChannels; c++) {
-    channelData[c] = new Float32Array(totalSamples);
-  }
-  let offset = 0;
-  for (const frame of frames) {
-    const num = frame.numberOfFrames;
-    for (let c = 0; c < numChannels; c++) {
-      const temp = new Float32Array(num);
-      frame.copyTo(temp, { planeIndex: c });
-      channelData[c].set(temp, offset);
-    }
-    offset += frame.numberOfFrames;
-  }
+  logInfo(`Generated WAV blob size: ${wavBlob.size} bytes`);
+  
+  const mimeType = "audio/wav";
+  const extension = "wav";
+  const currentChunk = chunkNumber;
+  logInfo(`Uploading chunk ${currentChunk}`);
+  uploadChunk(wavBlob, currentChunk, extension, mimeType, force, groupId)
+    .then(result => {
+      if (result && result.session_id) {
+        logInfo(`Chunk ${currentChunk} uploaded successfully. Starting polling.`);
+        pollChunkTranscript(currentChunk, groupId);
+      } else {
+        logInfo(`Chunk ${currentChunk} upload did not return a session ID; skipping polling.`);
+      }
+    })
+    .catch(err => logError(`Upload error for chunk ${currentChunk}:`, err));
+  chunkNumber++;
+  // Clear the audioFrames for the next chunk.
+  audioFrames = [];
+}
+
+// Helper: Convert AudioBuffer to WAV Blob.
+function audioBufferToWavFromAudioBuffer(buffer) {
+  const numChannels = buffer.numberOfChannels;
+  const sampleRate = buffer.sampleRate;
+  const length = buffer.length;
   let interleaved;
   if (numChannels === 1) {
-    interleaved = channelData[0];
+    interleaved = buffer.getChannelData(0);
   } else {
-    interleaved = new Float32Array(totalSamples * numChannels);
-    for (let i = 0; i < totalSamples; i++) {
-      for (let c = 0; c < numChannels; c++) {
-        interleaved[i * numChannels + c] = channelData[c][i];
+    interleaved = new Float32Array(length * numChannels);
+    for (let i = 0; i < length; i++) {
+      for (let ch = 0; ch < numChannels; ch++) {
+        interleaved[i * numChannels + ch] = buffer.getChannelData(ch)[i];
       }
     }
   }
   const pcmInt16 = floatTo16BitPCM(interleaved);
-  const wavBlob = encodeWAV(pcmInt16, sampleRate, numChannels);
-  return wavBlob;
+  return encodeWAV(pcmInt16, sampleRate, numChannels);
 }
 function floatTo16BitPCM(input) {
   const output = new Int16Array(input.length);
@@ -346,38 +391,6 @@ function encodeWAV(samples, sampleRate, numChannels) {
   return new Blob([view], { type: 'audio/wav' });
 }
 
-// --- AudioWorklet Integration (Inlined Processor) ---
-async function initAudioWorklet() {
-  if (!audioContext) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  // Create a Blob URL for the inlined processor code.
-  const blob = new Blob([audioProcessorCode], { type: "application/javascript" });
-  const moduleURL = URL.createObjectURL(blob);
-  try {
-    await audioContext.audioWorklet.addModule(moduleURL);
-    workletNode = new AudioWorkletNode(audioContext, 'chunk-processor');
-    workletNode.port.onmessage = (event) => {
-      const data = event.data;
-      const frame = {
-        numberOfFrames: data.channelData[0].length,
-        sampleRate: data.sampleRate,
-        numberOfChannels: data.numberOfChannels,
-        copyTo: (destination, options) => {
-          const plane = options.planeIndex || 0;
-          destination.set(data.channelData[plane]);
-        },
-        close: () => {}
-      };
-      audioFrames.push(frame);
-      lastFrameTime = Date.now();
-    };
-    logInfo("AudioWorklet initialized.");
-  } catch (error) {
-    logError("Error initializing AudioWorklet:", error);
-  }
-}
-
 // --- Schedule Chunk ---
 function scheduleChunk() {
   if (manualStop || recordingPaused) {
@@ -399,38 +412,6 @@ function scheduleChunk() {
   } else {
     chunkTimeoutId = setTimeout(scheduleChunk, 500);
   }
-}
-
-// --- Process Audio Chunk ---
-async function processAudioChunkInternal(force = false) {
-  if (audioFrames.length === 0) {
-    logDebug("No audio frames to process.");
-    return;
-  }
-  logInfo(`Processing ${audioFrames.length} audio frames for chunk ${chunkNumber}.`);
-  const framesToProcess = audioFrames;
-  audioFrames = [];
-  const wavBlob = framesToWav(framesToProcess);
-  if (!wavBlob) {
-    logError("Failed to convert frames to WAV blob.");
-    return;
-  }
-  logInfo(`Generated WAV blob size: ${wavBlob.size} bytes`);
-  const mimeType = "audio/wav";
-  const extension = "wav";
-  const currentChunk = chunkNumber;
-  logInfo(`Uploading chunk ${currentChunk}`);
-  uploadChunk(wavBlob, currentChunk, extension, mimeType, force, groupId)
-    .then(result => {
-      if (result && result.session_id) {
-        logInfo(`Chunk ${currentChunk} uploaded successfully. Starting polling.`);
-        pollChunkTranscript(currentChunk, groupId);
-      } else {
-        logInfo(`Chunk ${currentChunk} upload did not return a session ID; skipping polling.`);
-      }
-    })
-    .catch(err => logError(`Upload error for chunk ${currentChunk}:`, err));
-  chunkNumber++;
 }
 async function safeProcessAudioChunk(force = false) {
   if (manualStop && finalChunkProcessed) {
@@ -508,9 +489,7 @@ function updateTranscriptionOutput() {
     combinedTranscript += transcriptChunks[key] + " ";
   });
   const transcriptionElem = document.getElementById("transcription");
-  if (transcriptionElem) {
-    transcriptionElem.value = combinedTranscript.trim();
-  }
+  if (transcriptionElem) transcriptionElem.value = combinedTranscript.trim();
   if (manualStop && Object.keys(transcriptChunks).length >= (chunkNumber - 1)) {
     updateStatusMessage("Transcription finished!", "green");
     logInfo("Transcription complete.");
