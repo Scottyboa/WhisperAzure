@@ -1,6 +1,7 @@
 // recording.js
 // Updated recording module with API key validation, file encryption, request signing, sending device_token,
-// and with a dynamic flush mechanism that waits until no new frames are delivered before finalizing the recording.
+// and with a dynamic flush mechanism that waits until no new frames arrive before finalizing the recording.
+// The stop handler now cancels the audio reader after inactivity to force the stream to close.
 
 function hashString(str) {
   let hash = 0;
@@ -376,7 +377,7 @@ async function flushAudioFrames() {
 
 // --- Wait Until Inactivity ---
 async function waitForInactivity(thresholdMs = 3000) {
-  // Wait until no new frames have arrived for thresholdMs.
+  // Loop until no new frames have arrived for thresholdMs.
   while (true) {
     await new Promise(resolve => setTimeout(resolve, 100));
     if (Date.now() - lastFrameTime > thresholdMs) {
@@ -656,10 +657,14 @@ function initRecording() {
     manualStop = true;
     clearTimeout(chunkTimeoutId);
     clearInterval(recordingTimerInterval);
-    // Instead of a fixed delay, wait until no new frames have arrived.
+    // Wait until no new frames have arrived.
     await waitForInactivity(500);
-    // Now stop the microphone while keeping the reader active for flushing.
-    stopMicrophone(true);
+    // Cancel the audio reader to force the stream to close.
+    if (audioReader) {
+      audioReader.cancel();
+      audioReader = null;
+      logInfo("Audio reader cancelled after inactivity.");
+    }
     // Flush any pending audio frames.
     await flushAudioFrames();
     chunkStartTime = 0;
