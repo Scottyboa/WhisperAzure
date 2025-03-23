@@ -54,6 +54,31 @@ def compute_hmac(message: str, secret: str) -> str:
     return base64.b64encode(hm.digest()).decode('utf-8')
 
 # ------------------------------
+# MIME Type Management (Server-Side)
+# ------------------------------
+MIME_MAPPING = {
+    ".mp3": "audio/mp3",
+    ".mp4": "audio/mp4",
+    ".mpeg": "audio/mpeg",
+    ".mpga": "audio/mpga",
+    ".m4a": "audio/m4a",
+    ".wav": "audio/wav",
+    ".webm": "audio/webm",
+    ".ogg": "audio/ogg"
+}
+
+def get_file_extension_from_mime(mime_type: str) -> str:
+    # For our purposes, if the MIME type is audio/wav, we use "wav"
+    # Otherwise, you might choose to derive it from the mapping.
+    if mime_type == "audio/wav":
+        return "wav"
+    # Otherwise, try to find the extension from the mapping:
+    for ext, mt in MIME_MAPPING.items():
+        if mt == mime_type:
+            return ext[1:]  # strip the dot
+    return "wav"  # fallback
+
+# ------------------------------
 # Decryption Function for Audio
 # ------------------------------
 
@@ -138,12 +163,22 @@ def upload_audio():
     api_key_marker = request.form.get("api_key_marker")
     device_marker = request.form.get("device_marker")
     device_token = request.form.get("device_token")  # This field is now required
-    mime_type = request.form.get("mime_type", "audio/wav")  # NEW: Extract MIME type
 
     missing_fields = []
-    for field in ["group_id", "chunk_number", "api_key", "signature", "device_token", "iv", "salt"]:
-        if not request.form.get(field):
-            missing_fields.append(field)
+    if not group_id:
+        missing_fields.append("group_id")
+    if not chunk_number:
+        missing_fields.append("chunk_number")
+    if not api_key:
+        missing_fields.append("api_key")
+    if not signature:
+        missing_fields.append("signature")
+    if not device_token:
+        missing_fields.append("device_token")
+    if not iv:
+        missing_fields.append("iv")
+    if not salt:
+        missing_fields.append("salt")
     if missing_fields:
         return jsonify({"error": "Missing required fields", "fields": missing_fields}), 400
 
@@ -159,6 +194,7 @@ def upload_audio():
         return jsonify({"error": "Invalid device marker"}), 400
 
     # Validate the request signature.
+    # The secret is defined as: api_key + ":" + device_token
     secret = api_key + ":" + device_token
     message = f"upload:{group_id}:{chunk_number}"
     expected_signature = compute_hmac(message, secret)
@@ -181,20 +217,20 @@ def upload_audio():
     # Determine a safe filename.
     original_filename = secure_filename(audio_file.filename)
     if not original_filename:
+        # Use dynamic extension if possible. Here, we default to wav.
         original_filename = f"chunk_{chunk_number}.wav"
     else:
         ext = os.path.splitext(original_filename)[1]
         original_filename = f"chunk_{chunk_number}{ext}"
     save_path = os.path.join(group_folder, original_filename)
     audio_file.save(save_path)
-    logger.info(f"Received chunk {chunk_number} for group {group_id}, MIME: {mime_type}, stored at {save_path}")
+    logger.info(f"Received chunk {chunk_number} for group {group_id} stored at {save_path}")
 
-    # Store chunk info (including encryption metadata and MIME type) in session.
+    # Store chunk info (including encryption metadata) in session.
     sessions[group_id].setdefault("chunks", {})[chunk_number] = {
         "path": save_path,
         "iv": iv,
-        "salt": salt,
-        "mime_type": mime_type  # NEW: Save MIME type
+        "salt": salt
     }
 
     # Restart the session deletion timer.
@@ -274,11 +310,25 @@ def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
     file_path = chunk_info["path"]
     iv = chunk_info["iv"]
     salt = chunk_info["salt"]
-    # Use the MIME type provided by the client
-    content_type = chunk_info.get("mime_type", "audio/wav")
+
+    # Determine content type based on file extension using the MIME_MAPPING.
+    ext = os.path.splitext(file_path)[1].lower()
+    mime_mapping = {
+        ".mp3": "audio/mp3",
+        ".mp4": "audio/mp4",
+        ".mpeg": "audio/mpeg",
+        ".mpga": "audio/mpga",
+        ".m4a": "audio/m4a",
+        ".wav": "audio/wav",
+        ".webm": "audio/webm",
+        ".ogg": "audio/ogg"
+    }
+    content_type = mime_mapping.get(ext, "application/octet-stream")
     try:
+        # Read the encrypted file
         with open(file_path, "rb") as f:
             encrypted_data = f.read()
+        # Decrypt the audio data using the provided salt and iv
         decrypted_data = decrypt_audio_file(encrypted_data, salt, iv, api_key, device_token)
         
         response = requests.post(
@@ -320,10 +370,6 @@ def process_transcription_queue(group_id, api_key):
         if sessions[group_id].get("last_chunk_received") and q.empty():
             break
     logger.info(f"Finished processing transcription queue for group {group_id}")
-
-# ------------------------------
-# Main Application Entry Point
-# ------------------------------
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
