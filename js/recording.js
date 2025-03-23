@@ -4,6 +4,17 @@
 // and processes/uploads each chunk for transcription. When you click Stop, the current chunk is processed
 // as the final chunk and then the stream is shut down.
 
+// --- Utility: hashString ---
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0; // Convert to 32-bit signed integer
+  }
+  return (hash >>> 0).toString();
+}
+
 // --- Inlined AudioWorklet Processor Code ---
 const audioProcessorCode = `
 class ChunkProcessor extends AudioWorkletProcessor {
@@ -12,7 +23,7 @@ class ChunkProcessor extends AudioWorkletProcessor {
     if (input && input.length > 0) {
       // Copy each channel's data (typically 128 samples per block)
       const channelData = input.map(channel => channel.slice(0));
-      // Post the channel data along with sample rate and number of channels.
+      // Post the data with sample rate and number of channels.
       this.port.postMessage({
         channelData,
         sampleRate: sampleRate,
@@ -57,7 +68,7 @@ let lastFrameTime = 0;
 let chunkTimeoutId;
 let audioFrames = []; // Array to collect frames from the AudioWorklet
 let recordingPaused = false;
-let finalChunkProcessed = false; // Ensure this global is declared
+let finalChunkProcessed = false; // Global flag
 
 // --- UI Helper Functions ---
 function updateStatusMessage(message, color = "#333") {
@@ -80,7 +91,7 @@ function updateRecordingTimer() {
   if (timerElem) timerElem.innerText = "Recording Timer: " + formatTime(elapsed);
 }
 
-// --- Stop Audio ---
+// --- Stop Audio (close stream, node, context) ---
 function stopAudio() {
   if (mediaStream) {
     mediaStream.getTracks().forEach(track => track.stop());
@@ -165,13 +176,19 @@ async function encryptFileBlob(blob) {
   const encoder = new TextEncoder();
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
-  const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" }, keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+  const key = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
+  );
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const buffer = await blob.arrayBuffer();
   const encryptedBuffer = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, buffer);
   const encryptedBlob = new Blob([encryptedBuffer], { type: blob.type });
   const apiKeyMarker = hashString(apiKey);
-  const deviceMarker = hashString(getDeviceToken());
+  const deviceMarker = hashString(deviceToken);
   return { encryptedBlob, iv: arrayBufferToBase64(iv), salt: arrayBufferToBase64(salt), apiKeyMarker, deviceMarker };
 }
 
@@ -191,7 +208,6 @@ async function signUploadRequest(groupId, chunkNumber) {
 }
 
 // --- Upload Chunk Function ---
-// Defined here so that it is available to processAudioChunkInternal.
 async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast = false, currentGroup) {
   let encryptionResult;
   try {
@@ -343,7 +359,6 @@ async function initAudioWorklet() {
     workletNode = new AudioWorkletNode(audioContext, 'chunk-processor');
     workletNode.port.onmessage = (event) => {
       const data = event.data;
-      // Mimic a frame object similar to previous implementations.
       const frame = {
         numberOfFrames: data.channelData[0].length,
         sampleRate: data.sampleRate,
