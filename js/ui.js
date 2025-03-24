@@ -34,42 +34,6 @@ function loadAdSense() {
   (adsbygoogle = window.adsbygoogle || []).push({});
 }
 
-// === Guide Overlay (Index Page) ===
-
-// Initializes the API key guide overlay and the enter button event listener.
-function initGuideOverlay() {
-  const overlay = document.getElementById("apiKeyGuideOverlay");
-  const openGuideButton = document.getElementById("openGuideButton");
-  const closeGuideBtn = document.getElementById("closeGuideBtn");
-
-  if (openGuideButton && overlay) {
-    openGuideButton.addEventListener("click", () => {
-      // Toggle the overlay display
-      if (overlay.style.display === "flex") {
-        overlay.style.display = "none";
-        console.log("Guide overlay closed via toggle.");
-      } else {
-        overlay.style.display = "flex";
-        overlay.style.flexDirection = "column";
-        overlay.style.alignItems = "center";
-        console.log("Guide overlay opened.");
-      }
-    });
-  } else {
-    console.error("Guide overlay or openGuideButton element missing.");
-  }
-
-  // Attach event listener for the close (exit) button.
-  if (closeGuideBtn && overlay) {
-    closeGuideBtn.addEventListener("click", () => {
-      overlay.style.display = "none";
-      console.log("Guide overlay closed via exit button.");
-    });
-  } else {
-    console.error("Close guide button element missing.");
-  }
-}
-
 // Initializes the consent banner.
 function initConsentBanner() {
   const cmpAccept = document.getElementById("cmp-accept");
@@ -106,4 +70,101 @@ function initConsentBanner() {
   }
 }
 
-export { initConsentBanner, initGuideOverlay };
+// === Info Modals Initialization (Index Page) ===
+
+// Initializes all modal overlays and their corresponding info buttons.
+function initInfoModals() {
+  // Guide Modal
+  const guideOverlay = document.getElementById("apiKeyGuideOverlay");
+  const openGuideButton = document.getElementById("openGuideButton");
+  const closeGuideBtn = document.getElementById("closeGuideBtn");
+  if (openGuideButton && guideOverlay) {
+    openGuideButton.addEventListener("click", () => {
+      guideOverlay.style.display = "flex";
+      guideOverlay.style.flexDirection = "column";
+      guideOverlay.style.alignItems = "center";
+      console.log("Guide overlay opened.");
+    });
+  } else {
+    console.error("Guide overlay or openGuideButton element missing.");
+  }
+  if (closeGuideBtn && guideOverlay) {
+    closeGuideBtn.addEventListener("click", () => {
+      guideOverlay.style.display = "none";
+      console.log("Guide overlay closed.");
+    });
+  } else {
+    console.error("Close guide button element missing.");
+  }
+
+  // Price Modal
+  const priceOverlay = document.getElementById("priceModalOverlay");
+  const openPriceButton = document.getElementById("openPriceButton");
+  const closePriceBtn = document.getElementById("closePriceModalButton");
+  if (openPriceButton && priceOverlay) {
+    openPriceButton.addEventListener("click", () => {
+      priceOverlay.style.display = "flex";
+      priceOverlay.style.flexDirection = "column";
+      priceOverlay.style.alignItems = "center";
+      console.log("Price modal opened.");
+    });
+  } else {
+    console.error("Price modal or openPriceButton element missing.");
+  }
+  if (closePriceBtn && priceOverlay) {
+    closePriceBtn.addEventListener("click", () => {
+      priceOverlay.style.display = "none";
+      console.log("Price modal closed.");
+    });
+  } else {
+    console.error("Close price button element missing.");
+  }
+
+  // Security Modal
+  const securityOverlay = document.getElementById("securityModalOverlay");
+  const openSecurityButton = document.getElementById("openSecurityButton");
+  const closeSecurityBtn = document.getElementById("closeSecurityModalButton");
+  if (openSecurityButton && securityOverlay) {
+    openSecurityButton.addEventListener("click", () => {
+      securityOverlay.style.display = "flex";
+      securityOverlay.style.flexDirection = "column";
+      securityOverlay.style.alignItems = "center";
+      console.log("Security modal opened.");
+    });
+  } else {
+    console.error("Security modal or openSecurityButton element missing.");
+  }
+  if (closeSecurityBtn && securityOverlay) {
+    closeSecurityBtn.addEventListener("click", () => {
+      securityOverlay.style.display = "none";
+      console.log("Security modal closed.");
+    });
+  } else {
+    console.error("Close security button element missing.");
+  }
+
+  // About Modal
+  const aboutOverlay = document.getElementById("aboutModalOverlay");
+  const openAboutButton = document.getElementById("openAboutButton");
+  const closeAboutBtn = document.getElementById("closeAboutModalButton");
+  if (openAboutButton && aboutOverlay) {
+    openAboutButton.addEventListener("click", () => {
+      aboutOverlay.style.display = "flex";
+      aboutOverlay.style.flexDirection = "column";
+      aboutOverlay.style.alignItems = "center";
+      console.log("About modal opened.");
+    });
+  } else {
+    console.error("About modal or openAboutButton element missing.");
+  }
+  if (closeAboutBtn && aboutOverlay) {
+    closeAboutBtn.addEventListener("click", () => {
+      aboutOverlay.style.display = "none";
+      console.log("About modal closed.");
+    });
+  } else {
+    console.error("Close about button element missing.");
+  }
+}
+
+export { initConsentBanner, initInfoModals };
