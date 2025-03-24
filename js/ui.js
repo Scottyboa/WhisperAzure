@@ -34,7 +34,7 @@ function loadAdSense() {
   (adsbygoogle = window.adsbygoogle || []).push({});
 }
 
-// Initializes the consent banner.
+// Initializes the consent banner: attaches event listeners and checks cookie status.
 function initConsentBanner() {
   const cmpAccept = document.getElementById("cmp-accept");
   const cmpManage = document.getElementById("cmp-manage");
