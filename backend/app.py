@@ -308,7 +308,7 @@ def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
         sox_convert_cmd = [
             "sox",
             input_path,
-            "-r", "16000",
+            "-r", "24000",
             "-b", "16",
             "-e", "signed-integer",
             "-c", "1",
