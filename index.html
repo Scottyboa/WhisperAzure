@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title id="page-title">Secure Medical Transcription</title>
-  <!-- Import Google Fonts -->
+  <!-- Import Google Fonts for other elements if needed -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=Merriweather:wght@300;400&display=swap" rel="stylesheet">
+  <!-- You may need to include a link for "Wensley Modern Serif Font Family" if it’s hosted externally -->
   <style>
     /* Base styles */
     body {
@@ -25,12 +26,15 @@
       position: relative;
     }
     header h1 {
-      font-family: 'Merriweather', serif;
+      /* Changed to use Wensley Modern Serif Font Family */
+      font-family: 'Wensley Modern Serif Font Family', serif;
       font-weight: 300;
       font-size: 48px;
       margin: 0;
     }
     header p {
+      /* Changed to use Wensley Modern Serif Font Family */
+      font-family: 'Wensley Modern Serif Font Family', serif;
       font-size: 20px;
       margin-top: 10px;
     }
@@ -243,7 +247,9 @@
     <button id="cmp-manage">Manage</button>
   </div>
 
-  <!-- Script Section: Encryption, Modal, and Consent Logic -->
+  <!-- Inline script for encryption, API key handling, and consent logic.
+       (Note: The duplicate event listener for the API guide button has been removed here.
+       The modal toggling for the API guide is now solely handled in ui.js via main-index.js.) -->
   <script>
     // --- Encryption Helper Functions ---
     function arrayBufferToBase64(buffer) {
@@ -314,80 +320,9 @@
       const encrypted = await encryptAPIKey(apiKey);
       sessionStorage.setItem("encrypted_api_key", JSON.stringify(encrypted));
     }
-
-    // --- Modal Logic & API Key Handling ---
+    
+    // API key and Enter button logic
     document.addEventListener("DOMContentLoaded", function() {
-      // API Guide Modal
-      const apiOverlay = document.getElementById("apiKeyGuideOverlay");
-      const closeGuideBtn = document.getElementById("closeGuideBtn");
-      const openGuideButton = document.getElementById("openGuideButton");
-      if (openGuideButton && apiOverlay) {
-        openGuideButton.addEventListener("click", () => {
-          apiOverlay.style.display = "flex";
-          apiOverlay.style.flexDirection = "column";
-          apiOverlay.style.alignItems = "center";
-          console.log("Guide overlay opened.");
-        });
-      } else {
-        console.error("Guide overlay or openGuideButton element missing.");
-      }
-      if (closeGuideBtn && apiOverlay) {
-        closeGuideBtn.addEventListener("click", () => {
-          apiOverlay.style.display = "none";
-          console.log("Guide overlay closed.");
-        });
-      } else {
-        console.error("Close guide button element missing.");
-      }
-      // Price Modal
-      const priceOverlay = document.getElementById("priceModalOverlay");
-      const openPriceButton = document.getElementById("openPriceButton");
-      const closePriceBtn = document.getElementById("closePriceModalButton");
-      if (openPriceButton && priceOverlay) {
-        openPriceButton.addEventListener("click", () => {
-          priceOverlay.style.display = "flex";
-          priceOverlay.style.flexDirection = "column";
-          priceOverlay.style.alignItems = "center";
-        });
-      }
-      if (closePriceBtn && priceOverlay) {
-        closePriceBtn.addEventListener("click", () => {
-          priceOverlay.style.display = "none";
-        });
-      }
-      // Security Modal
-      const securityOverlay = document.getElementById("securityModalOverlay");
-      const openSecurityButton = document.getElementById("openSecurityButton");
-      const closeSecurityBtn = document.getElementById("closeSecurityModalButton");
-      if (openSecurityButton && securityOverlay) {
-        openSecurityButton.addEventListener("click", () => {
-          securityOverlay.style.display = "flex";
-          securityOverlay.style.flexDirection = "column";
-          securityOverlay.style.alignItems = "center";
-        });
-      }
-      if (closeSecurityBtn && securityOverlay) {
-        closeSecurityBtn.addEventListener("click", () => {
-          securityOverlay.style.display = "none";
-        });
-      }
-      // About Modal
-      const aboutOverlay = document.getElementById("aboutModalOverlay");
-      const openAboutButton = document.getElementById("openAboutButton");
-      const closeAboutBtn = document.getElementById("closeAboutModalButton");
-      if (openAboutButton && aboutOverlay) {
-        openAboutButton.addEventListener("click", () => {
-          aboutOverlay.style.display = "flex";
-          aboutOverlay.style.flexDirection = "column";
-          aboutOverlay.style.alignItems = "center";
-        });
-      }
-      if (closeAboutBtn && aboutOverlay) {
-        closeAboutBtn.addEventListener("click", () => {
-          aboutOverlay.style.display = "none";
-        });
-      }
-      // API Key and Enter Button Logic
       const enterTranscriptionBtn = document.getElementById("enterTranscriptionBtn");
       const apiKeyInput = document.getElementById("apiKeyInput");
       if (enterTranscriptionBtn && apiKeyInput) {
@@ -404,7 +339,7 @@
         console.error("API key input or enter button element is missing.");
       }
       
-      // --- Beta Test Button Logic ---
+      // Beta Test Button Logic
       const betaTestButton = document.getElementById("betaTestButton");
       if (betaTestButton) {
         betaTestButton.addEventListener("click", function () {
