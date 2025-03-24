@@ -1,13 +1,13 @@
 import { initIndexLanguage } from './languageLoaderUsage.js';
-import { initConsentBanner, initGuideOverlay } from './ui.js';
+import { initConsentBanner, initInfoModals } from './ui.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Wait for the language initialization to complete.
+  // Initialize language support for the index page.
   await initIndexLanguage();
-  
+
   // Initialize the consent banner.
   initConsentBanner();
-  
-  // Initialize the API key guide overlay and API key redirect functionality.
-  initGuideOverlay();
+
+  // Initialize all the info modals (Guide, Price, Security, About).
+  initInfoModals();
 });
