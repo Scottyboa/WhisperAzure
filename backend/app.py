@@ -342,8 +342,7 @@ def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
             headers={"Authorization": f"Bearer {api_key}"},
             files={"file": (os.path.basename(file_path), final_data, content_type)},
             data={
-                "model": "gpt-4o-transcribe",
-                "prompt": "Dr–pat consult. Transcribe spoken language as-is."
+                "model": "whisper-1",
             }
         )
         if response.status_code != 200:
