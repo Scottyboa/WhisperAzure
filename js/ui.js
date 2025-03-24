@@ -34,7 +34,43 @@ function loadAdSense() {
   (adsbygoogle = window.adsbygoogle || []).push({});
 }
 
-// Initializes the consent banner: attaches event listeners and checks cookie status.
+// === Guide Overlay (Index Page) ===
+
+// Initializes the API key guide overlay and the enter button event listener.
+function initGuideOverlay() {
+  const overlay = document.getElementById("apiKeyGuideOverlay");
+  const openGuideButton = document.getElementById("openGuideButton");
+  const closeGuideBtn = document.getElementById("closeGuideBtn");
+
+  if (openGuideButton && overlay) {
+    openGuideButton.addEventListener("click", () => {
+      // Toggle the overlay display
+      if (overlay.style.display === "flex") {
+        overlay.style.display = "none";
+        console.log("Guide overlay closed via toggle.");
+      } else {
+        overlay.style.display = "flex";
+        overlay.style.flexDirection = "column";
+        overlay.style.alignItems = "center";
+        console.log("Guide overlay opened.");
+      }
+    });
+  } else {
+    console.error("Guide overlay or openGuideButton element missing.");
+  }
+
+  // Attach event listener for the close (exit) button.
+  if (closeGuideBtn && overlay) {
+    closeGuideBtn.addEventListener("click", () => {
+      overlay.style.display = "none";
+      console.log("Guide overlay closed via exit button.");
+    });
+  } else {
+    console.error("Close guide button element missing.");
+  }
+}
+
+// Initializes the consent banner.
 function initConsentBanner() {
   const cmpAccept = document.getElementById("cmp-accept");
   const cmpManage = document.getElementById("cmp-manage");
@@ -67,51 +103,6 @@ function initConsentBanner() {
       adRevenueMessage.style.display = "none";
     }
     console.log("Consent already accepted: Banner hidden and AdSense loaded.");
-  }
-}
-
-// === Guide Overlay (Index Page) ===
-
-// Initializes the API key guide overlay and the enter button event listener.
-function initGuideOverlay() {
-  const overlay = document.getElementById("apiKeyGuideOverlay");
-  const openGuideButton = document.getElementById("openGuideButton");
-  const enterTranscriptionBtn = document.getElementById("enterTranscriptionBtn");
-  const apiKeyInput = document.getElementById("apiKeyInput");
-
-  if (openGuideButton && overlay) {
-    openGuideButton.addEventListener("click", () => {
-      // Toggle the overlay display
-      if (overlay.style.display === "flex") {
-        overlay.style.display = "none";
-        console.log("Guide overlay closed.");
-      } else {
-        overlay.style.display = "flex";
-        overlay.style.flexDirection = "column";
-        overlay.style.alignItems = "center";
-        console.log("Guide overlay opened.");
-      }
-    });
-  } else {
-    console.error("Guide overlay or openGuideButton element missing.");
-  }
-
-  // Attach event listener to enter button.
-  if (enterTranscriptionBtn && apiKeyInput) {
-    enterTranscriptionBtn.addEventListener("click", () => {
-      console.log("Enter button clicked.");
-      const apiKey = apiKeyInput.value.trim();
-      if (apiKey) {
-        console.log("API key entered:", apiKey);
-        sessionStorage.setItem("openai_api_key", apiKey);
-        window.location.href = "transcribe.html";
-      } else {
-        console.log("No valid API key entered.");
-        alert("Please enter a valid API key.");
-      }
-    });
-  } else {
-    console.error("Enter button or API key input element missing.");
   }
 }
 
