@@ -34,6 +34,8 @@ const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azur
 let mediaStream = null;
 let audioReader = null;
 let recordingStartTime = 0;
+// New variable to accumulate time from all active segments
+let accumulatedRecordingTime = 0;
 let recordingTimerInterval;
 let completionTimerInterval = null;
 let completionStartTime = 0;
@@ -74,7 +76,8 @@ function formatTime(ms) {
 }
 
 function updateRecordingTimer() {
-  const elapsed = Date.now() - recordingStartTime;
+  // Timer now shows accumulated time plus current active segment time
+  const elapsed = accumulatedRecordingTime + (Date.now() - recordingStartTime);
   const timerElem = document.getElementById("recordTimer");
   if (timerElem) {
     timerElem.innerText = "Recording Timer: " + formatTime(elapsed);
@@ -525,6 +528,8 @@ function resetRecordingState() {
   recordingPaused = false;
   groupId = Date.now().toString();
   chunkNumber = 1;
+  // Reset accumulated recording time for a new session
+  accumulatedRecordingTime = 0;
 }
 
 function initRecording() {
@@ -585,6 +590,8 @@ function initRecording() {
     if (!mediaStream) return;
     const track = mediaStream.getAudioTracks()[0];
     if (track.enabled) {
+      // Pausing: add the current active time to accumulatedRecordingTime
+      accumulatedRecordingTime += Date.now() - recordingStartTime;
       track.enabled = false;
       recordingPaused = true;
       clearInterval(recordingTimerInterval);
@@ -593,6 +600,7 @@ function initRecording() {
       updateStatusMessage("Recording paused", "orange");
       logInfo("Recording paused.");
     } else {
+      // Resuming: do not reset accumulatedRecordingTime, just set a new recordingStartTime
       track.enabled = true;
       recordingPaused = false;
       recordingStartTime = Date.now();
