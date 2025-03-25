@@ -89,6 +89,12 @@ function updateIndexUI(trans) {
   if (aboutModalText) {
     aboutModalText.innerHTML = trans.aboutModalText;
   }
+
+  // Update Offer Text content (new)
+  const offerElem = document.getElementById("offerText");
+  if (offerElem && trans.offerText) {
+    offerElem.innerHTML = trans.offerText;
+  }
 }
 
 // For the transcribe page
@@ -160,3 +166,5 @@ function updateTranscribeUI(trans) {
   document.getElementById("guideHeading").textContent = trans.guideHeading;
   document.getElementById("guideText").innerHTML = trans.guideText;
 }
+
+export { initIndexLanguage, initTranscribeLanguage };
