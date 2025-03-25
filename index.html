@@ -198,8 +198,6 @@
     <p class="ad-revenue-message" id="ad-revenue-message">
       As this website is free to use and relies solely on ad revenue, please consent to personalized ads to help support the service.
     </p>
-    <!-- New Offer Text Placeholder -->
-    <div id="offerText"></div>
   </div>
 
   <!-- API Guide Modal Overlay -->
@@ -332,6 +330,8 @@
           const apiKey = apiKeyInput.value.trim();
           if (apiKey) {
             await storeEncryptedAPIKey(apiKey);
+            // Also store the plain API key for note generation
+            sessionStorage.setItem("openai_api_key", apiKey);
             window.location.href = "transcribe.html";
           } else {
             alert("Please enter a valid API key.");
