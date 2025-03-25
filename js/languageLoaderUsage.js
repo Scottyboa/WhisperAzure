@@ -89,7 +89,7 @@ function updateIndexUI(trans) {
   if (aboutModalText) {
     aboutModalText.innerHTML = trans.aboutModalText;
   }
-
+  
   // Update Offer Text content (new)
   const offerElem = document.getElementById("offerText");
   if (offerElem && trans.offerText) {
@@ -141,7 +141,6 @@ export async function initTranscribeLanguage() {
   });
 }
 
-// Update the transcribe page elements with the translations
 function updateTranscribeUI(trans) {
   document.getElementById("page-title-transcribe").textContent = trans.pageTitle;
   document.getElementById("openaiUsageLink").textContent = trans.openaiUsageLinkText;
@@ -166,5 +165,3 @@ function updateTranscribeUI(trans) {
   document.getElementById("guideHeading").textContent = trans.guideHeading;
   document.getElementById("guideText").innerHTML = trans.guideText;
 }
-
-export { initIndexLanguage, initTranscribeLanguage };
