@@ -1,9 +1,7 @@
-// js/language-en.js
-
 export const indexTranslations = {
   pageTitle: "Whisper Clinical Transcription",
   headerTitle: "Whisper Clinical Transcription",
-  headerSubtitle: "Advanced AI-Powered Speech-to-Text and Note Generation for Healthcare Consultations",
+  headerSubtitle: "Advanced AI-Powered Speech-to-Text and Clinical Note Generation for Healthcare Consultations",
   startText: "To get started, please enter your OpenAI API key:",
   apiPlaceholder: "Enter API Key here",
   enterButton: "Enter Transcription Tool",
@@ -106,6 +104,18 @@ When you log in by entering your API key, it is stored only temporarily in your 
   <p>Our webapp connects you directly with the OpenAI API—no intermediary, no extra fees. This direct link means you only pay for the actual AI processing cost, making our service one of the most affordable speech-to-text and note generation solutions available today.</p>
 </div>
 `,
+  // New offerText key added below
+  offerText: `
+    <h2>What Does Whisper Clinical Transcription Offer?</h2>
+    <p>Whisper Clinical Transcription is a user-friendly web application designed specifically for medical professionals, therapists, and healthcare workers who want to simplify patient consultations and documentation tasks. Our service leverages cutting-edge AI technology from OpenAI to provide:</p>
+    <ul>
+      <li><strong>Effortless Documentation:</strong> Quickly convert spoken patient interactions into precise, structured clinical notes, significantly reducing administrative workload.</li>
+      <li><strong>Multilingual Support:</strong> Seamlessly supports multiple languages, making it ideal for diverse clinical settings.</li>
+      <li><strong>Direct Cost Savings:</strong> Unlike traditional transcription services that mark up costs substantially, our platform connects you directly to OpenAI, providing unbeatable affordability without compromising quality.</li>
+      <li><strong>Privacy First Approach:</strong> Ensures absolute confidentiality and GDPR compliance, keeping all patient data secure and under your direct control.</li>
+    </ul>
+    <p>We believe technology should empower medical professionals—not add to their expenses. Whisper Clinical Transcription embodies this principle by combining affordability, security, and convenience.</p>
+  `
 };
 
 export const transcribeTranslations = {
