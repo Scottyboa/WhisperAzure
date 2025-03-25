@@ -1,4 +1,5 @@
 import { loadLanguageModule } from './languageLoader.js';
+import { initInfoModals } from './ui.js';
 
 // For the index page
 export async function initIndexLanguage() {
@@ -16,6 +17,8 @@ export async function initIndexLanguage() {
     return;
   }
   updateIndexUI(indexTranslations);
+  // Reinitialize info modal event listeners after UI update
+  initInfoModals();
   
   // Listen for language changes
   langSelect.addEventListener("change", async function() {
@@ -29,6 +32,8 @@ export async function initIndexLanguage() {
       return;
     }
     updateIndexUI(indexTranslations);
+    // Reinitialize info modal event listeners after UI update
+    initInfoModals();
   });
 }
 
