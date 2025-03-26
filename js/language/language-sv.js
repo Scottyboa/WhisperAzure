@@ -103,6 +103,18 @@ Därför är denna webbplats helt gratis att använda – den enda kostnaden du 
 <h2>Direktanslutningsfördel</h2>
 <p>Vår webbapp kopplar dig direkt till OpenAI API – utan mellanhänder, utan extra avgifter. Denna direkta anslutning innebär att du endast betalar för den faktiska AI-behandlingskostnaden, vilket gör vår tjänst till en av de mest prisvärda lösningarna för speech-to-text och notisgenerering som finns tillgängliga idag.</p>
 </div>`,
+// New offerText key added below
+offerText: 
+  <h2>Vad erbjuder Whisper Clinical Transcription?</h2>
+  <p>Whisper Clinical Transcription är en användarvänlig webbapplikation som är speciellt utformad för medicinska yrkespersoner, terapeuter och vårdpersonal som vill förenkla patientkonsultationer och dokumentationsuppgifter. Vår tjänst använder banbrytande AI-teknologi från OpenAI för att erbjuda:</p>
+  <ul>
+    <li><strong>Smidig dokumentation:</strong> Konvertera snabbt talade patientinteraktioner till precisa, strukturerade kliniska anteckningar, vilket avsevärt minskar den administrativa arbetsbördan.</li>
+    <li><strong>Flerspråkigt stöd:</strong> Stöder flera språk sömlöst, vilket gör det idealiskt för olika kliniska miljöer.</li>
+    <li><strong>Direkta kostnadsbesparingar:</strong> Till skillnad från traditionella transkriptionstjänster som höjer priserna markant, kopplar vår plattform dig direkt till OpenAI, vilket ger oöverträffad prisvärdhet utan att kompromissa med kvaliteten.</li>
+    <li><strong>Integritet i första hand:</strong> Säkerställer absolut konfidentialitet och GDPR-efterlevnad, vilket håller all patientdata säker och under din direkta kontroll.</li>
+  </ul>
+  <p>Vi anser att teknologin ska stärka medicinska yrkespersoner – inte öka deras kostnader. Whisper Clinical Transcription förkroppsligar denna princip genom att kombinera prisvärdhet, säkerhet och bekvämlighet.</p>
+  `
 };
 
 export const transcribeTranslations = {
