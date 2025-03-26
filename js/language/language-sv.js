@@ -105,7 +105,7 @@ Därför är denna webbplats helt gratis att använda – den enda kostnaden du 
 </div>
 `,
 // New offerText key added below
-offerText: 
+  offerText: `
   <h2>Vad erbjuder Whisper Clinical Transcription?</h2>
   <p>Whisper Clinical Transcription är en användarvänlig webbapplikation som är speciellt utformad för medicinska yrkespersoner, terapeuter och vårdpersonal som vill förenkla patientkonsultationer och dokumentationsuppgifter. Vår tjänst använder banbrytande AI-teknologi från OpenAI för att erbjuda:</p>
   <ul>
