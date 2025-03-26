@@ -102,7 +102,8 @@ Därför är denna webbplats helt gratis att använda – den enda kostnaden du 
 <hr>
 <h2>Direktanslutningsfördel</h2>
 <p>Vår webbapp kopplar dig direkt till OpenAI API – utan mellanhänder, utan extra avgifter. Denna direkta anslutning innebär att du endast betalar för den faktiska AI-behandlingskostnaden, vilket gör vår tjänst till en av de mest prisvärda lösningarna för speech-to-text och notisgenerering som finns tillgängliga idag.</p>
-</div>`,
+</div>
+`,
 // New offerText key added below
 offerText: 
   <h2>Vad erbjuder Whisper Clinical Transcription?</h2>
