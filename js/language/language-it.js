@@ -86,6 +86,20 @@ export const indexTranslations = {
 <hr>
 <h2>Vantaggio della Connessione Diretta</h2>
 <p>La nostra webapp ti connette direttamente con l'API di OpenAI — nessun intermediario, nessun costo aggiuntivo. Questo collegamento diretto significa che paghi solo per il costo effettivo di elaborazione dell'IA, rendendo il nostro servizio una delle soluzioni più economiche per la trascrizione da voce a testo e la generazione di note disponibili oggi.</p>`,
+</div>
+`,
+  // New offerText key added below
+  offerText: `
+    <h2>Cosa offre Whisper Clinical Transcription?</h2>
+    <p>Whisper Clinical Transcription è un'applicazione web intuitiva progettata specificamente per professionisti medici, terapisti e operatori sanitari che desiderano semplificare le consultazioni con i pazienti e le attività di documentazione. Il nostro servizio sfrutta la tecnologia AI all'avanguardia di OpenAI per fornire:</p>
+    <ul>
+      <li><strong>Documentazione senza sforzo:</strong> Converte rapidamente le interazioni verbali con i pazienti in note cliniche precise e strutturate, riducendo significativamente il carico amministrativo.</li>
+      <li><strong>Supporto multilingue:</strong> Supporta in modo fluido diverse lingue, rendendolo ideale per ambienti clinici diversificati.</li>
+      <li><strong>Risparmio diretto sui costi:</strong> A differenza dei tradizionali servizi di trascrizione che aumentano notevolmente i costi, la nostra piattaforma ti connette direttamente a OpenAI, offrendo una convenienza imbattibile senza compromettere la qualità.</li>
+      <li><strong>Approccio prioritario alla privacy:</strong> Garantisce la massima riservatezza e la conformità al GDPR, mantenendo tutti i dati dei pazienti sicuri e sotto il tuo diretto controllo.</li>
+    </ul>
+    <p>Crediamo che la tecnologia debba potenziare i professionisti medici, non aumentare le loro spese. Whisper Clinical Transcription incarna questo principio combinando convenienza, sicurezza e praticità.</p>
+  `
 };
 
 export const transcribeTranslations = {
