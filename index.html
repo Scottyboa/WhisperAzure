@@ -187,9 +187,6 @@
     <input type="text" id="apiKeyInput" placeholder="Enter API Key here" autocomplete="off">
     <br>
     <button id="enterTranscriptionBtn">Enter Transcription Tool</button>
-    <!-- New Beta Test Button -->
-    <br>
-    <button id="betaTestButton">Beta Test - Transcription Tool</button>
     <br>
     <div class="button-group">
       <button id="openSecurityButton">Security</button>
@@ -340,15 +337,7 @@
       } else {
         console.error("API key input or enter button element is missing.");
       }
-      
-      // Beta Test Button Logic
-      const betaTestButton = document.getElementById("betaTestButton");
-      if (betaTestButton) {
-        betaTestButton.addEventListener("click", function () {
-          window.location.href = "transcribe.html";
-        });
-      }
-      
+            
       // Consent Banner & Cookie Management
       function setCookie(name, value, days) {
         let expires = "";
