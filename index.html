@@ -332,14 +332,10 @@
       if (enterTranscriptionBtn && apiKeyInput) {
         enterTranscriptionBtn.addEventListener("click", async () => {
           const apiKey = apiKeyInput.value.trim();
-          if (apiKey) {
-            await storeEncryptedAPIKey(apiKey);
-            // Also store the plain API key for note generation
-            sessionStorage.setItem("openai_api_key", apiKey);
-            window.location.href = "transcribe.html";
-          } else {
-            alert("Please enter a valid API key.");
-          }
+          await storeEncryptedAPIKey(apiKey);
+          // Also store the plain API key for note generation
+          sessionStorage.setItem("openai_api_key", apiKey);
+          window.location.href = "transcribe.html";
         });
       } else {
         console.error("API key input or enter button element is missing.");
