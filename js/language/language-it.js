@@ -108,6 +108,7 @@ Per far funzionare la webapp, il tuo portafoglio OpenAI deve avere fondi suffici
 <hr>
 <h2>Vantaggio della Connessione Diretta</h2>
 <p>La nostra webapp ti connette direttamente con l'API di OpenAI — nessun intermediario, nessun costo aggiuntivo. Questo collegamento diretto significa che paghi solo per il costo effettivo di elaborazione dell'IA, rendendo il nostro servizio una delle soluzioni più economiche per la trascrizione da voce a Testo e la generazione di note disponibili oggi.</p>`,
+`,
 };
 
 export const transcribeTranslations = {
