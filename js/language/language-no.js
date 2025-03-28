@@ -116,6 +116,7 @@ Når du logger inn ved å skrive inn API-nøkkelen, lagres den kun midlertidig i
   <hr>
   <h2>Fordel med direkte tilkobling</h2>
   <p>Vår webapp kobler deg direkte til OpenAI API – ingen mellomledd, ingen ekstra avgifter. Denne direkte tilkoblingen betyr at du kun betaler for den faktiske AI-behandlingskostnaden, noe som gjør vår tjeneste til en av de mest prisgunstige løsningene for tale-til-tekst og notisgenerering som er tilgjengelig i dag.</p>
+  `,
 };
 
 export const transcribeTranslations = {
