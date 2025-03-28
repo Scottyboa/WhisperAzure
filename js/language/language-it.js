@@ -107,7 +107,8 @@ Per far funzionare la webapp, il tuo portafoglio OpenAI deve avere fondi suffici
 <p>A differenza dei fornitori che richiedono un abbonamento mensile, paghi solo per l'utilizzo. Se prendi una giornata libera, vai in vacanza o se non utilizzi il servizio, il costo è zero. Anche se usi il servizio ogni giorno per tutte le consultazioni con i pazienti, il costo per ogni consultazione rimane notevolmente inferiore rispetto ad altri fornitori.</p>
 <hr>
 <h2>Vantaggio della Connessione Diretta</h2>
-<p>La nostra webapp ti connette direttamente con l'API di OpenAI — nessun intermediario, nessun costo aggiuntivo. Questo collegamento diretto significa che paghi solo per il costo effettivo di elaborazione dell'IA, rendendo il nostro servizio una delle soluzioni più economiche per la trascrizione da voce a Testo e la generazione di note disponibili oggi.</p>
+<p>La nostra webapp ti connette direttamente con l'API di OpenAI — nessun intermediario, nessun costo aggiuntivo. Questo collegamento diretto significa che paghi solo per il costo effettivo di elaborazione dell'IA, rendendo il nostro servizio una delle soluzioni più economiche per la trascrizione da voce a Testo e la generazione di note disponibili oggi.</p>`,
+`,
 };
 
 export const transcribeTranslations = {
@@ -132,7 +133,7 @@ export const transcribeTranslations = {
   customPromptPlaceholder: "Inserisci qui il prompt personalizzato",
   adUnitText: "Il tuo annuncio qui",
   guideHeading: "Guida e Istruzioni",
-  guideText: `Benvenuto nello strumento di trascrizione Whisper. Questa applicazione consente ai professionisti sanitari, ai terapisti e ad altri operatori di registrare e trascrivere le consultazioni, oltre a generare note professionali utilizzando un generatore di note basato su intelligenza artificiale.`<br><br>
+  guideText: `Benvenuto nello strumento di trascrizione Whisper. Questa applicazione consente ai professionisti sanitari, ai terapisti e ad altri operatori di registrare e trascrivere le consultazioni, oltre a generare note professionali utilizzando un generatore di note basato su intelligenza artificiale.<br><br>
 <strong>Come utilizzare le funzioni:</strong>
 <ul>
   <li><strong>Registrazione:</strong> Clicca su "Avvia Registrazione" per iniziare a catturare l'audio. Ogni 40 secondi, un frammento dell'audio verrà automaticamente inviato ai server di OpenAI per la trascrizione. Le trascrizioni arriveranno una ad una nel campo di output del testo della trascrizione.</li>
