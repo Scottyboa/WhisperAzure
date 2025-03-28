@@ -107,8 +107,7 @@ Per far funzionare la webapp, il tuo portafoglio OpenAI deve avere fondi suffici
 <p>A differenza dei fornitori che richiedono un abbonamento mensile, paghi solo per l'utilizzo. Se prendi una giornata libera, vai in vacanza o se non utilizzi il servizio, il costo è zero. Anche se usi il servizio ogni giorno per tutte le consultazioni con i pazienti, il costo per ogni consultazione rimane notevolmente inferiore rispetto ad altri fornitori.</p>
 <hr>
 <h2>Vantaggio della Connessione Diretta</h2>
-<p>La nostra webapp ti connette direttamente con l'API di OpenAI — nessun intermediario, nessun costo aggiuntivo. Questo collegamento diretto significa che paghi solo per il costo effettivo di elaborazione dell'IA, rendendo il nostro servizio una delle soluzioni più economiche per la trascrizione da voce a Testo e la generazione di note disponibili oggi.</p>`,
-`,
+<p>La nostra webapp ti connette direttamente con l'API di OpenAI — nessun intermediario, nessun costo aggiuntivo. Questo collegamento diretto significa che paghi solo per il costo effettivo di elaborazione dell'IA, rendendo il nostro servizio una delle soluzioni più economiche per la trascrizione da voce a Testo e la generazione di note disponibili oggi.</p>
 };
 
 export const transcribeTranslations = {
