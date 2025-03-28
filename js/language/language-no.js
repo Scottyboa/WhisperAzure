@@ -12,7 +12,7 @@ export const indexTranslations = {
   aboutButton: "Om",
   adRevenueMessage: "Siden denne nettsiden er gratis å bruke og kun finansieres via annonseinntekter, vennligst godta personaliserte annonser for å støtte tjenesten.",
   
-  securityModalHeading: "Sikkerhetsinformasjon",
+  securityModalHeading: "Personvern",
   securityModalText: `Ditt personvern og sikkerheten til pasientinformasjonen er vår høyeste prioritet. For å sikre at dataene forblir konfidensielle:
 <div style="margin-left:20px;">
   <ul>
@@ -24,7 +24,7 @@ export const indexTranslations = {
 </div>
 Vær trygg på at strenge sikkerhetstiltak sikrer at all pasientrelatert data forblir trygg, konfidensiell og helt under din kontroll.`,
   
-  aboutModalHeading: "Om dette prosjektet",
+  aboutModalHeading: "Om",
   aboutModalText: `Jeg er en norsk fastlege med en langvarig interesse for teknologiske fremskritt, spesielt innen kunstig intelligens, og jeg har fulgt AI-utviklingen i helsesektoren tett.<br><br>
 Da jeg først hørte om selskaper som tilbyr tale-til-tekst-tjenester for medisinske konsultasjoner i Norge, ble jeg svært entusiastisk. Både kollegaer og online anmeldelser roste disse tjenestene for de betydelige forbedringene i effektivitet og arbeidsflyt de medførte. Men etter nærmere undersøkelser ble jeg overrasket over hvor mye disse selskapene tar betalt – spesielt når den faktiske kostnaden for teknologien kun utgjør en liten brøkdel av prisene deres.<br><br>
 Motivert av denne innsikten utviklet jeg min egen tale-til-tekst-løsning, opprinnelig for eget bruk. Etter å ha erfart hvor effektiv og kostnadseffektiv løsningen var, bestemte jeg meg for å gjøre den tilgjengelig på nettet. Jeg tilbyr samme hastighet, nøyaktighet og kvalitet som finnes hos premiumtjenester, men uten de høye avgiftene.<br><br>
@@ -38,7 +38,7 @@ Denne nettsiden er helt gratis å bruke – den eneste kostnaden du pådrar deg 
 Det eneste jeg ber om, er at du aksepterer annonser, som bidrar til å dekke kostnadene for backend-servere.<br>
 Etter hvert som flere benytter nettsiden, vil kostnadene til hosting og drift øke, og annonseinntektene sikrer at jeg kan holde tjenesten gratis og i drift uten å belaste brukerne.`,
   
-  guideModalHeading: "Slik setter du opp din OpenAI API for Whisper Klinisk Transkripsjon",
+  guideModalHeading: "Hvordan bruke",
   guideModalText: `For å bruke denne webappen, må du først opprette en OpenAI API-profil, generere en API-nøkkel og sørge for at din OpenAI-lommebok har tilstrekkelige midler. API-nøkkelen kopieres deretter og limes inn i det angitte feltet. Når du trykker på "Enter", lagrer webappen API-nøkkelen midlertidig for økten – denne nøkkelen kobler deg til OpenAI-serverne slik at tale-til-tekst-transkripsjon og notatgenerering kan fungere. Vennligst merk at du belastes umiddelbart per utført oppgave. For mer informasjon om kostnader, se "Kostnad"-seksjonen på forsiden.
 <br><br>
 <strong>1. Opprett din OpenAI API-profil</strong><br>
