@@ -70,101 +70,13 @@ function initConsentBanner() {
   }
 }
 
-// === Info Modals Initialization (Index Page) ===
-
-// Initializes all modal overlays and their corresponding info buttons.
+// === Info Accordions Initialization (Index Page) ===
+// Previously, this function initialized modal overlays and their event listeners.
+// Now that we have replaced modals with accordions in index.html,
+// the accordion toggle is handled by inline JavaScript there.
+// We leave this function as a stub to avoid breaking any references.
 function initInfoModals() {
-  // Guide Modal
-  const guideOverlay = document.getElementById("apiKeyGuideOverlay");
-  const openGuideButton = document.getElementById("openGuideButton");
-  const closeGuideBtn = document.getElementById("closeGuideBtn");
-  if (openGuideButton && guideOverlay) {
-    openGuideButton.addEventListener("click", () => {
-      guideOverlay.style.display = "flex";
-      guideOverlay.style.flexDirection = "column";
-      guideOverlay.style.alignItems = "center";
-      console.log("Guide overlay opened.");
-    });
-  } else {
-    console.error("Guide overlay or openGuideButton element missing.");
-  }
-  if (closeGuideBtn && guideOverlay) {
-    closeGuideBtn.addEventListener("click", () => {
-      guideOverlay.style.display = "none";
-      console.log("Guide overlay closed.");
-    });
-  } else {
-    console.error("Close guide button element missing.");
-  }
-
-  // Price Modal
-  const priceOverlay = document.getElementById("priceModalOverlay");
-  const openPriceButton = document.getElementById("openPriceButton");
-  const closePriceBtn = document.getElementById("closePriceModalButton");
-  if (openPriceButton && priceOverlay) {
-    openPriceButton.addEventListener("click", () => {
-      priceOverlay.style.display = "flex";
-      priceOverlay.style.flexDirection = "column";
-      priceOverlay.style.alignItems = "center";
-      console.log("Price modal opened.");
-    });
-  } else {
-    console.error("Price modal or openPriceButton element missing.");
-  }
-  if (closePriceBtn && priceOverlay) {
-    closePriceBtn.addEventListener("click", () => {
-      priceOverlay.style.display = "none";
-      console.log("Price modal closed.");
-    });
-  } else {
-    console.error("Close price button element missing.");
-  }
-
-  // Security Modal
-  const securityOverlay = document.getElementById("securityModalOverlay");
-  const openSecurityButton = document.getElementById("openSecurityButton");
-  const closeSecurityBtn = document.getElementById("closeSecurityModalButton");
-  if (openSecurityButton && securityOverlay) {
-    openSecurityButton.addEventListener("click", () => {
-      securityOverlay.style.display = "flex";
-      securityOverlay.style.flexDirection = "column";
-      securityOverlay.style.alignItems = "center";
-      console.log("Security modal opened.");
-    });
-  } else {
-    console.error("Security modal or openSecurityButton element missing.");
-  }
-  if (closeSecurityBtn && securityOverlay) {
-    closeSecurityBtn.addEventListener("click", () => {
-      securityOverlay.style.display = "none";
-      console.log("Security modal closed.");
-    });
-  } else {
-    console.error("Close security button element missing.");
-  }
-
-  // About Modal
-  const aboutOverlay = document.getElementById("aboutModalOverlay");
-  const openAboutButton = document.getElementById("openAboutButton");
-  const closeAboutBtn = document.getElementById("closeAboutModalButton");
-  if (openAboutButton && aboutOverlay) {
-    openAboutButton.addEventListener("click", () => {
-      aboutOverlay.style.display = "flex";
-      aboutOverlay.style.flexDirection = "column";
-      aboutOverlay.style.alignItems = "center";
-      console.log("About modal opened.");
-    });
-  } else {
-    console.error("About modal or openAboutButton element missing.");
-  }
-  if (closeAboutBtn && aboutOverlay) {
-    closeAboutBtn.addEventListener("click", () => {
-      aboutOverlay.style.display = "none";
-      console.log("About modal closed.");
-    });
-  } else {
-    console.error("Close about button element missing.");
-  }
+  console.log("initInfoModals: Accordion UI is enabled; modal initialization is disabled.");
 }
 
 export { initConsentBanner, initInfoModals };
