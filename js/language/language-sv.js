@@ -7,12 +7,12 @@ export const indexTranslations = {
   startText: "För att komma igång, vänligen ange din OpenAI API-nyckel:",
   apiPlaceholder: "Ange API-nyckel här",
   enterButton: "Gå till transkriptionsverktyget",
-  guideButton: "API-guide – Hur du använder",
+  guideButton: "Hur du använder",
   securityButton: "Säkerhet",
   aboutButton: "Om",
   adRevenueMessage: "Eftersom denna webbplats är gratis att använda och enbart finansieras genom annonsintäkter, vänligen godkänn personliga annonser för att stödja tjänsten.",
 
-  securityModalHeading: "Säkerhetsinformation",
+  securityModalHeading: "Integritet",
   securityModalText: `Din integritet och säkerheten för patientinformation är vår högsta prioritet. För att säkerställa att data förblir konfidentiell:
 <div style="margin-left:20px;">
   <ul>
@@ -24,7 +24,7 @@ export const indexTranslations = {
 </div>
 Var säker på att strikta säkerhetsåtgärder garanterar att all patientrelaterad data förblir säker, konfidentiell och helt under din kontroll.`,
   
-  aboutModalHeading: "Om detta projekt",
+  aboutModalHeading: "Om",
   aboutModalText: `Jag är en norsk allmänläkare med ett stort intresse för teknologiska framsteg, särskilt inom artificiell intelligens, och jag har noga följt AI-utvecklingen inom vården.<br><br>
 När jag först hörde om tjänster för tal-till-text vid medicinska konsultationer i Norge blev jag optimistisk. Kollegor och användarrecensioner betonade hur dessa lösningar kunde förbättra effektiviteten och arbetsflödet avsevärt. Men efter en närmare undersökning blev jag förvånad över hur höga priserna var – särskilt med tanke på att den underliggande teknologin endast står för en bråkdel av kostnaderna som företagen kräver.<br><br>
 Motiverad av denna insikt utvecklade jag min egen tal-till-text-lösning, ursprungligen för personligt bruk. När jag insåg hur effektiv och kostnadseffektiv den var, bestämde jag mig för att göra den tillgänglig online. Målet var att erbjuda samma hastighet, noggrannhet och kvalitet som premiumtjänster – men utan de oproportionerliga avgifterna.<br><br>
@@ -35,7 +35,7 @@ Därför är denna webbplats helt gratis att använda – den enda kostnaden du 
   guideModalText: `För att använda denna webbapp måste du först skapa en API-profil hos OpenAI, generera en API-nyckel och ladda ditt OpenAI-konto med medel. API-nyckeln kopieras och klistras in i det angivna fältet. När du trycker på Enter sparas API-nyckeln temporärt för din session – denna nyckel kopplar dig till OpenAI:s servrar så att tal-till-text-transkription och notisgenerering fungerar. Observera att du debiteras direkt per utförd uppgift. För mer information om kostnader, se avsnittet "Kostnadsinformation" på startsidan.`,
   
   priceButton: "Pris",
-  priceModalHeading: "Kostnadsinformation",
+  priceModalHeading: "Pris",
   priceModalText: `<h1>Kostnadsinformation</h1>
 <h2>Speech-to-text prissättning</h2>
 <ul>
