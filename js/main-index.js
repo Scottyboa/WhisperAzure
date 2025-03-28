@@ -8,6 +8,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize the consent banner.
   initConsentBanner();
 
-  // Initialize all the info modals (Guide, Price, Security, About).
+  // Initialize the info accordions (replacing the previous modal implementation).
   initInfoModals();
 });
