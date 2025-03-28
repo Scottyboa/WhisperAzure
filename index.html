@@ -118,29 +118,37 @@
       margin-left: 10px;
       padding: 8px 16px;
     }
-    /* Accordion Styles */
+    /* New Horizontal Accordion (Tabbed Interface) */
     .accordion {
       margin: 20px auto;
       max-width: 800px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      text-align: left;
     }
-    .accordion-item {
-      border-bottom: 1px solid #ddd;
-    }
-    .accordion-item:last-child {
-      border-bottom: none;
+    .accordion-headers {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
     }
     .accordion-header {
       background-color: #f0f0f0;
-      padding: 15px;
-      margin: 0;
+      padding: 10px 20px;
+      border: none;
       cursor: pointer;
       font-size: 18px;
+      border-radius: 5px;
+      transition: background-color 0.3s;
     }
-    .accordion-content {
+    .accordion-header.active {
+      background-color: #ddd;
+    }
+    .accordion-content-container {
+      border: 1px solid #ddd;
+      border-radius: 5px;
       padding: 15px;
+      text-align: left;
+      min-height: 100px;
+    }
+    .accordion-hidden-content {
       display: none;
     }
   </style>
@@ -170,43 +178,41 @@
     <br>
     <button id="enterTranscriptionBtn">Enter Transcription Tool</button>
     <br>
-    <!-- Old modal buttons removed -->
     <p class="ad-revenue-message" id="ad-revenue-message">
       As this website is free to use and relies solely on ad revenue, please consent to personalized ads to help support the service.
     </p>
     <div id="offerText"></div>
   </div>
 
-  <!-- Accordion Container for Informational Text -->
+  <!-- New Horizontal Accordion -->
   <div class="accordion">
-    <div class="accordion-item">
-      <h2 class="accordion-header">API Guide</h2>
-      <div class="accordion-content">
-        <!-- API Guide content will be injected here -->
-        <div id="guide-p1"></div>
-      </div>
+    <div class="accordion-headers">
+      <button class="accordion-header" data-content-id="guide-p1">API Guide</button>
+      <button class="accordion-header" data-content-id="priceModalText">Price Information</button>
+      <button class="accordion-header" data-content-id="securityModalText">Security Information</button>
+      <button class="accordion-header" data-content-id="aboutModalText">About</button>
     </div>
-    <div class="accordion-item">
-      <h2 class="accordion-header">Price Information</h2>
-      <div class="accordion-content">
-        <!-- Price Information content will be injected here -->
-        <div id="priceModalText"></div>
-      </div>
+    <div class="accordion-content-container">
+      <!-- Active content will be displayed here -->
     </div>
-    <div class="accordion-item">
-      <h2 class="accordion-header">Security Information</h2>
-      <div class="accordion-content">
-        <!-- Security Information content will be injected here -->
-        <div id="securityModalText"></div>
-      </div>
-    </div>
-    <div class="accordion-item">
-      <h2 class="accordion-header">About</h2>
-      <div class="accordion-content">
-        <!-- About content will be injected here -->
-        <div id="aboutModalText"></div>
-      </div>
-    </div>
+  </div>
+
+  <!-- Hidden Content Containers for Accordion -->
+  <div id="guide-p1" class="accordion-hidden-content">
+    <!-- API Guide content will be injected here -->
+    <div id="guide-p1-content"></div>
+  </div>
+  <div id="priceModalText" class="accordion-hidden-content">
+    <!-- Price Information content will be injected here -->
+    <div id="priceModalText-content"></div>
+  </div>
+  <div id="securityModalText" class="accordion-hidden-content">
+    <!-- Security Information content will be injected here -->
+    <div id="securityModalText-content"></div>
+  </div>
+  <div id="aboutModalText" class="accordion-hidden-content">
+    <!-- About content will be injected here -->
+    <div id="aboutModalText-content"></div>
   </div>
 
   <!-- Consent Banner -->
@@ -216,7 +222,7 @@
     <button id="cmp-manage">Manage</button>
   </div>
 
-  <!-- Inline script for encryption, API key handling, and consent logic -->
+  <!-- Inline Script for API Key Handling and Consent (unchanged) -->
   <script>
     document.addEventListener("DOMContentLoaded", function() {
       const enterTranscriptionBtn = document.getElementById("enterTranscriptionBtn");
@@ -240,16 +246,33 @@
     });
   </script>
   
-  <script type="module" src="./js/main-index.js"></script>
-  
-  <!-- Accordion Toggle Script -->
+  <!-- New Horizontal Accordion Script -->
   <script>
     document.querySelectorAll('.accordion-header').forEach(header => {
       header.addEventListener('click', () => {
-        const content = header.nextElementSibling;
-        content.style.display = (content.style.display === 'block') ? 'none' : 'block';
+        const contentContainer = document.querySelector('.accordion-content-container');
+        
+        // If the clicked header is already active, collapse it.
+        if (header.classList.contains('active')) {
+          header.classList.remove('active');
+          contentContainer.innerHTML = '';
+        } else {
+          // Remove active state from any active header.
+          document.querySelectorAll('.accordion-header.active').forEach(activeHeader => {
+            activeHeader.classList.remove('active');
+          });
+          header.classList.add('active');
+          const contentId = header.getAttribute('data-content-id');
+          const hiddenContent = document.getElementById(contentId);
+          if (hiddenContent) {
+            contentContainer.innerHTML = hiddenContent.innerHTML;
+          }
+        }
       });
     });
   </script>
+  
+  <script type="module" src="./js/main-index.js"></script>
+  
 </body>
 </html>
