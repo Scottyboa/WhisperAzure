@@ -17,7 +17,7 @@ export async function initIndexLanguage() {
     return;
   }
   updateIndexUI(indexTranslations);
-  // Reinitialize info modal event listeners after UI update
+  // Reinitialize info modal (now accordion) event listeners after UI update
   initInfoModals();
   
   // Listen for language changes
@@ -32,7 +32,7 @@ export async function initIndexLanguage() {
       return;
     }
     updateIndexUI(indexTranslations);
-    // Reinitialize info modal event listeners after UI update
+    // Reinitialize info modal (now accordion) event listeners after UI update
     initInfoModals();
   });
 }
@@ -50,11 +50,7 @@ function updateIndexUI(trans) {
   document.getElementById("openAboutButton").textContent = trans.aboutButton;
   document.getElementById("ad-revenue-message").textContent = trans.adRevenueMessage;
   
-  // Update API Guide Modal content
-  const guideHeading = document.getElementById("guide-heading");
-  if (guideHeading) {
-    guideHeading.textContent = trans.guideModalHeading;
-  }
+  // Update API Guide accordion content
   const guideContent = document.getElementById("guide-p1");
   if (guideContent) {
     guideContent.innerHTML = trans.guideModalText;
@@ -65,40 +61,37 @@ function updateIndexUI(trans) {
     });
   }
   
-  // Update Price Modal content
-  const priceModalHeading = document.getElementById("priceModalHeading");
-  if (priceModalHeading) {
-    priceModalHeading.textContent = trans.priceModalHeading;
-  }
-  const priceModalText = document.getElementById("priceModalText");
-  if (priceModalText) {
-    priceModalText.innerHTML = trans.priceModalText;
+  // Update Price accordion content
+  const priceContent = document.getElementById("priceModalText");
+  if (priceContent) {
+    priceContent.innerHTML = trans.priceModalText;
   }
   
-  // Update Security Modal content
-  const securityModalHeading = document.getElementById("securityModalHeading");
-  if (securityModalHeading) {
-    securityModalHeading.textContent = trans.securityModalHeading;
-  }
-  const securityModalText = document.getElementById("securityModalText");
-  if (securityModalText) {
-    securityModalText.innerHTML = trans.securityModalText;
+  // Update Security accordion content
+  const securityContent = document.getElementById("securityModalText");
+  if (securityContent) {
+    securityContent.innerHTML = trans.securityModalText;
   }
   
-  // Update About Modal content
-  const aboutModalHeading = document.getElementById("aboutModalHeading");
-  if (aboutModalHeading) {
-    aboutModalHeading.textContent = trans.aboutModalHeading;
-  }
-  const aboutModalText = document.getElementById("aboutModalText");
-  if (aboutModalText) {
-    aboutModalText.innerHTML = trans.aboutModalText;
+  // Update About accordion content
+  const aboutContent = document.getElementById("aboutModalText");
+  if (aboutContent) {
+    aboutContent.innerHTML = trans.aboutModalText;
   }
   
   // Update Offer Text content (new)
   const offerElem = document.getElementById("offerText");
   if (offerElem && trans.offerText) {
     offerElem.innerHTML = trans.offerText;
+  }
+  
+  // Dynamically update accordion headers using language translations
+  const accordionHeaders = document.querySelectorAll('.accordion .accordion-header');
+  if (accordionHeaders.length >= 4) {
+    accordionHeaders[0].textContent = trans.guideModalHeading;
+    accordionHeaders[1].textContent = trans.priceModalHeading;
+    accordionHeaders[2].textContent = trans.securityModalHeading;
+    accordionHeaders[3].textContent = trans.aboutModalHeading;
   }
 }
 
@@ -170,3 +163,5 @@ function updateTranscribeUI(trans) {
   document.getElementById("guideHeading").textContent = trans.guideHeading;
   document.getElementById("guideText").innerHTML = trans.guideText;
 }
+
+export default { initIndexLanguage, initTranscribeLanguage };
