@@ -62,7 +62,7 @@ function updateIndexUI(trans) {
     offerElem.innerHTML = trans.offerText;
   }
   
-  // Update accordion content
+  // Update accordion hidden content
   const guideContent = document.getElementById("guide-p1");
   if (guideContent) {
     guideContent.innerHTML = trans.guideModalText;
@@ -95,6 +95,17 @@ function updateIndexUI(trans) {
     accordionHeaders[1].textContent = trans.priceModalHeading;
     accordionHeaders[2].textContent = trans.securityModalHeading;
     accordionHeaders[3].textContent = trans.aboutModalHeading;
+  }
+  
+  // If an accordion header is active, update the shared content container with the new language.
+  const activeHeader = document.querySelector('.accordion-header.active');
+  if (activeHeader) {
+    const contentId = activeHeader.getAttribute('data-content-id');
+    const hiddenContent = document.getElementById(contentId);
+    const contentContainer = document.querySelector('.accordion-content-container');
+    if (hiddenContent && contentContainer) {
+      contentContainer.innerHTML = hiddenContent.innerHTML;
+    }
   }
 }
 
