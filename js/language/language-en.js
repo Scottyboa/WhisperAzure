@@ -9,14 +9,14 @@ export const indexTranslations = {
   securityButton: "Security",
   aboutButton: "About",
   adRevenueMessage: "As this website is free to use and relies solely on ad revenue, please consent to personalized ads to help support the service.",
-  securityModalHeading: "Security Information",
+  securityModalHeading: "Privacy",
   securityModalText: `Your privacy and the security of patient information are the highest priorities. To ensure that data remains confidential:<br><br>
 - <strong>Data Encryption:</strong> All data processed by the system is secured using industry-standard encryption methods. Transcripts and notes are linked exclusively to your encrypted personal API key and the device used for access, ensuring that only you have access to the generated content.<br><br>
 - <strong>Automatic Deletion:</strong> Once a transcript or note is generated and displayed on your screen, it is automatically and irreversibly deleted from the servers within 2 minutes.<br><br>
 - <strong>Unauthorized Access Protection:</strong> Even if unauthorized access to your API key were to occur, the data remains encrypted and secured by device-specific markers, rendering the information inaccessible.<br><br>
 - <strong>GDPR-Compliant Hosting:</strong> All backend processes run on dedicated Microsoft Azure servers located within the EU, fully compliant with GDPR regulations.<br><br>
 Rest assured, stringent security measures ensure that all patient-related data remains safe, confidential, and entirely under your control.`,
-  aboutModalHeading: "About This Project",
+  aboutModalHeading: "About",
   aboutModalText: `This website was created to provide healthcare professionals and other users with direct access to high-quality speech-to-text transcription and clinical note generation—without unnecessary costs or intermediaries.<br><br>
 By using your own OpenAI API key, you connect directly to the source of the technology. This means you only pay the actual usage cost set by OpenAI, without markups or subscription fees.<br><br>
 Many existing providers offer similar services but charge significantly more—often 8 to 10 times the real cost of the underlying technology. This platform offers the same functionality at a fraction of the price.<br><br>
@@ -25,7 +25,7 @@ Many existing providers offer similar services but charge significantly more—o
 • You only pay OpenAI directly for what you use.<br>
 • The website itself is completely free.<br><br>
 To keep it that way, users are required to accept ads. Ad revenue helps cover hosting and operational costs so the service can remain accessible and free for everyone.`,
-  guideModalHeading: "How to Set Up Your OpenAI API for Whisper Clinical Transcription",
+  guideModalHeading: "How To Use",
   guideModalText: `To use this webapp, you must first create an OpenAI API profile, generate an API key, and fund your OpenAI wallet. Your API key is then copied and pasted into the provided API key field. Once you press Enter, the webapp saves the API key temporarily for your session—this key links you to the OpenAI servers so that speech-to-text transcription and note generation can work. Please note, you are charged immediately per task performed. For more info on cost, please review the "Cost" section on the front page.
 <br><br>
 <strong>1. Create Your OpenAI API Profile</strong><br>
@@ -40,7 +40,7 @@ For the webapp to function, your OpenAI wallet must have sufficient funds. Visit
 <strong>Session Security Reminder</strong><br>
 When you log in by entering your API key, it is stored only temporarily in your browser session. This means if you exit the website, close your browser, or turn off your computer, the API key will not be saved. You will need to re-enter your API key the next time you use the webapp, ensuring your key remains secure.`,
   priceButton: "Price",
-  priceModalHeading: "Cost Information",
+  priceModalHeading: "Price",
   priceModalText: `
 <div>
   <h1>Cost Information</h1>
