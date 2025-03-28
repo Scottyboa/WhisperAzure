@@ -45,44 +45,47 @@ function updateIndexUI(trans) {
   document.getElementById("start-text").textContent = trans.startText;
   document.getElementById("apiKeyInput").placeholder = trans.apiPlaceholder;
   document.getElementById("enterTranscriptionBtn").textContent = trans.enterButton;
-  document.getElementById("openGuideButton").textContent = trans.guideButton;
-  document.getElementById("openSecurityButton").textContent = trans.securityButton;
-  document.getElementById("openAboutButton").textContent = trans.aboutButton;
+  // Although the old modal buttons were removed from index.html,
+  // we still update the text in case other elements reference them.
+  // (If not needed, these lines can be removed.)
+  const guideBtn = document.getElementById("openGuideButton");
+  if (guideBtn) guideBtn.textContent = trans.guideButton;
+  const securityBtn = document.getElementById("openSecurityButton");
+  if (securityBtn) securityBtn.textContent = trans.securityButton;
+  const aboutBtn = document.getElementById("openAboutButton");
+  if (aboutBtn) aboutBtn.textContent = trans.aboutButton;
   document.getElementById("ad-revenue-message").textContent = trans.adRevenueMessage;
   
-  // Update API Guide accordion content
+  // Update the Offer Text content
+  const offerElem = document.getElementById("offerText");
+  if (offerElem && trans.offerText) {
+    offerElem.innerHTML = trans.offerText;
+  }
+  
+  // Update accordion content
   const guideContent = document.getElementById("guide-p1");
   if (guideContent) {
     guideContent.innerHTML = trans.guideModalText;
-    // Automatically modify all links in the guide to open in a new tab
+    // Ensure that links open in a new tab
     guideContent.querySelectorAll("a").forEach(anchor => {
       anchor.setAttribute("target", "_blank");
       anchor.setAttribute("rel", "noopener noreferrer");
     });
   }
   
-  // Update Price accordion content
   const priceContent = document.getElementById("priceModalText");
   if (priceContent) {
     priceContent.innerHTML = trans.priceModalText;
   }
   
-  // Update Security accordion content
   const securityContent = document.getElementById("securityModalText");
   if (securityContent) {
     securityContent.innerHTML = trans.securityModalText;
   }
   
-  // Update About accordion content
   const aboutContent = document.getElementById("aboutModalText");
   if (aboutContent) {
     aboutContent.innerHTML = trans.aboutModalText;
-  }
-  
-  // Update Offer Text content (new)
-  const offerElem = document.getElementById("offerText");
-  if (offerElem && trans.offerText) {
-    offerElem.innerHTML = trans.offerText;
   }
   
   // Dynamically update accordion headers using language translations
@@ -142,7 +145,6 @@ export async function initTranscribeLanguage() {
 function updateTranscribeUI(trans) {
   document.getElementById("page-title-transcribe").textContent = trans.pageTitle;
   document.getElementById("openaiUsageLink").textContent = trans.openaiUsageLinkText;
-  // Removed reference to btnFunctions since the Functions button is no longer used
   document.getElementById("btnGuide").textContent = trans.btnGuide;
   document.getElementById("recordingAreaTitle").textContent = trans.recordingAreaTitle;
   document.getElementById("recordTimer").textContent = trans.recordTimer;
