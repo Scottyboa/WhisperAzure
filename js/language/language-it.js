@@ -79,7 +79,7 @@ Per far funzionare la webapp, il tuo portafoglio OpenAI deve avere fondi suffici
   </li>
 </ol>
 <h2>Costo Combinato Approssimativo per Consultazione</h2>
-<p>(per una consultazione/opregistrazione di 15 minuti, utilizzando entrambe le funzioni)</p>
+<p>(per una consultazione/registrazione di 15 minuti, utilizzando entrambe le funzioni)</p>
 <ul>
   <li><strong>Trascrizione da Voce a Testo:</strong> <strong>$0.09</strong></li>
   <li><strong>Generazione delle Note:</strong> <strong>$0.0111</strong></li>
@@ -102,13 +102,36 @@ Per far funzionare la webapp, il tuo portafoglio OpenAI deve avere fondi suffici
   </li>
 </ol>
 <h2>Opzione Alternativa per la Generazione delle Note</h2>
-<p>Se possiedi già un account OpenAI, puoi utilizzare la generazione delle note tramite il tuo account ChatGPT — che è sostanzialmente gratuito. In tal caso, sostieni solo il costo della trascrizione da voce a Testo quando utilizzi questa webapp.</p>
+<p>Se possiedi già un account OpenAI, puoi utilizzare la generazione delle note tramite ChatGPT sul tuo profilo — che è sostanzialmente gratuita. In tal caso, sostieni solo il costo della trascrizione da voce a Testo quando utilizzi questa webapp.</p>
 <h2>Flessibilità d'Uso</h2>
-<p>A differenza dei fornitori commerciali, paghi solo per l'utilizzo effettivo. Se prendi una giornata libera, vai in vacanza o se non utilizzi il servizio, il costo sarà zero. Anche se usi il servizio ogni giorno per tutte le consultazioni, il costo per consultazione rimane notevolmente inferiore rispetto ad altri fornitori.</p>
+<p>A differenza dei fornitori che richiedono un abbonamento mensile, paghi solo per l'utilizzo. Se prendi una giornata libera, vai in vacanza o se non utilizzi il servizio, il costo è zero. Anche se usi il servizio ogni giorno per tutte le consultazioni con i pazienti, il costo per ogni consultazione rimane notevolmente inferiore rispetto ad altri fornitori.</p>
 <hr>
 <h2>Vantaggio della Connessione Diretta</h2>
-<p>La nostra webapp ti connette direttamente con l'API di OpenAI — senza intermediari, senza costi aggiuntivi. Questo collegamento diretto significa che paghi solo per il costo effettivo di elaborazione dell'IA, rendendo il nostro servizio una delle soluzioni più economiche per la trascrizione da voce a Testo e la generazione di note disponibili oggi.</p>`,
-  guideButton: "Guida",
+<p>La nostra webapp ti connette direttamente con l'API di OpenAI — senza intermediari e senza costi aggiuntivi. Ciò significa che paghi solo per il costo effettivo di elaborazione dell'IA, rendendo il nostro servizio una delle soluzioni più convenienti per la trascrizione da voce a Testo e la generazione di note disponibili oggi.</p>`,
+};
+
+export const transcribeTranslations = {
+  pageTitle: "Strumento di Trascrizione con Annunci e Sovrapposizione della Guida",
+  openaiUsageLinkText: "Riepilogo dei costi",
+  btnFunctions: "Funzioni",
+  btnGuide: "Guida",
+  recordingAreaTitle: "Area di Registrazione",
+  recordTimer: "Timer di Registrazione: 0 sec",
+  transcribeTimer: "Timer di Completamento: 0 sec",
+  transcriptionPlaceholder: "Il risultato della trascrizione apparirà qui...",
+  startButton: "Avvia Registrazione",
+  stopButton: "Ferma/Completa",
+  pauseButton: "Pausa Registrazione",
+  statusMessage: "Benvenuto! Clicca su \"Avvia Registrazione\" per iniziare.",
+  noteGenerationTitle: "Generazione delle Note",
+  generateNoteButton: "Genera Nota",
+  noteTimer: "Timer per la Generazione della Nota: 0 sec",
+  generatedNotePlaceholder: "La nota generata apparirà qui...",
+  customPromptTitle: "Prompt Personalizzato",
+  promptSlotLabel: "Slot del Prompt:",
+  customPromptPlaceholder: "Inserisci qui il prompt personalizzato",
+  adUnitText: "Il tuo annuncio qui",
+  guideHeading: "Guida e Istruzioni",
   guideText: `Benvenuto nello strumento di trascrizione Whisper. Questa applicazione consente ai professionisti sanitari, ai terapisti e ad altri operatori di registrare e trascrivere le consultazioni, oltre a generare note professionali utilizzando un generatore di note basato su intelligenza artificiale.<br><br>
 <strong>Come utilizzare le funzioni:</strong>
 <ul>
@@ -118,7 +141,7 @@ Per far funzionare la webapp, il tuo portafoglio OpenAI deve avere fondi suffici
   <li><strong>Prompt Personalizzato:</strong> Sulla destra, seleziona uno slot per il prompt (1–10) e inserisci il tuo prompt personalizzato. Il prompt viene salvato automaticamente e associato alla tua chiave API.</li>
   <li><strong>Interruttore Guida:</strong> Utilizza i pulsanti "Funzioni" e "Guida" per passare dalla vista funzionale a questa guida.</li>
 </ul>
-Clicca su "Funzioni" per tornare all'interfaccia principale.`
+Clicca su "Funzioni" per tornare all'interfaccia principale.`,
 };
 
 export default { indexTranslations, transcribeTranslations };
