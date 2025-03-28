@@ -118,7 +118,7 @@ Per far funzionare la webapp, il tuo portafoglio OpenAI deve avere fondi suffici
   <li><strong>Prompt Personalizzato:</strong> Sulla destra, seleziona uno slot per il prompt (1–10) e inserisci il tuo prompt personalizzato. Il prompt viene salvato automaticamente e associato alla tua chiave API.</li>
   <li><strong>Interruttore Guida:</strong> Utilizza i pulsanti "Funzioni" e "Guida" per passare dalla vista funzionale a questa guida.</li>
 </ul>
-Clicca su "Funzioni" per tornare all'interfaccia principale.`,
+Clicca su "Funzioni" per tornare all'interfaccia principale.`
 };
 
 export default { indexTranslations, transcribeTranslations };
