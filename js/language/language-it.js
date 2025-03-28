@@ -132,7 +132,7 @@ export const transcribeTranslations = {
   customPromptPlaceholder: "Inserisci qui il prompt personalizzato",
   adUnitText: "Il tuo annuncio qui",
   guideHeading: "Guida e Istruzioni",
-  guideText: `Benvenuto nello strumento di trascrizione Whisper. Questa applicazione consente ai professionisti sanitari, ai terapisti e ad altri operatori di registrare e trascrivere le consultazioni, oltre a generare note professionali utilizzando un generatore di note basato su intelligenza artificiale.<br><br>
+  guideText: `Benvenuto nello strumento di trascrizione Whisper. Questa applicazione consente ai professionisti sanitari, ai terapisti e ad altri operatori di registrare e trascrivere le consultazioni, oltre a generare note professionali utilizzando un generatore di note basato su intelligenza artificiale.`<br><br>
 <strong>Come utilizzare le funzioni:</strong>
 <ul>
   <li><strong>Registrazione:</strong> Clicca su "Avvia Registrazione" per iniziare a catturare l'audio. Ogni 40 secondi, un frammento dell'audio verrà automaticamente inviato ai server di OpenAI per la trascrizione. Le trascrizioni arriveranno una ad una nel campo di output del testo della trascrizione.</li>
