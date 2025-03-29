@@ -226,15 +226,63 @@
     <button id="cmp-manage">Manage</button>
   </div>
 
-  <!-- Inline Script for API Key Handling and Consent (unchanged) -->
+  <!-- Inline Script for API Key Handling and Consent (modified) -->
   <script>
+    // Helper function to convert an ArrayBuffer to a Base64 string
+    function arrayBufferToBase64(buffer) {
+      let binary = "";
+      const bytes = new Uint8Array(buffer);
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return window.btoa(binary);
+    }
+
+    // Encrypt the API key using the device token as the encryption key.
+    async function encryptAPIKey(apiKey) {
+      // Retrieve or generate a device token (used as the password for encryption)
+      let deviceToken = localStorage.getItem("device_token");
+      if (!deviceToken) {
+        deviceToken = crypto.randomUUID();
+        localStorage.setItem("device_token", deviceToken);
+      }
+      const password = deviceToken; // Using deviceToken as the encryption key
+      const encoder = new TextEncoder();
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
+      const key = await crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+      );
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const encryptedBuffer = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv: iv },
+        key,
+        encoder.encode(apiKey)
+      );
+      return {
+        ciphertext: arrayBufferToBase64(encryptedBuffer),
+        iv: arrayBufferToBase64(iv),
+        salt: arrayBufferToBase64(salt)
+      };
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
       const enterTranscriptionBtn = document.getElementById("enterTranscriptionBtn");
       const apiKeyInput = document.getElementById("apiKeyInput");
       if (enterTranscriptionBtn && apiKeyInput) {
         enterTranscriptionBtn.addEventListener("click", async () => {
           const apiKey = apiKeyInput.value.trim();
-          // Additional logic to store the API key and navigate
+          if (!apiKey.startsWith("sk-")) {
+            alert("Please enter a valid OpenAI API key.");
+            return;
+          }
+          // Encrypt and store the API key in sessionStorage
+          const encryptedData = await encryptAPIKey(apiKey);
+          sessionStorage.setItem("encrypted_api_key", JSON.stringify(encryptedData));
           window.location.href = "transcribe.html";
         });
       }
