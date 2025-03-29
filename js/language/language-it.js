@@ -11,14 +11,14 @@ export const indexTranslations = {
   securityButton: "Sicurezza",
   aboutButton: "Informazioni",
   adRevenueMessage: "Poiché questo sito è gratuito e si basa esclusivamente sui ricavi pubblicitari, ti preghiamo di acconsentire alla visualizzazione di annunci personalizzati per sostenere il servizio.",
-  securityModalHeading: "Informazioni sulla sicurezza",
+  securityModalHeading: "Privacy",
   securityModalText: `La tua privacy e la sicurezza delle informazioni dei pazienti sono la massima priorità. Per garantire la riservatezza dei dati:<br><br>
 - <strong>Crittografia dei dati:</strong> Tutti i dati elaborati dal sistema sono protetti utilizzando metodi di crittografia conformi agli standard del settore. Le trascrizioni e le note sono collegate esclusivamente alla tua chiave API personale criptata e al dispositivo usato per l'accesso, garantendo che solo tu possa accedere al contenuto generato.<br><br>
 - <strong>Cancellazione automatica:</strong> Una volta generata e visualizzata una trascrizione o una nota, essa viene eliminata automaticamente e in maniera irreversibile dai server entro 2 minuti.<br><br>
 - <strong>Protezione contro accessi non autorizzati:</strong> Anche in caso di accesso non autorizzato alla tua chiave API, i dati rimangono criptati e protetti da marcatori specifici del dispositivo, rendendo le informazioni inaccessibili.<br><br>
 - <strong>Hosting conforme al GDPR:</strong> Tutti i processi di backend operano su server dedicati di Microsoft Azure situati nell'UE, pienamente conformi alle normative GDPR.<br><br>
 Stai tranquillo, misure di sicurezza rigorose assicurano che tutti i dati relativi ai pazienti rimangano sicuri, confidenziali e completamente sotto il tuo controllo.`,
-  aboutModalHeading: "Informazioni su questo progetto",
+  aboutModalHeading: "Informazioni",
   aboutModalText: `Sono un medico di famiglia norvegese con una profonda passione per i progressi tecnologici, in particolare per l'intelligenza artificiale, e ho seguito da vicino gli sviluppi dell'IA in ambito sanitario.<br><br>
 Quando ho appreso per la prima volta dell'esistenza di aziende che offrono servizi di trascrizione da voce a testo per consultazioni mediche in Norvegia, ne sono rimasto entusiasta. Colleghi e recensioni online hanno elogiato questi servizi, evidenziando miglioramenti significativi in termini di efficienza e flusso di lavoro. Tuttavia, approfondendo la questione, sono rimasto sorpreso dai costi elevati richiesti, considerando che il costo reale della tecnologia è solo una frazione di tali prezzi.<br><br>
 Motivato da questa constatazione, ho sviluppato personalmente una soluzione di trascrizione da voce a testo, inizialmente per uso personale. Vedendo quanto fosse efficace ed economica, ho deciso di rendere la mia soluzione accessibile online, offrendo la stessa velocità, precisione e qualità dei servizi premium, ma senza le tariffe elevate.<br><br>
@@ -40,7 +40,7 @@ Dopo aver creato il profilo, genera una chiave API andando sulla pagina <a href=
 <strong>3. Ricarica il tuo portafoglio OpenAI</strong><br>
 Per far funzionare la webapp, il tuo portafoglio OpenAI deve avere fondi sufficienti. Visita la pagina <a href="https://platform.openai.com/account/billing/overview" style="color:blue;">Fatturazione & Pagamenti</a> per aggiungere fondi. Puoi trasferire qualsiasi importo in qualsiasi momento. Finché ci sono fondi disponibili, potrai utilizzare il sito — ogni attività viene addebitata immediatamente.`,
   priceButton: "Prezzo",
-  priceModalHeading: "Informazioni sui costi",
+  priceModalHeading: "Prezzo",
   priceModalText: `<h1>Informazioni sui Costi</h1>
 <h2>Prezzi per la Trascrizione da Voce a Testo</h2>
 <ul>
