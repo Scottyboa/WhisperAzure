@@ -14,14 +14,14 @@ export const indexTranslations = {
   securityModalHeading: "Confidentialité",
   securityModalText: "Votre vie privée et la sécurité des informations patient sont nos priorités absolues. Pour garantir la confidentialité des données:<br><br>- <strong>Chiffrement des données :</strong> Toutes les données traitées par le système sont sécurisées grâce à des méthodes de chiffrement conformes aux normes de l'industrie. Les transcriptions et les notes sont exclusivement associées à votre clé API personnelle chiffrée et à l'appareil utilisé, garantissant ainsi que seul vous pouvez accéder au contenu généré.<br><br>- <strong>Suppression automatique :</strong> Une fois qu'une transcription ou une note est générée et affichée à l'écran, elle est automatiquement et irréversiblement supprimée des serveurs dans les 2 minutes qui suivent.<br><br>- <strong>Protection contre les accès non autorisés :</strong> Même en cas d'accès non autorisé à votre clé API, les données restent chiffrées et sécurisées par des marqueurs spécifiques à l'appareil, rendant ainsi l'information inaccessible.<br><br>- <strong>Hébergement conforme au RGPD :</strong> Tous les processus backend s'exécutent sur des serveurs dédiés Microsoft Azure situés au sein de l'UE, en totale conformité avec le RGPD.<br><br>Soyez assuré que des mesures de sécurité strictes garantissent que toutes les données relatives aux patients demeurent sûres, confidentielles et entièrement sous votre contrôle.",
   aboutModalHeading: "À propos",
-  aboutModalText: `Ce site a été créé pour offrir aux professionnels de la santé et aux autres utilisateurs un accès direct à une transcription de haute qualité de la parole en texte ainsi qu'à la génération de notes cliniques, sans coûts inutiles ni intermédiaires.<br><br>
-En utilisant votre propre clé API OpenAI, vous vous connectez directement à la source de la technologie. Cela signifie que vous ne payez que le coût d'utilisation réel fixé par OpenAI, sans majoration ni frais d'abonnement.<br><br>
-De nombreux fournisseurs existants offrent des services similaires mais facturent des tarifs nettement plus élevés – souvent 8 à 10 fois le coût réel de la technologie sous-jacente. Cette plateforme offre la même fonctionnalité à une fraction du prix.<br><br>
-<strong>Points clés :</strong><br>
-• Pas d'abonnement, pas de compte requis.<br>
-• Vous ne payez directement à OpenAI que pour ce que vous utilisez.<br>
-• Le site lui-même est entièrement gratuit.<br><br>
-Pour que cela reste ainsi, les utilisateurs doivent accepter la publicité. Les revenus publicitaires aident à couvrir les frais d'hébergement et d'exploitation, permettant ainsi au service de rester accessible et gratuit pour tous.`,
+  aboutModalText: `Questo sito è stato creato per offrire ai professionisti della salute e ad altri utenti un accesso diretto a trascrizioni vocali di alta qualità e alla generazione di note cliniche — senza costi superflui o intermediari.<br><br>
+Utilizzando la tua chiave API OpenAI personale, ti connetti direttamente alla fonte della tecnologia. Ciò significa che paghi solo il costo effettivo d'uso stabilito da OpenAI, senza maggiorazioni o tariffe di abbonamento.<br><br>
+Molti fornitori esistenti offrono servizi simili, ma addebitano costi significativamente più elevati — spesso 8-10 volte il costo reale della tecnologia sottostante. Questa piattaforma offre la stessa funzionalità a una frazione del prezzo.<br><br>
+<strong>Punti chiave:</strong><br>
+• Nessun abbonamento, nessun account richiesto.<br>
+• Paghi direttamente OpenAI solo per ciò che utilizzi.<br>
+• Il sito stesso è completamente gratuito.<br><br>
+Per mantenere questo modello, gli utenti sono tenuti ad accettare la pubblicità. I ricavi pubblicitari aiutano a coprire i costi di hosting e gestione, permettendo al servizio di rimanere accessibile e gratuito per tutti.`,
   guideModalHeading: "Comment utiliser",
   guideModalText: `Pour utiliser cette application web, vous devez d'abord créer un profil API OpenAI, générer une clé API et approvisionner votre portefeuille OpenAI. Votre clé API est ensuite copiée et collée dans le champ dédié. Une fois que vous appuyez sur Entrée, l'application web enregistre temporairement la clé pour votre session — cette clé vous connecte aux serveurs d'OpenAI, permettant ainsi la transcription de la parole en texte et la génération de notes. Veuillez noter que chaque tâche effectuée vous est facturée immédiatement. Pour plus d'informations sur les coûts, veuillez consulter la section "Coûts" sur la page d'accueil.
 <br><br>
