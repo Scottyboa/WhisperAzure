@@ -31,7 +31,7 @@ Questo sito è completamente gratuito da utilizzare: il tuo unico costo è la ta
 • Controlli quanto spendere decidendo quanto trasferire nel tuo portafoglio OpenAI.<br><br>
 L'unica cosa che chiedo è che accetti la visualizzazione degli annunci, che aiutano a coprire i costi dei server di backend.<br>
 Man mano che sempre più persone utilizzeranno il sito, le spese di hosting e operative aumenteranno, e i ricavi pubblicitari garantiranno che il servizio rimanga gratuito e operativo senza addebitare costi agli utenti.`,
-  guideModalHeading: "Come configurare la tua API di OpenAI per la Trascrizione Clinica Whisper",
+  guideModalHeading: "Come si usa",
   guideModalText: `Per utilizzare questa webapp, devi prima creare un profilo API su OpenAI, generare una chiave API e ricaricare il tuo portafoglio OpenAI. La tua chiave API viene quindi copiata e incollata nel campo apposito. Una volta premuto Invio, la webapp salva temporaneamente la chiave API per la tua sessione — questa chiave ti collega ai server di OpenAI, permettendo la trascrizione da voce a testo e la generazione delle note. Nota bene: ti viene addebitato immediatamente per ogni attività svolta. Per ulteriori informazioni sui costi, consulta la sezione "Cost" nella pagina principale.<br><br>
 <strong>1. Crea il tuo profilo API OpenAI</strong><br>
 Per iniziare, crea un profilo sulla piattaforma API di OpenAI. Questo profilo funge da account per la gestione delle chiavi API e della fatturazione. Visita la pagina <a href="https://platform.openai.com/signup" style="color:blue;">Registrazione API di OpenAI</a> e segui le istruzioni per registrarti inserendo il tuo indirizzo email, impostando una password e verificando il tuo account. Una volta registrato, avrai accesso al tuo dashboard.<br><br>
