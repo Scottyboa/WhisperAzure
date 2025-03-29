@@ -270,27 +270,18 @@
       };
     }
 
-  document.addEventListener("DOMContentLoaded", function() {
-    const enterTranscriptionBtn = document.getElementById("enterTranscriptionBtn");
-    const apiKeyInput = document.getElementById("apiKeyInput");
-    if (enterTranscriptionBtn && apiKeyInput) {
-      enterTranscriptionBtn.addEventListener("click", async () => {
-        const apiKey = apiKeyInput.value.trim();
-        // No validation check; proceed regardless of the API key content—even if empty
-        const encryptedData = await encryptAPIKey(apiKey);
-        sessionStorage.setItem("encrypted_api_key", JSON.stringify(encryptedData));
-        window.location.href = "transcribe.html";
-      });
-    }
-    
-    document.getElementById("cmp-accept").addEventListener("click", function() {
-      document.getElementById("cmp-banner").style.display = "none";
-    });
-    
-    document.getElementById("cmp-manage").addEventListener("click", function() {
-      alert("Here you can manage your cookie and ad preferences.");
-    });
-  });
+    document.addEventListener("DOMContentLoaded", function() {
+      const enterTranscriptionBtn = document.getElementById("enterTranscriptionBtn");
+      const apiKeyInput = document.getElementById("apiKeyInput");
+      if (enterTranscriptionBtn && apiKeyInput) {
+        enterTranscriptionBtn.addEventListener("click", async () => {
+          const apiKey = apiKeyInput.value.trim();
+          // No validation check; proceed regardless of the API key content—even if empty
+          const encryptedData = await encryptAPIKey(apiKey);
+          sessionStorage.setItem("encrypted_api_key", JSON.stringify(encryptedData));
+          window.location.href = "transcribe.html";
+        });
+      }
       
       document.getElementById("cmp-accept").addEventListener("click", function() {
         document.getElementById("cmp-banner").style.display = "none";
