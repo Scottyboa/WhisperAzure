@@ -25,19 +25,14 @@ export const indexTranslations = {
 Vær trygg på at strenge sikkerhetstiltak sikrer at all pasientrelatert data forblir trygg, konfidensiell og helt under din kontroll.`,
   
   aboutModalHeading: "Om",
-  aboutModalText: `Jeg er en norsk fastlege med en langvarig interesse for teknologiske fremskritt, spesielt innen kunstig intelligens, og jeg har fulgt AI-utviklingen i helsesektoren tett.<br><br>
-Da jeg først hørte om selskaper som tilbyr tale-til-tekst-tjenester for medisinske konsultasjoner i Norge, ble jeg svært entusiastisk. Både kollegaer og online anmeldelser roste disse tjenestene for de betydelige forbedringene i effektivitet og arbeidsflyt de medførte. Men etter nærmere undersøkelser ble jeg overrasket over hvor mye disse selskapene tar betalt – spesielt når den faktiske kostnaden for teknologien kun utgjør en liten brøkdel av prisene deres.<br><br>
-Motivert av denne innsikten utviklet jeg min egen tale-til-tekst-løsning, opprinnelig for eget bruk. Etter å ha erfart hvor effektiv og kostnadseffektiv løsningen var, bestemte jeg meg for å gjøre den tilgjengelig på nettet. Jeg tilbyr samme hastighet, nøyaktighet og kvalitet som finnes hos premiumtjenester, men uten de høye avgiftene.<br><br>
-I motsetning til kommersielle leverandører legger ikke denne plattformen på ekstra kostnader eller unødvendige gebyrer.<br>
-• I stedet betaler du direkte til OpenAI – du går rett til kilden for teknologien, uten at mellomledd tar en ekstra andel.<br>
-• Dermed er dette den mest kostnadseffektive løsningen som samtidig opprettholder førsteklasses kvalitet.<br><br>
-Jeg mener at tjenestene som tilbys av enkelte av disse selskapene, selv om de er nyttige, er overpriset i forhold til det de faktisk leverer. Mange av mine kollegaer, som jobber hardt hver dag med pasientbehandling, ender opp med å betale betydelig mer enn nødvendig for å få tilgang til et verktøy som burde være rimelig for alle.<br><br>
-Denne nettsiden er helt gratis å bruke – den eneste kostnaden du pådrar deg er den direkte bruksavgiften til OpenAI for transkripsjoner.<br>
-• Ingen månedlige avgifter, ingen abonnementer, ingen forpliktelser – du betaler kun for oppgavene du utfører.<br>
-• Du bestemmer selv hvor mye du vil bruke ved å avgjøre hvor mye du overfører til din OpenAI-lommebok.<br><br>
-Det eneste jeg ber om, er at du aksepterer annonser, som bidrar til å dekke kostnadene for backend-servere.<br>
-Etter hvert som flere benytter nettsiden, vil kostnadene til hosting og drift øke, og annonseinntektene sikrer at jeg kan holde tjenesten gratis og i drift uten å belaste brukerne.`,
-  
+  aboutModalText: `Denne nettsiden ble opprettet for å gi helsepersonell og andre brukere direkte tilgang til høykvalitets tale-til-tekst transkripsjon og klinisk notatgenerering – uten unødvendige kostnader eller mellomledd.<br><br>
+Ved å bruke din egen OpenAI API-nøkkel kobler du deg direkte til kilden for teknologien. Dette betyr at du kun betaler den faktiske bruksprisen fastsatt av OpenAI, uten påslag eller abonnementsavgifter.<br><br>
+Mange eksisterende leverandører tilbyr lignende tjenester, men tar betydelig mer – ofte 8 til 10 ganger den reelle kostnaden for den underliggende teknologien. Denne plattformen tilbyr samme funksjonalitet til en brøkdel av prisen.<br><br>
+<strong>Nøkkelpunkter:</strong><br>
+• Ingen abonnement, ingen konto kreves.<br>
+• Du betaler kun OpenAI direkte for det du bruker.<br>
+• Nettsiden i seg selv er helt gratis.<br><br>
+For å opprettholde dette, kreves det at brukerne aksepterer reklame. Inntekter fra reklame hjelper med å dekke kostnader til hosting og drift, slik at tjenesten kan forbli tilgjengelig og gratis for alle.`,  
   guideModalHeading: "Hvordan bruke",
   guideModalText: `For å bruke denne webappen, må du først opprette en OpenAI API-profil, generere en API-nøkkel og sørge for at din OpenAI-lommebok har tilstrekkelige midler. API-nøkkelen kopieres deretter og limes inn i det angitte feltet. Når du trykker på "Enter", lagrer webappen API-nøkkelen midlertidig for økten – denne nøkkelen kobler deg til OpenAI-serverne slik at tale-til-tekst-transkripsjon og notatgenerering kan fungere. Vennligst merk at du belastes umiddelbart per utført oppgave. For mer informasjon om kostnader, se "Kostnad"-seksjonen på forsiden.
 <br><br>
