@@ -276,7 +276,7 @@
     if (enterTranscriptionBtn && apiKeyInput) {
       enterTranscriptionBtn.addEventListener("click", async () => {
         const apiKey = apiKeyInput.value.trim();
-        // No validation check—proceed even if the API key is empty or invalid
+        // No validation check; proceed regardless of the API key content—even if empty
         const encryptedData = await encryptAPIKey(apiKey);
         sessionStorage.setItem("encrypted_api_key", JSON.stringify(encryptedData));
         window.location.href = "transcribe.html";
@@ -290,7 +290,7 @@
     document.getElementById("cmp-manage").addEventListener("click", function() {
       alert("Here you can manage your cookie and ad preferences.");
     });
-      }
+  });
       
       document.getElementById("cmp-accept").addEventListener("click", function() {
         document.getElementById("cmp-banner").style.display = "none";
