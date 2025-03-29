@@ -19,17 +19,14 @@ export const indexTranslations = {
 - <strong>DSGVO-konformes Hosting:</strong> Alle Backend-Prozesse laufen auf dedizierten Microsoft Azure-Servern innerhalb der EU und entsprechen vollständig den DSGVO-Vorschriften.<br><br>
 Seien Sie versichert, dass strenge Sicherheitsmaßnahmen gewährleisten, dass alle patientenbezogenen Daten sicher, vertraulich und vollständig unter Ihrer Kontrolle bleiben.`,
   aboutModalHeading: "Über uns",
-  aboutModalText: `Ich bin ein norwegischer Hausarzt mit großem Interesse an technologischen Fortschritten, insbesondere im Bereich der künstlichen Intelligenz. Ich habe die Entwicklungen der KI im Gesundheitswesen aufmerksam verfolgt.
-Als ich von Unternehmen erfuhr, die Sprach-zu-Text-Dienste für medizinische Konsultationen in Norwegen anbieten, war ich begeistert. Kollegen und Online-Bewertungen lobten diese Dienste, wiesen aber auch auf hohe Kosten hin, obwohl die tatsächlichen Technologiekosten nur einen Bruchteil ausmachen.
-Motiviert von dieser Erkenntnis entwickelte ich zunächst eine eigene Lösung für den persönlichen Gebrauch, bevor ich sie online zugänglich machte, um dieselbe Geschwindigkeit, Genauigkeit und Qualität zu bieten wie Premium-Dienste – jedoch ohne hohe Gebühren.
-Diese Plattform berechnet keine zusätzlichen Gebühren oder Aufschläge.
-• Sie zahlen direkt an OpenAI – Sie erhalten direkten Zugriff auf die Technologie ohne Zwischenhändler.
-• Daher ist es die günstigste Option bei erstklassiger Qualität.
-Ich bin überzeugt, dass die Dienste vieler Anbieter zwar nützlich, aber überteuert sind. Viele meiner Kollegen zahlen zu viel, um Zugang zu einem Werkzeug zu erhalten, das für alle erschwinglich sein sollte.
-Diese Website ist völlig kostenlos – Ihre einzige Ausgabe ist die direkte Nutzungsgebühr von OpenAI für Transkriptionen.
-• Keine monatlichen Gebühren, keine Abonnements, keine Verpflichtungen – Sie zahlen nur für die durchgeführten Aufgaben.
-• Sie kontrollieren Ihre Ausgaben, indem Sie entscheiden, wie viel Sie auf Ihre OpenAI-Wallet überweisen.
-Das Einzige, was ich bitte, ist die Zustimmung zu personalisierter Werbung, die zur Deckung der Serverkosten beiträgt.`,
+  aboutModalText: `Diese Website wurde entwickelt, um Gesundheitsfachkräfte und andere Nutzer mit direktem Zugang zu hochwertiger Spracherkennung und klinischer Notizgenerierung zu versorgen – ohne unnötige Kosten oder Zwischenhändler.<br><br>
+Durch die Verwendung Ihres eigenen OpenAI API-Schlüssels verbinden Sie sich direkt mit der Quelle der Technologie. Das bedeutet, dass Sie nur die tatsächlichen Nutzungskosten zahlen, die von OpenAI festgelegt werden, ohne Aufschläge oder Abonnementgebühren.<br><br>
+Viele bestehende Anbieter offerieren ähnliche Dienste, verlangen jedoch deutlich mehr – oftmals 8 bis 10 Mal die tatsächlichen Kosten der zugrunde liegenden Technologie. Diese Plattform bietet dieselbe Funktionalität zu einem Bruchteil des Preises.<br><br>
+<strong>Wichtige Punkte:</strong><br>
+• Kein Abonnement, kein Konto erforderlich.<br>
+• Sie zahlen nur OpenAI direkt für die tatsächlich genutzte Leistung.<br>
+• Die Website selbst ist völlig kostenlos.<br><br>
+Damit es so bleibt, müssen Nutzer Werbung akzeptieren. Werbeeinnahmen helfen dabei, Hosting- und Betriebskosten zu decken, sodass der Dienst für alle zugänglich und kostenlos bleibt.`,
   guideModalHeading: "Anleitung",
  guideModalText: `Um diese Web-App zu nutzen, müssen Sie zunächst ein OpenAI API-Profil erstellen, einen API-Schlüssel generieren und Ihre OpenAI-Brieftasche aufladen. Anschließend kopieren Sie Ihren API-Schlüssel und fügen ihn in das bereitgestellte API-Schlüsselfeld ein. Sobald Sie die Eingabetaste drücken, wird der API-Schlüssel temporär für Ihre Sitzung gespeichert – dieser Schlüssel verbindet Sie mit den OpenAI-Servern, sodass die Sprach-zu-Text-Transkription und die Notizgenerierung funktionieren. Bitte beachten Sie, dass Ihnen pro ausgeführter Aufgabe sofort Kosten in Rechnung gestellt werden. Für weitere Informationen zu den Kosten lesen Sie bitte den Abschnitt "Kosten" auf der Startseite.
 <br><br>
