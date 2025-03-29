@@ -31,7 +31,19 @@ Diese Website ist völlig kostenlos – Ihre einzige Ausgabe ist die direkte Nut
 • Sie kontrollieren Ihre Ausgaben, indem Sie entscheiden, wie viel Sie auf Ihre OpenAI-Wallet überweisen.
 Das Einzige, was ich bitte, ist die Zustimmung zu personalisierter Werbung, die zur Deckung der Serverkosten beiträgt.`,
   guideModalHeading: "Anleitung",
-  guideModalText: `Um diese Webapp zu nutzen, müssen Sie zunächst ein OpenAI API-Profil erstellen, einen API-Schlüssel generieren und Ihre OpenAI-Wallet aufladen. Kopieren Sie Ihren API-Schlüssel und fügen Sie ihn in das vorgesehene Feld ein. Nach dem Drücken der Eingabetaste wird der API-Schlüssel vorübergehend für Ihre Sitzung gespeichert – dieser Schlüssel verbindet Sie mit den OpenAI-Servern, sodass Sprach-zu-Text-Transkriptionen und die Notizenerstellung funktionieren. Bitte beachten Sie, dass für jede Aktion sofort Gebühren anfallen. Für weitere Informationen zu den Kosten lesen Sie bitte den Abschnitt „Kosten“ auf der Startseite.`,
+ guideModalText: `Um diese Web-App zu nutzen, müssen Sie zunächst ein OpenAI API-Profil erstellen, einen API-Schlüssel generieren und Ihre OpenAI-Brieftasche aufladen. Anschließend kopieren Sie Ihren API-Schlüssel und fügen ihn in das bereitgestellte API-Schlüsselfeld ein. Sobald Sie die Eingabetaste drücken, wird der API-Schlüssel temporär für Ihre Sitzung gespeichert – dieser Schlüssel verbindet Sie mit den OpenAI-Servern, sodass die Sprach-zu-Text-Transkription und die Notizgenerierung funktionieren. Bitte beachten Sie, dass Ihnen pro ausgeführter Aufgabe sofort Kosten in Rechnung gestellt werden. Für weitere Informationen zu den Kosten lesen Sie bitte den Abschnitt "Kosten" auf der Startseite.
+<br><br>
+<strong>1. Erstellen Sie Ihr OpenAI API-Profil</strong><br>
+Zu Beginn müssen Sie ein Profil auf der OpenAI API-Plattform erstellen. Dieses Profil dient als Ihr Konto zur Verwaltung von API-Schlüsseln und zur Abrechnung. Um loszulegen, besuchen Sie die <a href="https://platform.openai.com/signup" style="color:blue;">OpenAI API-Anmeldung</a>. Befolgen Sie die Anweisungen zur Registrierung, indem Sie Ihre E-Mail-Adresse angeben, ein Passwort festlegen und Ihr Konto verifizieren. Nach der Registrierung haben Sie Zugriff auf Ihr Dashboard.
+<br><br>
+<strong>2. Generieren Sie einen API-Schlüssel</strong><br>
+Nachdem Sie Ihr Profil erstellt haben, generieren Sie einen API-Schlüssel, indem Sie zur <a href="https://platform.openai.com/account/api-keys" style="color:blue;">API-Schlüsselverwaltung</a> navigieren. Klicken Sie auf die Schaltfläche, um einen neuen API-Schlüssel zu erstellen. Wichtig: Sie sehen Ihren API-Schlüssel nur einmal. Kopieren Sie ihn sofort und speichern Sie ihn sicher (z. B. in einer Textdatei) für die zukünftige Verwendung. Wenn Sie den Schlüssel verlieren oder vermuten, dass er kompromittiert wurde, löschen Sie ihn aus Ihrem Konto und erstellen einen neuen.
+<br><br>
+<strong>3. Laden Sie Ihre OpenAI-Brieftasche auf</strong><br>
+Damit die Web-App funktioniert, muss Ihre OpenAI-Brieftasche über ausreichende Mittel verfügen. Besuchen Sie die <a href="https://platform.openai.com/account/billing/overview" style="color:blue;">Abrechnungs- und Zahlungsseite</a>, um Mittel hinzuzufügen. Sie können jederzeit jeden Betrag überweisen. Solange ausreichende Mittel vorhanden sind, können Sie die Seite nutzen – jede Aufgabe wird sofort berechnet.
+<br><br>
+<strong>Hinweis zur Sitzungs-Sicherheit</strong><br>
+Wenn Sie sich anmelden, indem Sie Ihren API-Schlüssel eingeben, wird dieser nur temporär in Ihrer Browsersitzung gespeichert. Das bedeutet, dass der API-Schlüssel nicht gespeichert wird, wenn Sie die Website verlassen, Ihren Browser schließen oder Ihren Computer ausschalten. Beim nächsten Besuch der Web-App müssen Sie Ihren API-Schlüssel erneut eingeben, um die Sicherheit Ihres Schlüssels zu gewährleisten.`,
   priceButton: "Preis",
   priceModalHeading: "Preis",
   priceModalText: `
