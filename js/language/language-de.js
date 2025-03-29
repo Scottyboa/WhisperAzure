@@ -12,11 +12,12 @@ export const indexTranslations = {
   aboutButton: "Über",
   adRevenueMessage: "Da diese Website kostenlos genutzt werden kann und ausschließlich auf Werbeeinnahmen angewiesen ist, stimmen Sie bitte personalisierter Werbung zu, um den Dienst zu unterstützen.",
   securityModalHeading: "Datenschutz",
-  securityModalText: `Ihre Privatsphäre und die Sicherheit von Patientendaten haben höchste Priorität. Um die Vertraulichkeit der Daten zu gewährleisten:
-- <strong>Datenverschlüsselung:</strong> Alle vom System verarbeiteten Daten werden mit branchenüblichen Verschlüsselungsmethoden gesichert. Transkripte und Notizen sind ausschließlich mit Ihrem verschlüsselten persönlichen API-Schlüssel und dem verwendeten Gerät verknüpft, sodass nur Sie Zugriff auf die generierten Inhalte haben.
-- <strong>Automatische Löschung:</strong> Sobald ein Transkript oder eine Notiz erstellt und angezeigt wird, wird es innerhalb von 2 Minuten automatisch und unwiderruflich von den Servern gelöscht.
-- <strong>Schutz vor unbefugtem Zugriff:</strong> Selbst bei unbefugtem Zugriff auf Ihren API-Schlüssel bleiben die Daten verschlüsselt und durch gerätespezifische Marker geschützt, sodass die Informationen unzugänglich bleiben.
-- <strong>GDPR-konformes Hosting:</strong> Alle Backend-Prozesse laufen auf dedizierten Microsoft Azure-Servern in der EU, die vollständig den GDPR-Richtlinien entsprechen.`,
+  securityModalText: `Ihre Privatsphäre und die Sicherheit der Patientendaten haben oberste Priorität. Um sicherzustellen, dass die Daten vertraulich bleiben:<br><br>
+- <strong>Datenverschlüsselung:</strong> Alle vom System verarbeiteten Daten werden mit branchenüblichen Verschlüsselungsmethoden gesichert. Transkripte und Notizen sind ausschließlich mit Ihrem verschlüsselten persönlichen API-Schlüssel und dem für den Zugriff verwendeten Gerät verknüpft, sodass nur Sie Zugriff auf den generierten Inhalt haben.<br><br>
+- <strong>Automatische Löschung:</strong> Sobald ein Transkript oder eine Notiz erstellt und auf Ihrem Bildschirm angezeigt wird, wird es automatisch und unwiderruflich innerhalb von 2 Minuten von den Servern gelöscht.<br><br>
+- <strong>Schutz vor unbefugtem Zugriff:</strong> Selbst wenn es zu einem unbefugten Zugriff auf Ihren API-Schlüssel kommen sollte, bleiben die Daten verschlüsselt und durch gerätespezifische Marker gesichert, wodurch die Informationen unzugänglich werden.<br><br>
+- <strong>DSGVO-konformes Hosting:</strong> Alle Backend-Prozesse laufen auf dedizierten Microsoft Azure-Servern innerhalb der EU und entsprechen vollständig den DSGVO-Vorschriften.<br><br>
+Seien Sie versichert, dass strenge Sicherheitsmaßnahmen gewährleisten, dass alle patientenbezogenen Daten sicher, vertraulich und vollständig unter Ihrer Kontrolle bleiben.`,
   aboutModalHeading: "Über uns",
   aboutModalText: `Ich bin ein norwegischer Hausarzt mit großem Interesse an technologischen Fortschritten, insbesondere im Bereich der künstlichen Intelligenz. Ich habe die Entwicklungen der KI im Gesundheitswesen aufmerksam verfolgt.
 Als ich von Unternehmen erfuhr, die Sprach-zu-Text-Dienste für medizinische Konsultationen in Norwegen anbieten, war ich begeistert. Kollegen und Online-Bewertungen lobten diese Dienste, wiesen aber auch auf hohe Kosten hin, obwohl die tatsächlichen Technologiekosten nur einen Bruchteil ausmachen.
