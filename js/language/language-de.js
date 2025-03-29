@@ -11,13 +11,13 @@ export const indexTranslations = {
   securityButton: "Sicherheit",
   aboutButton: "Über",
   adRevenueMessage: "Da diese Website kostenlos genutzt werden kann und ausschließlich auf Werbeeinnahmen angewiesen ist, stimmen Sie bitte personalisierter Werbung zu, um den Dienst zu unterstützen.",
-  securityModalHeading: "Sicherheitsinformationen",
+  securityModalHeading: "Datenschutz",
   securityModalText: `Ihre Privatsphäre und die Sicherheit von Patientendaten haben höchste Priorität. Um die Vertraulichkeit der Daten zu gewährleisten:
 - <strong>Datenverschlüsselung:</strong> Alle vom System verarbeiteten Daten werden mit branchenüblichen Verschlüsselungsmethoden gesichert. Transkripte und Notizen sind ausschließlich mit Ihrem verschlüsselten persönlichen API-Schlüssel und dem verwendeten Gerät verknüpft, sodass nur Sie Zugriff auf die generierten Inhalte haben.
 - <strong>Automatische Löschung:</strong> Sobald ein Transkript oder eine Notiz erstellt und angezeigt wird, wird es innerhalb von 2 Minuten automatisch und unwiderruflich von den Servern gelöscht.
 - <strong>Schutz vor unbefugtem Zugriff:</strong> Selbst bei unbefugtem Zugriff auf Ihren API-Schlüssel bleiben die Daten verschlüsselt und durch gerätespezifische Marker geschützt, sodass die Informationen unzugänglich bleiben.
 - <strong>GDPR-konformes Hosting:</strong> Alle Backend-Prozesse laufen auf dedizierten Microsoft Azure-Servern in der EU, die vollständig den GDPR-Richtlinien entsprechen.`,
-  aboutModalHeading: "Über dieses Projekt",
+  aboutModalHeading: "Über uns",
   aboutModalText: `Ich bin ein norwegischer Hausarzt mit großem Interesse an technologischen Fortschritten, insbesondere im Bereich der künstlichen Intelligenz. Ich habe die Entwicklungen der KI im Gesundheitswesen aufmerksam verfolgt.
 Als ich von Unternehmen erfuhr, die Sprach-zu-Text-Dienste für medizinische Konsultationen in Norwegen anbieten, war ich begeistert. Kollegen und Online-Bewertungen lobten diese Dienste, wiesen aber auch auf hohe Kosten hin, obwohl die tatsächlichen Technologiekosten nur einen Bruchteil ausmachen.
 Motiviert von dieser Erkenntnis entwickelte ich zunächst eine eigene Lösung für den persönlichen Gebrauch, bevor ich sie online zugänglich machte, um dieselbe Geschwindigkeit, Genauigkeit und Qualität zu bieten wie Premium-Dienste – jedoch ohne hohe Gebühren.
@@ -29,10 +29,10 @@ Diese Website ist völlig kostenlos – Ihre einzige Ausgabe ist die direkte Nut
 • Keine monatlichen Gebühren, keine Abonnements, keine Verpflichtungen – Sie zahlen nur für die durchgeführten Aufgaben.
 • Sie kontrollieren Ihre Ausgaben, indem Sie entscheiden, wie viel Sie auf Ihre OpenAI-Wallet überweisen.
 Das Einzige, was ich bitte, ist die Zustimmung zu personalisierter Werbung, die zur Deckung der Serverkosten beiträgt.`,
-  guideModalHeading: "Einrichtung Ihrer OpenAI API für Whisper Klinische Transkription",
+  guideModalHeading: "Anleitung",
   guideModalText: `Um diese Webapp zu nutzen, müssen Sie zunächst ein OpenAI API-Profil erstellen, einen API-Schlüssel generieren und Ihre OpenAI-Wallet aufladen. Kopieren Sie Ihren API-Schlüssel und fügen Sie ihn in das vorgesehene Feld ein. Nach dem Drücken der Eingabetaste wird der API-Schlüssel vorübergehend für Ihre Sitzung gespeichert – dieser Schlüssel verbindet Sie mit den OpenAI-Servern, sodass Sprach-zu-Text-Transkriptionen und die Notizenerstellung funktionieren. Bitte beachten Sie, dass für jede Aktion sofort Gebühren anfallen. Für weitere Informationen zu den Kosten lesen Sie bitte den Abschnitt „Kosten“ auf der Startseite.`,
   priceButton: "Preis",
-  priceModalHeading: "Kosteninformationen",
+  priceModalHeading: "Preis",
   priceModalText: `
     <h1>Kosteninformationen</h1>
     <h2>Preisgestaltung für Sprach-zu-Text</h2>
