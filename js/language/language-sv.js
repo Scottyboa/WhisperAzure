@@ -13,16 +13,16 @@ export const indexTranslations = {
   adRevenueMessage: "Eftersom denna webbplats är gratis att använda och enbart finansieras genom annonsintäkter, vänligen godkänn personliga annonser för att stödja tjänsten.",
 
   securityModalHeading: "Integritet",
-  securityModalText: `Din integritet och säkerheten för patientinformation är vår högsta prioritet. För att säkerställa att data förblir konfidentiell:
-<div style="margin-left:20px;">
-  <ul>
-    <li><strong>Datakryptering:</strong> All data som behandlas av systemet skyddas med industristandard krypteringsmetoder. Transkriptioner och notiser är exklusivt kopplade till din krypterade personliga API-nyckel och den enhet du använder, vilket garanterar att endast du har åtkomst till det genererade innehållet.</li>
-    <li><strong>Automatisk radering:</strong> Så fort en transkription eller notis genereras och visas, raderas den automatiskt och permanent från servrarna inom 2 minuter.</li>
-    <li><strong>Skydd mot obehörig åtkomst:</strong> Även om obehörig åtkomst till din API-nyckel skulle inträffa, förblir data krypterad och skyddad med enhetsspecifika markörer, så att informationen inte blir åtkomlig.</li>
-    <li><strong>GDPR-kompatibel hosting:</strong> Alla backend-processer körs på dedikerade Microsoft Azure-servrar inom EU, helt i enlighet med GDPR.</li>
-  </ul>
-</div>
-Var säker på att strikta säkerhetsåtgärder garanterar att all patientrelaterad data förblir säker, konfidentiell och helt under din kontroll.`,
+securityModalText: `Ditt privatliv och säkerheten för patientinformation är våra högsta prioriteringar. Vi använder robusta åtgärder för att säkerställa att dina data förblir konfidentiella och säkra:<br><br>
+- <strong>Datakryptering:</strong> All data som behandlas av vårt system – inklusive ljudinspelningar, transkriptioner och anteckningar – är krypterade med industristandardmetoder. Transkriptioner och anteckningar är exklusivt kopplade till din krypterade personliga API-nyckel och den enhet som används för åtkomst, vilket säkerställer att endast du kan se det genererade innehållet.<br><br>
+- <strong>Automatisk radering:</strong> När en transkription eller anteckning har genererats och visas på din skärm, raderas den automatiskt och permanent från våra servrar inom 2 minuter. Ljudfiler lagras endast temporärt för bearbetning och sparas inte längre än nödvändigt.<br><br>
+- <strong>Skydd mot obehörig åtkomst:</strong> Även om obehörig åtkomst till din API-nyckel skulle inträffa, förblir dina data krypterade och säkra med enhetsspecifika markörer, vilket gör informationen otillgänglig.<br><br>
+- <strong>GDPR-kompatibel hosting:</strong> Alla backend-processer körs på dedikerade Microsoft Azure-servrar belägna inom EU, fullt kompatibla med GDPR-reglerna.<br><br>
+<strong>Ytterligare integritetsrutiner:</strong><br><br>
+- <strong>Minimal datainsamling:</strong> Vi samlar endast in den väsentliga information som krävs för att tillhandahålla våra tjänster. Detta inkluderar din OpenAI API-nyckel (lagrad i krypterad form under din session), en enhetstoken som enbart används för kryptering, och din språkpreferens. Ingen ytterligare personlig information sparas.<br><br>
+- <strong>Användning av cookies:</strong> Vår webbplats använder cookies för att spara användarpreferenser och hantera samtycke för personaliserade annonser, vilket förbättrar din upplevelse. Du kan hantera dina cookie-inställningar via samtyckesbanner på vår webbplats.<br><br>
+- <strong>Delning med tredje part:</strong> Vi säljer inte och delar inte dina personliga data med tredje part. Data delas endast med betrodda externa tjänster (såsom OpenAI för transkription och notatgenerering, samt Google AdSense för annonsanpassning) under strikta integritetsstandarder.<br><br>
+Observera att, på grund av vårt systemdesign, raderas all data automatiskt kort efter bearbetning och sparas inte på lång sikt.`,
   
   aboutModalHeading: "Om",
   aboutModalText: `Jag är en norsk allmänläkare med ett stort intresse för teknologiska framsteg, särskilt inom artificiell intelligens, och jag har noga följt AI-utvecklingen inom vården.<br><br>
