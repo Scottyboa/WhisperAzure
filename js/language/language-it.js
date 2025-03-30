@@ -132,16 +132,17 @@ export const transcribeTranslations = {
   customPromptPlaceholder: "Inserisci qui il prompt personalizzato",
   adUnitText: "Il tuo annuncio qui",
   guideHeading: "Guida e Istruzioni",
-  guideText: `Benvenuto nello strumento di trascrizione Whisper. Questa applicazione consente ai professionisti sanitari, ai terapisti e ad altri operatori di registrare e trascrivere le consultazioni, oltre a generare note professionali utilizzando un generatore di note basato su intelligenza artificiale.<br><br>
+guideText: `Benvenuto allo strumento di trascrizione Whisper. Questa applicazione consente ai professionisti sanitari, ai terapisti e ad altri operatori di registrare e trascrivere le consultazioni, oltre a generare note professionali utilizzando un generatore di note basato su intelligenza artificiale.<br><br>
 <strong>Come utilizzare le funzioni:</strong>
 <ul>
-  <li><strong>Registrazione:</strong> Clicca su "Avvia Registrazione" per iniziare a catturare l'audio. Ogni 40 secondi, un frammento dell'audio verrà automaticamente inviato ai server di OpenAI per la trascrizione. Le trascrizioni arriveranno una ad una nel campo di output del testo della trascrizione.</li>
-  <li><strong>Completamento:</strong> Dopo aver cliccato su "Ferma/Completa", la registrazione si interrompe. Il Timer di Completamento inizierà a contare fino a quando non verrà ricevuta la trascrizione completa. Questo solitamente richiede tra 5 e 10 secondi.</li>
-  <li><strong>Generazione delle Note:</strong> Dopo la trascrizione, clicca su "Genera Nota" per produrre una nota basata sulla tua trascrizione e sul tuo prompt personalizzato.</li>
-  <li><strong>Prompt Personalizzato:</strong> Sulla destra, seleziona uno slot per il prompt (1–10) e inserisci il tuo prompt personalizzato. Il prompt viene salvato automaticamente e associato alla tua chiave API.</li>
-  <li><strong>Interruttore Guida:</strong> Utilizza i pulsanti "Funzioni" e "Guida" per passare dalla vista funzionale a questa guida.</li>
-</ul>
-Clicca su "Funzioni" per tornare all'interfaccia principale.`,
+  <li><strong>Registrazione:</strong> Clicca su "Avvia Registrazione" per iniziare a catturare l'audio. Ogni 2 minuti, un segmento audio viene automaticamente inviato ai server di OpenAI per la trascrizione. I trascritti appariranno in sequenza nel campo di output della trascrizione.</li>
+  <li><strong>Completamento:</strong> Dopo aver cliccato su "Ferma/Completa", la registrazione si interrompe. Il timer di completamento continua a contare fino a quando il trascritto completo non viene ricevuto (solitamente entro 5–10 secondi).</li>
+  <li><strong>Generazione della Nota:</strong> Una volta completata la trascrizione, clicca su "Genera Nota" per creare una nota basata sul tuo trascritto e sul prompt personalizzato.</li>
+  <li><strong>Prompt Personalizzato:</strong> A destra, seleziona uno slot per il prompt (1–10) ed inserisci il tuo prompt personalizzato. Il tuo prompt viene salvato automaticamente e collegato alla tua chiave API.</li>
+  <li><strong>Panoramica dell'Uso:</strong> Per verificare il tuo utilizzo attuale presso OpenAI, clicca sul collegamento per la panoramica dell'uso presente nell'interfaccia principale.</li>
+  <li><strong>Sicurezza:</strong> Il tuo audio viene criptato e processato su server Microsoft Azure sicuri. Inoltre, trascrizioni e note vengono eliminate automaticamente poco dopo la lavorazione per proteggere la tua privacy.</li>
+  <li><strong>Interruttore Guida:</strong> Clicca nuovamente sul pulsante "Guida" per tornare all'interfaccia principale.</li>
+</ul>`
 };
 
 export default { indexTranslations, transcribeTranslations };
