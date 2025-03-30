@@ -127,14 +127,15 @@ export const transcribeTranslations = {
   customPromptPlaceholder: "Ange anpassad prompt här",
   adUnitText: "Din annons här",
   guideHeading: "Guide & Instruktioner",
-  guideText: `Välkommen till Whisper Transkriptionstjänst. Denna applikation låter medicinska experter, terapeuter och andra utövare spela in och transkribera konsultationer samt generera professionella notiser med hjälp av en AI-driven notisgenerator.<br><br>
+guideText: `Välkommen till Whisper Transkriptionstjänst. Denna applikation låter medicinska experter, terapeuter och andra praktiker spela in och transkribera konsultationer, samt generera professionella notiser med hjälp av en AI-driven notisgenerator.<br><br>
 <strong>Så här använder du funktionerna:</strong>
 <ul>
-  <li><strong>Inspelning:</strong> Klicka på "Starta inspelning" för att börja fånga upp ljud. Var 40:e sekund skickas en ljudsekvens automatiskt för transkription till OpenAI-servrarna. Transkriptionerna visas en efter en i textfältet för transkription.</li>
-  <li><strong>Fullföljande:</strong> Efter att du klickat på "Stoppa/Avsluta" stoppas inspelningen. Fullföljandetimern börjar sedan ticka tills hela transkriptionen är mottagen – detta tar vanligtvis mellan 5 och 10 sekunder.</li>
-  <li><strong>Notisgenerering:</strong> När transkriptionen är klar, klicka på "Generera notis" för att skapa en notis baserad på transkriptionen och din anpassade prompt.</li>
-  <li><strong>Anpassad prompt:</strong> Välj en promptplats (1–10) och ange din anpassade prompt. Prompten sparas automatiskt och kopplas till din API-nyckel.</li>
-  <li><strong>Guideväxling:</strong> Använd knapparna "Funktioner" och "Guide" för att växla mellan funktionsvyn och denna guide.</li>
-</ul>
-Vänligen klicka på "Funktioner" för att återgå till huvudgränssnittet.`,
+  <li><strong>Inspelning:</strong> Klicka på "Starta Inspelning" för att börja spela in ljud. Varje 2:a minut skickas en ljudbit automatiskt till OpenAI-servrarna för transkription. Transkriptionerna visas sekventiellt i fältet för transkription.</li>
+  <li><strong>Fullbordan:</strong> Efter att du har klickat på "Stoppa/Avsluta" stoppas inspelningen. Fullbordningstimern räknar tills hela transkriptionen har mottagits (vanligtvis inom 5–10 sekunder).</li>
+  <li><strong>Notisgenerering:</strong> När transkriptionen är klar klickar du på "Generera Notis" för att skapa en notis baserad på din transkription och ditt anpassade prompt.</li>
+  <li><strong>Anpassat Prompt:</strong> Till höger, välj en prompt-slot (1–10) och skriv in ditt anpassade prompt. Ditt prompt sparas automatiskt och länkas till din API-nyckel.</li>
+  <li><strong>Översikt över användning:</strong> För att se din aktuella användning hos OpenAI, klicka på länken för användningsöversikt på huvudsidan.</li>
+  <li><strong>Säkerhet:</strong> Ditt ljud är krypterat och behandlas på säkra Microsoft Azure-servrar. Dessutom raderas transkriptioner och notiser automatiskt strax efter behandlingen för att skydda din integritet.</li>
+  <li><strong>Guideväxling:</strong> Klicka på "Guide"-knappen igen för att återgå till huvudsidan.</li>
+</ul>`
 };
