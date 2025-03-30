@@ -136,16 +136,17 @@ export const transcribeTranslations = {
   customPromptPlaceholder: "Skriv inn tilpasset prompt her",
   adUnitText: "Din annonse her",
   guideHeading: "Guide & Instruksjoner",
-  guideText: `Velkommen til Whisper Transkripsjonsverktøy. Denne applikasjonen gir medisinske fagpersoner, terapeuter og andre behandlere muligheten til å ta opp og transkribere konsultasjoner, samt generere profesjonelle notater ved hjelp av en AI-drevet notatgenerator.<br><br>
+guideText: `Velkommen til Whisper Transkripsjonsverktøyet. Denne applikasjonen gir medisinske fagpersoner, terapeuter og andre behandlere muligheten til å ta opp og transkribere konsultasjoner, samt generere profesjonelle notater ved hjelp av en AI-drevet notatgenerator.<br><br>
 <strong>Slik bruker du funksjonene:</strong>
 <ul>
-  <li><strong>Opptak:</strong> Klikk på "Start opptak" for å begynne å ta opp lyd. Hvert 40. sekund vil et lydsegment automatisk bli sendt til OpenAI-serverne for transkripsjon. Transkripsjonene vil vises én etter én i tekstfeltet.</li>
-  <li><strong>Fullføring:</strong> Etter at du klikker på "Stopp/Fullfør", stopper opptaket. Fullføringstimeren går deretter til den fullstendige transkripsjonen er mottatt. Dette tar vanligvis mellom 5 og 10 sekunder.</li>
-  <li><strong>Notatgenerering:</strong> Etter transkripsjonen klikker du på "Generer notat" for å lage et notat basert på transkripsjonen din og din tilpassede prompt.</li>
-  <li><strong>Tilpasset prompt:</strong> Til høyre, velg en prompt slot (1–10) og skriv inn din tilpassede prompt. Denne lagres automatisk og knyttes til din API-nøkkel.</li>
-  <li><strong>Guide-bryter:</strong> Bruk knappene "Funksjoner" og "Guide" for å bytte mellom hovedvisningen og denne guiden.</li>
-</ul>
-Vennligst klikk på "Funksjoner" for å gå tilbake til hovedgrensesnittet.`,
+  <li><strong>Opptak:</strong> Klikk på "Start opptak" for å begynne å fange opp lyd. Hvert 2. minutt blir en lydbit automatisk sendt til OpenAI-serverne for transkripsjon. Transkripsjonene vises sekvensielt i tekstfeltet for transkripsjon.</li>
+  <li><strong>Fullføring:</strong> Etter at du har klikket på "Stopp/Fullfør", stoppes opptaket. Fullføringstimeren teller til hele transkripsjonen er mottatt (vanligvis innen 5–10 sekunder).</li>
+  <li><strong>Notatgenerering:</strong> Når transkripsjonen er fullført, klikker du på "Generer notat" for å lage et notat basert på transkripsjonen din og din tilpassede prompt.</li>
+  <li><strong>Tilpasset prompt:</strong> Til høyre, velg en prompt-slot (1–10) og skriv inn din tilpassede prompt. Din prompt lagres automatisk og knyttes til API-nøkkelen din.</li>
+  <li><strong>Bruksoversikt:</strong> For å sjekke din nåværende bruk hos OpenAI, klikk på lenken for bruksovervåkning på hovedgrensesnittet.</li>
+  <li><strong>Sikkerhet:</strong> Lydopptaket ditt blir kryptert og behandlet på sikre Microsoft Azure-servere. I tillegg slettes transkripsjoner og notater automatisk kort tid etter behandling for å beskytte ditt personvern.</li>
+  <li><strong>Guide-bryter:</strong> Klikk på "Guide"-knappen igjen for å gå tilbake til hovedgrensesnittet.</li>
+</ul>`
 };
 
 export default { indexTranslations, transcribeTranslations };
