@@ -127,16 +127,17 @@ export const transcribeTranslations = {
   customPromptPlaceholder: "Enter custom prompt here",
   adUnitText: "Your Ad Here",
   guideHeading: "Guide & Instructions",
-  guideText: `Welcome to the Whisper Transcription tool. This application allows medical professionals, therapists, and other practitioners to record and transcribe consultations, as well as generate professional notes using an AI-powered note generator.<br><br>
+guideText: `Welcome to the Whisper Transcription tool. This application allows medical professionals, therapists, and other practitioners to record and transcribe consultations, as well as generate professional notes using an AI-powered note generator.<br><br>
 <strong>How to Use the Functions:</strong>
 <ul>
-  <li><strong>Recording:</strong> Click "Start Recording" to begin capturing audio. Every 40 sec a chunk/slice of audio will be automatically sent for transcription at the OpenAI servers. The transcriptions will arrive one by one at the transcription text output field.</li>
-  <li><strong>Completion:</strong> After clicking "Stop/Complete", the recording stops. The Completion Timer then ticks until the full transcript is received. This usually takes between 5-10 sec.</li>
-  <li><strong>Note Generation:</strong> After transcription, click "Generate Note" to produce a note based on your transcript and your custom prompt.</li>
+  <li><strong>Recording:</strong> Click "Start Recording" to begin capturing audio. Every 2 minutes, a chunk of audio is automatically sent to the OpenAI servers for transcription. The transcripts will appear sequentially in the transcription output field.</li>
+  <li><strong>Completion:</strong> After clicking "Stop/Complete", the recording stops. The Completion Timer counts until the full transcript is received (usually within 5–10 seconds).</li>
+  <li><strong>Note Generation:</strong> Once transcription is complete, click "Generate Note" to create a note based on your transcript and custom prompt.</li>
   <li><strong>Custom Prompt:</strong> On the right, select a prompt slot (1–10) and enter your custom prompt. Your prompt is saved automatically and linked to your API key.</li>
-  <li><strong>Guide Toggle:</strong> Use the "Functions" and "Guide" buttons to switch between the functional view and this guide.</li>
-</ul>
-Please click "Functions" to return to the main interface.`,
+  <li><strong>Usage Overview:</strong> To check your current usage at OpenAI, click on the usage overview hyperlink on the main interface.</li>
+  <li><strong>Security:</strong> Your audio is encrypted and processed on secure Microsoft Azure servers. Additionally, transcriptions and notes are automatically deleted shortly after processing to protect your privacy.</li>
+  <li><strong>Guide Toggle:</strong> Click the "Guide" button again to return to the main interface.</li>
+</ul>`
 };
 
 export default { indexTranslations, transcribeTranslations };
