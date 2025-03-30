@@ -128,14 +128,15 @@ export const transcribeTranslations = {
   customPromptPlaceholder: "Benutzerdefinierten Prompt hier eingeben",
   adUnitText: "Ihre Anzeige hier",
   guideHeading: "Anleitung & Instruktionen",
-  guideText: `Willkommen beim Whisper Transkriptionstool. Diese Anwendung ermöglicht es medizinischen Fachkräften, Therapeuten und anderen, Konsultationen aufzunehmen und zu transkribieren sowie professionelle Notizen mit Hilfe eines KI-gesteuerten Notizgenerators zu erstellen.<br><br>
-<strong>So verwenden Sie die Funktionen:</strong>
+guideText: `Willkommen beim Whisper Transkriptionstool. Diese Anwendung ermöglicht es medizinischen Fachkräften, Therapeuten und anderen Anwendern, Konsultationen aufzunehmen und zu transkribieren sowie professionelle Notizen mithilfe eines KI-gestützten Notizgenerators zu erstellen.<br><br>
+<strong>So nutzen Sie die Funktionen:</strong>
 <ul>
-  <li><strong>Aufnahme:</strong> Klicken Sie auf "Aufnahme starten", um die Audioaufnahme zu beginnen. Alle 40 Sekunden wird ein Audioabschnitt automatisch zur Transkription an die OpenAI-Server gesendet. Die Transkriptionen erscheinen nacheinander im Textfeld.</li>
-  <li><strong>Abschluss:</strong> Nach dem Klicken auf "Stoppen/Abschließen" wird die Aufnahme beendet. Der Abschlusstimer läuft, bis die vollständige Transkription empfangen wird. Dies dauert in der Regel 5 bis 10 Sekunden.</li>
-  <li><strong>Notizenerstellung:</strong> Nach der Transkription klicken Sie auf "Notiz generieren", um eine Notiz basierend auf Ihrer Transkription und Ihrem benutzerdefinierten Prompt zu erstellen.</li>
-  <li><strong>Benutzerdefinierter Prompt:</strong> Wählen Sie rechts einen Prompt-Slot (1–10) und geben Sie Ihren benutzerdefinierten Prompt ein. Dieser wird automatisch gespeichert und mit Ihrem API-Schlüssel verknüpft.</li>
-  <li><strong>Anleitungswechsel:</strong> Verwenden Sie die Schaltflächen "Funktionen" und "Anleitung", um zwischen der Funktionsansicht und dieser Anleitung zu wechseln.</li>
-</ul>
-Bitte klicken Sie auf "Funktionen", um zur Hauptoberfläche zurückzukehren.`,
+  <li><strong>Aufnahme:</strong> Klicken Sie auf "Aufnahme starten", um die Audioaufnahme zu beginnen. Alle 2 Minuten wird ein Abschnitt der Aufnahme automatisch an die OpenAI-Server zur Transkription gesendet. Die Transkripte werden der Reihe nach im Transkriptions-Ausgabefeld angezeigt.</li>
+  <li><strong>Vollständigkeit:</strong> Nach dem Klick auf "Stoppen/Abschließen" wird die Aufnahme beendet. Der Abschlusstimer zählt, bis das vollständige Transkript empfangen wurde (in der Regel innerhalb von 5–10 Sekunden).</li>
+  <li><strong>Notizgenerierung:</strong> Sobald die Transkription abgeschlossen ist, klicken Sie auf "Notiz generieren", um eine Notiz basierend auf Ihrem Transkript und Ihrem benutzerdefinierten Prompt zu erstellen.</li>
+  <li><strong>Benutzerdefinierter Prompt:</strong> Wählen Sie rechts einen Prompt-Slot (1–10) und geben Sie Ihren benutzerdefinierten Prompt ein. Ihr Prompt wird automatisch gespeichert und mit Ihrem API-Schlüssel verknüpft.</li>
+  <li><strong>Nutzungsübersicht:</strong> Um Ihre aktuelle Nutzung bei OpenAI zu überprüfen, klicken Sie auf den Link zur Nutzungsübersicht im Hauptinterface.</li>
+  <li><strong>Sicherheit:</strong> Ihre Audiodaten werden verschlüsselt und auf sicheren Microsoft Azure-Servern verarbeitet. Außerdem werden Transkripte und Notizen kurz nach der Verarbeitung automatisch gelöscht, um Ihre Privatsphäre zu schützen.</li>
+  <li><strong>Guide-Umschaltung:</strong> Klicken Sie erneut auf die "Guide"-Schaltfläche, um zum Hauptinterface zurückzukehren.</li>
+</ul>`
 };
