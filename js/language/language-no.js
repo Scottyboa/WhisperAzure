@@ -13,16 +13,16 @@ export const indexTranslations = {
   adRevenueMessage: "Siden denne nettsiden er gratis å bruke og kun finansieres via annonseinntekter, vennligst godta personaliserte annonser for å støtte tjenesten.",
   
   securityModalHeading: "Personvern",
-  securityModalText: `Ditt personvern og sikkerheten til pasientinformasjonen er vår høyeste prioritet. For å sikre at dataene forblir konfidensielle:
-<div style="margin-left:20px;">
-  <ul>
-    <li><strong>Datakryptering:</strong> All data som behandles av systemet er sikret med industristandard krypteringsmetoder. Transkripsjoner og notater knyttes utelukkende til din krypterte personlige API-nøkkel og den enheten du bruker, slik at bare du har tilgang til de genererte innholdene.</li>
-    <li><strong>Automatisk sletting:</strong> Så snart en transkripsjon eller et notat er generert og vist på skjermen, slettes det automatisk og permanent fra serverne innen 2 minutter.</li>
-    <li><strong>Beskyttelse mot uautorisert tilgang:</strong> Selv om uautorisert tilgang til din API-nøkkel skulle inntreffe, forblir dataene kryptert og beskyttet med enhetsspesifikke markører, slik at informasjonen ikke er tilgjengelig.</li>
-    <li><strong>GDPR-kompatibel hosting:</strong> Alle backend-prosesser kjøres på dedikerte Microsoft Azure-servere innenfor EU, i full overensstemmelse med GDPR.</li>
-  </ul>
-</div>
-Vær trygg på at strenge sikkerhetstiltak sikrer at all pasientrelatert data forblir trygg, konfidensiell og helt under din kontroll.`,
+securityModalText: `Ditt personvern og sikkerheten til pasientinformasjon er våre høyeste prioriteringer. Vi bruker robuste tiltak for å sikre at dataene dine forblir konfidensielle og trygge:<br><br>
+- <strong>Datakryptering:</strong> All data som behandles av systemet vårt – inkludert lydopptak, transkripsjoner og notater – er kryptert ved hjelp av metoder som oppfyller industristandarder. Transkripsjoner og notater er utelukkende knyttet til din krypterte personlige API-nøkkel og den enheten du benytter for tilgang, slik at bare du kan se det genererte innholdet.<br><br>
+- <strong>Automatisk sletting:</strong> Så snart en transkripsjon eller et notat er generert og vist på skjermen din, slettes det automatisk og permanent fra våre servere innen 2 minutter. Lydfiler lagres kun midlertidig for behandling og beholdes ikke utover umiddelbar bruk.<br><br>
+- <strong>Beskyttelse mot uautorisert tilgang:</strong> Selv om uautorisert tilgang til din API-nøkkel skulle inntreffe, forblir dataene dine kryptert og sikret med enhetsspesifikke markører, noe som gjør informasjonen utilgjengelig.<br><br>
+- <strong>GDPR-kompatibel hosting:</strong> Alle backend-prosesser kjøres på dedikerte Microsoft Azure-servere lokalisert innenfor EU, fullt ut i samsvar med GDPR-forskriftene.<br><br>
+<strong>Ytterligere personverntiltak:</strong><br><br>
+- <strong>Minimal datainnsamling:</strong> Vi samler kun inn den nødvendige informasjonen som kreves for å levere tjenestene våre. Dette inkluderer din OpenAI API-nøkkel (lagret i kryptert form for varigheten av økten din), en enhetstoken som kun brukes til kryptering, og din språkpreferanse. Ingen ytterligere personlige data lagres.<br><br>
+- <strong>Bruk av informasjonskapsler:</strong> Nettsiden vår benytter informasjonskapsler for å lagre brukerpreferanser og administrere samtykke for personaliserte annonser, noe som forbedrer opplevelsen din. Du kan administrere informasjonskapselinnstillingene via samtykkebanneret på nettstedet vårt.<br><br>
+- <strong>Deling med tredjepart:</strong> Vi selger ikke og deler ikke dine personlige data med tredjepart. Data deles kun med betrodde eksterne tjenester (som OpenAI for transkripsjon og notatgenerering, samt Google AdSense for annonsepersonaliering) under strenge personvernstandarder.<br><br>
+Vennligst merk at, på grunn av systemdesignet vårt, slettes alle data automatisk kort tid etter behandling og lagres ikke på lang sikt.`,
   
   aboutModalHeading: "Om",
   aboutModalText: `Denne nettsiden ble opprettet for å gi helsepersonell og andre brukere direkte tilgang til høykvalitets tale-til-tekst transkripsjon og klinisk notatgenerering – uten unødvendige kostnader eller mellomledd.<br><br>
