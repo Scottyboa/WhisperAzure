@@ -24,17 +24,24 @@ function getCookie(name) {
   return null;
 }
 
-// Dynamically loads the AdSense script with the proper client parameter and crossorigin attribute.
-function loadAdSense() {
+// Dynamically loads the AdsTera script with the proper client parameter and crossorigin attribute.
+function loadAdStera() {
+  // Define the ad options for AdStera
+  window.atOptions = {
+    'key': '71a7378e100db1ee346bb177138bb050',
+    'format': 'iframe',
+    'height': 250,
+    'width': 300,
+    'params': {}
+  };
+  // Create and load the AdStera script
   const script = document.createElement("script");
+  script.type = "text/javascript";
   script.async = true;
-  script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3747901131960450";
-  script.setAttribute("crossorigin", "anonymous");
+  script.src = "//www.highperformanceformat.com/71a7378e100db1ee346bb177138bb050/invoke.js";
   document.head.appendChild(script);
-  (adsbygoogle = window.adsbygoogle || []).push({});
 }
 
-// Initializes the consent banner.
 function initConsentBanner() {
   const cmpAccept = document.getElementById("cmp-accept");
   const cmpManage = document.getElementById("cmp-manage");
@@ -44,12 +51,13 @@ function initConsentBanner() {
     cmpAccept.addEventListener("click", () => {
       setCookie("user_consent", "accepted", 365);
       if (cmpBanner) cmpBanner.style.display = "none";
-      loadAdSense();
+      // Replace loadAdSense() with loadAdStera()
+      loadAdStera();
       const adRevenueMessage = document.getElementById("ad-revenue-message");
       if (adRevenueMessage) {
         adRevenueMessage.style.display = "none";
       }
-      console.log("Consent accepted: AdSense loaded and banner hidden.");
+      console.log("Consent accepted: AdStera loaded and banner hidden.");
     });
   }
 
@@ -61,12 +69,13 @@ function initConsentBanner() {
 
   if (getCookie("user_consent") === "accepted") {
     if (cmpBanner) cmpBanner.style.display = "none";
-    loadAdSense();
+    // Replace loadAdSense() with loadAdStera()
+    loadAdStera();
     const adRevenueMessage = document.getElementById("ad-revenue-message");
     if (adRevenueMessage) {
       adRevenueMessage.style.display = "none";
     }
-    console.log("Consent already accepted: Banner hidden and AdSense loaded.");
+    console.log("Consent already accepted: Banner hidden and AdStera loaded.");
   }
 }
 
