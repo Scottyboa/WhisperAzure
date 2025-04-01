@@ -38,7 +38,7 @@ function loadAdStera() {
   const script = document.createElement("script");
   script.type = "text/javascript";
   script.async = true;
-  script.src = "//www.highperformanceformat.com/71a7378e100db1ee346bb177138bb050/invoke.js";
+  script.src = "//comparedsobalike.com/71a7378e100db1ee346bb177138bb050/invoke.js";
   document.head.appendChild(script);
 }
 
