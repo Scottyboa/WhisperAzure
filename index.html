@@ -219,12 +219,21 @@
     <div id="aboutModalText-content"></div>
   </div>
 
-  <!-- Consent Banner -->
-  <div id="cmp-banner">
-    <span id="consent-text">This website is free to use because it relies solely on ad revenue. Cookies are used to personalize ads and improve the experience. By clicking "Accept", you consent to the use of cookies.</span>
-    <button id="cmp-accept">Accept</button>
-    <button id="cmp-manage">Manage</button>
+<!-- Consent Banner -->
+<div id="cmp-banner">
+  <span id="consent-text">
+    This website is free to use because it relies solely on ad revenue. Cookies are used to personalize ads and improve the experience. By clicking "Accept", you consent to the use of cookies.
+  </span>
+  <button id="cmp-accept">Accept</button>
+  <button id="cmp-reject">Reject</button>
+  <!-- Hidden confirmation section for rejection -->
+  <div id="cmp-reject-confirmation" style="display: none; margin-top: 10px;">
+    <p>Are you sure? Rejecting cookies will prevent you from using the functions on our site.</p>
+    <button id="cmp-reject-confirm-accept">Accept</button>
+    <button id="cmp-reject-confirm-reject">Reject</button>
   </div>
+</div>
+
 
   <!-- Inline Script for API Key Handling and Consent (modified) -->
   <script>
