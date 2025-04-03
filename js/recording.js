@@ -539,6 +539,11 @@ function initRecording() {
   if (!startButton || !stopButton || !pauseResumeButton) return;
 
   startButton.addEventListener("click", async () => {
+    // Check if user consent is given
+    if (document.cookie.indexOf("user_consent=accepted") === -1) {
+      alert("Access Denied: Please accept cookies/ads to use the recording function.");
+      return;
+    }
     // Retrieve and decrypt the API key before starting.
     const decryptedApiKey = await getDecryptedAPIKey();
     if (!decryptedApiKey || !decryptedApiKey.startsWith("sk-")) {
