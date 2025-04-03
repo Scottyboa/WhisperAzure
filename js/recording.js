@@ -590,8 +590,8 @@ function initRecording() {
     if (!mediaStream) return;
     const track = mediaStream.getAudioTracks()[0];
     if (track.enabled) {
-      // Modified pause: finalize current chunk upload and then pause.
-      await safeProcessAudioChunk(true);
+      // Modified pause: finalize current chunk upload without marking as final, then pause.
+      await safeProcessAudioChunk(false);
       accumulatedRecordingTime += Date.now() - recordingStartTime;
       track.enabled = false;
       recordingPaused = true;
