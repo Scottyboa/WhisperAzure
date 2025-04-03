@@ -109,11 +109,6 @@ Lorsque vous vous connectez en saisissant votre clé API, celle-ci est stockée 
       </li>
     </ul>
 
-    <h2>Option alternative pour la génération de notes</h2>
-    <p>
-      Si vous possédez déjà un compte OpenAI, vous pouvez utiliser la génération de notes via ChatGPT sur votre propre profil — ce qui est pratiquement gratuit. Dans ce cas, vous n'encourez que le coût de la transcription audio en texte lors de l'utilisation de cette application.
-    </p>
-
     <h2>Flexibilité d'utilisation</h2>
     <p>
       Contrairement aux fournisseurs qui exigent un abonnement mensuel, vous ne payez que par utilisation. Si vous prenez une journée de repos, partez en vacances ou si vous ne faites aucune activité, vos coûts seront nuls. Même si vous utilisez le service chaque jour pour toutes vos consultations, le coût par utilisation reste nettement inférieur à celui des autres fournisseurs.
