@@ -104,6 +104,11 @@ function formatTime(ms) {
 
 // Handles the note generation process using the OpenAI API
 async function generateNote() {
+  // Check if user consent is given
+  if (document.cookie.indexOf("user_consent=accepted") === -1) {
+    alert("Access Denied: Please accept cookies/ads to use the note generation function.");
+    return;
+  }
   const transcriptionElem = document.getElementById("transcription");
   if (!transcriptionElem) {
     alert("No transcription text available.");
