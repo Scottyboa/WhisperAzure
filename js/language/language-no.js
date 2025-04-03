@@ -104,8 +104,6 @@ Når du logger inn ved å skrive inn API-nøkkelen, lagres den kun midlertidig i
       Månedlig kostnad = 320 × $0.101 ≈ <strong>$32.32</strong>.
     </li>
   </ol>
-  <h2>Alternativ for notisgenerering</h2>
-  <p>Hvis du allerede har en OpenAI-konto, kan du bruke notisgenerering via ChatGPT på din egen profil – som i praksis er gratis. I så fall påløper kun kostnaden for tale-til-tekst når du bruker denne webappen.</p>
   <h2>Fleksibilitet i bruken</h2>
   <p>I motsetning til leverandører som krever et månedlig abonnement, betaler du kun for faktisk bruk. Om du tar en fridag, drar på ferie eller har en periode uten aktivitet, vil kostnadene dine være null. Selv om du bruker tjenesten daglig for alle dine pasientkonsultasjoner, forblir kostnaden per oppgave betydelig lavere enn hos andre leverandører.</p>
   <hr>
