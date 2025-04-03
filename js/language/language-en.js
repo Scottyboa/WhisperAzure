@@ -99,8 +99,6 @@ When you log in by entering your API key, it is stored only temporarily in your 
       Monthly cost = 320 × $0.101 ≈ <strong>$32.32</strong>.
     </li>
   </ol>
-  <h2>Alternative Note Generation Option</h2>
-  <p>If you already have an OpenAI account, you can use note generation via ChatGPT on your own profile—which is essentially free. In that case, you only incur the speech-to-text cost when using this webapp.</p>
   <h2>Usage Flexibility</h2>
   <p>Unlike providers that require a monthly subscription, you only pay per usage. If you take a day off, go on vacation, or have a period of no activity, your costs will be zero. Even if you use the service every day for all your patient consultations, the per-use cost remains significantly lower compared to other providers.</p>
   <hr>
