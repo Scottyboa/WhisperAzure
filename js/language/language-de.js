@@ -100,8 +100,6 @@ Wenn Sie sich anmelden, indem Sie Ihren API-Schlüssel eingeben, wird dieser nur
         Monatliche Kosten = 320 × $0.101 ≈ <strong>$32.32</strong>.
       </li>
     </ol>
-    <h2>Alternative Option für Notizenerstellung</h2>
-    <p>Wenn Sie bereits ein OpenAI-Konto haben, können Sie die Notizenerstellung über ChatGPT nutzen – was nahezu kostenlos ist. In diesem Fall fallen nur die Kosten für Sprach-zu-Text an, wenn Sie diese Webapp verwenden.</p>
     <h2>Flexibilität in der Nutzung</h2>
     <p>Im Gegensatz zu Anbietern mit monatlichen Abonnements zahlen Sie nur pro Nutzung. Sollten Sie einen Tag aussetzen oder weniger aktiv sein, entstehen keine Kosten. Selbst bei täglicher Nutzung bleiben die Kosten pro Konsultation deutlich geringer als bei anderen Anbietern.</p>
     <hr>
