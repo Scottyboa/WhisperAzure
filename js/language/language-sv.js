@@ -95,8 +95,6 @@ Därför är denna webbplats helt gratis att använda – den enda kostnaden du 
     Månadskostnad = 320 × $0.101 ≈ <strong>$32.32</strong>.
   </li>
 </ol>
-<h2>Alternativ för notisgenerering</h2>
-<p>Om du redan har ett OpenAI-konto kan du använda notisgenerering via ChatGPT på ditt eget konto – i princip gratis. I så fall uppstår endast kostnaden för speech-to-text när du använder denna webbapp.</p>
 <h2>Användarvänlighet</h2>
 <p>Till skillnad från leverantörer som kräver ett månatligt abonnemang betalar du endast för faktiskt bruk. Om du tar en ledig dag, är på semester eller har en period utan aktivitet blir dina kostnader noll. Även om du använder tjänsten dagligen för alla dina patientkonsultationer, förblir kostnaden per konsultation avsevärt lägre jämfört med andra leverantörer.</p>
 <hr>
