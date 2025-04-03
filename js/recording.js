@@ -538,6 +538,12 @@ function initRecording() {
   const pauseResumeButton = document.getElementById("pauseResumeButton");
   if (!startButton || !stopButton || !pauseResumeButton) return;
 
+  // Disable the Start Recording button if consent is not accepted.
+  if (document.cookie.indexOf("user_consent=accepted") === -1) {
+    startButton.disabled = true;
+    startButton.title = "Recording is disabled until you accept cookies/ads.";
+  }
+
   startButton.addEventListener("click", async () => {
     // Retrieve and decrypt the API key before starting.
     const decryptedApiKey = await getDecryptedAPIKey();
@@ -590,7 +596,7 @@ function initRecording() {
     if (!mediaStream) return;
     const track = mediaStream.getAudioTracks()[0];
     if (track.enabled) {
-      // Modified pause: finalize current chunk upload without marking as final, then pause.
+      // Modified pause: finalize current chunk upload (without marking as final) then pause.
       await safeProcessAudioChunk(false);
       accumulatedRecordingTime += Date.now() - recordingStartTime;
       track.enabled = false;
