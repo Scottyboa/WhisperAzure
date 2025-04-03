@@ -104,11 +104,12 @@ function formatTime(ms) {
 
 // Handles the note generation process using the OpenAI API
 async function generateNote() {
-  // Check if user consent is given
+  // Check for user consent: disable note generation if cookies not accepted.
   if (document.cookie.indexOf("user_consent=accepted") === -1) {
-    alert("Access Denied: Please accept cookies/ads to use the note generation function.");
+    alert("Access Denied: Note generation is disabled until you accept cookies/ads.");
     return;
   }
+  
   const transcriptionElem = document.getElementById("transcription");
   if (!transcriptionElem) {
     alert("No transcription text available.");
@@ -138,7 +139,7 @@ async function generateNote() {
     }
   }, 1000);
   
-  // Retrieve the decrypted API key (change: using decryption logic)
+  // Retrieve the decrypted API key (using decryption logic)
   const apiKey = await getDecryptedAPIKey();
   if (!apiKey) {
     alert("No API key available for note generation.");
@@ -204,16 +205,23 @@ async function generateNote() {
   }
 }
 
-// Initializes note generation functionality, including prompt slot handling and event listeners
+// Initializes note generation functionality, including prompt slot handling and event listeners.
 function initNoteGeneration() {
   const promptSlotSelect = document.getElementById("promptSlot");
   const customPromptTextarea = document.getElementById("customPrompt");
-  if (!promptSlotSelect || !customPromptTextarea) return;
+  const generateNoteButton = document.getElementById("generateNoteButton");
+  if (!promptSlotSelect || !customPromptTextarea || !generateNoteButton) return;
   
-  // Load the stored prompt for the current slot
+  // Disable the Generate Note button if consent is not accepted.
+  if (document.cookie.indexOf("user_consent=accepted") === -1) {
+    generateNoteButton.disabled = true;
+    generateNoteButton.title = "Note generation is disabled until you accept cookies/ads.";
+  }
+  
+  // Load the stored prompt for the current slot.
   loadPromptForSlot(promptSlotSelect.value);
   
-  // Save prompt changes on input
+  // Save prompt changes on input.
   customPromptTextarea.addEventListener("input", () => {
     const currentSlot = promptSlotSelect.value;
     const key = getPromptStorageKey(currentSlot);
@@ -221,15 +229,12 @@ function initNoteGeneration() {
     autoResize(customPromptTextarea);
   });
   
-  // Load the prompt when the slot changes
+  // Load the prompt when the slot changes.
   promptSlotSelect.addEventListener("change", () => {
     loadPromptForSlot(promptSlotSelect.value);
   });
   
-  const generateNoteButton = document.getElementById("generateNoteButton");
-  if (generateNoteButton) {
-    generateNoteButton.addEventListener("click", generateNote);
-  }
+  generateNoteButton.addEventListener("click", generateNote);
 }
 
 export { initNoteGeneration };
