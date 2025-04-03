@@ -42,6 +42,20 @@ function loadAdStera() {
   document.head.appendChild(script);
 }
 
+// Re-enable buttons if they exist on the page.
+function enableFunctionalButtons() {
+  const startButton = document.getElementById("startButton");
+  if (startButton) {
+    startButton.disabled = false;
+    startButton.title = "";
+  }
+  const generateNoteButton = document.getElementById("generateNoteButton");
+  if (generateNoteButton) {
+    generateNoteButton.disabled = false;
+    generateNoteButton.title = "";
+  }
+}
+
 function initConsentBanner() {
   const cmpAccept = document.getElementById("cmp-accept");
   // Replace the old "Manage" button with a new "Reject" button.
@@ -60,6 +74,8 @@ function initConsentBanner() {
     const adRevenueMessage = document.getElementById("ad-revenue-message");
     if (adRevenueMessage) adRevenueMessage.style.display = "none";
     console.log("Consent already accepted: Banner hidden and AdStera loaded.");
+    // Ensure buttons are enabled.
+    enableFunctionalButtons();
     return;
   } else if (userConsent === "rejected") {
     if (cmpBanner) cmpBanner.style.display = "none";
@@ -77,6 +93,8 @@ function initConsentBanner() {
         adRevenueMessage.style.display = "none";
       }
       console.log("Consent accepted: AdStera loaded and banner hidden.");
+      // Re-enable the functional buttons immediately.
+      enableFunctionalButtons();
     });
   }
 
@@ -99,6 +117,7 @@ function initConsentBanner() {
         adRevenueMessage.style.display = "none";
       }
       console.log("Consent accepted from reject confirmation: AdStera loaded and banner hidden.");
+      enableFunctionalButtons();
     });
   }
 
@@ -111,11 +130,6 @@ function initConsentBanner() {
   }
 }
 
-// === Info Accordions Initialization (Index Page) ===
-// Previously, this function initialized modal overlays and their event listeners.
-// Now that we have replaced modals with accordions in index.html,
-// the accordion toggle is handled by inline JavaScript there.
-// We leave this function as a stub to avoid breaking any references.
 function initInfoModals() {
   console.log("initInfoModals: Accordion UI is enabled; modal initialization is disabled.");
 }
