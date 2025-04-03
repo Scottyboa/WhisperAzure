@@ -12,16 +12,28 @@ export const indexTranslations = {
   aboutButton: "Über",
   adRevenueMessage: "Da diese Website kostenlos genutzt werden kann und ausschließlich auf Werbeeinnahmen angewiesen ist, stimmen Sie bitte personalisierter Werbung zu, um den Dienst zu unterstützen.",
   securityModalHeading: "Datenschutz",
-securityModalText: `Ihre Privatsphäre und die Sicherheit der Patientendaten haben oberste Priorität. Wir setzen robuste Maßnahmen ein, um sicherzustellen, dass Ihre Daten vertraulich und sicher bleiben:<br><br>
-- <strong>Datenverschlüsselung:</strong> Alle von unserem System verarbeiteten Daten – einschließlich Audioaufnahmen, Transkriptionen und Notizen – werden mit branchenüblichen Methoden verschlüsselt. Transkriptionen und Notizen sind ausschließlich mit Ihrem verschlüsselten persönlichen API-Schlüssel und dem für den Zugriff verwendeten Gerät verknüpft, sodass nur Sie den generierten Inhalt einsehen können.<br><br>
-- <strong>Automatische Löschung:</strong> Sobald eine Transkription oder ein Notiz erstellt und auf Ihrem Bildschirm angezeigt wird, wird sie automatisch und unwiderruflich innerhalb von 2 Minuten von unseren Servern gelöscht. Audiodateien werden nur temporär zur Verarbeitung gespeichert und nicht über den unmittelbaren Gebrauch hinaus aufbewahrt.<br><br>
-- <strong>Schutz vor unbefugtem Zugriff:</strong> Selbst wenn unbefugter Zugriff auf Ihren API-Schlüssel erfolgen sollte, bleiben Ihre Daten verschlüsselt und durch gerätespezifische Marker gesichert, wodurch die Informationen unzugänglich werden.<br><br>
-- <strong>DSGVO-konformes Hosting:</strong> Alle Backend-Prozesse laufen auf dedizierten Microsoft Azure-Servern innerhalb der EU und entsprechen vollständig den DSGVO-Vorschriften.<br><br>
-<strong>Zusätzliche Datenschutzpraktiken:</strong><br><br>
-- <strong>Minimale Datenerfassung:</strong> Wir erheben nur die wesentlichen Informationen, die zur Bereitstellung unserer Dienste erforderlich sind. Dazu gehören Ihr OpenAI API-Schlüssel (während Ihrer Sitzung in verschlüsselter Form gespeichert), ein ausschließlich für die Verschlüsselung verwendeter Gerätetoken sowie Ihre Spracheinstellung. Es werden keine weiteren persönlichen Daten gespeichert.<br><br>
-- <strong>Verwendung von Cookies:</strong> Unsere Webseite nutzt Cookies, um Benutzerpräferenzen zu speichern und das Einverständnis für personalisierte Werbung zu verwalten, was Ihre Nutzererfahrung verbessert. Sie können Ihre Cookie-Einstellungen über das Einverständnisbanner auf unserer Seite verwalten.<br><br>
-- <strong>Weitergabe an Dritte:</strong> Wir verkaufen oder teilen Ihre persönlichen Daten nicht mit Dritten. Daten werden nur an vertrauenswürdige externe Dienste weitergegeben (wie OpenAI für Transkription und Notizgenerierung sowie Google AdSense für die Anpassung von Werbung) und dies unter strengen Datenschutzstandards.<br><br>
+securityModalText: `Ihre Privatsphäre und die Sicherheit von Patientendaten haben für uns höchste Priorität. Wir setzen robuste Maßnahmen ein, um sicherzustellen, dass Ihre Daten vertraulich und geschützt bleiben:<br><br>
+
+- <strong>Datenverschlüsselung:</strong> Alle von unserem System verarbeiteten Daten – einschließlich Audioaufnahmen, Transkripte und Notizen – werden nach branchenüblichen Methoden verschlüsselt. Transkripte und Notizen sind ausschließlich mit Ihrem verschlüsselten persönlichen API-Schlüssel und dem verwendeten Gerät verknüpft, sodass nur Sie auf die generierten Inhalte zugreifen können.<br><br>
+
+- <strong>Automatische Löschung:</strong> Sobald ein Transkript oder eine Notiz generiert und auf Ihrem Bildschirm angezeigt wurde, wird es automatisch und unwiderruflich innerhalb von 2 Minuten von unseren Servern gelöscht. Audiodateien werden nur vorübergehend zur Verarbeitung gespeichert und nicht über den unmittelbaren Verwendungszweck hinaus aufbewahrt.<br><br>
+
+- <strong>Schutz vor unbefugtem Zugriff:</strong> Selbst bei unbefugtem Zugriff auf Ihren API-Schlüssel bleiben Ihre Daten durch gerätespezifische Marker verschlüsselt und somit unzugänglich.<br><br>
+
+- <strong>DSGVO-konformes Hosting:</strong> Alle Backend-Prozesse laufen auf dedizierten Microsoft Azure-Servern innerhalb der EU und entsprechen vollständig den Anforderungen der DSGVO.<br><br>
+
+<strong>Weitere Datenschutzmaßnahmen:</strong><br><br>
+
+- <strong>Minimale Datenerfassung:</strong> Wir erfassen nur die Informationen, die für die Bereitstellung unserer Dienste unbedingt erforderlich sind. Dazu gehören Ihr OpenAI API-Schlüssel (in verschlüsselter Form für die Dauer Ihrer Sitzung gespeichert), ein ausschließlich zur Verschlüsselung verwendetes Gerätetoken sowie Ihre Spracheinstellung. Es werden keine weiteren personenbezogenen Daten gespeichert.<br><br>
+
+- <strong>Cookie-Nutzung:</strong> Cookies auf dieser Website dienen ausschließlich der Anzeige personalisierter Werbung und der Verbesserung Ihrer Nutzererfahrung. Diese Cookies werden nicht zur Erfassung oder Speicherung personenbezogener Daten über das für diesen Zweck erforderliche Maß hinaus verwendet. Zudem nutzt unsere Website Cookies zur Speicherung von Benutzereinstellungen und zur Verwaltung von Einwilligungen.<br><br>
+
+- <strong>Datenverarbeitung & -speicherung:</strong> Alle von unserem System verarbeiteten Daten – einschließlich Audioaufnahmen, Transkripte und generierter Notizen – werden nur für die Dauer des Transkriptions- und Notizerstellungsprozesses gespeichert und kurz nach Abschluss der Verarbeitung automatisch gelöscht. Wir speichern oder teilen keine personenbezogenen Daten über das für die ordnungsgemäße Funktion unseres Dienstes erforderliche Maß hinaus.<br><br>
+
+- <strong>Datenweitergabe an Dritte & gesetzliche Vorgaben:</strong> Wir verkaufen oder teilen Ihre personenbezogenen Daten nicht mit Dritten. Alle Daten, die an externe Dienste – wie OpenAI zur Transkription und Notizerstellung oder Google AdSense zur Anzeige personalisierter Werbung – weitergegeben werden, beschränken sich auf anonymisierte Informationen, die sich ausschließlich auf Werbepersonalisierung und Benutzereinstellungen beziehen. Ihre Aufnahmen, Transkripte oder generierten Notizen sind davon ausgeschlossen. Jegliche Datenweitergabe erfolgt unter strikter Vertraulichkeit und in voller Übereinstimmung mit den geltenden Datenschutzbestimmungen.<br><br>
+
 Bitte beachten Sie, dass aufgrund unseres Systemdesigns alle Daten kurz nach der Verarbeitung automatisch gelöscht werden und nicht langfristig gespeichert werden.`,
+
   aboutModalHeading: "Über uns",
   aboutModalText: `Diese Website wurde entwickelt, um Gesundheitsfachkräfte und andere Nutzer mit direktem Zugang zu hochwertiger Spracherkennung und klinischer Notizgenerierung zu versorgen – ohne unnötige Kosten oder Zwischenhändler.<br><br>
 Durch die Verwendung Ihres eigenen OpenAI API-Schlüssels verbinden Sie sich direkt mit der Quelle der Technologie. Das bedeutet, dass Sie nur die tatsächlichen Nutzungskosten zahlen, die von OpenAI festgelegt werden, ohne Aufschläge oder Abonnementgebühren.<br><br>
