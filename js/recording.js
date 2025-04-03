@@ -539,11 +539,6 @@ function initRecording() {
   if (!startButton || !stopButton || !pauseResumeButton) return;
 
   startButton.addEventListener("click", async () => {
-    // Check if user consent is given
-    if (document.cookie.indexOf("user_consent=accepted") === -1) {
-      alert("Access Denied: Please accept cookies/ads to use the recording function.");
-      return;
-    }
     // Retrieve and decrypt the API key before starting.
     const decryptedApiKey = await getDecryptedAPIKey();
     if (!decryptedApiKey || !decryptedApiKey.startsWith("sk-")) {
@@ -591,11 +586,12 @@ function initRecording() {
     }
   });
 
-  pauseResumeButton.addEventListener("click", () => {
+  pauseResumeButton.addEventListener("click", async () => {
     if (!mediaStream) return;
     const track = mediaStream.getAudioTracks()[0];
     if (track.enabled) {
-      // Pausing: add the current active time to accumulatedRecordingTime
+      // Modified pause: finalize current chunk upload and then pause.
+      await safeProcessAudioChunk(true);
       accumulatedRecordingTime += Date.now() - recordingStartTime;
       track.enabled = false;
       recordingPaused = true;
@@ -603,9 +599,9 @@ function initRecording() {
       clearTimeout(chunkTimeoutId);
       pauseResumeButton.innerText = "Resume Recording";
       updateStatusMessage("Recording paused", "orange");
-      logInfo("Recording paused.");
+      logInfo("Recording paused; current chunk uploaded.");
     } else {
-      // Resuming: do not reset accumulatedRecordingTime, just set a new recordingStartTime
+      // Resuming: do not reset accumulatedRecordingTime, just set a new recordingStartTime.
       track.enabled = true;
       recordingPaused = false;
       recordingStartTime = Date.now();
