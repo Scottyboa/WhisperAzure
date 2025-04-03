@@ -44,14 +44,33 @@ function loadAdStera() {
 
 function initConsentBanner() {
   const cmpAccept = document.getElementById("cmp-accept");
-  const cmpManage = document.getElementById("cmp-manage");
+  // Replace the old "Manage" button with a new "Reject" button.
+  const cmpReject = document.getElementById("cmp-reject");
   const cmpBanner = document.getElementById("cmp-banner");
+  // New confirmation section for rejection
+  const cmpRejectConfirmation = document.getElementById("cmp-reject-confirmation");
+  const cmpRejectConfirmAccept = document.getElementById("cmp-reject-confirm-accept");
+  const cmpRejectConfirmReject = document.getElementById("cmp-reject-confirm-reject");
+
+  // Check if the user has already made a choice.
+  const userConsent = getCookie("user_consent");
+  if (userConsent === "accepted") {
+    if (cmpBanner) cmpBanner.style.display = "none";
+    loadAdStera();
+    const adRevenueMessage = document.getElementById("ad-revenue-message");
+    if (adRevenueMessage) adRevenueMessage.style.display = "none";
+    console.log("Consent already accepted: Banner hidden and AdStera loaded.");
+    return;
+  } else if (userConsent === "rejected") {
+    if (cmpBanner) cmpBanner.style.display = "none";
+    console.log("Consent rejected: Cookie set to rejected. Functions will be disabled.");
+    return;
+  }
 
   if (cmpAccept) {
     cmpAccept.addEventListener("click", () => {
       setCookie("user_consent", "accepted", 365);
       if (cmpBanner) cmpBanner.style.display = "none";
-      // Replace loadAdSense() with loadAdStera()
       loadAdStera();
       const adRevenueMessage = document.getElementById("ad-revenue-message");
       if (adRevenueMessage) {
@@ -61,21 +80,34 @@ function initConsentBanner() {
     });
   }
 
-  if (cmpManage) {
-    cmpManage.addEventListener("click", () => {
-      alert("Here you can manage your cookie and ad preferences.");
+  if (cmpReject) {
+    cmpReject.addEventListener("click", () => {
+      if (cmpRejectConfirmation) {
+        cmpRejectConfirmation.style.display = "block";
+      }
     });
   }
 
-  if (getCookie("user_consent") === "accepted") {
-    if (cmpBanner) cmpBanner.style.display = "none";
-    // Replace loadAdSense() with loadAdStera()
-    loadAdStera();
-    const adRevenueMessage = document.getElementById("ad-revenue-message");
-    if (adRevenueMessage) {
-      adRevenueMessage.style.display = "none";
-    }
-    console.log("Consent already accepted: Banner hidden and AdStera loaded.");
+  if (cmpRejectConfirmAccept) {
+    cmpRejectConfirmAccept.addEventListener("click", () => {
+      // User changes mind in the rejection confirmation; treat as acceptance.
+      setCookie("user_consent", "accepted", 365);
+      if (cmpBanner) cmpBanner.style.display = "none";
+      loadAdStera();
+      const adRevenueMessage = document.getElementById("ad-revenue-message");
+      if (adRevenueMessage) {
+        adRevenueMessage.style.display = "none";
+      }
+      console.log("Consent accepted from reject confirmation: AdStera loaded and banner hidden.");
+    });
+  }
+
+  if (cmpRejectConfirmReject) {
+    cmpRejectConfirmReject.addEventListener("click", () => {
+      setCookie("user_consent", "rejected", 365);
+      if (cmpBanner) cmpBanner.style.display = "none";
+      console.log("Consent rejected: Cookie set to rejected. Functions will be disabled.");
+    });
   }
 }
 
