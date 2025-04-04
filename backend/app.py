@@ -322,7 +322,7 @@ def transcribe_chunk_sync(chunk_info, api_key, chunk_number, device_token):
             "sox",
             converted_path,
             final_output_path,
-            "fade", "l", "0.6", "0", "0.6"
+            "fade", "l", "0.3", "0", "0.3"
         ]
         subprocess.run(sox_fade_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         
