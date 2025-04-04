@@ -29,7 +29,7 @@ function getCookie(name) {
 // otherwise, loads with npa=1 (non‑personalized ads).
 function loadAdSenseAds() {
   const consent = getCookie("user_consent");
-  // If consent is accepted, load personalized ads; if not or rejected, add npa=1 for non-personalized ads.
+  // If consent is accepted, load personalized ads; if not (or rejected/not set), add npa=1.
   const npaParam = (consent === "accepted") ? "" : "&npa=1";
   const adScript = document.createElement('script');
   adScript.async = true;
@@ -39,7 +39,8 @@ function loadAdSenseAds() {
 }
 
 // Inserts an AdSense ad unit into a specified container.
-// Expects containerId (the HTML element ID) and adSlot (your AdSense ad slot ID).
+// containerId: the HTML element's ID where the ad will be injected.
+// adSlot: your AdSense ad slot ID.
 function insertAdSenseAd(containerId, adSlot) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -57,12 +58,14 @@ function insertAdSenseAd(containerId, adSlot) {
 }
 
 // Initializes ad units in the right sidebar.
-// In this example, it inserts two 300x250 medium rectangles.
-// Assumes your HTML contains containers with IDs "right-ad-unit-1" and "right-ad-unit-2".
+// Here we insert two 300x250 medium rectangle ad units.
+// For the top ad unit, we use the provided ad slot "4927329947".
+// The second ad unit currently remains as a placeholder; update its ad slot when available.
 function initAdUnits() {
   // Delay slightly to allow the AdSense script to load.
   setTimeout(() => {
-    insertAdSenseAd("right-ad-unit-1", "YOUR_AD_SLOT_1");
+    insertAdSenseAd("right-ad-unit-1", "4927329947"); // Right sidebar top ad (300x250)
+    // For the second ad unit, replace "YOUR_AD_SLOT_2" with the actual slot when ready.
     insertAdSenseAd("right-ad-unit-2", "YOUR_AD_SLOT_2");
   }, 500);
 }
