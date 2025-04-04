@@ -244,9 +244,14 @@
      data-ad-slot="4927329947"></ins>
 <script>
   window.addEventListener('load', function() {
-    (adsbygoogle = window.adsbygoogle || []).push({});
+    var adIns = document.querySelector('ins.adsbygoogle');
+    // Only push if the ad hasn't already been rendered.
+    if (!adIns.getAttribute('data-adsbygoogle-status')) {
+      (adsbygoogle = window.adsbygoogle || []).push({});
+    }
   });
 </script>
+
 
         </div>
       </div>
