@@ -100,7 +100,6 @@
       font-weight: bold;
       color: #555;
     }
-    /* Removed Consent Banner styles */
     /* New Horizontal Accordion (Tabbed Interface) */
     .accordion {
       margin: 20px auto;
@@ -202,8 +201,6 @@
     <div id="aboutModalText-content"></div>
   </div>
 
-  <!-- Removed Consent Banner -->
-
   <!-- Inline Script for API Key Handling and Consent -->
   <script>
     // Helper function to set a cookie
@@ -217,6 +214,48 @@
       document.cookie = name + "=" + (value || "")  + expires + "; path=/";
     }
 
+    // Helper function to convert an ArrayBuffer to a Base64 string
+    function arrayBufferToBase64(buffer) {
+      let binary = "";
+      const bytes = new Uint8Array(buffer);
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return window.btoa(binary);
+    }
+
+    // Encrypt the API key using the device token as the encryption key.
+    async function encryptAPIKey(apiKey) {
+      // Retrieve or generate a device token (used as the password for encryption)
+      let deviceToken = localStorage.getItem("device_token");
+      if (!deviceToken) {
+        deviceToken = crypto.randomUUID();
+        localStorage.setItem("device_token", deviceToken);
+      }
+      const password = deviceToken; // Using deviceToken as the encryption key
+      const encoder = new TextEncoder();
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
+      const key = await crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+      );
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const encryptedBuffer = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv: iv },
+        key,
+        encoder.encode(apiKey)
+      );
+      return {
+        ciphertext: arrayBufferToBase64(encryptedBuffer),
+        iv: arrayBufferToBase64(iv),
+        salt: arrayBufferToBase64(salt)
+      };
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
       const enterTranscriptionBtn = document.getElementById("enterTranscriptionBtn");
       const apiKeyInput = document.getElementById("apiKeyInput");
@@ -225,9 +264,10 @@
           const apiKey = apiKeyInput.value.trim();
           // Set consent cookie upon clicking the Enter Transcription Tool button
           setCookie("user_consent", "accepted", 365);
-          // No validation check; proceed regardless of the API key content—even if empty
+          // Encrypt the API key and store it in sessionStorage
           const encryptedData = await encryptAPIKey(apiKey);
           sessionStorage.setItem("encrypted_api_key", JSON.stringify(encryptedData));
+          // Redirect to transcribe.html
           window.location.href = "transcribe.html";
         });
       }
@@ -239,13 +279,10 @@
     document.querySelectorAll('.accordion-header').forEach(header => {
       header.addEventListener('click', () => {
         const contentContainer = document.querySelector('.accordion-content-container');
-        
-        // If the clicked header is already active, collapse it.
         if (header.classList.contains('active')) {
           header.classList.remove('active');
           contentContainer.innerHTML = '';
         } else {
-          // Remove active state from any active header.
           document.querySelectorAll('.accordion-header.active').forEach(activeHeader => {
             activeHeader.classList.remove('active');
           });
