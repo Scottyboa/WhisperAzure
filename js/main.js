@@ -3,7 +3,8 @@
 import { initTranscribeLanguage } from './languageLoaderUsage.js';
 import { initRecording } from './recording.js';
 import { initNoteGeneration } from './noteGeneration.js';
-import { initConsentBanner } from './ui.js';
+// Removed initConsentBanner import since it's no longer needed
+// import { initConsentBanner } from './ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize language support for the transcribe page.
@@ -14,9 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialize note generation and custom prompt handling.
   initNoteGeneration();
-
-  // Initialize the consent banner and ad loading.
-  initConsentBanner();
 
   // Add hotkey for the "r" key to trigger the "Start Recording" button,
   // but only when not inside an editable text field.
