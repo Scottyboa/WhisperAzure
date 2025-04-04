@@ -24,26 +24,6 @@ function getCookie(name) {
   return null;
 }
 
-/*
-// Dynamically loads the AdsTera script with the proper client parameter and crossorigin attribute.
-function loadAdStera() {
-  // Define the ad options for AdStera
-  window.atOptions = {
-    'key': '71a7378e100db1ee346bb177138bb050',
-    'format': 'iframe',
-    'height': 250,
-    'width': 300,
-    'params': {}
-  };
-  // Create and load the AdStera script
-  const script = document.createElement("script");
-  script.type = "text/javascript";
-  script.async = true;
-  script.src = "//comparedsobalike.com/71a7378e100db1ee346bb177138bb050/invoke.js";
-  document.head.appendChild(script);
-}
-*/
-
 // Re-enable buttons if they exist on the page.
 function enableFunctionalButtons() {
   const startButton = document.getElementById("startButton");
@@ -72,10 +52,10 @@ function initConsentBanner() {
   const userConsent = getCookie("user_consent");
   if (userConsent === "accepted") {
     if (cmpBanner) cmpBanner.style.display = "none";
-    loadAdStera();
+    // AdStera code removed – new ad implementation will be loaded later based on consent.
     const adRevenueMessage = document.getElementById("ad-revenue-message");
     if (adRevenueMessage) adRevenueMessage.style.display = "none";
-    console.log("Consent already accepted: Banner hidden and AdStera loaded.");
+    console.log("Consent already accepted: Banner hidden and AdStera code removed.");
     // Ensure buttons are enabled.
     enableFunctionalButtons();
     return;
@@ -89,12 +69,12 @@ function initConsentBanner() {
     cmpAccept.addEventListener("click", () => {
       setCookie("user_consent", "accepted", 365);
       if (cmpBanner) cmpBanner.style.display = "none";
-      loadAdStera();
+      // AdStera code removed – new ad implementation will be loaded later based on consent.
       const adRevenueMessage = document.getElementById("ad-revenue-message");
       if (adRevenueMessage) {
         adRevenueMessage.style.display = "none";
       }
-      console.log("Consent accepted: AdStera loaded and banner hidden.");
+      console.log("Consent accepted: AdStera code removed and banner hidden.");
       // Re-enable the functional buttons immediately.
       enableFunctionalButtons();
     });
@@ -113,12 +93,12 @@ function initConsentBanner() {
       // User changes mind in the rejection confirmation; treat as acceptance.
       setCookie("user_consent", "accepted", 365);
       if (cmpBanner) cmpBanner.style.display = "none";
-      loadAdStera();
+      // AdStera code removed – new ad implementation will be loaded later based on consent.
       const adRevenueMessage = document.getElementById("ad-revenue-message");
       if (adRevenueMessage) {
         adRevenueMessage.style.display = "none";
       }
-      console.log("Consent accepted from reject confirmation: AdStera loaded and banner hidden.");
+      console.log("Consent accepted from reject confirmation: AdStera code removed and banner hidden.");
       enableFunctionalButtons();
     });
   }
