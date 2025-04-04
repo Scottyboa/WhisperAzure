@@ -1,4 +1,4 @@
-ad<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -126,15 +126,10 @@ ad<!DOCTYPE html>
       flex-direction: column;
       align-items: center;
     }
-#adUnit {
-  width: 300px;
-  height: 250px;
-  background-color: #ddd;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 10px;
-}
+    .ads-container {
+      width: 300px;
+      height: 250px;
+    }
     /* Guide Overlay */
     #guideView {
       display: none;
@@ -247,30 +242,30 @@ ad<!DOCTYPE html>
       </div>
     </main>
     <!-- Right Sidebar (Ad Area) -->
-<aside class="ad-sidebar">
-  <!-- Right Sidebar: Placeholder for new AdSense ad units -->
-  <div id="right-ad-unit-1" class="ads-container"></div>
-  <div id="right-ad-unit-2" class="ads-container" style="margin-top:20px;"></div>
-</aside>
+    <aside class="ad-sidebar">
+      <div id="right-ad-unit-1" class="ads-container"></div>
+      <div id="right-ad-unit-2" class="ads-container" style="margin-top:20px;"></div>
+    </aside>
+  </div>
   <!-- Guide Overlay -->
   <div id="guideView">
     <h3 id="guideHeading">Guide & Instructions</h3>
     <p id="guideText"></p>
   </div>
-<!-- Consent Banner -->
-<div id="cmp-banner">
-  <span id="consent-text">
-    This website is free to use because it relies solely on ad revenue. Cookies are used to personalize ads and improve the experience. By clicking "Accept", you consent to the use of cookies.
-  </span>
-  <button id="cmp-accept">Accept</button>
-  <button id="cmp-reject">Reject</button>
-  <!-- Hidden confirmation section for rejection -->
-  <div id="cmp-reject-confirmation" style="display: none; margin-top: 10px;">
-    <p>Are you sure? Rejecting cookies will prevent you from using the functions on our site.</p>
-    <button id="cmp-reject-confirm-accept">Accept</button>
-    <button id="cmp-reject-confirm-reject">Reject</button>
+  <!-- Consent Banner -->
+  <div id="cmp-banner">
+    <span id="consent-text">
+      This website is free to use because it relies solely on ad revenue. Cookies are used to personalize ads and improve the experience. By clicking "Accept", you consent to the use of cookies.
+    </span>
+    <button id="cmp-accept">Accept</button>
+    <button id="cmp-reject">Reject</button>
+    <!-- Hidden confirmation section for rejection -->
+    <div id="cmp-reject-confirmation" style="display: none; margin-top: 10px;">
+      <p>Are you sure? Rejecting cookies will prevent you from using the functions on our site.</p>
+      <button id="cmp-reject-confirm-accept">Accept</button>
+      <button id="cmp-reject-confirm-reject">Reject</button>
+    </div>
   </div>
-</div>
   <!-- Inline script to toggle the guide overlay on the transcribe page -->
   <script>
     document.addEventListener("DOMContentLoaded", function() {
