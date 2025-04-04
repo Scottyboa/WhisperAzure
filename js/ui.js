@@ -24,6 +24,7 @@ function getCookie(name) {
   return null;
 }
 
+/*
 // Dynamically loads the AdsTera script with the proper client parameter and crossorigin attribute.
 function loadAdStera() {
   // Define the ad options for AdStera
@@ -41,6 +42,7 @@ function loadAdStera() {
   script.src = "//comparedsobalike.com/71a7378e100db1ee346bb177138bb050/invoke.js";
   document.head.appendChild(script);
 }
+*/
 
 // Re-enable buttons if they exist on the page.
 function enableFunctionalButtons() {
