@@ -1,7 +1,3 @@
-// noteGeneration.js
-
-import { checkConsentForAds } from './consent.js';
-
 // Utility function to hash a string (used for storing prompts keyed by API key)
 function hashString(str) {
   let hash = 0;
@@ -202,20 +198,16 @@ async function generateNote() {
 }
 
 // Initializes note generation functionality, including prompt slot handling and event listeners.
-async function initNoteGeneration() {
+function initNoteGeneration() {
   const promptSlotSelect = document.getElementById("promptSlot");
   const customPromptTextarea = document.getElementById("customPrompt");
   const generateNoteButton = document.getElementById("generateNoteButton");
   if (!promptSlotSelect || !customPromptTextarea || !generateNoteButton) return;
   
-  // Use the CMP API to check for ad consent.
-  const consentGiven = await checkConsentForAds("755");
-  if (!consentGiven) {
+  // Disable the Generate Note button if consent is not accepted.
+  if (document.cookie.indexOf("user_consent=accepted") === -1) {
     generateNoteButton.disabled = true;
-    generateNoteButton.title = "Note generation is disabled until you provide consent for personalized ads.";
-  } else {
-    generateNoteButton.disabled = false;
-    generateNoteButton.title = "";
+    generateNoteButton.title = "Note generation is disabled until you accept cookies/ads.";
   }
   
   // Load the stored prompt for the current slot.
