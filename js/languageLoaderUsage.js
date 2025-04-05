@@ -32,7 +32,6 @@ export async function initIndexLanguage() {
       return;
     }
     updateIndexUI(indexTranslations);
-    // Reinitialize info modal (now accordion) event listeners after UI update
     initInfoModals();
   });
 }
@@ -45,9 +44,6 @@ function updateIndexUI(trans) {
   document.getElementById("start-text").textContent = trans.startText;
   document.getElementById("apiKeyInput").placeholder = trans.apiPlaceholder;
   document.getElementById("enterTranscriptionBtn").textContent = trans.enterButton;
-  // Although the old modal buttons were removed from index.html,
-  // we still update the text in case other elements reference them.
-  // (If not needed, these lines can be removed.)
   const guideBtn = document.getElementById("openGuideButton");
   if (guideBtn) guideBtn.textContent = trans.guideButton;
   const securityBtn = document.getElementById("openSecurityButton");
@@ -55,40 +51,30 @@ function updateIndexUI(trans) {
   const aboutBtn = document.getElementById("openAboutButton");
   if (aboutBtn) aboutBtn.textContent = trans.aboutButton;
   document.getElementById("ad-revenue-message").textContent = trans.adRevenueMessage;
-  
-  // Update the Offer Text content
   const offerElem = document.getElementById("offerText");
   if (offerElem && trans.offerText) {
     offerElem.innerHTML = trans.offerText;
   }
-  
-  // Update accordion hidden content
   const guideContent = document.getElementById("guide-p1");
   if (guideContent) {
     guideContent.innerHTML = trans.guideModalText;
-    // Ensure that links open in a new tab
     guideContent.querySelectorAll("a").forEach(anchor => {
       anchor.setAttribute("target", "_blank");
       anchor.setAttribute("rel", "noopener noreferrer");
     });
   }
-  
   const priceContent = document.getElementById("priceModalText");
   if (priceContent) {
     priceContent.innerHTML = trans.priceModalText;
   }
-  
   const securityContent = document.getElementById("securityModalText");
   if (securityContent) {
     securityContent.innerHTML = trans.securityModalText;
   }
-  
   const aboutContent = document.getElementById("aboutModalText");
   if (aboutContent) {
     aboutContent.innerHTML = trans.aboutModalText;
   }
-  
-  // Dynamically update accordion headers using language translations
   const accordionHeaders = document.querySelectorAll('.accordion .accordion-header');
   if (accordionHeaders.length >= 4) {
     accordionHeaders[0].textContent = trans.guideModalHeading;
@@ -96,8 +82,6 @@ function updateIndexUI(trans) {
     accordionHeaders[2].textContent = trans.securityModalHeading;
     accordionHeaders[3].textContent = trans.aboutModalHeading;
   }
-  
-  // If an accordion header is active, update the shared content container with the new language.
   const activeHeader = document.querySelector('.accordion-header.active');
   if (activeHeader) {
     const contentId = activeHeader.getAttribute('data-content-id');
@@ -172,7 +156,8 @@ function updateTranscribeUI(trans) {
   document.getElementById("customPromptTitle").textContent = trans.customPromptTitle;
   document.getElementById("promptSlotLabel").textContent = trans.promptSlotLabel;
   document.getElementById("customPrompt").placeholder = trans.customPromptPlaceholder;
-  document.getElementById("adUnit").textContent = trans.adUnitText;
+  // Removed this line because the "adUnit" element no longer exists:
+  // document.getElementById("adUnit").textContent = trans.adUnitText;
   document.getElementById("guideHeading").textContent = trans.guideHeading;
   document.getElementById("guideText").innerHTML = trans.guideText;
 }
