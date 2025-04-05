@@ -18,7 +18,8 @@
     .grid-container {
       display: grid;
       grid-template-columns: 300px 1fr 300px;
-      min-height: 100vh; /* Changed from height: 100vh to min-height: 100vh */
+      /* Force the grid to always fill the viewport height */
+      height: 100vh;
     }
     /* Left Sidebar */
     .sidebar {
@@ -303,6 +304,26 @@
         setTimeout(function() {
           document.querySelectorAll('div[style*="forced-color-adjust: initial"]').forEach(el => el.remove());
         }, 2000);
+      });
+    </script>
+    <!-- New MutationObserver script to remove any fixed white elements added after consent -->
+    <script>
+      window.addEventListener('load', function() {
+        const observer = new MutationObserver((mutations, obs) => {
+          mutations.forEach(mutation => {
+            mutation.addedNodes.forEach(node => {
+              if (node.nodeType === 1) {
+                const computedStyle = window.getComputedStyle(node);
+                // If the element is fixed at the bottom and has a white background, remove it.
+                if (computedStyle.position === 'fixed' && computedStyle.bottom !== 'auto' && computedStyle.backgroundColor === 'rgb(255, 255, 255)') {
+                  node.remove();
+                  console.log("Removed unwanted consent element:", node);
+                }
+              }
+            });
+          });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
       });
     </script>
     <!-- Import the main module to initialize language, recording, note generation, and UI functionalities -->
