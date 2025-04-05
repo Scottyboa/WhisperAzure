@@ -1,15 +1,17 @@
 // consentHandler.js
 
+// Global flag to indicate if the user has rejected all consent options.
+window.consentRejected = false;
+
 // Listen for TCF events using the __tcfapi event listener.
 window.__tcfapi('addEventListener', 2, function(tcData, success) {
   if (success) {
-    // The eventStatus indicates whether the user has completed a consent action.
+    // Check if the user has completed the consent action or the consent data has been loaded.
     if (tcData.eventStatus === 'useractioncomplete' || tcData.eventStatus === 'tcloaded') {
-      // If GDPR applies, check the consent for each purpose.
       if (tcData.gdprApplies) {
         let allRejected = true;
         if (tcData.purpose && tcData.purpose.consents) {
-          // Loop over each purpose consent flag.
+          // Loop through each consent purpose to check if any are granted.
           for (let purpose in tcData.purpose.consents) {
             if (tcData.purpose.consents[purpose] === true) {
               allRejected = false;
@@ -20,13 +22,16 @@ window.__tcfapi('addEventListener', 2, function(tcData, success) {
         if (allRejected) {
           console.log("User rejected all consent options.");
           disableConsentDependentFeatures();
+          window.consentRejected = true;
         } else {
           console.log("User granted some consent.");
           enableConsentDependentFeatures();
+          window.consentRejected = false;
         }
       } else {
         console.log("GDPR does not apply; enabling all features.");
         enableConsentDependentFeatures();
+        window.consentRejected = false;
       }
     }
   } else {
@@ -35,7 +40,7 @@ window.__tcfapi('addEventListener', 2, function(tcData, success) {
 });
 
 // Function to disable features that depend on user consent.
-// For example, disabling the note generation functionality.
+// For example, disable the note generation feature.
 function disableConsentDependentFeatures() {
   const generateNoteButton = document.getElementById("generateNoteButton");
   if (generateNoteButton) {
@@ -45,7 +50,7 @@ function disableConsentDependentFeatures() {
   // Add further logic here to disable any other consent-dependent features.
 }
 
-// Function to re-enable features when consent is granted.
+// Function to enable features that depend on user consent.
 function enableConsentDependentFeatures() {
   const generateNoteButton = document.getElementById("generateNoteButton");
   if (generateNoteButton) {
