@@ -32,13 +32,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Add __tcfapi listener to detect consent updates.
+  // Check the initial consent state immediately.
   if (typeof window.__tcfapi === 'function') {
+    window.__tcfapi('getTCData', 2, function(tcData, success) {
+      if (success && tcData) {
+        console.log("Initial consent data on transcribe page:", tcData);
+        let consentGiven = false;
+        for (let purpose in tcData.purpose.consents) {
+          if (tcData.purpose.consents[purpose] === true) {
+            consentGiven = true;
+            break;
+          }
+        }
+        if (consentGiven) {
+          enableTranscribeFunctions();
+        } else {
+          disableTranscribeFunctions();
+        }
+      }
+    });
+
+    // Active event listener for future consent changes.
     window.__tcfapi('addEventListener', 2, function(tcData, success) {
-      if (success) {
+      if (success && tcData) {
         console.log("Consent updated on transcribe page:", tcData);
         let consentGiven = false;
-        // Check if at least one purpose has consent.
         for (let purpose in tcData.purpose.consents) {
           if (tcData.purpose.consents[purpose] === true) {
             consentGiven = true;
