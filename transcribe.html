@@ -41,6 +41,34 @@
       gap: 20px;
       overflow-y: auto;
     }
+    /* New Top Bar */
+    .top-bar {
+      background-color: #e0e0e0; /* Same as left sidebar */
+      height: 50px; /* Adjust as needed */
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      margin-bottom: 20px; /* Space between top bar and recording area */
+    }
+    .top-bar button {
+      font-size: 18px;
+      padding: 10px 20px;
+    }
+    .top-bar #lang-container-transcribe {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .top-bar #lang-icon-transcribe {
+      width: 36px;
+      height: 36px;
+      margin-right: 8px;
+    }
+    .top-bar #lang-select-transcribe {
+      padding: 5px;
+      font-size: 18px;
+    }
     /* Recording Area (Top Half) */
     .recording-area {
       border-bottom: 1px solid #ddd;
@@ -140,7 +168,7 @@
       background: transparent;
       margin-top: 10px; /* Adjust spacing as needed */
     }
-    /* Language Dropdown in Sidebar */
+    /* Original Language Dropdown in Sidebar (if used outside top bar) */
     #lang-container-transcribe {
       position: absolute;
       bottom: 20px;
@@ -180,24 +208,27 @@
 </head>
 <body>
   <div class="grid-container">
-    <!-- Left Sidebar -->
+    <!-- Left Sidebar (reserved for ads) -->
     <aside class="sidebar">
-      <button id="btnGuide">Guide</button>
-      <!-- Language dropdown -->
-      <div id="lang-container-transcribe">
-        <img src="language-icon.png" alt="Language Icon" id="lang-icon-transcribe">
-        <select id="lang-select-transcribe">
-          <option value="en">English</option>
-          <option value="no">Norsk</option>
-          <option value="sv">Svenska</option>
-          <option value="de">Deutsch</option>
-          <option value="fr">Français</option>
-          <option value="it">Italiano</option>
-        </select>
-      </div>
+      <!-- Ads will be placed here -->
     </aside>
     <!-- Main Content -->
     <main class="main-content">
+      <!-- New Top Bar containing Guide button (left) and Language pulldown (right) -->
+      <div class="top-bar">
+        <button id="btnGuide">Guide</button>
+        <div id="lang-container-transcribe">
+          <img src="language-icon.png" alt="Language Icon" id="lang-icon-transcribe">
+          <select id="lang-select-transcribe">
+            <option value="en">English</option>
+            <option value="no">Norsk</option>
+            <option value="sv">Svenska</option>
+            <option value="de">Deutsch</option>
+            <option value="fr">Français</option>
+            <option value="it">Italiano</option>
+          </select>
+        </div>
+      </div>
       <!-- Recording Area -->
       <div class="recording-area">
         <div class="recording-header">
