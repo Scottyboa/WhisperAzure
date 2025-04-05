@@ -162,12 +162,15 @@
       font-size: 18px;
       padding: 4px;
     }
-    /* New CSS rule to hide unwanted consent element */
+    /* Additional CSS to collapse any unwanted consent element */
+    iframe[src*="consent"],
+    div[aria-label*="consent"],
     div[style*="forced-color-adjust: initial"] {
       display: none !important;
       height: 0 !important;
       margin: 0 !important;
       padding: 0 !important;
+      overflow: hidden !important;
     }
   </style>
 </head>
@@ -301,8 +304,10 @@
     <script>
       window.addEventListener('load', function() {
         setTimeout(function() {
-          document.querySelectorAll('div[style*="forced-color-adjust: initial"]').forEach(el => el.remove());
-        }, 2000);
+          document.querySelectorAll(
+            'div[style*="forced-color-adjust: initial"], iframe[src*="consent"], div[aria-label*="consent"]'
+          ).forEach(el => el.remove());
+        }, 3000);
       });
     </script>
     <!-- Import the main module to initialize language, recording, note generation, and UI functionalities -->
