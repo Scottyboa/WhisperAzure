@@ -546,9 +546,9 @@ function initRecording() {
   if (!startButton || !stopButton || !pauseResumeButton) return;
 
   startButton.addEventListener("click", async () => {
-    // Check if ads are active
-    if (getCookie("adsActive") !== "true") {
-      alert("Recording is disabled because ads are not active. Please update your consent via the Consent Menu.");
+    // Check if user consent is accepted and ads are active
+    if (getCookie("user_consent") !== "accepted" || getCookie("adsActive") !== "true") {
+      alert("Recording is disabled because ads are not active or consent is not given. Please update your consent via the Consent Menu.");
       return;
     }
 
