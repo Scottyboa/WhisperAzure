@@ -228,7 +228,13 @@ function initNoteGeneration() {
     loadPromptForSlot(promptSlotSelect.value);
   });
   
-  generateNoteButton.addEventListener("click", generateNote);
+generateNoteButton.addEventListener("click", () => {
+  if (getCookie("adsActive") !== "true") {
+    alert("Note generation is disabled because ads are not active.");
+    return;
+  }
+  generateNote();
+});
 }
 
 export { initNoteGeneration };
