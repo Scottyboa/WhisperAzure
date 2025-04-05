@@ -1,11 +1,3 @@
-// Helper function to read a cookie by name
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(";").shift();
-  return null;
-}
-
 // Utility function to hash a string (used for storing prompts keyed by API key)
 function hashString(str) {
   let hash = 0;
@@ -110,12 +102,6 @@ function formatTime(ms) {
 
 // Handles the note generation process using the OpenAI API
 async function generateNote() {
-  // Gate note generation: require both ads to be active and user consent to be accepted.
-  if (getCookie("user_consent") !== "accepted" || getCookie("adsActive") !== "true") {
-    alert("Note generation is disabled because ads are not active or consent is not given. Please update your consent via the Consent Menu.");
-    return;
-  }
-  
   const transcriptionElem = document.getElementById("transcription");
   if (!transcriptionElem) {
     alert("No transcription text available.");
@@ -218,10 +204,10 @@ function initNoteGeneration() {
   const generateNoteButton = document.getElementById("generateNoteButton");
   if (!promptSlotSelect || !customPromptTextarea || !generateNoteButton) return;
   
-  // Disable the Generate Note button if ads are not active or user consent is not accepted.
-  if (getCookie("user_consent") !== "accepted" || getCookie("adsActive") !== "true") {
+  // Disable the Generate Note button if consent is not accepted.
+  if (document.cookie.indexOf("user_consent=accepted") === -1) {
     generateNoteButton.disabled = true;
-    generateNoteButton.title = "Note generation is disabled until ads are active and consent is accepted. Please update your consent via the Consent Menu.";
+    generateNoteButton.title = "Note generation is disabled until you accept cookies/ads.";
   }
   
   // Load the stored prompt for the current slot.
