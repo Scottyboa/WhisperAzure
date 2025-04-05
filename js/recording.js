@@ -538,13 +538,19 @@ function initRecording() {
   const pauseResumeButton = document.getElementById("pauseResumeButton");
   if (!startButton || !stopButton || !pauseResumeButton) return;
 
-  startButton.addEventListener("click", async () => {
-    // Retrieve and decrypt the API key before starting.
-    const decryptedApiKey = await getDecryptedAPIKey();
-    if (!decryptedApiKey || !decryptedApiKey.startsWith("sk-")) {
-      alert("Please enter a valid OpenAI API key before starting the recording.");
-      return;
-    }
+startButton.addEventListener("click", async () => {
+  // ✅ Check for ad signal before allowing recording
+  if (getCookie("adsActive") !== "true") {
+    alert("Recording is disabled because ads are not active.");
+    return;
+  }
+
+  // ✅ Continue with existing recording logic
+  const decryptedApiKey = await getDecryptedAPIKey();
+  if (!decryptedApiKey || !decryptedApiKey.startsWith("sk-")) {
+    alert("Please enter a valid OpenAI API key before starting the recording.");
+    return;
+  }
     resetRecordingState();
     const transcriptionElem = document.getElementById("transcription");
     if (transcriptionElem) transcriptionElem.value = "";
