@@ -1,6 +1,3 @@
-// recording.js
-import { checkConsentForAds } from './consent.js';
-
 // Updated recording module with API key validation, file encryption, request signing, and sending device_token.
 
 // Updated hash function: now returns an unsigned 32-bit integer string.
@@ -534,22 +531,11 @@ function resetRecordingState() {
   accumulatedRecordingTime = 0;
 }
 
-// Updated initRecording to check consent using CMP API
-async function initRecording() {
+function initRecording() {
   const startButton = document.getElementById("startButton");
   const stopButton = document.getElementById("stopButton");
   const pauseResumeButton = document.getElementById("pauseResumeButton");
   if (!startButton || !stopButton || !pauseResumeButton) return;
-
-  // Check CMP consent for personalized ads (vendor ID "755")
-  const consentGiven = await checkConsentForAds("755");
-  if (!consentGiven) {
-    startButton.disabled = true;
-    startButton.title = "Recording is disabled until you provide consent for personalized ads.";
-  } else {
-    startButton.disabled = false;
-    startButton.title = "";
-  }
 
   startButton.addEventListener("click", async () => {
     // Retrieve and decrypt the API key before starting.
