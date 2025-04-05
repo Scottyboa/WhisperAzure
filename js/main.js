@@ -1,10 +1,6 @@
-// main.js
-
 import { initTranscribeLanguage } from './languageLoaderUsage.js';
 import { initRecording } from './recording.js';
 import { initNoteGeneration } from './noteGeneration.js';
-// Removed initConsentBanner import since it's no longer needed
-// import { initConsentBanner } from './ui.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize language support for the transcribe page.
@@ -20,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // but only when not inside an editable text field.
   document.addEventListener('keydown', (event) => {
     const activeElement = document.activeElement;
-    // Check if the active element is an input, textarea, or a contentEditable element.
     if (
       activeElement &&
       (activeElement.tagName === 'INPUT' ||
@@ -29,7 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
     ) {
       return;
     }
-    // Check if the pressed key is "r" (case-insensitive).
     if (event.key.toLowerCase() === 'r') {
       const startButton = document.getElementById('startButton');
       if (startButton) {
@@ -37,4 +31,56 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
+
+  // Add __tcfapi listener to detect consent updates.
+  if (typeof window.__tcfapi === 'function') {
+    window.__tcfapi('addEventListener', 2, function(tcData, success) {
+      if (success) {
+        console.log("Consent updated on transcribe page:", tcData);
+        let consentGiven = false;
+        // Check if at least one purpose has consent.
+        for (let purpose in tcData.purpose.consents) {
+          if (tcData.purpose.consents[purpose] === true) {
+            consentGiven = true;
+            break;
+          }
+        }
+        if (consentGiven) {
+          enableTranscribeFunctions();
+        } else {
+          disableTranscribeFunctions();
+        }
+      }
+    });
+  }
 });
+
+// Function to disable functions on the transcribe page.
+function disableTranscribeFunctions() {
+  const startButton = document.getElementById("startButton");
+  if (startButton) {
+    startButton.disabled = true;
+    startButton.title = "Start Recording is disabled because you rejected consent.";
+  }
+  const generateNoteButton = document.getElementById("generateNoteButton");
+  if (generateNoteButton) {
+    generateNoteButton.disabled = true;
+    generateNoteButton.title = "Generate Note is disabled because you rejected consent.";
+  }
+  console.log("Transcribe page functions disabled due to lack of consent.");
+}
+
+// Function to enable functions on the transcribe page.
+function enableTranscribeFunctions() {
+  const startButton = document.getElementById("startButton");
+  if (startButton) {
+    startButton.disabled = false;
+    startButton.title = "";
+  }
+  const generateNoteButton = document.getElementById("generateNoteButton");
+  if (generateNoteButton) {
+    generateNoteButton.disabled = false;
+    generateNoteButton.title = "";
+  }
+  console.log("Transcribe page functions enabled.");
+}
