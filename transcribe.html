@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title id="page-title-transcribe">Transcription Tool with Ads and Guide Overlay</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=Merriweather:wght@300;400&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=Merriweather:wght@300;400&display=swap"
+    rel="stylesheet"
+  />
   <style>
     /* Base Styles */
-    html, body {
+    html,
+    body {
       margin: 0;
       padding: 0;
     }
@@ -28,7 +32,8 @@
       grid-column: 1 / 2;
       grid-row: 1 / 2;
       background-color: #e0e0e0;
-      padding: 20px;
+      /* Remove top padding so it's flush with the top */
+      padding: 0 20px 20px;
       display: flex;
       flex-direction: column;
       gap: 20px;
@@ -39,7 +44,8 @@
       grid-column: 3 / 4;
       grid-row: 1 / 2;
       background-color: #e0e0e0;
-      padding: 20px;
+      /* Remove top padding so the ad is pushed up */
+      padding: 0 20px 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -51,13 +57,14 @@
       display: flex;
       flex-direction: column;
       overflow-y: auto;
-      padding: 0 20px 20px; /* No top padding so content starts at the very top */
+      /* Remove horizontal padding so top bar is flush with sidebars */
+      padding: 0;
     }
     /* Top Bar within main content */
     .top-bar {
       background-color: #e0e0e0; /* Matches sidebars */
-      padding: 20px;            /* Increased padding for a thicker bar */
-      margin-bottom: 20px;      /* Space below the top bar */
+      padding: 20px;            /* Thicker bar */
+      margin-bottom: 20px;      /* Space below the bar */
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -84,6 +91,8 @@
     .recording-area {
       border-bottom: 1px solid #ddd;
       padding-bottom: 20px;
+      padding-left: 20px;
+      padding-right: 20px;
     }
     .recording-header {
       display: flex;
@@ -108,7 +117,9 @@
       color: darkblue;
     }
     /* Auto-resizing Textareas */
-    #transcription, #generatedNote, #customPrompt {
+    #transcription,
+    #generatedNote,
+    #customPrompt {
       width: 100%;
       padding: 12px;
       border: 1px solid #ddd;
@@ -119,9 +130,16 @@
       font-family: 'Roboto', sans-serif;
       resize: none;
     }
-    #transcription { resize: vertical; }
-    #transcription, #generatedNote { min-height: 150px; }
-    #customPrompt { min-height: 200px; }
+    #transcription {
+      resize: vertical;
+    }
+    #transcription,
+    #generatedNote {
+      min-height: 150px;
+    }
+    #customPrompt {
+      min-height: 200px;
+    }
     /* Button Styles */
     button {
       background-color: #5a9;
@@ -134,8 +152,12 @@
       transition: background-color 0.3s, transform 0.1s;
       margin: 10px;
     }
-    button:hover { background-color: #489; }
-    button:active { transform: scale(0.98); }
+    button:hover {
+      background-color: #489;
+    }
+    button:active {
+      transform: scale(0.98);
+    }
     button:disabled {
       background-color: #ccc;
       color: #666;
@@ -149,6 +171,7 @@
       display: flex;
       gap: 20px;
       flex: 1;
+      padding: 0 20px; /* keep side padding for the bottom half content */
     }
     .column {
       flex: 1;
@@ -156,7 +179,7 @@
       flex-direction: column;
       gap: 10px;
     }
-    /* New Ad Containers */
+    /* Ad Containers */
     #right-ad-unit-1 {
       width: 300px;
       min-height: 250px;
@@ -169,7 +192,7 @@
       background: transparent;
       margin-top: 10px;
     }
-    /* Hide any leftover forced-color-adjust elements */
+    /* Hide leftover forced-color-adjust elements */
     div[style*="forced-color-adjust: initial"] {
       display: none !important;
       height: 0 !important;
@@ -190,7 +213,9 @@
       overflow-y: auto;
       z-index: 2000;
     }
-    #guideView.active { display: block; }
+    #guideView.active {
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -205,7 +230,7 @@
       <div class="top-bar">
         <button id="btnGuide">Guide</button>
         <div id="lang-container-transcribe">
-          <img src="language-icon.png" alt="Language Icon" id="lang-icon-transcribe">
+          <img src="language-icon.png" alt="Language Icon" id="lang-icon-transcribe" />
           <select id="lang-select-transcribe">
             <option value="en">English</option>
             <option value="no">Norsk</option>
@@ -220,7 +245,13 @@
       <div class="recording-area">
         <div class="recording-header">
           <h3 id="recordingAreaTitle">Recording Area</h3>
-          <a id="openaiUsageLink" href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer">Cost usage overview</a>
+          <a
+            id="openaiUsageLink"
+            href="https://platform.openai.com/usage"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Cost usage overview</a
+          >
         </div>
         <div id="recordTimer" class="timer">Recording Timer: 0 sec</div>
         <div id="transcribeTimer" class="timer">Completion Timer: 0 sec</div>
@@ -238,7 +269,11 @@
           <h3 id="noteGenerationTitle">Note Generation</h3>
           <button id="generateNoteButton">Generate Note</button>
           <div id="noteTimer" class="timer">Note Generation Timer: 0 sec</div>
-          <textarea id="generatedNote" readonly placeholder="Generated note will appear here..."></textarea>
+          <textarea
+            id="generatedNote"
+            readonly
+            placeholder="Generated note will appear here..."
+          ></textarea>
         </div>
         <div class="column">
           <h3 id="customPromptTitle">Custom Prompt</h3>
@@ -255,7 +290,11 @@
             <option value="9">9</option>
             <option value="10">10</option>
           </select>
-          <textarea id="customPrompt" placeholder="Enter custom prompt here" rows="1"></textarea>
+          <textarea
+            id="customPrompt"
+            placeholder="Enter custom prompt here"
+            rows="1"
+          ></textarea>
         </div>
       </div>
     </main>
@@ -265,26 +304,26 @@
       <div id="right-ad-unit-2"></div>
     </aside>
   </div>
-  
+
   <!-- Guide Overlay (outside the grid container) -->
   <div id="guideView">
     <h3 id="guideHeading">Guide & Instructions</h3>
     <p id="guideText"></p>
   </div>
-  
+
   <!-- Inline script to toggle the guide overlay -->
   <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
       const btnGuide = document.getElementById("btnGuide");
       const guideView = document.getElementById("guideView");
       if (btnGuide && guideView) {
-        btnGuide.addEventListener("click", function() {
+        btnGuide.addEventListener("click", function () {
           guideView.classList.toggle("active");
         });
       }
     });
   </script>
-  
+
   <!-- Dynamic Ad Injection Scripts for the new responsive ads -->
   <script>
     function loadAdSenseAds(callback) {
@@ -292,19 +331,21 @@
       const npaParam = consent ? "" : "&npa=1";
       const adScript = document.createElement("script");
       adScript.async = true;
-      adScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3747901131960450" + npaParam;
+      adScript.src =
+        "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3747901131960450" +
+        npaParam;
       adScript.crossOrigin = "anonymous";
       adScript.onload = callback;
       document.head.appendChild(adScript);
     }
-  
+
     function insertAdSenseAd(containerId, adSlot) {
       const container = document.getElementById(containerId);
       if (!container) return;
       const ins = document.createElement("ins");
       ins.className = "adsbygoogle";
       ins.style.display = "block"; // responsive ad style
-      ins.style.width = "100%";    // fill container's width
+      ins.style.width = "100%"; // fill container's width
       ins.setAttribute("data-ad-client", "ca-pub-3747901131960450");
       ins.setAttribute("data-ad-slot", adSlot);
       ins.setAttribute("data-ad-format", "auto");
@@ -314,7 +355,7 @@
         (adsbygoogle = window.adsbygoogle || []).push({});
       }
     }
-  
+
     function initAdUnits() {
       // Use a delay (1000ms) to ensure containers are rendered
       setTimeout(() => {
@@ -322,29 +363,31 @@
         insertAdSenseAd("right-ad-unit-2", "8337760213");
       }, 1000);
     }
-  
-    window.addEventListener("load", function() {
+
+    window.addEventListener("load", function () {
       loadAdSenseAds(initAdUnits);
     });
   </script>
-  
+
   <!-- Enforce grid container height on load, resize, and after a short delay -->
   <script>
     function setGridHeight() {
-      const grid = document.querySelector('.grid-container');
+      const grid = document.querySelector(".grid-container");
       if (grid) {
-        let height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-        grid.style.height = height + 'px';
+        let height = window.visualViewport
+          ? window.visualViewport.height
+          : window.innerHeight;
+        grid.style.height = height + "px";
       }
     }
-    window.addEventListener('load', function() {
+    window.addEventListener("load", function () {
       setGridHeight();
       let interval = setInterval(setGridHeight, 200);
       setTimeout(() => clearInterval(interval), 2000);
     });
-    window.addEventListener('resize', setGridHeight);
+    window.addEventListener("resize", setGridHeight);
   </script>
-  
+
   <!-- Import the main module to initialize language, recording, note generation, and UI functionalities -->
   <script type="module" src="./js/main.js"></script>
 </body>
