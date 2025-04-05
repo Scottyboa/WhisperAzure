@@ -19,16 +19,22 @@ function initInfoModals() {
   console.log("initInfoModals: Accordion UI is enabled; modal initialization is disabled.");
 }
 
-// Removed adsterra code; these functions are now no-ops because AdSense is managed directly in the HTML.
-function loadAdStera() {
-  // AdStera ad code removed; no ad script is loaded here.
+// Ad injection functions are now handled directly in transcribe.html.
+// The following functions remain as no‑ops to avoid breaking other parts of the code.
+
+function loadAdSenseAds() {
+  // No ad loading here. Ads are dynamically injected in transcribe.html.
+}
+
+function initAdUnits() {
+  // No ad injection here. Ad units are managed in transcribe.html.
 }
 
 function initConsentBanner() {
-  // Ads are now managed directly in the HTML via AdSense.
+  // Since ads are now managed in transcribe.html, simply enable functional buttons.
   enableFunctionalButtons();
-  console.log("Consent banner removed; ads loaded and functions enabled.");
+  console.log("Consent banner removed; ads are managed in transcribe.html.");
 }
 
-// Export functions if using ES modules.
-export { enableFunctionalButtons, initInfoModals, loadAdStera, initConsentBanner };
+// Export functions for use in other modules.
+export { enableFunctionalButtons, initInfoModals, loadAdSenseAds, initAdUnits, initConsentBanner };
