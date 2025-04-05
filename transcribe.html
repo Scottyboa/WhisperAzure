@@ -297,17 +297,19 @@
         loadAdSenseAds(initAdUnits);
       });
     </script>
-    <!-- Enforce grid container height on load, resize, and after a short delay -->
+    <!-- Enforce grid container height on load, resize, and after a short delay using visualViewport if available -->
     <script>
       function setGridHeight() {
         const grid = document.querySelector('.grid-container');
         if (grid) {
-          grid.style.height = window.innerHeight + 'px';
+          let height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+          grid.style.height = height + 'px';
         }
       }
       window.addEventListener('load', function() {
         setGridHeight();
-        setTimeout(setGridHeight, 500); // Force reflow after 500ms
+        let interval = setInterval(setGridHeight, 200);
+        setTimeout(() => clearInterval(interval), 2000); // Keep updating for 2 seconds
       });
       window.addEventListener('resize', setGridHeight);
     </script>
