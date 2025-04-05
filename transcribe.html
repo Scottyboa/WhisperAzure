@@ -162,7 +162,7 @@
       font-size: 18px;
       padding: 4px;
     }
-    /* New CSS rule to hide unwanted consent element (if any) */
+    /* New CSS rule to hide unwanted consent element */
     div[style*="forced-color-adjust: initial"] {
       display: none !important;
       height: 0 !important;
@@ -295,6 +295,14 @@
 
       window.addEventListener("load", function() {
         loadAdSenseAds(initAdUnits);
+      });
+    </script>
+    <!-- New script to remove any unwanted consent elements -->
+    <script>
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          document.querySelectorAll('div[style*="forced-color-adjust: initial"]').forEach(el => el.remove());
+        }, 2000);
       });
     </script>
     <!-- Import the main module to initialize language, recording, note generation, and UI functionalities -->
