@@ -262,27 +262,27 @@
         document.head.appendChild(adScript);
       }
 
-      function insertAdSenseAd(containerId, adSlot) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        const ins = document.createElement("ins");
-        ins.className = "adsbygoogle";
-        ins.style.display = "inline-block";
-        ins.style.width = "300px";
-        ins.style.height = "250px";
-        ins.setAttribute("data-ad-client", "ca-pub-3747901131960450");
-        ins.setAttribute("data-ad-slot", adSlot);
-        container.appendChild(ins);
-        if (!ins.getAttribute("data-adsbygoogle-status")) {
-          (adsbygoogle = window.adsbygoogle || []).push({});
-        }
-      }
+function insertAdSenseAd(containerId, adSlot) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const ins = document.createElement("ins");
+  ins.className = "adsbygoogle";
+  ins.style.display = "block"; // responsive ad style
+  ins.setAttribute("data-ad-client", "ca-pub-3747901131960450");
+  ins.setAttribute("data-ad-slot", adSlot);
+  ins.setAttribute("data-ad-format", "auto");
+  ins.setAttribute("data-full-width-responsive", "true");
+  container.appendChild(ins);
+  if (!ins.getAttribute("data-adsbygoogle-status")) {
+    (adsbygoogle = window.adsbygoogle || []).push({});
+  }
+}
 
-      function initAdUnits() {
-        setTimeout(() => {
-          insertAdSenseAd("right-ad-unit-1", "4927329947");
-        }, 500);
-      }
+function initAdUnits() {
+  setTimeout(() => {
+    insertAdSenseAd("right-ad-unit-1", "7966995632");
+  }, 500);
+}
 
       window.addEventListener("load", function() {
         loadAdSenseAds();
