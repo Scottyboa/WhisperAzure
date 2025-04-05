@@ -125,13 +125,13 @@
       flex-direction: column;
       align-items: center;
     }
-    /* Ad container for dynamic injection */
+    /* New Ad Container – removed old adsterra markup */
     #right-ad-unit-1 {
       width: 300px;
-      height: 250px;
-      background-color: #ddd;
-      display: block;
-      margin-bottom: 10px;
+      /* Let the ad be responsive; no fixed height */
+      min-height: 250px;
+      background: transparent;
+      margin-bottom: 0;
     }
     /* Guide Overlay */
     #guideView {
@@ -229,6 +229,7 @@
     </main>
     <!-- Right Sidebar (Ad Area) -->
     <aside class="ad-sidebar">
+      <!-- New Ad Container; old adsterra markup removed -->
       <div id="right-ad-unit-1"></div>
     </aside>
     <!-- Guide Overlay -->
@@ -248,7 +249,7 @@
         }
       });
     </script>
-    <!-- Dynamic Ad Injection Scripts -->
+    <!-- Dynamic Ad Injection Scripts for the new responsive ad -->
     <script>
       function loadAdSenseAds(callback) {
         const consent = document.cookie.indexOf("user_consent=accepted") !== -1;
@@ -267,7 +268,7 @@
         const ins = document.createElement("ins");
         ins.className = "adsbygoogle";
         ins.style.display = "block"; // responsive ad style
-        ins.style.width = "100%"; // force the ins element to fill the container
+        ins.style.width = "100%"; // fill container's width
         ins.setAttribute("data-ad-client", "ca-pub-3747901131960450");
         ins.setAttribute("data-ad-slot", adSlot);
         ins.setAttribute("data-ad-format", "auto");
@@ -279,7 +280,7 @@
       }
 
       function initAdUnits() {
-        // Use a longer delay (1000ms) to ensure container rendering and layout calculation.
+        // Use a delay (1000ms) to ensure container is fully rendered and layout is computed.
         setTimeout(() => {
           insertAdSenseAd("right-ad-unit-1", "7966995632");
         }, 1000);
