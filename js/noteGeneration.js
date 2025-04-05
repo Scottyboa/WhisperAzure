@@ -72,6 +72,8 @@ async function getDecryptedAPIKey() {
 
 // Returns a storage key for a given prompt slot and API key
 function getPromptStorageKey(slot) {
+  // Note: This function still retrieves the key from "openai_api_key" for hashing.
+  // Adjust if you later want to use the decrypted API key instead.
   const apiKey = sessionStorage.getItem("openai_api_key") || "";
   const hashedApiKey = hashString(apiKey);
   return "customPrompt_" + hashedApiKey + "_" + slot;
@@ -108,9 +110,9 @@ function formatTime(ms) {
 
 // Handles the note generation process using the OpenAI API
 async function generateNote() {
-  // Gate note generation by checking if ads are active
-  if (getCookie("adsActive") !== "true") {
-    alert("Note generation is disabled because ads are not active. Please update your consent via the Consent Menu.");
+  // Gate note generation: require both ads to be active and user consent to be accepted.
+  if (getCookie("user_consent") !== "accepted" || getCookie("adsActive") !== "true") {
+    alert("Note generation is disabled because ads are not active or consent is not given. Please update your consent via the Consent Menu.");
     return;
   }
   
@@ -216,10 +218,10 @@ function initNoteGeneration() {
   const generateNoteButton = document.getElementById("generateNoteButton");
   if (!promptSlotSelect || !customPromptTextarea || !generateNoteButton) return;
   
-  // Disable the Generate Note button if ads are not active.
-  if (getCookie("adsActive") !== "true") {
+  // Disable the Generate Note button if ads are not active or user consent is not accepted.
+  if (getCookie("user_consent") !== "accepted" || getCookie("adsActive") !== "true") {
     generateNoteButton.disabled = true;
-    generateNoteButton.title = "Note generation is disabled until ads are active. Please update your consent via the Consent Menu.";
+    generateNoteButton.title = "Note generation is disabled until ads are active and consent is accepted. Please update your consent via the Consent Menu.";
   }
   
   // Load the stored prompt for the current slot.
