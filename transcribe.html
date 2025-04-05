@@ -14,14 +14,45 @@
       margin: 0;
       padding: 0;
     }
-    /* Grid Layout */
+    /* Grid Layout: 2 Rows (Top Bar, then Main Content Area), 3 Columns */
     .grid-container {
       display: grid;
-      grid-template-columns: 300px 1fr 300px;
-      height: 100vh; /* Always force to fill the viewport */
+      grid-template-columns: 300px 1fr 300px; /* Left sidebar, main content, right sidebar */
+      grid-template-rows: auto 1fr;           /* Top bar (auto height), then the rest */
+      height: 100vh; /* Fill the viewport */
     }
-    /* Left Sidebar */
+    /* Top Bar: spans all columns in row 1 */
+    .top-bar {
+      grid-row: 1 / 2;
+      grid-column: 1 / 4;   /* Span from column 1 to column 3 + 1 */
+      background-color: #e0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;        /* Increase padding for a thicker bar */
+    }
+    .top-bar button {
+      font-size: 18px;
+      padding: 10px 20px;
+    }
+    /* Language Container in Top Bar (right side) */
+    #lang-container-transcribe {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #lang-icon-transcribe {
+      width: 36px;
+      height: 36px;
+    }
+    #lang-select-transcribe {
+      padding: 5px;
+      font-size: 18px;
+    }
+    /* Left Sidebar: occupies row 2, column 1 */
     .sidebar {
+      grid-row: 2 / 3;
+      grid-column: 1 / 2;
       background-color: #e0e0e0;
       padding: 20px;
       display: flex;
@@ -29,45 +60,25 @@
       gap: 20px;
       position: relative;
     }
-    .sidebar button {
-      font-size: 18px;
-      padding: 15px;
+    /* Right Sidebar: occupies row 2, column 3 */
+    .ad-sidebar {
+      grid-row: 2 / 3;
+      grid-column: 3 / 4;
+      background-color: #e0e0e0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    /* Main Content */
+    /* Main Content: occupies row 2, column 2 */
     .main-content {
+      grid-row: 2 / 3;
+      grid-column: 2 / 3;
       padding: 20px;
       display: flex;
       flex-direction: column;
       gap: 20px;
       overflow-y: auto;
-    }
-    /* New Top Bar */
-    .top-bar {
-      background-color: #e0e0e0; /* Same as left sidebar */
-      height: 50px; /* Adjust as needed */
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      margin-bottom: 20px; /* Space between top bar and recording area */
-    }
-    .top-bar button {
-      font-size: 18px;
-      padding: 10px 20px;
-    }
-    .top-bar #lang-container-transcribe {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .top-bar #lang-icon-transcribe {
-      width: 36px;
-      height: 36px;
-      margin-right: 8px;
-    }
-    .top-bar #lang-select-transcribe {
-      padding: 5px;
-      font-size: 18px;
     }
     /* Recording Area (Top Half) */
     .recording-area {
@@ -145,44 +156,20 @@
       flex-direction: column;
       gap: 10px;
     }
-    /* Right Sidebar (Ad Area) */
-    .ad-sidebar {
-      background-color: #e0e0e0;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
     /* New Ad Container – removed old adsterra markup */
     #right-ad-unit-1 {
       width: 300px;
-      /* Let the ad be responsive; no fixed height */
       min-height: 250px;
       background: transparent;
       margin-bottom: 0;
     }
-    /* New container for the second ad */
     #right-ad-unit-2 {
       width: 300px;
       min-height: 250px;
       background: transparent;
       margin-top: 10px; /* Adjust spacing as needed */
     }
-    /* Original Language Dropdown in Sidebar (if used outside top bar) */
-    #lang-container-transcribe {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    #lang-icon-transcribe { width: 36px; height: 36px; }
-    #lang-select-transcribe {
-      font-size: 18px;
-      padding: 4px;
-    }
-    /* New CSS rule to hide unwanted consent element (if any remains) */
+    /* Hide any leftover forced-color-adjust elements (if any) */
     div[style*="forced-color-adjust: initial"] {
       display: none !important;
       height: 0 !important;
@@ -208,27 +195,29 @@
 </head>
 <body>
   <div class="grid-container">
+    <!-- Top Bar (spans all 3 columns) -->
+    <header class="top-bar">
+      <button id="btnGuide">Guide</button>
+      <div id="lang-container-transcribe">
+        <img src="language-icon.png" alt="Language Icon" id="lang-icon-transcribe">
+        <select id="lang-select-transcribe">
+          <option value="en">English</option>
+          <option value="no">Norsk</option>
+          <option value="sv">Svenska</option>
+          <option value="de">Deutsch</option>
+          <option value="fr">Français</option>
+          <option value="it">Italiano</option>
+        </select>
+      </div>
+    </header>
+
     <!-- Left Sidebar (reserved for ads) -->
     <aside class="sidebar">
       <!-- Ads will be placed here -->
     </aside>
+
     <!-- Main Content -->
     <main class="main-content">
-      <!-- New Top Bar containing Guide button (left) and Language pulldown (right) -->
-      <div class="top-bar">
-        <button id="btnGuide">Guide</button>
-        <div id="lang-container-transcribe">
-          <img src="language-icon.png" alt="Language Icon" id="lang-icon-transcribe">
-          <select id="lang-select-transcribe">
-            <option value="en">English</option>
-            <option value="no">Norsk</option>
-            <option value="sv">Svenska</option>
-            <option value="de">Deutsch</option>
-            <option value="fr">Français</option>
-            <option value="it">Italiano</option>
-          </select>
-        </div>
-      </div>
       <!-- Recording Area -->
       <div class="recording-area">
         <div class="recording-header">
@@ -272,16 +261,16 @@
         </div>
       </div>
     </main>
+
     <!-- Right Sidebar (Ad Area) -->
     <aside class="ad-sidebar">
-      <!-- New Ad Container; old adsterra markup removed -->
+      <!-- New Ad Container -->
       <div id="right-ad-unit-1"></div>
-      <!-- New second ad container added -->
       <div id="right-ad-unit-2"></div>
     </aside>
   </div>
   
-  <!-- Guide Overlay (moved outside the grid container) -->
+  <!-- Guide Overlay (outside the grid container) -->
   <div id="guideView">
     <h3 id="guideHeading">Guide & Instructions</h3>
     <p id="guideText"></p>
@@ -319,7 +308,7 @@
       const ins = document.createElement("ins");
       ins.className = "adsbygoogle";
       ins.style.display = "block"; // responsive ad style
-      ins.style.width = "100%"; // fill container's width
+      ins.style.width = "100%";    // fill container's width
       ins.setAttribute("data-ad-client", "ca-pub-3747901131960450");
       ins.setAttribute("data-ad-slot", adSlot);
       ins.setAttribute("data-ad-format", "auto");
