@@ -309,20 +309,103 @@
     <p id="guideText"></p>
   </div>
 
-  <!-- Inline script to toggle the guide overlay -->
+  <!-- Inline script for API Key Handling and Consent -->
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const btnGuide = document.getElementById("btnGuide");
-      const guideView = document.getElementById("guideView");
-      if (btnGuide && guideView) {
-        btnGuide.addEventListener("click", function () {
-          guideView.classList.toggle("active");
+    // Helper function to set a cookie
+    function setCookie(name, value, days) {
+      var expires = "";
+      if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days*24*60*60*1000));
+        expires = "; expires=" + date.toUTCString();
+      }
+      document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+    }
+
+    // Helper function to convert an ArrayBuffer to a Base64 string
+    function arrayBufferToBase64(buffer) {
+      let binary = "";
+      const bytes = new Uint8Array(buffer);
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return window.btoa(binary);
+    }
+
+    // Encrypt the API key using the device token as the encryption key.
+    async function encryptAPIKey(apiKey) {
+      // Retrieve or generate a device token (used as the password for encryption)
+      let deviceToken = localStorage.getItem("device_token");
+      if (!deviceToken) {
+        deviceToken = crypto.randomUUID();
+        localStorage.setItem("device_token", deviceToken);
+      }
+      const password = deviceToken; // Using deviceToken as the encryption key
+      const encoder = new TextEncoder();
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
+      const key = await crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+      );
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const encryptedBuffer = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv: iv },
+        key,
+        encoder.encode(apiKey)
+      );
+      return {
+        ciphertext: arrayBufferToBase64(encryptedBuffer),
+        iv: arrayBufferToBase64(iv),
+        salt: arrayBufferToBase64(salt)
+      };
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const enterTranscriptionBtn = document.getElementById("enterTranscriptionBtn");
+      const apiKeyInput = document.getElementById("apiKeyInput");
+      if (enterTranscriptionBtn && apiKeyInput) {
+        enterTranscriptionBtn.addEventListener("click", async () => {
+          const apiKey = apiKeyInput.value.trim();
+          // Set consent cookie upon clicking the Enter Transcription Tool button
+          setCookie("user_consent", "accepted", 365);
+          // Encrypt the API key and store it in sessionStorage
+          const encryptedData = await encryptAPIKey(apiKey);
+          sessionStorage.setItem("encrypted_api_key", JSON.stringify(encryptedData));
+          // Redirect to transcribe.html
+          window.location.href = "transcribe.html";
         });
       }
     });
   </script>
-
-  <!-- Dynamic Ad Injection Scripts -->
+  
+  <!-- New Horizontal Accordion Script -->
+  <script>
+    document.querySelectorAll('.accordion-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const contentContainer = document.querySelector('.accordion-content-container');
+        if (header.classList.contains('active')) {
+          header.classList.remove('active');
+          contentContainer.innerHTML = '';
+        } else {
+          document.querySelectorAll('.accordion-header.active').forEach(activeHeader => {
+            activeHeader.classList.remove('active');
+          });
+          header.classList.add('active');
+          const contentId = header.getAttribute('data-content-id');
+          const hiddenContent = document.getElementById(contentId);
+          if (hiddenContent) {
+            contentContainer.innerHTML = hiddenContent.innerHTML;
+          }
+        }
+      });
+    });
+  </script>
+  
+  <!-- Updated AdSense Ads Loader with Cookie Setting -->
   <script>
     function loadAdSenseAds(callback) {
       const consent = document.cookie.indexOf("user_consent=accepted") !== -1;
@@ -331,7 +414,10 @@
       adScript.async = true;
       adScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3747901131960450" + npaParam;
       adScript.crossOrigin = "anonymous";
-      adScript.onload = callback;
+      adScript.onload = () => {
+        document.cookie = "adsActive=true; path=/";
+        if (callback) callback();
+      };
       document.head.appendChild(adScript);
     }
 
