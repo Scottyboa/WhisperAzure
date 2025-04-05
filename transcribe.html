@@ -33,7 +33,7 @@
       font-size: 18px;
       padding: 15px;
     }
-    /* Main Content Area */
+    /* Main Content */
     .main-content {
       padding: 20px;
       display: flex;
@@ -57,7 +57,7 @@
       margin-bottom: 10px;
       color: #333;
     }
-    /* Style the cost overview hyperlink */
+    /* Cost Overview Hyperlink */
     #openaiUsageLink {
       font-size: inherit;
       font-family: inherit;
@@ -97,7 +97,6 @@
     }
     button:hover { background-color: #489; }
     button:active { transform: scale(0.98); }
-    /* Custom style for disabled buttons */
     button:disabled {
       background-color: #ccc;
       color: #666;
@@ -126,15 +125,16 @@
       flex-direction: column;
       align-items: center;
     }
-#adUnit {
-  width: 300px;
-  height: 250px;
-  background-color: #ddd;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 10px;
-}
+    /* Ad container for dynamic injection */
+    #right-ad-unit-1 {
+      width: 300px;
+      height: 250px;
+      background-color: #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
     /* Guide Overlay */
     #guideView {
       display: none;
@@ -159,9 +159,7 @@
       align-items: center;
       gap: 8px;
     }
-    /* Increased size for language icon */
     #lang-icon-transcribe { width: 36px; height: 36px; }
-    /* Increased font-size for language select */
     #lang-select-transcribe {
       font-size: 18px;
       padding: 4px;
@@ -233,45 +231,62 @@
     </main>
     <!-- Right Sidebar (Ad Area) -->
     <aside class="ad-sidebar">
-      <div id="adArea">
-        <div id="adUnit">
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3747901131960450" 
-     crossorigin="anonymous"></script>
-<!-- Right sidebar top -->
-<ins class="adsbygoogle"
-     style="display:inline-block;width:300px;height:250px"
-     data-ad-client="ca-pub-3747901131960450"
-     data-ad-slot="4927329947"></ins>
-<script>
-  window.addEventListener('load', function() {
-    var adIns = document.querySelector('ins.adsbygoogle');
-    // Only push if the ad hasn't already been rendered.
-    if (!adIns.getAttribute('data-adsbygoogle-status')) {
-      (adsbygoogle = window.adsbygoogle || []).push({});
-    }
-  });
-</script>
-
-
-        </div>
-      </div>
+      <div id="right-ad-unit-1"></div>
     </aside>
     <!-- Guide Overlay -->
     <div id="guideView">
       <h3 id="guideHeading">Guide & Instructions</h3>
       <p id="guideText"></p>
     </div>
-    <!-- Inline script to toggle the guide overlay on the transcribe page -->
+    <!-- Inline script to toggle the guide overlay -->
     <script>
       document.addEventListener("DOMContentLoaded", function() {
         const btnGuide = document.getElementById("btnGuide");
         const guideView = document.getElementById("guideView");
-        
         if (btnGuide && guideView) {
           btnGuide.addEventListener("click", function() {
             guideView.classList.toggle("active");
           });
         }
+      });
+    </script>
+    <!-- Dynamic Ad Injection Scripts -->
+    <script>
+      function loadAdSenseAds() {
+        const consent = document.cookie.indexOf("user_consent=accepted") !== -1;
+        const npaParam = consent ? "" : "&npa=1";
+        const adScript = document.createElement("script");
+        adScript.async = true;
+        adScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3747901131960450" + npaParam;
+        adScript.crossOrigin = "anonymous";
+        document.head.appendChild(adScript);
+      }
+
+      function insertAdSenseAd(containerId, adSlot) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const ins = document.createElement("ins");
+        ins.className = "adsbygoogle";
+        ins.style.display = "inline-block";
+        ins.style.width = "300px";
+        ins.style.height = "250px";
+        ins.setAttribute("data-ad-client", "ca-pub-3747901131960450");
+        ins.setAttribute("data-ad-slot", adSlot);
+        container.appendChild(ins);
+        if (!ins.getAttribute("data-adsbygoogle-status")) {
+          (adsbygoogle = window.adsbygoogle || []).push({});
+        }
+      }
+
+      function initAdUnits() {
+        setTimeout(() => {
+          insertAdSenseAd("right-ad-unit-1", "4927329947");
+        }, 500);
+      }
+
+      window.addEventListener("load", function() {
+        loadAdSenseAds();
+        initAdUnits();
       });
     </script>
     <!-- Import the main module to initialize language, recording, note generation, and UI functionalities -->
