@@ -1,11 +1,3 @@
-// Helper function to read a cookie by name
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(";").shift();
-  return null;
-}
-
 // Updated recording module with API key validation, file encryption, request signing, and sending device_token.
 
 // Updated hash function: now returns an unsigned 32-bit integer string.
@@ -546,12 +538,6 @@ function initRecording() {
   if (!startButton || !stopButton || !pauseResumeButton) return;
 
   startButton.addEventListener("click", async () => {
-    // Check if user consent is accepted and ads are active
-    if (getCookie("user_consent") !== "accepted" || getCookie("adsActive") !== "true") {
-      alert("Recording is disabled because ads are not active or consent is not given. Please update your consent via the Consent Menu.");
-      return;
-    }
-
     // Retrieve and decrypt the API key before starting.
     const decryptedApiKey = await getDecryptedAPIKey();
     if (!decryptedApiKey || !decryptedApiKey.startsWith("sk-")) {
