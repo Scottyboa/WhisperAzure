@@ -18,8 +18,7 @@
     .grid-container {
       display: grid;
       grid-template-columns: 300px 1fr 300px;
-      /* Force the grid to always fill the viewport */
-      height: 100vh;
+      height: 100vh; /* This will be overridden by JS if needed */
     }
     /* Left Sidebar */
     .sidebar {
@@ -300,6 +299,17 @@
     </script>
     <!-- Import the main module to initialize language, recording, note generation, and UI functionalities -->
     <script type="module" src="./js/main.js"></script>
+    <!-- New snippet to enforce grid container height on resize -->
+    <script>
+      function setGridHeight() {
+        const grid = document.querySelector('.grid-container');
+        if (grid) {
+          grid.style.height = window.innerHeight + 'px';
+        }
+      }
+      window.addEventListener('load', setGridHeight);
+      window.addEventListener('resize', setGridHeight);
+    </script>
   </div>
 </body>
 </html>
