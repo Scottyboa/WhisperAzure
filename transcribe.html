@@ -63,8 +63,8 @@
     /* Top Bar within main content */
     .top-bar {
       background-color: #e0e0e0; /* Matches sidebars */
-      padding: 20px;            /* Thicker bar */
-      margin-bottom: 20px;      /* Space below the bar */
+      padding: 20px;            /* Increased padding for a thicker bar */
+      margin-bottom: 20px;      /* Space below the top bar */
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -171,7 +171,7 @@
       display: flex;
       gap: 20px;
       flex: 1;
-      padding: 0 20px; /* keep side padding for the bottom half content */
+      padding: 0 20px; /* Maintain side padding for bottom half content */
     }
     .column {
       flex: 1;
@@ -179,7 +179,7 @@
       flex-direction: column;
       gap: 10px;
     }
-    /* Ad Containers */
+    /* Ad Containers for Right Sidebar */
     #right-ad-unit-1 {
       width: 300px;
       min-height: 250px;
@@ -191,6 +191,18 @@
       min-height: 250px;
       background: transparent;
       margin-top: 10px;
+    }
+    /* Ad Containers for Left Sidebar */
+    #left-ad-unit-1 {
+      width: 100%;
+      min-height: 150px;
+      background: transparent;
+      margin-bottom: 10px;
+    }
+    #left-ad-unit-2 {
+      width: 100%;
+      min-height: 150px;
+      background: transparent;
     }
     /* Hide leftover forced-color-adjust elements */
     div[style*="forced-color-adjust: initial"] {
@@ -220,9 +232,10 @@
 </head>
 <body>
   <div class="grid-container">
-    <!-- Left Sidebar (reserved for ads) -->
+    <!-- Left Sidebar (reserved for ads) with two new ad units -->
     <aside class="sidebar">
-      <!-- Ads will be placed here -->
+      <div id="left-ad-unit-1"></div>
+      <div id="left-ad-unit-2"></div>
     </aside>
     <!-- Main Content (center column) -->
     <main class="main-content">
@@ -245,13 +258,7 @@
       <div class="recording-area">
         <div class="recording-header">
           <h3 id="recordingAreaTitle">Recording Area</h3>
-          <a
-            id="openaiUsageLink"
-            href="https://platform.openai.com/usage"
-            target="_blank"
-            rel="noopener noreferrer"
-            >Cost usage overview</a
-          >
+          <a id="openaiUsageLink" href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer">Cost usage overview</a>
         </div>
         <div id="recordTimer" class="timer">Recording Timer: 0 sec</div>
         <div id="transcribeTimer" class="timer">Completion Timer: 0 sec</div>
@@ -269,11 +276,7 @@
           <h3 id="noteGenerationTitle">Note Generation</h3>
           <button id="generateNoteButton">Generate Note</button>
           <div id="noteTimer" class="timer">Note Generation Timer: 0 sec</div>
-          <textarea
-            id="generatedNote"
-            readonly
-            placeholder="Generated note will appear here..."
-          ></textarea>
+          <textarea id="generatedNote" readonly placeholder="Generated note will appear here..."></textarea>
         </div>
         <div class="column">
           <h3 id="customPromptTitle">Custom Prompt</h3>
@@ -290,11 +293,7 @@
             <option value="9">9</option>
             <option value="10">10</option>
           </select>
-          <textarea
-            id="customPrompt"
-            placeholder="Enter custom prompt here"
-            rows="1"
-          ></textarea>
+          <textarea id="customPrompt" placeholder="Enter custom prompt here" rows="1"></textarea>
         </div>
       </div>
     </main>
@@ -324,16 +323,14 @@
     });
   </script>
 
-  <!-- Dynamic Ad Injection Scripts for the new responsive ads -->
+  <!-- Dynamic Ad Injection Scripts -->
   <script>
     function loadAdSenseAds(callback) {
       const consent = document.cookie.indexOf("user_consent=accepted") !== -1;
       const npaParam = consent ? "" : "&npa=1";
       const adScript = document.createElement("script");
       adScript.async = true;
-      adScript.src =
-        "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3747901131960450" +
-        npaParam;
+      adScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3747901131960450" + npaParam;
       adScript.crossOrigin = "anonymous";
       adScript.onload = callback;
       document.head.appendChild(adScript);
@@ -345,7 +342,7 @@
       const ins = document.createElement("ins");
       ins.className = "adsbygoogle";
       ins.style.display = "block"; // responsive ad style
-      ins.style.width = "100%"; // fill container's width
+      ins.style.width = "100%";    // fill container's width
       ins.setAttribute("data-ad-client", "ca-pub-3747901131960450");
       ins.setAttribute("data-ad-slot", adSlot);
       ins.setAttribute("data-ad-format", "auto");
@@ -359,8 +356,12 @@
     function initAdUnits() {
       // Use a delay (1000ms) to ensure containers are rendered
       setTimeout(() => {
+        // Right Sidebar Ads
         insertAdSenseAd("right-ad-unit-1", "7966995632");
         insertAdSenseAd("right-ad-unit-2", "8337760213");
+        // Left Sidebar Ads
+        insertAdSenseAd("left-ad-unit-1", "1259785352");
+        insertAdSenseAd("left-ad-unit-2", "3753316246");
       }, 1000);
     }
 
@@ -374,9 +375,7 @@
     function setGridHeight() {
       const grid = document.querySelector(".grid-container");
       if (grid) {
-        let height = window.visualViewport
-          ? window.visualViewport.height
-          : window.innerHeight;
+        let height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
         grid.style.height = height + "px";
       }
     }
