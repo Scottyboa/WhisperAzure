@@ -1,5 +1,3 @@
-// noteGeneration.js
-
 // Utility function to hash a string (used for storing prompts keyed by API key)
 function hashString(str) {
   let hash = 0;
@@ -228,13 +226,7 @@ function initNoteGeneration() {
     loadPromptForSlot(promptSlotSelect.value);
   });
   
-generateNoteButton.addEventListener("click", () => {
-  if (getCookie("adsActive") !== "true") {
-    alert("Note generation is disabled because ads are not active.");
-    return;
-  }
-  generateNote();
-});
+  generateNoteButton.addEventListener("click", generateNote);
 }
 
 export { initNoteGeneration };
