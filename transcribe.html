@@ -161,6 +161,21 @@
       margin: 0 !important;
       padding: 0 !important;
     }
+    /* Guide Overlay Styles */
+    #guideView {
+      display: none;
+      position: fixed;
+      top: 10%;
+      left: 10%;
+      width: 80%;
+      height: 80%;
+      background: white;
+      border: 2px solid #ccc;
+      padding: 20px;
+      overflow-y: auto;
+      z-index: 2000;
+    }
+    #guideView.active { display: block; }
   </style>
 </head>
 <body>
@@ -233,83 +248,88 @@
       <!-- New second ad container added -->
       <div id="right-ad-unit-2"></div>
     </aside>
-    <!-- Guide Overlay -->
-    <div id="guideView">
-      <h3 id="guideHeading">Guide & Instructions</h3>
-      <p id="guideText"></p>
-    </div>
-    <!-- Inline script to toggle the guide overlay -->
-    <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        const btnGuide = document.getElementById("btnGuide");
-        const guideView = document.getElementById("guideView");
-        if (btnGuide && guideView) {
-          btnGuide.addEventListener("click", function() {
-            guideView.classList.toggle("active");
-          });
-        }
-      });
-    </script>
-    <!-- Dynamic Ad Injection Scripts for the new responsive ads -->
-    <script>
-      function loadAdSenseAds(callback) {
-        const consent = document.cookie.indexOf("user_consent=accepted") !== -1;
-        const npaParam = consent ? "" : "&npa=1";
-        const adScript = document.createElement("script");
-        adScript.async = true;
-        adScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3747901131960450" + npaParam;
-        adScript.crossOrigin = "anonymous";
-        adScript.onload = callback;
-        document.head.appendChild(adScript);
-      }
-  
-      function insertAdSenseAd(containerId, adSlot) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        const ins = document.createElement("ins");
-        ins.className = "adsbygoogle";
-        ins.style.display = "block"; // responsive ad style
-        ins.style.width = "100%"; // fill container's width
-        ins.setAttribute("data-ad-client", "ca-pub-3747901131960450");
-        ins.setAttribute("data-ad-slot", adSlot);
-        ins.setAttribute("data-ad-format", "auto");
-        ins.setAttribute("data-full-width-responsive", "true");
-        container.appendChild(ins);
-        if (!ins.getAttribute("data-adsbygoogle-status")) {
-          (adsbygoogle = window.adsbygoogle || []).push({});
-        }
-      }
-  
-      function initAdUnits() {
-        // Use a delay (1000ms) to ensure container is fully rendered and layout is computed.
-        setTimeout(() => {
-          insertAdSenseAd("right-ad-unit-1", "7966995632");
-          insertAdSenseAd("right-ad-unit-2", "8337760213");
-        }, 1000);
-      }
-  
-      window.addEventListener("load", function() {
-        loadAdSenseAds(initAdUnits);
-      });
-    </script>
-    <!-- Enforce grid container height on load, resize, and after a short delay using visualViewport if available -->
-    <script>
-      function setGridHeight() {
-        const grid = document.querySelector('.grid-container');
-        if (grid) {
-          let height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-          grid.style.height = height + 'px';
-        }
-      }
-      window.addEventListener('load', function() {
-        setGridHeight();
-        let interval = setInterval(setGridHeight, 200);
-        setTimeout(() => clearInterval(interval), 2000); // Keep updating for 2 seconds
-      });
-      window.addEventListener('resize', setGridHeight);
-    </script>
-    <!-- Import the main module to initialize language, recording, note generation, and UI functionalities -->
-    <script type="module" src="./js/main.js"></script>
   </div>
+  
+  <!-- Guide Overlay (moved outside the grid container) -->
+  <div id="guideView">
+    <h3 id="guideHeading">Guide & Instructions</h3>
+    <p id="guideText"></p>
+  </div>
+  
+  <!-- Inline script to toggle the guide overlay -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const btnGuide = document.getElementById("btnGuide");
+      const guideView = document.getElementById("guideView");
+      if (btnGuide && guideView) {
+        btnGuide.addEventListener("click", function() {
+          guideView.classList.toggle("active");
+        });
+      }
+    });
+  </script>
+  
+  <!-- Dynamic Ad Injection Scripts for the new responsive ads -->
+  <script>
+    function loadAdSenseAds(callback) {
+      const consent = document.cookie.indexOf("user_consent=accepted") !== -1;
+      const npaParam = consent ? "" : "&npa=1";
+      const adScript = document.createElement("script");
+      adScript.async = true;
+      adScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3747901131960450" + npaParam;
+      adScript.crossOrigin = "anonymous";
+      adScript.onload = callback;
+      document.head.appendChild(adScript);
+    }
+  
+    function insertAdSenseAd(containerId, adSlot) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const ins = document.createElement("ins");
+      ins.className = "adsbygoogle";
+      ins.style.display = "block"; // responsive ad style
+      ins.style.width = "100%"; // fill container's width
+      ins.setAttribute("data-ad-client", "ca-pub-3747901131960450");
+      ins.setAttribute("data-ad-slot", adSlot);
+      ins.setAttribute("data-ad-format", "auto");
+      ins.setAttribute("data-full-width-responsive", "true");
+      container.appendChild(ins);
+      if (!ins.getAttribute("data-adsbygoogle-status")) {
+        (adsbygoogle = window.adsbygoogle || []).push({});
+      }
+    }
+  
+    function initAdUnits() {
+      // Use a delay (1000ms) to ensure container is fully rendered and layout is computed.
+      setTimeout(() => {
+        insertAdSenseAd("right-ad-unit-1", "7966995632");
+        insertAdSenseAd("right-ad-unit-2", "8337760213");
+      }, 1000);
+    }
+  
+    window.addEventListener("load", function() {
+      loadAdSenseAds(initAdUnits);
+    });
+  </script>
+  
+  <!-- Enforce grid container height on load, resize, and after a short delay using visualViewport if available -->
+  <script>
+    function setGridHeight() {
+      const grid = document.querySelector('.grid-container');
+      if (grid) {
+        let height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        grid.style.height = height + 'px';
+      }
+    }
+    window.addEventListener('load', function() {
+      setGridHeight();
+      let interval = setInterval(setGridHeight, 200);
+      setTimeout(() => clearInterval(interval), 2000); // Keep updating for 2 seconds
+    });
+    window.addEventListener('resize', setGridHeight);
+  </script>
+  
+  <!-- Import the main module to initialize language, recording, note generation, and UI functionalities -->
+  <script type="module" src="./js/main.js"></script>
 </body>
 </html>
