@@ -1,3 +1,4 @@
+// recording.js
 // Updated recording module with API key validation, file encryption, request signing, and sending device_token.
 
 // Updated hash function: now returns an unsigned 32-bit integer string.
@@ -538,6 +539,12 @@ function initRecording() {
   if (!startButton || !stopButton || !pauseResumeButton) return;
 
   startButton.addEventListener("click", async () => {
+    // Check if the user has rejected all consent options.
+    if (window.consentRejected) {
+      alert("In order to use the functions of this app, you need to consent to cookies for personalized ads.");
+      return;
+    }
+  
     // Retrieve and decrypt the API key before starting.
     const decryptedApiKey = await getDecryptedAPIKey();
     if (!decryptedApiKey || !decryptedApiKey.startsWith("sk-")) {
