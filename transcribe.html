@@ -118,14 +118,13 @@
       gap: 10px;
     }
     /* Right Sidebar (Ad Area) */
-.ad-sidebar {
-  background-color: #e0e0e0;
-  padding: 0 20px 20px 20px; /* Remove top padding */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start; /* Align content to the top */
-}
+    .ad-sidebar {
+      background-color: #e0e0e0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
     /* New Ad Container – removed old adsterra markup */
     #right-ad-unit-1 {
       width: 300px;
@@ -134,21 +133,13 @@
       background: transparent;
       margin-bottom: 0;
     }
-    /* Guide Overlay */
-    #guideView {
-      display: none;
-      position: fixed;
-      top: 10%;
-      left: 10%;
-      width: 80%;
-      height: 80%;
-      background: white;
-      border: 2px solid #ccc;
-      padding: 20px;
-      overflow-y: auto;
-      z-index: 2000;
+    /* New container for the second ad */
+    #right-ad-unit-2 {
+      width: 300px;
+      min-height: 250px;
+      background: transparent;
+      margin-top: 10px; /* Adjust spacing as needed */
     }
-    #guideView.active { display: block; }
     /* Language Dropdown in Sidebar */
     #lang-container-transcribe {
       position: absolute;
@@ -236,10 +227,12 @@
       </div>
     </main>
     <!-- Right Sidebar (Ad Area) -->
-<aside class="ad-sidebar">
-  <div id="right-ad-unit-1"></div>
-  <div id="right-ad-unit-2"></div>
-</aside>
+    <aside class="ad-sidebar">
+      <!-- New Ad Container; old adsterra markup removed -->
+      <div id="right-ad-unit-1"></div>
+      <!-- New second ad container added -->
+      <div id="right-ad-unit-2"></div>
+    </aside>
     <!-- Guide Overlay -->
     <div id="guideView">
       <h3 id="guideHeading">Guide & Instructions</h3>
@@ -257,7 +250,7 @@
         }
       });
     </script>
-    <!-- Dynamic Ad Injection Scripts for the new responsive ad -->
+    <!-- Dynamic Ad Injection Scripts for the new responsive ads -->
     <script>
       function loadAdSenseAds(callback) {
         const consent = document.cookie.indexOf("user_consent=accepted") !== -1;
@@ -269,7 +262,7 @@
         adScript.onload = callback;
         document.head.appendChild(adScript);
       }
-
+  
       function insertAdSenseAd(containerId, adSlot) {
         const container = document.getElementById(containerId);
         if (!container) return;
@@ -286,14 +279,15 @@
           (adsbygoogle = window.adsbygoogle || []).push({});
         }
       }
-
+  
       function initAdUnits() {
         // Use a delay (1000ms) to ensure container is fully rendered and layout is computed.
         setTimeout(() => {
           insertAdSenseAd("right-ad-unit-1", "7966995632");
+          insertAdSenseAd("right-ad-unit-2", "8337760213");
         }, 1000);
       }
-
+  
       window.addEventListener("load", function() {
         loadAdSenseAds(initAdUnits);
       });
