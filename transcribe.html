@@ -376,15 +376,30 @@
     function refreshAds() {
       const now = Date.now();
       if (now - lastAdRefreshTime >= 120000) { // 2 minutes
-        // Clear the ad containers
-        const adContainers = ["right-ad-unit-1", "right-ad-unit-2", "left-ad-unit-1", "left-ad-unit-2"];
-        adContainers.forEach(id => {
-          const container = document.getElementById(id);
+        // Define the ad units with container IDs and ad slot numbers
+        const adUnits = [
+          { containerId: "right-ad-unit-1", adSlot: "7966995632" },
+          { containerId: "right-ad-unit-2", adSlot: "8337760213" },
+          { containerId: "left-ad-unit-1", adSlot: "1259785352" },
+          { containerId: "left-ad-unit-2", adSlot: "3753316246" }
+        ];
+        adUnits.forEach(unit => {
+          const container = document.getElementById(unit.containerId);
           if (container) {
             container.innerHTML = "";
+            // Re-create the <ins> element for the ad
+            const ins = document.createElement("ins");
+            ins.className = "adsbygoogle";
+            ins.style.display = "block";
+            ins.style.width = "100%";
+            ins.setAttribute("data-ad-client", "ca-pub-3747901131960450");
+            ins.setAttribute("data-ad-slot", unit.adSlot);
+            ins.setAttribute("data-ad-format", "auto");
+            ins.setAttribute("data-full-width-responsive", "true");
+            container.appendChild(ins);
           }
         });
-        // Re-inject ads by pushing a new ad request
+        // Trigger the adsbygoogle request to load new ads
         (adsbygoogle = window.adsbygoogle || []).push({});
         lastAdRefreshTime = now;
         console.log("Ads refreshed at", new Date(now).toLocaleTimeString());
