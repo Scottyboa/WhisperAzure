@@ -369,13 +369,13 @@
     });
   </script>
 
-  <!-- Ad Refresh Logic: Only refresh ads (not the whole page) once every 2 minutes triggered by button clicks -->
+  <!-- Ad Refresh Logic: Only refresh ads (not the whole page) once every 5 minutes triggered by content creating button clicks -->
   <script>
     let lastAdRefreshTime = Date.now();
 
     function refreshAds() {
       const now = Date.now();
-      if (now - lastAdRefreshTime >= 120000) { // 2 minutes
+      if (now - lastAdRefreshTime >= 300000) { // 5 minutes
         const adUnits = [
           { containerId: "right-ad-unit-1", adSlot: "7966995632" },
           { containerId: "right-ad-unit-2", adSlot: "8337760213" },
