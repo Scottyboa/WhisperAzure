@@ -376,7 +376,6 @@
     function refreshAds() {
       const now = Date.now();
       if (now - lastAdRefreshTime >= 120000) { // 2 minutes
-        // Define the ad units with container IDs and ad slot numbers
         const adUnits = [
           { containerId: "right-ad-unit-1", adSlot: "7966995632" },
           { containerId: "right-ad-unit-2", adSlot: "8337760213" },
@@ -387,7 +386,6 @@
           const container = document.getElementById(unit.containerId);
           if (container) {
             container.innerHTML = "";
-            // Re-create the <ins> element for the ad
             const ins = document.createElement("ins");
             ins.className = "adsbygoogle";
             ins.style.display = "block";
@@ -397,16 +395,15 @@
             ins.setAttribute("data-ad-format", "auto");
             ins.setAttribute("data-full-width-responsive", "true");
             container.appendChild(ins);
+            (adsbygoogle = window.adsbygoogle || []).push({});
           }
         });
-        // Trigger the adsbygoogle request to load new ads
-        (adsbygoogle = window.adsbygoogle || []).push({});
         lastAdRefreshTime = now;
         console.log("Ads refreshed at", new Date(now).toLocaleTimeString());
       }
     }
 
-    // Refresh ads only when certain actions are performed on the page.
+    // Refresh ads only when specific actions are performed on the page.
     ["startButton", "stopButton", "generateNoteButton"].forEach(id => {
       const el = document.getElementById(id);
       if (el) {
