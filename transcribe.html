@@ -369,6 +369,44 @@
     });
   </script>
 
+  <!-- Ad Refresh Logic: Only refresh ads (not the whole page) once every 2 minutes -->
+  <script>
+    let lastAdRefreshTime = Date.now();
+
+    function refreshAds() {
+      const now = Date.now();
+      if (now - lastAdRefreshTime >= 120000) { // 2 minutes
+        // Clear the ad containers
+        const adContainers = ["right-ad-unit-1", "right-ad-unit-2", "left-ad-unit-1", "left-ad-unit-2"];
+        adContainers.forEach(id => {
+          const container = document.getElementById(id);
+          if (container) {
+            container.innerHTML = "";
+          }
+        });
+        // Re-inject ads by pushing a new ad request
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        lastAdRefreshTime = now;
+        console.log("Ads refreshed at", new Date(now).toLocaleTimeString());
+      }
+    }
+
+    // Refresh ads when the page/tab becomes visible again.
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        refreshAds();
+      }
+    });
+
+    // Refresh ads when certain actions are performed on the page.
+    ["startButton", "stopButton", "btnGuide", "generateNoteButton"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener("click", refreshAds);
+      }
+    });
+  </script>
+
   <!-- Enforce grid container height on load, resize, and after a short delay -->
   <script>
     function setGridHeight() {
