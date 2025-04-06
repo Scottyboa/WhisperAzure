@@ -369,7 +369,7 @@
     });
   </script>
 
-  <!-- Ad Refresh Logic: Only refresh ads (not the whole page) once every 2 minutes -->
+  <!-- Ad Refresh Logic: Only refresh ads (not the whole page) once every 2 minutes triggered by button clicks -->
   <script>
     let lastAdRefreshTime = Date.now();
 
@@ -406,15 +406,8 @@
       }
     }
 
-    // Refresh ads when the page/tab becomes visible again.
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") {
-        refreshAds();
-      }
-    });
-
-    // Refresh ads when certain actions are performed on the page.
-    ["startButton", "stopButton", "btnGuide", "generateNoteButton"].forEach(id => {
+    // Refresh ads only when certain actions are performed on the page.
+    ["startButton", "stopButton", "generateNoteButton"].forEach(id => {
       const el = document.getElementById(id);
       if (el) {
         el.addEventListener("click", refreshAds);
