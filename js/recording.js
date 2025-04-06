@@ -1,4 +1,3 @@
-// recording.js
 // Updated recording module with API key validation, file encryption, request signing, and sending device_token.
 
 // Updated hash function: now returns an unsigned 32-bit integer string.
@@ -532,142 +531,107 @@ function resetRecordingState() {
   accumulatedRecordingTime = 0;
 }
 
-// --- Start Recording Process ---
-// This function contains the original logic for starting the recording.
-async function startRecordingProcess() {
-  // Retrieve and decrypt the API key before starting.
-  const decryptedApiKey = await getDecryptedAPIKey();
-  if (!decryptedApiKey || !decryptedApiKey.startsWith("sk-")) {
-    alert("Please enter a valid OpenAI API key before starting the recording.");
-    return;
-  }
-  resetRecordingState();
-  const transcriptionElem = document.getElementById("transcription");
-  if (transcriptionElem) transcriptionElem.value = "";
-  
-  updateStatusMessage("Recording...", "green");
-  logInfo("Recording started.");
-  try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    recordingStartTime = Date.now();
-    recordingTimerInterval = setInterval(updateRecordingTimer, 1000);
-    
-    const track = mediaStream.getAudioTracks()[0];
-    const processor = new MediaStreamTrackProcessor({ track: track });
-    audioReader = processor.readable.getReader();
-    
-    function readLoop() {
-      audioReader.read().then(({ done, value }) => {
-        if (done) {
-          logInfo("Audio track reading complete.");
-          return;
-        }
-        lastFrameTime = Date.now();
-        audioFrames.push(value);
-        readLoop();
-      }).catch(err => {
-        logError("Error reading audio frames", err);
-      });
+function initRecording() {
+  const startButton = document.getElementById("startButton");
+  const stopButton = document.getElementById("stopButton");
+  const pauseResumeButton = document.getElementById("pauseResumeButton");
+  if (!startButton || !stopButton || !pauseResumeButton) return;
+
+  startButton.addEventListener("click", async () => {
+    // Retrieve and decrypt the API key before starting.
+    const decryptedApiKey = await getDecryptedAPIKey();
+    if (!decryptedApiKey || !decryptedApiKey.startsWith("sk-")) {
+      alert("Please enter a valid OpenAI API key before starting the recording.");
+      return;
     }
-    readLoop();
-    scheduleChunk();
-    logInfo("MediaStreamTrackProcessor started, reading audio frames.");
-    const startButton = document.getElementById("startButton");
-    const stopButton = document.getElementById("stopButton");
-    const pauseResumeButton = document.getElementById("pauseResumeButton");
-    if (startButton) startButton.disabled = true;
-    if (stopButton) stopButton.disabled = false;
-    if (pauseResumeButton) {
+    resetRecordingState();
+    const transcriptionElem = document.getElementById("transcription");
+    if (transcriptionElem) transcriptionElem.value = "";
+    
+    updateStatusMessage("Recording...", "green");
+    logInfo("Recording started.");
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recordingStartTime = Date.now();
+      recordingTimerInterval = setInterval(updateRecordingTimer, 1000);
+      
+      const track = mediaStream.getAudioTracks()[0];
+      const processor = new MediaStreamTrackProcessor({ track: track });
+      audioReader = processor.readable.getReader();
+      
+      function readLoop() {
+        audioReader.read().then(({ done, value }) => {
+          if (done) {
+            logInfo("Audio track reading complete.");
+            return;
+          }
+          lastFrameTime = Date.now();
+          audioFrames.push(value);
+          readLoop();
+        }).catch(err => {
+          logError("Error reading audio frames", err);
+        });
+      }
+      readLoop();
+      scheduleChunk();
+      logInfo("MediaStreamTrackProcessor started, reading audio frames.");
+      startButton.disabled = true;
+      stopButton.disabled = false;
       pauseResumeButton.disabled = false;
       pauseResumeButton.innerText = "Pause Recording";
+    } catch (error) {
+      updateStatusMessage("Microphone access error: " + error, "red");
+      logError("Microphone access error", error);
     }
-  } catch (error) {
-    updateStatusMessage("Microphone access error: " + error, "red");
-    logError("Microphone access error", error);
-  }
-}
+  });
 
-// --- Modified Start Button Handler ---
-// Instead of checking the global flag from page load, we query the consent state when the user clicks Start.
-const startButton = document.getElementById("startButton");
-if (startButton) {
-  startButton.addEventListener("click", async () => {
-    if (typeof window.__tcfapi === "function") {
-      window.__tcfapi("getTCData", 2, function(tcData, success) {
-        if (success && tcData) {
-          let allRejected = true;
-          if (tcData.gdprApplies && tcData.purpose && tcData.purpose.consents) {
-            for (let purpose in tcData.purpose.consents) {
-              if (tcData.purpose.consents[purpose] === true) {
-                allRejected = false;
-                break;
-              }
-            }
-          }
-          if (allRejected) {
-            alert("In order to use the functions of this app, you need to consent to cookies for personalized ads.");
-            return;
-          } else {
-            startRecordingProcess();
-          }
-        } else {
-          console.error("Failed to retrieve consent data. Proceeding with recording by default.");
-          startRecordingProcess();
-        }
-      });
+  pauseResumeButton.addEventListener("click", async () => {
+    if (!mediaStream) return;
+    const track = mediaStream.getAudioTracks()[0];
+    if (track.enabled) {
+      // Modified pause: finalize current chunk upload (without marking as final) then pause.
+      await safeProcessAudioChunk(false);
+      accumulatedRecordingTime += Date.now() - recordingStartTime;
+      track.enabled = false;
+      recordingPaused = true;
+      clearInterval(recordingTimerInterval);
+      clearTimeout(chunkTimeoutId);
+      pauseResumeButton.innerText = "Resume Recording";
+      updateStatusMessage("Recording paused", "orange");
+      logInfo("Recording paused; current chunk uploaded.");
     } else {
-      console.error("TCF API is not available. Proceeding with recording by default.");
-      startRecordingProcess();
+      // Resuming: do not reset accumulatedRecordingTime, just set a new recordingStartTime.
+      track.enabled = true;
+      recordingPaused = false;
+      recordingStartTime = Date.now();
+      recordingTimerInterval = setInterval(updateRecordingTimer, 1000);
+      pauseResumeButton.innerText = "Pause Recording";
+      updateStatusMessage("Recording...", "green");
+      chunkStartTime = Date.now();
+      scheduleChunk();
+      logInfo("Recording resumed.");
+    }
+  });
+
+  stopButton.addEventListener("click", async () => {
+    updateStatusMessage("Finishing transcription...", "blue");
+    manualStop = true;
+    clearTimeout(chunkTimeoutId);
+    clearInterval(recordingTimerInterval);
+    stopMicrophone();
+    chunkStartTime = 0;
+    lastFrameTime = 0;
+    await new Promise(resolve => setTimeout(resolve, 200));
+    if (chunkProcessingLock) {
+      pendingStop = true;
+      logDebug("Chunk processing locked at stop; setting pendingStop.");
+    } else {
+      await safeProcessAudioChunk(true);
+      finalChunkProcessed = true;
+      finalizeStop();
+      logInfo("Stop button processed; final chunk handled.");
     }
   });
 }
-
-pauseResumeButton.addEventListener("click", async () => {
-  if (!mediaStream) return;
-  const track = mediaStream.getAudioTracks()[0];
-  if (track.enabled) {
-    // Modified pause: finalize current chunk upload (without marking as final) then pause.
-    await safeProcessAudioChunk(false);
-    accumulatedRecordingTime += Date.now() - recordingStartTime;
-    track.enabled = false;
-    recordingPaused = true;
-    clearInterval(recordingTimerInterval);
-    clearTimeout(chunkTimeoutId);
-    pauseResumeButton.innerText = "Resume Recording";
-    updateStatusMessage("Recording paused", "orange");
-    logInfo("Recording paused; current chunk uploaded.");
-  } else {
-    // Resuming: do not reset accumulatedRecordingTime, just set a new recordingStartTime.
-    track.enabled = true;
-    recordingPaused = false;
-    recordingStartTime = Date.now();
-    recordingTimerInterval = setInterval(updateRecordingTimer, 1000);
-    pauseResumeButton.innerText = "Pause Recording";
-    updateStatusMessage("Recording...", "green");
-    chunkStartTime = Date.now();
-    scheduleChunk();
-    logInfo("Recording resumed.");
-  }
-});
-
-stopButton.addEventListener("click", async () => {
-  updateStatusMessage("Finishing transcription...", "blue");
-  manualStop = true;
-  clearTimeout(chunkTimeoutId);
-  clearInterval(recordingTimerInterval);
-  stopMicrophone();
-  chunkStartTime = 0;
-  lastFrameTime = 0;
-  await new Promise(resolve => setTimeout(resolve, 200));
-  if (chunkProcessingLock) {
-    pendingStop = true;
-    logDebug("Chunk processing locked at stop; setting pendingStop.");
-  } else {
-    await safeProcessAudioChunk(true);
-    finalChunkProcessed = true;
-    finalizeStop();
-    logInfo("Stop button processed; final chunk handled.");
-  }
-});
 
 export { initRecording };
