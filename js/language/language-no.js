@@ -10,7 +10,7 @@ export const indexTranslations = {
   guideButton: "API-guide – Slik bruker du den",
   securityButton: "Sikkerhet",
   aboutButton: "Om",
-  adRevenueMessage: "Siden denne nettsiden er gratis å bruke og kun finansieres via annonseinntekter, vennligst godta personaliserte annonser for å støtte tjenesten.",
+  adRevenueMessage: "Siden dette nettstedet er gratis å bruke og utelukkende finansieres av annonseinntekter, setter vi stor pris på om du godtar personaliserte annonser for å støtte tjenesten.",
   
   securityModalHeading: "Personvern",
 securityModalText: `Personvernet ditt og sikkerheten til pasientinformasjon er vår høyeste prioritet. Vi benytter robuste tiltak for å sikre at dine data forblir konfidensielle og trygge:<br><br>
