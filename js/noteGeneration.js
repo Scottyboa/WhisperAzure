@@ -1,3 +1,5 @@
+// noteGeneration.js
+
 // Utility function to hash a string (used for storing prompts keyed by API key)
 function hashString(str) {
   let hash = 0;
@@ -9,7 +11,7 @@ function hashString(str) {
   return hash.toString();
 }
 
-// Helper functions for decryption (added for note generation API key retrieval)
+// Helper functions for base64 conversions (kept in case they’re used elsewhere)
 function arrayBufferToBase64(buffer) {
   let binary = "";
   const bytes = new Uint8Array(buffer);
@@ -29,44 +31,13 @@ function base64ToArrayBuffer(base64) {
   return bytes;
 }
 
-async function decryptAPIKey(encryptedData) {
-  const { ciphertext, iv, salt } = encryptedData;
-  let deviceToken = localStorage.getItem("device_token");
-  if (!deviceToken) {
-    deviceToken = crypto.randomUUID();
-    localStorage.setItem("device_token", deviceToken);
-  }
-  const password = deviceToken;
-  const encoder = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
-  const key = await crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt: base64ToArrayBuffer(salt), iterations: 100000, hash: "SHA-256" },
-    keyMaterial,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["decrypt"]
-  );
-  const decryptedBuffer = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: base64ToArrayBuffer(iv) },
-    key,
-    base64ToArrayBuffer(ciphertext)
-  );
-  const decoder = new TextDecoder();
-  return decoder.decode(decryptedBuffer);
-}
-
-async function getDecryptedAPIKey() {
-  const encryptedStr = sessionStorage.getItem("encrypted_api_key");
-  if (!encryptedStr) return null;
-  const encryptedData = JSON.parse(encryptedStr);
-  return await decryptAPIKey(encryptedData);
-}
+// Since encryption is no longer needed, the decryption functions are removed.
+// We now assume that the plain API key is stored in sessionStorage under "user_api_key".
 
 // Returns a storage key for a given prompt slot and API key
 function getPromptStorageKey(slot) {
-  // Note: This function still retrieves the key from "openai_api_key" for hashing.
-  // Adjust if you later want to use the decrypted API key instead.
-  const apiKey = sessionStorage.getItem("openai_api_key") || "";
+  // Now retrieves the key from "user_api_key" directly.
+  const apiKey = sessionStorage.getItem("user_api_key") || "";
   const hashedApiKey = hashString(apiKey);
   return "customPrompt_" + hashedApiKey + "_" + slot;
 }
@@ -131,8 +102,8 @@ async function generateNote() {
     }
   }, 1000);
   
-  // Retrieve the decrypted API key (using decryption logic)
-  const apiKey = await getDecryptedAPIKey();
+  // Retrieve the plain API key from sessionStorage
+  const apiKey = sessionStorage.getItem("user_api_key");
   if (!apiKey) {
     alert("No API key available for note generation.");
     clearInterval(noteTimerInterval);
@@ -196,7 +167,7 @@ async function generateNote() {
     }
   }
 }
-
+ 
 // Initializes note generation functionality, including prompt slot handling and event listeners.
 function initNoteGeneration() {
   const promptSlotSelect = document.getElementById("promptSlot");
@@ -228,5 +199,5 @@ function initNoteGeneration() {
   
   generateNoteButton.addEventListener("click", generateNote);
 }
-
+ 
 export { initNoteGeneration };
