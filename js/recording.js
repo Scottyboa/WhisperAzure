@@ -1,6 +1,8 @@
-// Updated recording module with API key validation, file encryption, request signing, and sending device_token.
+// recording.js
+// Updated recording module without encryption/HMAC mechanisms,
+// processing audio chunks using OfflineAudioContext,
+// and implementing a client‑side transcription queue that sends each processed chunk directly to OpenAI's Whisper API.
 
-// Updated hash function: now returns an unsigned 32-bit integer string.
 function hashString(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -28,12 +30,11 @@ function logError(message, ...optionalParams) {
 const MIN_CHUNK_DURATION = 120000; // 120 seconds
 const MAX_CHUNK_DURATION = 120000; // 120 seconds
 const watchdogThreshold = 1500;   // 1.5 seconds with no frame
-const backendUrl = "https://transcribe-notes-dnd6accbgwc9gdbz.norwayeast-01.azurewebsites.net/";
 
 let mediaStream = null;
 let audioReader = null;
 let recordingStartTime = 0;
-// New variable to accumulate time from all active segments
+// Accumulate time from all active segments
 let accumulatedRecordingTime = 0;
 let recordingTimerInterval;
 let completionTimerInterval = null;
@@ -41,8 +42,8 @@ let completionStartTime = 0;
 let groupId = null;
 let chunkNumber = 1;
 let manualStop = false;
-let transcriptChunks = {};
-let pollingIntervals = {};
+let transcriptChunks = {};  // {chunkNumber: transcript}
+let pollingIntervals = {};  // (removed polling functions, kept for legacy structure)
 
 let chunkStartTime = 0;
 let lastFrameTime = 0;
@@ -53,6 +54,10 @@ let pendingStop = false;
 let finalChunkProcessed = false;
 let recordingPaused = false;
 let audioFrames = []; // Buffer for audio frames
+
+// --- New Transcription Queue Variables ---
+let transcriptionQueue = [];  // Queue of { chunkNumber, blob }
+let isProcessingQueue = false;
 
 // --- Utility Functions ---
 function updateStatusMessage(message, color = "#333") {
@@ -75,7 +80,7 @@ function formatTime(ms) {
 }
 
 function updateRecordingTimer() {
-  // Timer now shows accumulated time plus current active segment time
+  // Timer shows accumulated time plus current active segment time
   const elapsed = accumulatedRecordingTime + (Date.now() - recordingStartTime);
   const timerElem = document.getElementById("recordTimer");
   if (timerElem) {
@@ -95,7 +100,7 @@ function stopMicrophone() {
   }
 }
 
-// --- Base64 Helper Functions ---
+// --- Base64 Helper Functions (kept for legacy) ---
 function arrayBufferToBase64(buffer) {
   let binary = "";
   const bytes = new Uint8Array(buffer);
@@ -124,193 +129,152 @@ function getDeviceToken() {
   return token;
 }
 
-// --- API Key Encryption/Decryption Helpers ---
-// These functions assume that the API key is stored in sessionStorage as an encrypted JSON object.
-async function deriveKey(password, salt) {
-  const encoder = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password),
-    "PBKDF2",
-    false,
-    ["deriveKey"]
-  );
-  return crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: salt,
-      iterations: 100000,
-      hash: "SHA-256"
-    },
-    keyMaterial,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["decrypt"]
-  );
+// --- API Key Retrieval ---
+// With encryption removed, we now simply get the API key from sessionStorage.
+function getAPIKey() {
+  return sessionStorage.getItem("user_api_key");
 }
 
-async function decryptAPIKey(encryptedData) {
-  // encryptedData is an object: { ciphertext, iv, salt } (all Base64-encoded)
-  const { ciphertext, iv, salt } = encryptedData;
-  const deviceToken = getDeviceToken();
-  const key = await deriveKey(deviceToken, base64ToArrayBuffer(salt));
-  const decryptedBuffer = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: base64ToArrayBuffer(iv) },
-    key,
-    base64ToArrayBuffer(ciphertext)
-  );
-  const decoder = new TextDecoder();
-  return decoder.decode(decryptedBuffer);
-}
-
-async function getDecryptedAPIKey() {
-  const encryptedStr = sessionStorage.getItem("encrypted_api_key");
-  if (!encryptedStr) return null;
-  const encryptedData = JSON.parse(encryptedStr);
-  return await decryptAPIKey(encryptedData);
-}
-
-// --- File Blob Encryption ---
-// Encrypts the audio file blob using a key derived from the decrypted API key and device token.
+// --- File Blob Processing ---
+// Previously used for encryption; now simply returns the original blob along with markers.
 async function encryptFileBlob(blob) {
-  const apiKey = await getDecryptedAPIKey();
-  if (!apiKey) throw new Error("API key not available for encryption");
+  const apiKey = getAPIKey();
+  if (!apiKey) throw new Error("API key not available");
   const deviceToken = getDeviceToken();
-  const password = apiKey + ":" + deviceToken;
-  const encoder = new TextEncoder();
-  const salt = crypto.getRandomValues(new Uint8Array(16)); // 16-byte salt
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password),
-    "PBKDF2",
-    false,
-    ["deriveKey"]
-  );
-  const key = await crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: salt,
-      iterations: 100000,
-      hash: "SHA-256"
-    },
-    keyMaterial,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt", "decrypt"]
-  );
-  const iv = crypto.getRandomValues(new Uint8Array(12)); // 12-byte IV
-  const buffer = await blob.arrayBuffer();
-  const encryptedBuffer = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv: iv },
-    key,
-    buffer
-  );
-  const encryptedBlob = new Blob([encryptedBuffer], { type: blob.type });
-  
-  // Generate markers using our updated hashString() function.
   const apiKeyMarker = hashString(apiKey);
   const deviceMarker = hashString(deviceToken);
-
+  // Return the original blob without any encryption; iv and salt are empty.
   return {
-    encryptedBlob,
-    iv: arrayBufferToBase64(iv),
-    salt: arrayBufferToBase64(salt),
+    encryptedBlob: blob,
+    iv: "",
+    salt: "",
     apiKeyMarker,
     deviceMarker
   };
 }
 
-// --- HMAC and Request Signing ---
-// Computes an HMAC-SHA256 signature for a given message and secret.
-async function computeHMAC(message, secret) {
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const signatureBuffer = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    encoder.encode(message)
-  );
-  return arrayBufferToBase64(signatureBuffer);
-}
-
-// Generates a signature for the upload request based on group ID and chunk number.
-async function signUploadRequest(groupId, chunkNumber) {
-  const apiKey = await getDecryptedAPIKey();
-  const deviceToken = getDeviceToken();
-  const secret = apiKey + ":" + deviceToken;
-  const message = "upload:" + groupId + ":" + chunkNumber;
-  return await computeHMAC(message, secret);
-}
-
-// --- Upload Chunk Function (with Encryption, Request Signing, and sending device_token) ---
-async function uploadChunk(blob, currentChunkNumber, extension, mimeType, isLast = false, currentGroup) {
-  let encryptionResult;
-  try {
-    encryptionResult = await encryptFileBlob(blob);
-  } catch (err) {
-    console.error("Error encrypting file blob:", err);
-    throw err;
-  }
-  const encryptedBlob = encryptionResult.encryptedBlob;
-
-  let signature;
-  try {
-    signature = await signUploadRequest(currentGroup, currentChunkNumber);
-  } catch (err) {
-    console.error("Error generating signature:", err);
-    throw err;
-  }
-
-  const formData = new FormData();
-  formData.append("file", encryptedBlob, `chunk_${currentChunkNumber}.${extension}`);
-  formData.append("group_id", currentGroup);
-  formData.append("chunk_number", currentChunkNumber);
-  formData.append("api_key", await getDecryptedAPIKey());
-  formData.append("iv", encryptionResult.iv);
-  formData.append("salt", encryptionResult.salt);
-  formData.append("api_key_marker", encryptionResult.apiKeyMarker);
-  formData.append("device_marker", encryptionResult.deviceMarker);
-  // Now send the device_token
-  formData.append("device_token", getDeviceToken());
-  formData.append("signature", signature);
-  if (isLast) {
-    formData.append("last_chunk", "true");
-  }
+// --- OfflineAudioContext Processing ---
+// This function takes interleaved PCM samples (Float32Array), the original sample rate, and the number of channels,
+// converts the audio to mono (averaging channels if needed), resamples to 16kHz, and applies 0.3s fade‑in/out.
+// It returns a 16-bit PCM WAV Blob.
+async function processAudioUsingOfflineContext(pcmFloat32, originalSampleRate, numChannels) {
+  const targetSampleRate = 16000;
   
-  let attempts = 0;
-  const retryDelay = 4000; // 4 seconds
-  const maxRetryTime = 60000; // 1 minute
-  const startTime = Date.now();
-  while (true) {
-    try {
-      const response = await fetch(`${backendUrl}/upload`, {
-        method: "POST",
-        body: formData
-      });
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Server responded with status ${response.status}: ${errorText}`);
+  // Calculate the number of frames
+  const numFrames = pcmFloat32.length / numChannels;
+  
+  // Create an AudioBuffer in a temporary AudioContext
+  let tempCtx = new AudioContext();
+  let originalBuffer = tempCtx.createBuffer(numChannels, numFrames, originalSampleRate);
+  
+  if (numChannels === 1) {
+    originalBuffer.copyToChannel(pcmFloat32, 0);
+  } else {
+    // Deinterleave and copy each channel
+    for (let ch = 0; ch < numChannels; ch++) {
+      let channelData = new Float32Array(numFrames);
+      for (let i = 0; i < numFrames; i++) {
+        channelData[i] = pcmFloat32[i * numChannels + ch];
       }
-      const result = await response.json();
-      console.info(`Upload successful for chunk ${currentChunkNumber}`, { session_id: result.session_id });
-      return result;
-    } catch (error) {
-      attempts++;
-      console.error(`Upload error for chunk ${currentChunkNumber} on attempt ${attempts}:`, error);
-      if (Date.now() - startTime >= maxRetryTime) {
-        updateStatusMessage("Failed to upload chunk " + currentChunkNumber + " after maximum retry time", "red");
-        throw new Error("Maximum retry time exceeded for chunk " + currentChunkNumber);
-      }
-      await new Promise(resolve => setTimeout(resolve, retryDelay));
+      originalBuffer.copyToChannel(channelData, ch);
     }
   }
+  // Convert to mono by averaging channels if necessary
+  let monoBuffer;
+  if (numChannels > 1) {
+    let monoData = new Float32Array(numFrames);
+    for (let i = 0; i < numFrames; i++) {
+      let sum = 0;
+      for (let ch = 0; ch < numChannels; ch++) {
+        sum += originalBuffer.getChannelData(ch)[i];
+      }
+      monoData[i] = sum / numChannels;
+    }
+    monoBuffer = tempCtx.createBuffer(1, numFrames, originalSampleRate);
+    monoBuffer.copyToChannel(monoData, 0);
+  } else {
+    monoBuffer = originalBuffer;
+  }
+  tempCtx.close();
+  
+  // Set up OfflineAudioContext for resampling
+  const duration = monoBuffer.duration;
+  const offlineCtx = new OfflineAudioContext(1, targetSampleRate * duration, targetSampleRate);
+  
+  const source = offlineCtx.createBufferSource();
+  source.buffer = monoBuffer;
+  
+  // Create a gain node to apply a 0.3-second fade‑in and fade‑out
+  const gainNode = offlineCtx.createGain();
+  const fadeDuration = 0.3;
+  gainNode.gain.setValueAtTime(0, 0);
+  gainNode.gain.linearRampToValueAtTime(1, fadeDuration);
+  gainNode.gain.setValueAtTime(1, duration - fadeDuration);
+  gainNode.gain.linearRampToValueAtTime(0, duration);
+  
+  source.connect(gainNode).connect(offlineCtx.destination);
+  source.start(0);
+  
+  const renderedBuffer = await offlineCtx.startRendering();
+  const processedData = renderedBuffer.getChannelData(0);
+  const processedInt16 = floatTo16BitPCM(processedData);
+  const wavBlob = encodeWAV(processedInt16, targetSampleRate, 1);
+  return wavBlob;
 }
+
+// --- New: Transcribe Chunk Directly ---
+// Sends the WAV blob directly to OpenAI's Whisper API and returns the transcript.
+async function transcribeChunkDirectly(wavBlob, chunkNum) {
+  const apiKey = getAPIKey();
+  if (!apiKey) throw new Error("API key not available for transcription");
+  
+  const formData = new FormData();
+  formData.append("file", wavBlob, `chunk_${chunkNum}.wav`);
+  formData.append("model", "whisper-1");
+  
+  try {
+    const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + apiKey
+      },
+      body: formData
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenAI API error: ${errorText}`);
+    }
+    const result = await response.json();
+    return result.text || "";
+  } catch (error) {
+    logError(`Error transcribing chunk ${chunkNum}:`, error);
+    return `[Error transcribing chunk ${chunkNum}]`;
+  }
+}
+
+// --- Transcription Queue Processing ---
+// Adds a processed chunk to the queue and processes chunks sequentially.
+function enqueueTranscription(wavBlob, chunkNum) {
+  transcriptionQueue.push({ chunkNum, wavBlob });
+  processTranscriptionQueue();
+}
+
+async function processTranscriptionQueue() {
+  if (isProcessingQueue) return;
+  isProcessingQueue = true;
+  
+  while (transcriptionQueue.length > 0) {
+    const { chunkNum, wavBlob } = transcriptionQueue.shift();
+    logInfo(`Transcribing chunk ${chunkNum}...`);
+    const transcript = await transcribeChunkDirectly(wavBlob, chunkNum);
+    transcriptChunks[chunkNum] = transcript;
+    updateTranscriptionOutput();
+  }
+  
+  isProcessingQueue = false;
+}
+
+// --- Removed: Polling functions (pollChunkTranscript) since we now transcribe directly ---
 
 // --- Audio Chunk Processing ---
 async function processAudioChunkInternal(force = false) {
@@ -354,22 +318,14 @@ async function processAudioChunkInternal(force = false) {
     pcmFloat32.set(arr, offset);
     offset += arr.length;
   }
-  const pcmInt16 = floatTo16BitPCM(pcmFloat32);
-  const wavBlob = encodeWAV(pcmInt16, sampleRate, numChannels);
-  const mimeType = "audio/wav";
-  const extension = "wav";
-  const currentChunk = chunkNumber;
-  logInfo(`Uploading chunk ${currentChunk}`);
-  uploadChunk(wavBlob, currentChunk, extension, mimeType, force, groupId)
-    .then(result => {
-      if (result && result.session_id) {
-        logInfo(`Chunk ${currentChunk} uploaded successfully. Starting polling.`);
-        pollChunkTranscript(currentChunk, groupId);
-      } else {
-        logInfo(`Chunk ${currentChunk} upload did not return a session ID; skipping polling.`);
-      }
-    })
-    .catch(err => logError(`Upload error for chunk ${currentChunk}:`, err));
+  
+  // Process the raw audio samples using OfflineAudioContext:
+  // Convert to mono, resample to 16kHz, and apply 0.3s fade-in/out.
+  const wavBlob = await processAudioUsingOfflineContext(pcmFloat32, sampleRate, numChannels);
+  
+  // Instead of uploading to a backend, enqueue this processed chunk for direct transcription.
+  enqueueTranscription(wavBlob, chunkNumber);
+  
   chunkNumber++;
 }
 
@@ -406,40 +362,7 @@ function finalizeStop() {
   if (stopButton) stopButton.disabled = true;
   if (pauseResumeButton) pauseResumeButton.disabled = true;
   logInfo("Recording stopped by user. Finalizing transcription.");
-}
-
-function pollChunkTranscript(chunkNum, currentGroup) {
-  const pollStart = Date.now();
-  pollingIntervals[chunkNum] = setInterval(async () => {
-    if (groupId !== currentGroup) {
-      clearInterval(pollingIntervals[chunkNum]);
-      logDebug(`Polling stopped for chunk ${chunkNum} due to session change.`);
-      return;
-    }
-    if (Date.now() - pollStart > 120000) {
-      logInfo(`Polling timeout for chunk ${chunkNum}`);
-      clearInterval(pollingIntervals[chunkNum]);
-      return;
-    }
-    try {
-      const response = await fetch(`${backendUrl}/fetch_chunk`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: currentGroup, chunk_number: chunkNum })
-      });
-      if (response.status === 200) {
-        const data = await response.json();
-        transcriptChunks[chunkNum] = data.transcript;
-        updateTranscriptionOutput();
-        clearInterval(pollingIntervals[chunkNum]);
-        logInfo(`Transcript received for chunk ${chunkNum}`);
-      } else {
-        logDebug(`Chunk ${chunkNum} transcript not ready yet.`);
-      }
-    } catch (err) {
-      logError(`Error polling for chunk ${chunkNum}:`, err);
-    }
-  }, 3000);
+  // Optionally, you could wait here for the queue to empty before declaring completion.
 }
 
 function updateTranscriptionOutput() {
@@ -538,9 +461,9 @@ function initRecording() {
   if (!startButton || !stopButton || !pauseResumeButton) return;
 
   startButton.addEventListener("click", async () => {
-    // Retrieve and decrypt the API key before starting.
-    const decryptedApiKey = await getDecryptedAPIKey();
-    if (!decryptedApiKey || !decryptedApiKey.startsWith("sk-")) {
+    // Retrieve the API key before starting.
+    const apiKey = getAPIKey();
+    if (!apiKey || !apiKey.startsWith("sk-")) {
       alert("Please enter a valid OpenAI API key before starting the recording.");
       return;
     }
@@ -589,7 +512,6 @@ function initRecording() {
     if (!mediaStream) return;
     const track = mediaStream.getAudioTracks()[0];
     if (track.enabled) {
-      // Modified pause: finalize current chunk upload (without marking as final) then pause.
       await safeProcessAudioChunk(false);
       accumulatedRecordingTime += Date.now() - recordingStartTime;
       track.enabled = false;
@@ -600,7 +522,6 @@ function initRecording() {
       updateStatusMessage("Recording paused", "orange");
       logInfo("Recording paused; current chunk uploaded.");
     } else {
-      // Resuming: do not reset accumulatedRecordingTime, just set a new recordingStartTime.
       track.enabled = true;
       recordingPaused = false;
       recordingStartTime = Date.now();
