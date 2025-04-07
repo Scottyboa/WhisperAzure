@@ -215,26 +215,22 @@
       document.cookie = name + "=" + (value || "")  + expires + "; path=/";
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
-      const enterTranscriptionBtn = document.getElementById("enterTranscriptionBtn");
-      const apiKeyInput = document.getElementById("apiKeyInput");
-      if (enterTranscriptionBtn && apiKeyInput) {
-        enterTranscriptionBtn.addEventListener("click", () => {
-          const apiKey = apiKeyInput.value.trim();
-          if (!apiKey.startsWith("sk-")) {
-            alert("Please enter a valid OpenAI API key.");
-            return;
-          }
-          // Set consent cookie upon clicking the Enter Transcription Tool button
-          setCookie("user_consent", "accepted", 365);
-          // Store the plain API key directly in sessionStorage
-          sessionStorage.setItem("user_api_key", apiKey);
-          // Redirect to transcribe.html
-          window.location.href = "transcribe.html";
-        });
-      }
-    });
-  </script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const enterTranscriptionBtn = document.getElementById("enterTranscriptionBtn");
+    const apiKeyInput = document.getElementById("apiKeyInput");
+    if (enterTranscriptionBtn && apiKeyInput) {
+      enterTranscriptionBtn.addEventListener("click", () => {
+        const apiKey = apiKeyInput.value.trim();
+        // Consent cookie is still set
+        setCookie("user_consent", "accepted", 365);
+        // Store the API key as entered (valid or not)
+        sessionStorage.setItem("user_api_key", apiKey);
+        // Redirect to transcribe.html
+        window.location.href = "transcribe.html";
+      });
+    }
+  });
+</script>
   
   <!-- New Horizontal Accordion Script -->
   <script>
