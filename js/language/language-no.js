@@ -35,7 +35,7 @@ Mange eksisterende leverandører tilbyr lignende tjenester, men tar betydelig me
 • Du betaler kun OpenAI direkte for det du bruker.<br>
 • Nettsiden i seg selv er helt gratis.<br><br>
 For å opprettholde dette, kreves det at brukerne aksepterer reklame. Inntekter fra reklame hjelper med å dekke kostnader til hosting og drift, slik at tjenesten kan forbli tilgjengelig og gratis for alle.`,  
-  guideModalHeading: "Hvordan bruke",
+  guideModalHeading: "API nøkkel - Hvordan lage",
   guideModalText: `For å bruke denne webappen, må du først opprette en OpenAI API-profil, generere en API-nøkkel og sørge for at din OpenAI-lommebok har tilstrekkelige midler. API-nøkkelen kopieres deretter og limes inn i det angitte feltet. Når du trykker på "Enter", lagrer webappen API-nøkkelen midlertidig for økten – denne nøkkelen kobler deg til OpenAI-serverne slik at tale-til-tekst-transkripsjon og notatgenerering kan fungere. Vennligst merk at du belastes umiddelbart per utført oppgave. For mer informasjon om kostnader, se "Kostnad"-seksjonen på forsiden.
 <br><br>
 <strong>1. Opprett din OpenAI API-profil</strong><br>
