@@ -134,11 +134,14 @@
       resize: vertical;
     }
     #transcription,
-    #generatedNote {
-      min-height: 150px;
-    }
+#generatedNote {
+  min-height: 150px;
+  resize: vertical; /* user can resize manually */
+  overflow: hidden;
+}
     #customPrompt {
       min-height: 200px;
+      resize: vertical; /* user can resize manually */
     }
     /* Button Styles */
     button {
