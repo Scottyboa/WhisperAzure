@@ -56,7 +56,7 @@ Når du logger inn ved å oppgi API-nøkkelen din, lagres den kun midlertidig i 
   <h1>Kostnadsinformasjon</h1>
   <h2>Tale-til-tekst-prising</h2>
   <ul>
-    <li><strong>Kostnad:</strong> $0.006 per minutt. <em>Eksempel:</em> En <strong>15-minutters konsultasjon<strong> vil koste 15 × $0.006 = <strong>$0.09</strong> per konsultasjon.</li>
+    <li><strong>Kostnad:</strong> $0.006 per minutt. <em>Eksempel:</em> En 15-minutters konsultasjon vil koste 15 × $0.006 = <strong>$0.09</strong> per konsultasjon.</li>
   </ul>
   <h2>Notatgenereringsprising</h2>
   <ul>
