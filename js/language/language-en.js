@@ -30,7 +30,7 @@ Many existing providers offer similar services but charge significantly more—o
 • You only pay OpenAI directly for what you use.<br>
 • The website itself is completely free.<br><br>
 To keep it that way, users are required to accept ads. Ad revenue helps cover hosting and operational costs so the service can remain accessible and free for everyone.`,
-  guideModalHeading: "How To Use",
+  guideModalHeading: "API key - How to make",
   guideModalText: `To use this webapp, you must first create an OpenAI API profile, generate an API key, and fund your OpenAI wallet. Your API key is then copied and pasted into the provided API key field. Once you press Enter, the webapp saves the API key temporarily for your session—this key links you to the OpenAI servers so that speech-to-text transcription and note generation can work. Please note, you are charged immediately per task performed. For more info on cost, please review the "Cost" section on the front page.
 <br><br>
 <strong>1. Create Your OpenAI API Profile</strong><br>
