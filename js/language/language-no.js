@@ -32,22 +32,22 @@ Mange eksisterende leverandører tilbyr lignende tjenester, men tar betydelig me
 <strong>Nøkkelpunkter:</strong><br>
 • Ingen abonnement, ingen konto kreves.<br>
 • Du betaler kun OpenAI direkte for det du bruker.<br>
-• Nettsiden i seg selv er helt gratis.<br><br>
+• Nettsiden i seg selv er helt gratis å bruke.<br><br>
 For å opprettholde dette, kreves det at brukerne aksepterer reklame. Inntekter fra reklame hjelper med å dekke kostnader til hosting og drift, slik at tjenesten kan forbli tilgjengelig og gratis for alle.`,  
-  guideModalHeading: "Hvordan bruke",
-  guideModalText: `For å bruke denne webappen, må du først opprette en OpenAI API-profil, generere en API-nøkkel og sørge for at din OpenAI-lommebok har tilstrekkelige midler. API-nøkkelen kopieres deretter og limes inn i det angitte feltet. Når du trykker på "Enter", lagrer webappen API-nøkkelen midlertidig for økten – denne nøkkelen kobler deg til OpenAI-serverne slik at tale-til-tekst-transkripsjon og notatgenerering kan fungere. Vennligst merk at du belastes umiddelbart per utført oppgave. For mer informasjon om kostnader, se "Kostnad"-seksjonen på forsiden.
+  guideModalHeading: "API nøkkel - Hvordan bruke",
+  guideModalText: `For å bruke denne webappen, må du først opprette en OpenAI API-profil, generere en API-nøkkel og sørge for at din OpenAI-lommebok har tilstrekkelige midler. API-nøkkelen kopieres deretter og limes inn i det angitte feltet. Når du trykker på "Gå til transkripsjonsverktøyet", lagrer webappen din API-nøkkel midlertidig for økten – denne nøkkelen kobler deg til OpenAI-serverne slik at tale-til-tekst-transkripsjon og notatgenerering kan utføres. Vennligst merk at du belastes umiddelbart per utført oppgave. For mer informasjon om kostnader, se "Kostnadsinformasjon"-seksjonen på forsiden.
 <br><br>
 <strong>1. Opprett din OpenAI API-profil</strong><br>
-For å komme i gang, må du opprette en profil på OpenAI API-plattformen. Denne profilen fungerer som din konto for administrasjon av API-nøkler og fakturering. For å starte, besøk <a href="https://platform.openai.com/signup" style="color:blue;">OpenAI API Registrering</a>. Følg instruksjonene ved å oppgi e-postadressen din, sette et passord og bekrefte kontoen din. Når du er registrert, får du tilgang til dashbordet ditt.
+For å komme i gang, må du opprette en profil på OpenAI API-plattformen. Denne profilen fungerer som din konto for administrasjon av API-nøkler og fakturering. For å starte, besøk <a href="https://platform.openai.com/signup" style="color:blue;">OpenAI API Registrering</a>. Følg instruksjonene for å lage en bruker. Når du er registrert, får du tilgang til dashbordet ditt.
 <br><br>
 <strong>2. Generer en API-nøkkel</strong><br>
-Etter at du har opprettet profilen din, generer en API-nøkkel ved å gå til <a href="https://platform.openai.com/account/api-keys" style="color:blue;">API-nøkkeladministrasjonen</a>. Klikk på knappen for å opprette en ny API-nøkkel. Viktig: Du vil kun se nøkkelen én gang. Kopier den umiddelbart og oppbevar den sikkert (f.eks. i en tekstfil). Hvis du mister nøkkelen eller mistenker at den har blitt kompromittert, slett den og opprett en ny.
+Etter at du har opprettet profilen din, kan du generere en API-nøkkel ved å gå til <a href="https://platform.openai.com/account/api-keys" style="color:blue;">API-nøkkeladministrasjonen</a>. Klikk på knappen for å opprette en ny API-nøkkel. Viktig: Du vil kun se nøkkelen én gang. Kopier den umiddelbart og oppbevar den sikkert (f.eks. i en tekstfil på din datamaskin). Hvis du mister nøkkelen eller mistenker at den har blitt kompromittert, så kan du enkelt slette den og opprette en ny.
 <br><br>
 <strong>3. Sett inn midler på din OpenAI-lommebok</strong><br>
-For at webappen skal fungere, må din OpenAI-lommebok ha tilstrekkelige midler. Besøk <a href="https://platform.openai.com/account/billing/overview" style="color:blue;">Fakturerings- og betalingsside</a> for å sette inn midler. Du kan overføre hvilket som helst beløp når som helst. Så lenge midlene er tilgjengelige, vil du kunne bruke siden – hver oppgave belastes umiddelbart.
+For at webappen skal fungere, må din OpenAI-lommebok ha tilstrekkelige midler. Besøk <a href="https://platform.openai.com/account/billing/overview" style="color:blue;">Fakturerings- og betalingsside</a> for å sette inn midler. Du kan overføre hvilket som helst beløp når som helst. Så lenge midlene er tilgjengelige, vil du kunne bruke siden – hver oppgave(tale-til-tekst og notatgenerering) belastes umiddelbart. For mer informasjon om pris, se "Kostnadsinformasjon"
 <br><br>
 <strong>Sikkerhetsmerknad for økten</strong><br>
-Når du logger inn ved å skrive inn API-nøkkelen, lagres den kun midlertidig i nettleserøkten din. Dette betyr at hvis du forlater nettsiden, lukker nettleseren eller slår av datamaskinen, vil ikke API-nøkkelen bli lagret. Du må skrive den inn på nytt neste gang du bruker webappen, noe som sikrer at nøkkelen din forblir sikker.`,
+Når du logger inn ved å oppgi API-nøkkelen din, lagres den kun midlertidig i nettleserøkten. Det betyr at nøkkelen ikke blir lagret hvis du forlater nettsiden, lukker nettleseren eller slår av datamaskinen. Neste gang du åpner webappen, må du derfor lime inn nøkkelen på nytt. Dette bidrar til å ivareta sikkerheten og personvernet ditt.`,
   
   priceButton: "Pris",
   priceModalHeading: "Kostnadsinformasjon",
@@ -56,9 +56,9 @@ Når du logger inn ved å skrive inn API-nøkkelen, lagres den kun midlertidig i
   <h1>Kostnadsinformasjon</h1>
   <h2>Tale-til-tekst-prising</h2>
   <ul>
-    <li><strong>Kostnad:</strong> $0.006 per minutt. <em>Eksempel:</em> En 15-minutters konsultasjon vil koste 15 × $0.006 = <strong>$0.09</strong> per konsultasjon.</li>
+    <li><strong>Kostnad:</strong> $0.006 per minutt. <em>Eksempel:</em> En <strong>15-minutters konsultasjon<strong> vil koste 15 × $0.006 = <strong>$0.09</strong> per konsultasjon.</li>
   </ul>
-  <h2>Notisgenereringsprising</h2>
+  <h2>Notatgenereringsprising</h2>
   <ul>
     <li><strong>Token-basert prising:</strong></li>
     <ul>
@@ -66,7 +66,7 @@ Når du logger inn ved å skrive inn API-nøkkelen, lagres den kun midlertidig i
       <li><strong>Output (generert notat):</strong> $30 per 1 000 000 tokens (dvs. $0.00003 per token).</li>
     </ul>
   </ul>
-  <h3>Eksempelberegning for konsultasjon (kun notisgenerering)</h3>
+  <h3>Eksempelberegning for konsultasjon (kun notatgenerering)</h3>
   <ol>
     <li>
       <strong>Inputberegning:</strong>
@@ -82,7 +82,7 @@ Når du logger inn ved å skrive inn API-nøkkelen, lagres den kun midlertidig i
       Outputkostnad = 187.5 tokens × $0.00003 ≈ <strong>$0.0056</strong>.</p>
     </li>
     <li>
-      <strong>Total notisgenereringskostnad:</strong>
+      <strong>Total notatgenereringskostnad:</strong>
       <p>Kombinert kostnad ≈ $0.0055 + $0.0056 = <strong>$0.0111</strong> per konsultasjon.</p>
     </li>
   </ol>
@@ -90,18 +90,18 @@ Når du logger inn ved å skrive inn API-nøkkelen, lagres den kun midlertidig i
   <p>(for en 15-minutters konsultasjon/opptak med begge funksjoner)</p>
   <ul>
     <li><strong>Tale-til-tekst:</strong> <strong>$0.09</strong></li>
-    <li><strong>Notisgenerering:</strong> <strong>$0.0111</strong></li>
+    <li><strong>Notatgenerering:</strong> <strong>$0.0111</strong></li>
     <li><strong>Totalt:</strong> Omtrent <strong>$0.101</strong> per konsultasjon.</li>
   </ul>
   <h2>Månedlige kostnadsestimater</h2>
   <p>Dersom du gjennomfører 20 konsultasjoner per dag, 4 dager i uken, over 4 uker i måneden (20 × 4 × 4 = <strong>320 konsultasjoner</strong> per måned):</p>
   <ol>
     <li>
-      <strong>Kun tale-til-tekst</strong> (med notisgenerering via din egen ChatGPT-konto, som i praksis er gratis):<br>
+      <strong>Kun tale-til-tekst</strong> (med notatgenerering via din egen ChatGPT-konto, som i praksis er gratis):<br>
       Månedlig kostnad = 320 × $0.09 = <strong>$28.80</strong>.
     </li>
     <li>
-      <strong>Bruk av både tale-til-tekst og notisgenerering:</strong><br>
+      <strong>Bruk av både tale-til-tekst og notatgenerering:</strong><br>
       Månedlig kostnad = 320 × $0.101 ≈ <strong>$32.32</strong>.
     </li>
   </ol>
@@ -109,7 +109,7 @@ Når du logger inn ved å skrive inn API-nøkkelen, lagres den kun midlertidig i
   <p>I motsetning til leverandører som krever et månedlig abonnement, betaler du kun for faktisk bruk. Om du tar en fridag, drar på ferie eller har en periode uten aktivitet, vil kostnadene dine være null. Selv om du bruker tjenesten daglig for alle dine pasientkonsultasjoner, forblir kostnaden per oppgave betydelig lavere enn hos andre leverandører.</p>
   <hr>
   <h2>Fordel med direkte tilkobling</h2>
-  <p>Vår webapp kobler deg direkte til OpenAI API – ingen mellomledd, ingen ekstra avgifter. Denne direkte tilkoblingen betyr at du kun betaler for den faktiske AI-behandlingskostnaden, noe som gjør vår tjeneste til en av de mest prisgunstige løsningene for tale-til-tekst og notisgenerering som er tilgjengelig i dag.</p>
+  <p>Vår webapp kobler deg direkte til OpenAI API – ingen mellomledd, ingen ekstra avgifter. Denne direkte tilkoblingen betyr at du kun betaler for den faktiske AI-behandlingskostnaden, noe som gjør vår tjeneste til en av de mest prisgunstige løsningene for tale-til-tekst og notatgenerering som er tilgjengelig i dag.</p>
   `,
 };
 
