@@ -34,7 +34,7 @@ Många befintliga leverantörer erbjuder liknande tjänster men tar betydligt me
 • Ingen prenumeration, inget konto krävs.<br>
 • Du betalar endast direkt till OpenAI för det du använder.<br>
 • Webbplatsen i sig är helt gratis.<br><br>
-För att hålla det så krävs att användare godkänner annonser. Annonsintäkter hjälper till att täcka kostnader för drift och hosting, så att tjänsten kan förbli tillgänglig och gratis för alla.`,
+För att vi ska kunna fortsätta erbjuda den här gratistjänsten skulle vi verkligen uppskatta om du godkänner att annonser från Google Ads visas. Annonsintäkterna hjälper oss att täcka kostnader för hosting och drift, så att tjänsten kan förbli tillgänglig för alla.`,
   
   guideModalHeading: "API-guide – Hur du använder",
   guideModalText: `För att använda denna webbapp måste du först skapa en OpenAI API-profil, generera en API-nyckel och ladda ditt OpenAI-konto med pengar. Din API-nyckel kopieras och klistras sedan in i det angivna fältet. När du klickar på Enter sparas nyckeln tillfälligt för din session – denna nyckel kopplar dig till OpenAI:s servrar så att tal-till-text-transkription och notatgenerering kan fungera. Observera att du debiteras direkt per utfört uppdrag. För mer information om kostnader, se avsnittet "Pris" på startsidan.
