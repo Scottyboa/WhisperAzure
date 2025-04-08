@@ -150,7 +150,7 @@ guideText: `Välkommen till Whisper Transkriptionstjänst. Denna applikation lå
   <li><strong>Notisgenerering:</strong> När transkriptionen är klar klickar du på "Generera Notis" för att skapa en notis baserad på din transkription och ditt anpassade prompt.</li>
   <li><strong>Anpassat Prompt:</strong> Till höger, välj en prompt-slot (1–10) och skriv in ditt anpassade prompt. Ditt prompt sparas automatiskt och länkas till din API-nyckel.</li>
   <li><strong>Översikt över användning:</strong> För att se din aktuella användning hos OpenAI, klicka på länken för användningsöversikt på huvudsidan.</li>
-  <li><strong>Säkerhet:</strong> Ditt ljud är krypterat och behandlas på säkra Microsoft Azure-servrar. Dessutom raderas transkriptioner och notiser automatiskt strax efter behandlingen för att skydda din integritet.</li>
+  <li><strong>Säkerhet:</strong> Din ljudinspelning skickas direkt till OpenAIs API-servrar, som varken sparar datan eller använder den till något annat än själva transkriberingen. Den transkriberade texten som visas i webbläsaren sparas inte någonstans och försvinner så fort du stänger webbläsaren eller ny text laddas in.</li>
   <li><strong>Guideväxling:</strong> Klicka på "Guide"-knappen igen för att återgå till huvudsidan.</li>
 </ul>`
 };
