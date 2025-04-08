@@ -109,9 +109,12 @@ async function generateNote() {
     clearInterval(noteTimerInterval);
     return;
   }
+  
+  // Add the fixed formatting instruction as a hidden prompt component.
+  const baseInstruction = "Do not use bold text. Do not use asterisks (*) or Markdown formatting anywhere in the output. All headings should be plain text with a colon, like 'Bakgrunn:'.";
 
-// Add the fixed formatting instruction here
-const baseInstruction = "Do not use bold text. Do not use asterisks (*) or Markdown formatting anywhere in the output. All headings should be plain text with a colon, like 'Bakgrunn:'.";
+  // Append the hidden instruction to the user's prompt so it is always included.
+  const finalPromptText = promptText + "\n\n" + baseInstruction;
   
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -123,7 +126,7 @@ const baseInstruction = "Do not use bold text. Do not use asterisks (*) or Markd
       body: JSON.stringify({
         model: "gpt-4-turbo",
         messages: [
-          { role: "system", content: promptText },
+          { role: "system", content: finalPromptText },
           { role: "user", content: transcriptionText }
         ],
         temperature: 0.7,
