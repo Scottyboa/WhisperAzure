@@ -48,80 +48,67 @@ Pour que l'application web fonctionne, votre portefeuille OpenAI doit disposer d
 Lorsque vous vous connectez en saisissant votre clé API, celle-ci est stockée uniquement temporairement dans votre session de navigateur. Cela signifie que si vous quittez le site, fermez votre navigateur ou éteignez votre ordinateur, la clé API ne sera pas sauvegardée. Vous devrez la ressaisir lors de votre prochaine utilisation de l'application web, garantissant ainsi la sécurité de votre clé.`,
   priceButton: "Prix",
   priceModalHeading: "Prix",
-  priceModalText: `
-    <h1>Informations sur les coûts</h1>
-    <h2>Tarification de la transcription audio en texte</h2>
+priceModalText: `
+<div>
+  <h1>Informations sur les Coûts</h1>
+  <h2>Tarification de la Transcription Voix-en-Texte</h2>
+  <ul>
+    <li><strong>Coût :</strong> 0,006 $ par minute. <em>Exemple :</em> Une consultation de 15 minutes coûtera 15 × 0,006 $ = <strong>0,09 $</strong> par consultation.</li>
+  </ul>
+  <h2>Tarification de la Génération de Notes</h2>
+  <ul>
+    <li><strong>Tarification basée sur les tokens :</strong></li>
     <ul>
-      <li><strong>Coût :</strong> 0,006 $ par minute.</li>
-      <li><em>Exemple :</em> Une consultation de 15 minutes coûtera 15 × 0,006 $ = <strong>0,09 $</strong> par consultation.</li>
+      <li><strong>Entrée (transcription + prompt) :</strong> 2,50 $ par 1 000 000 tokens (soit 0,0000025 $ par token).</li>
+      <li><strong>Sortie (note générée) :</strong> 10,00 $ par 1 000 000 tokens (soit 0,00001 $ par token).</li>
     </ul>
-
-    <h2>Tarification de la génération de notes</h2>
-    <ul>
-      <li><strong>Tarification basée sur les tokens :</strong></li>
-      <ul>
-        <li><strong>Entrée (transcription + prompt) :</strong> 10 $ par 1 000 000 tokens (soit 0,00001 $ par token).</li>
-        <li><strong>Sortie (note générée) :</strong> 30 $ par 1 000 000 tokens (soit 0,00003 $ par token).</li>
-      </ul>
-    </ul>
-
-    <h3>Exemple de calcul pour une consultation (génération de note uniquement)</h3>
-    <ol>
-      <li>
-        <strong>Calcul pour l'entrée :</strong>
-        <ul>
-          <li>Supposons que la transcription de la consultation comporte environ <strong>700 mots</strong> et que vous ajoutiez un prompt de <strong>30 mots</strong>.</li>
-          <li>Total de mots = 700 + 30 = <strong>730 mots</strong>.</li>
-          <li>Tokens estimés = 730 × 0,75 ≈ <strong>547,5 tokens</strong>.</li>
-          <li>Coût de l'entrée = 547,5 tokens × 0,00001 $ ≈ <strong>0,0055 $</strong>.</li>
-        </ul>
-      </li>
-      <li>
-        <strong>Calcul pour la sortie :</strong>
-        <ul>
-          <li>Supposons que la note générée fasse environ <strong>250 mots</strong>.</li>
-          <li>Tokens estimés = 250 × 0,75 ≈ <strong>187,5 tokens</strong>.</li>
-          <li>Coût de la sortie = 187,5 tokens × 0,00003 $ ≈ <strong>0,0056 $</strong>.</li>
-        </ul>
-      </li>
-      <li>
-        <strong>Coût total de la génération de note :</strong> Coût combiné ≈ 0,0055 $ + 0,0056 $ = <strong>0,0111 $</strong> par consultation.
-      </li>
-    </ol>
-
-    <h2>Coût combiné approximatif par consultation</h2>
-    <p>(pour une consultation/enregistrement de 15 minutes, utilisant les deux fonctions)</p>
-    <ul>
-      <li><strong>Transcription audio en texte :</strong> <strong>0,09 $</strong></li>
-      <li><strong>Génération de notes :</strong> <strong>0,0111 $</strong></li>
-      <li><strong>Total :</strong> Environ <strong>0,101 $</strong> par consultation.</li>
-    </ul>
-
-    <h2>Estimations mensuelles</h2>
-    <p>En supposant que vous effectuiez 20 consultations par jour, 4 jours par semaine, pendant 4 semaines par mois (20 × 4 × 4 = <strong>320 consultations</strong> par mois) :</p>
-    <ul>
-      <li>
-        <strong>Utilisation de la transcription audio en texte uniquement</strong> (avec génération de notes via votre propre compte ChatGPT, qui est pratiquement gratuit) :<br>
-        Coût mensuel = 320 × 0,09 $ = <strong>28,80 $</strong>.
-      </li>
-      <li>
-        <strong>Utilisation de la transcription audio en texte et de la génération de notes :</strong><br>
-        Coût mensuel = 320 × 0,101 $ ≈ <strong>32,32 $</strong>.
-      </li>
-    </ul>
-
-    <h2>Flexibilité d'utilisation</h2>
-    <p>
-      Contrairement aux fournisseurs qui exigent un abonnement mensuel, vous ne payez que par utilisation. Si vous prenez une journée de repos, partez en vacances ou si vous ne faites aucune activité, vos coûts seront nuls. Même si vous utilisez le service chaque jour pour toutes vos consultations, le coût par utilisation reste nettement inférieur à celui des autres fournisseurs.
-    </p>
-
-    <hr>
-
-    <h2>Avantage de la connexion directe</h2>
-    <p>
-      Notre application web vous connecte directement à l'API OpenAI — sans intermédiaire, sans frais supplémentaires. Ce lien direct signifie que vous ne payez que pour le coût réel de traitement par l'IA, faisant de notre service l'une des solutions de transcription audio en texte et de génération de notes les plus abordables disponibles à ce jour.
-    </p>
-  `,
+  </ul>
+  <h3>Exemple de Calcul pour une Consultation (Génération de Note uniquement)</h3>
+  <ol>
+    <li>
+      <strong>Calcul pour l'entrée :</strong>
+      <p>Supposons que la transcription fasse environ <strong>700 mots</strong> et que vous ajoutiez un prompt de <strong>30 mots</strong>.<br>
+      Total des mots = 700 + 30 = <strong>730 mots</strong>.<br>
+      Estimation en tokens = 730 × 0,75 ≈ <strong>547,5 tokens</strong>.<br>
+      Coût d'entrée = 547,5 × 0,0000025 $ ≈ <strong>0,0014 $</strong>.</p>
+    </li>
+    <li>
+      <strong>Calcul pour la sortie :</strong>
+      <p>Supposons que la note générée fasse environ <strong>250 mots</strong>.<br>
+      Estimation en tokens = 250 × 0,75 ≈ <strong>187,5 tokens</strong>.<br>
+      Coût de sortie = 187,5 × 0,00001 $ ≈ <strong>0,0019 $</strong>.</p>
+    </li>
+    <li>
+      <strong>Coût total de la génération de note :</strong>
+      <p>Coût combiné ≈ 0,0014 $ + 0,0019 $ = <strong>0,0033 $</strong> par consultation.</p>
+    </li>
+  </ol>
+  <h2>Coût Total Approximatif par Consultation</h2>
+  <p>(pour une consultation ou un enregistrement de 15 minutes utilisant les deux fonctions)</p>
+  <ul>
+    <li><strong>Transcription Voix-en-Texte :</strong> <strong>0,09 $</strong></li>
+    <li><strong>Génération de Note :</strong> <strong>0,0033 $</strong></li>
+    <li><strong>Total :</strong> Environ <strong>0,0933 $</strong> par consultation.</li>
+  </ul>
+  <h2>Estimations Mensuelles</h2>
+  <p>En supposant que vous effectuiez 20 consultations par jour, 4 jours par semaine, pendant 4 semaines (20 × 4 × 4 = <strong>320 consultations</strong> par mois) :</p>
+  <ol>
+    <li>
+      <strong>Utilisation uniquement de la transcription Voix-en-Texte</strong> (avec génération de notes via votre compte ChatGPT personnel, qui est presque gratuit) :<br>
+      Coût mensuel = 320 × 0,09 $ = <strong>28,80 $</strong>.
+    </li>
+    <li>
+      <strong>Utilisation des deux fonctions (transcription + génération de notes) :</strong><br>
+      Coût mensuel = 320 × 0,0933 $ ≈ <strong>29,86 $</strong>.
+    </li>
+  </ol>
+  <h2>Souplesse d'Utilisation</h2>
+  <p>Contrairement aux prestataires imposant un abonnement mensuel, vous ne payez qu'à l'usage. Si vous prenez un jour de congé, partez en vacances ou faites une pause, aucun coût ne s’applique. Même si vous utilisez le service chaque jour, le coût par consultation reste bien inférieur à celui des alternatives existantes.</p>
+  <hr>
+  <h2>Avantage de la Connexion Directe</h2>
+  <p>Notre application se connecte directement à l'API d'OpenAI — sans intermédiaire ni frais supplémentaires. Cela signifie que vous ne payez que pour le traitement réel par l’IA, ce qui fait de notre service l’une des solutions les plus abordables de transcription et de génération de notes disponibles aujourd’hui.</p>
+</div>
+`
 };
 
 export const transcribeTranslations = {
