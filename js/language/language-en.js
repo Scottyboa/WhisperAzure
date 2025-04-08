@@ -139,7 +139,7 @@ guideText: `Welcome to the Whisper Transcription tool. This application allows m
   <li><strong>Note Generation:</strong> Once transcription is complete, click "Generate Note" to create a note based on your transcript and custom prompt.</li>
   <li><strong>Custom Prompt:</strong> On the right, select a prompt slot (1–10) and enter your custom prompt. Your prompt is saved automatically and linked to your API key.</li>
   <li><strong>Usage Overview:</strong> To check your current usage at OpenAI, click on the usage overview hyperlink on the main interface.</li>
-  <li><strong>Security:</strong> Your audio is encrypted and processed on secure Microsoft Azure servers. Additionally, transcriptions and notes are automatically deleted shortly after processing to protect your privacy.</li>
+  <li><strong>Security:</strong> Your audio recording is sent directly to OpenAI’s API servers, which do not store the data and only use it for the purpose of transcription. The transcribed text displayed in your browser is not saved anywhere and disappears as soon as you close the browser or new text is loaded.</li>
   <li><strong>Guide Toggle:</strong> Click the "Guide" button again to return to the main interface.</li>
 </ul>`
 };
