@@ -38,7 +38,7 @@ Därför är denna webbplats helt gratis att använda – den enda kostnaden du 
   
   priceButton: "Pris",
   priceModalHeading: "Pris",
-  priceModalText: `<h1>Kostnadsinformation</h1>
+priceModalText: `<h1>Kostnadsinformation</h1>
 <h2>Speech-to-text prissättning</h2>
 <ul>
   <li><strong>Kostnad:</strong> $0.006 per minut.<br>
@@ -49,8 +49,8 @@ Därför är denna webbplats helt gratis att använda – den enda kostnaden du 
 <ul>
   <li><strong>Tokenbaserad prissättning:</strong>
     <ul>
-      <li><strong>Input (transkription + prompt):</strong> $10 per 1 000 000 tokens (d.v.s. $0.00001 per token).</li>
-      <li><strong>Output (genererad notis):</strong> $30 per 1 000 000 tokens (d.v.s. $0.00003 per token).</li>
+      <li><strong>Input (transkription + prompt):</strong> $2.50 per 1 000 000 tokens (d.v.s. $0.0000025 per token).</li>
+      <li><strong>Output (genererad notis):</strong> $10.00 per 1 000 000 tokens (d.v.s. $0.00001 per token).</li>
     </ul>
   </li>
 </ul>
@@ -62,7 +62,7 @@ Därför är denna webbplats helt gratis att använda – den enda kostnaden du 
       <li>Anta att transkriptionen av konsultationen är ca. <strong>700 ord</strong> och att du lägger till en <strong>30-ords prompt</strong>.</li>
       <li>Totalt antal ord = 700 + 30 = <strong>730 ord</strong>.</li>
       <li>Uppskattade tokens = 730 × 0.75 ≈ <strong>547,5 tokens</strong>.</li>
-      <li>Inputkostnad = 547,5 tokens × $0.00001 ≈ <strong>$0.0055</strong>.</li>
+      <li>Inputkostnad = 547,5 tokens × $0.0000025 ≈ <strong>$0.0014</strong>.</li>
     </ul>
   </li>
   <li>
@@ -70,20 +70,20 @@ Därför är denna webbplats helt gratis att använda – den enda kostnaden du 
     <ul>
       <li>Anta att den genererade notisen är ca. <strong>250 ord</strong>.</li>
       <li>Uppskattade tokens = 250 × 0.75 ≈ <strong>187,5 tokens</strong>.</li>
-      <li>Outputkostnad = 187,5 tokens × $0.00003 ≈ <strong>$0.0056</strong>.</li>
+      <li>Outputkostnad = 187,5 tokens × $0.00001 ≈ <strong>$0.0019</strong>.</li>
     </ul>
   </li>
   <li>
     <strong>Total kostnad för notisgenerering:</strong><br>
-    Sammanlagd kostnad ≈ $0.0055 + $0.0056 = <strong>$0.0111</strong> per konsultation.
+    Sammanlagd kostnad ≈ $0.0014 + $0.0019 = <strong>$0.0033</strong> per konsultation.
   </li>
 </ol>
 <h2>Ungefärliga totala kostnader per konsultation</h2>
 <p>(för en 15-minuters konsultation/inspelning med båda funktionerna)</p>
 <ul>
   <li><strong>Speech-to-text:</strong> <strong>$0.09</strong></li>
-  <li><strong>Notisgenerering:</strong> <strong>$0.0111</strong></li>
-  <li><strong>Total:</strong> Ungefär <strong>$0.101</strong> per konsultation.</li>
+  <li><strong>Notisgenerering:</strong> <strong>$0.0033</strong></li>
+  <li><strong>Total:</strong> Ungefär <strong>$0.0933</strong> per konsultation.</li>
 </ul>
 <h2>Månatliga kostnadsuppskattningar</h2>
 <p>Om du genomför 20 konsultationer per dag, 4 dagar i veckan, under 4 veckor per månad (20 × 4 × 4 = <strong>320 konsultationer</strong> per månad):</p>
@@ -94,7 +94,7 @@ Därför är denna webbplats helt gratis att använda – den enda kostnaden du 
   </li>
   <li>
     <strong>Både speech-to-text och notisgenerering:</strong><br>
-    Månadskostnad = 320 × $0.101 ≈ <strong>$32.32</strong>.
+    Månadskostnad = 320 × $0.0933 ≈ <strong>$29.86</strong>.
   </li>
 </ol>
 <h2>Användarvänlighet</h2>
