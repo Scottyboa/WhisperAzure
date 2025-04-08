@@ -109,6 +109,9 @@ async function generateNote() {
     clearInterval(noteTimerInterval);
     return;
   }
+
+// Add the fixed formatting instruction here
+const baseInstruction = "Do not use bold text. Do not use asterisks (*) or Markdown formatting anywhere in the output. All headings should be plain text with a colon, like 'Bakgrunn:'.";
   
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
