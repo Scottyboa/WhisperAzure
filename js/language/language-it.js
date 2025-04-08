@@ -35,7 +35,7 @@ Questo sito è completamente gratuito da utilizzare: il tuo unico costo è la ta
 • Nessun abbonamento mensile, nessun impegno; paghi solo per le attività svolte.<br>
 • Controlli quanto spendere decidendo quanto trasferire nel tuo portafoglio OpenAI.<br><br>
 L'unica cosa che chiedo è che accetti la visualizzazione degli annunci, che aiutano a coprire i costi dei server di backend.<br>
-Man mano che sempre più persone utilizzeranno il sito, le spese di hosting e operative aumenteranno, e i ricavi pubblicitari garantiranno che il servizio rimanga gratuito e operativo senza addebitare costi agli utenti.`,
+Per poter continuare a offrire questo servizio gratuito, ti saremmo molto grati se accettassi la visualizzazione degli annunci di Google Ads. I ricavi pubblicitari ci aiutano a coprire i costi di hosting e gestione, così il servizio può rimanere accessibile a tutti.`,
   guideModalHeading: "Come si usa",
   guideModalText: `Per utilizzare questa webapp, devi prima creare un profilo API su OpenAI, generare una chiave API e ricaricare il tuo portafoglio OpenAI. La tua chiave API viene quindi copiata e incollata nel campo apposito. Una volta premuto Invio, la webapp salva temporaneamente la chiave API per la tua sessione — questa chiave ti collega ai server di OpenAI, permettendo la trascrizione da voce a testo e la generazione delle note. Nota bene: ti viene addebitato immediatamente per ogni attività svolta. Per ulteriori informazioni sui costi, consulta la sezione "Cost" nella pagina principale.<br><br>
 <strong>1. Crea il tuo profilo API OpenAI</strong><br>
