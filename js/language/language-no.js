@@ -145,7 +145,7 @@ guideText: `Velkommen til Whisper Transkripsjonsverktøyet. Denne applikasjonen 
   <li><strong>Notatgenerering:</strong> Når transkripsjonen er fullført, klikker du på "Generer notat" for å lage et notat basert på transkripsjonen din og din tilpassede prompt.</li>
   <li><strong>Tilpasset prompt:</strong> Til høyre, velg en prompt-slot (1–10) og skriv inn din tilpassede prompt. Din prompt lagres automatisk og knyttes til API-nøkkelen din.</li>
   <li><strong>Bruksoversikt:</strong> For å sjekke din nåværende bruk hos OpenAI, klikk på lenken for bruksovervåkning på hovedgrensesnittet.</li>
-  <li><strong>Sikkerhet:</strong> Lydopptaket ditt blir kryptert og behandlet på sikre Microsoft Azure-servere. I tillegg slettes transkripsjoner og notater automatisk kort tid etter behandling for å beskytte ditt personvern.</li>
+  <li><strong>Sikkerhet:</strong> Lydopptaket ditt sendes direkte til OpenAIs API-servere, som ikke lagrer dataen og kun bruker den til å utføre selve transkripsjonen. Den transkriberte teksten som vises i nettleseren, lagres ikke noe sted og forsvinner/slettes så snart du lukker nettleseren eller ny tekst lastes inn. Det samme gjelder for generert notat-tekst.</li>
   <li><strong>Guide-bryter:</strong> Klikk på "Guide"-knappen igjen for å gå tilbake til hovedgrensesnittet.</li>
 </ul>`
 };
