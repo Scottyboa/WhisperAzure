@@ -129,7 +129,7 @@ export const transcribeTranslations = {
   transcribeTimer: "Fullföljandetimer: 0 sek",
   transcriptionPlaceholder: "Transkriptionsresultatet visas här...",
   startButton: "Starta inspelning",
-  readFirstText: "Läs först! ➔"
+  readFirstText: "Läs först! ➔",
   stopButton: "Stoppa/Avsluta",
   pauseButton: "Pausa inspelning",
   statusMessage: "Välkommen! Klicka på 'Starta inspelning' för att börja.",
