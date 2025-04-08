@@ -124,6 +124,7 @@ export const transcribeTranslations = {
   transcribeTimer: "Fullføringstimer: 0 sek",
   transcriptionPlaceholder: "Transkripsjonsresultatet vil vises her...",
   startButton: "Start opptak",
+  readFirstText: "Les først! ➔",
   stopButton: "Stopp/Fullfør",
   pauseButton: "Pause opptak",
   statusMessage: "Velkommen! Klikk på \"Start opptak\" for å begynne.",
