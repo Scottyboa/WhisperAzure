@@ -118,7 +118,7 @@ async function generateNote() {
         "Authorization": "Bearer " + apiKey
       },
       body: JSON.stringify({
-        model: "gpt-4o-2024-08-06",
+        model: "gpt-4-turbo",
         messages: [
           { role: "system", content: promptText },
           { role: "user", content: transcriptionText }
