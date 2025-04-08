@@ -147,15 +147,30 @@ export const transcribeTranslations = {
   customPromptPlaceholder: "Saisissez l'invite personnalisée ici",
   adUnitText: "Votre publicité ici",
   guideHeading: "Guide et instructions",
-guideText: `Bienvenue dans l'outil de transcription Whisper. Cette application permet aux professionnels de santé, aux thérapeutes et à d'autres praticiens d'enregistrer et de transcrire des consultations, ainsi que de générer des notes professionnelles grâce à un générateur de notes alimenté par l'IA.<br><br>
-<strong>Comment utiliser les fonctions :</strong>
+guideText: `Bienvenue dans <strong>Whisper Transcription Clinique</strong>. Cette application permet aux professionnels de santé, thérapeutes et autres praticiens d’enregistrer et de transcrire des consultations, ainsi que de générer des notes professionnelles grâce à un générateur alimenté par intelligence artificielle.<br><br>
+
+<strong>Comment utiliser les fonctionnalités :</strong><br><br>
+
 <ul>
-  <li><strong>Enregistrement :</strong> Cliquez sur "Démarrer l'enregistrement" pour commencer à capturer l'audio. Toutes les 2 minutes, un segment audio est automatiquement envoyé aux serveurs d'OpenAI pour transcription. Les transcriptions apparaîtront successivement dans le champ de sortie de transcription.</li>
-  <li><strong>Achèvement :</strong> Après avoir cliqué sur "Arrêter/Terminer", l'enregistrement s'arrête. Le minuteur d'achèvement continue de compter jusqu'à ce que la transcription complète soit reçue (généralement en 5–10 secondes).</li>
-  <li><strong>Génération de note :</strong> Une fois la transcription terminée, cliquez sur "Générer la note" pour créer une note basée sur votre transcription et votre prompt personnalisé.</li>
-  <li><strong>Prompt personnalisé :</strong> À droite, sélectionnez un emplacement de prompt (1–10) et saisissez votre prompt personnalisé. Votre prompt est sauvegardé automatiquement et lié à votre clé API.</li>
-  <li><strong>Vue d'ensemble de l'utilisation :</strong> Pour vérifier votre consommation actuelle chez OpenAI, cliquez sur le lien de vue d'ensemble de l'utilisation dans l'interface principale.</li>
-  <li><strong>Sécurité :</strong> Votre audio est crypté et traité sur des serveurs Microsoft Azure sécurisés. De plus, les transcriptions et les notes sont automatiquement supprimées peu de temps après le traitement afin de protéger votre vie privée.</li>
-  <li><strong>Basculer le guide :</strong> Cliquez à nouveau sur le bouton "Guide" pour revenir à l'interface principale.</li>
-</ul>`
+  <li><strong>Enregistrement :</strong> Cliquez sur "Démarrer l’enregistrement" pour commencer à capturer l’audio. Toutes les 2 minutes, un segment audio est automatiquement envoyé aux serveurs d’OpenAI pour transcription. Les transcriptions apparaîtront progressivement dans le champ de sortie.<br><br>
+  <strong><u>Important :</u> L’enregistreur ne fonctionne pas avec tous les navigateurs. Il est recommandé d’utiliser <strong>Google Chrome</strong> ou <strong>Microsoft Edge</strong>.</strong></li><br>
+
+  <li><strong>Finalisation :</strong> Après avoir cliqué sur "Stop/Terminer", l’enregistrement s’arrête. Le minuteur de finalisation indique le temps nécessaire pour recevoir la transcription complète (généralement en 5 à 10 secondes).</li><br>
+
+  <li><strong>Prompt personnalisé :</strong> Sur la droite, sélectionnez un emplacement de prompt (1 à 10) et saisissez votre propre prompt. Il sera automatiquement enregistré et associé à votre clé API. Vous pouvez créer tout type de prompt adapté à votre style de documentation, ton et domaine clinique. Cela vous offre une flexibilité totale dans la génération des notes.</li><br>
+
+  <li><strong>Génération de note :</strong> Une fois la transcription terminée, cliquez sur "Générer la note" pour créer une note basée sur la transcription et le prompt sélectionné/personnalisé.</li><br>
+
+  <li><strong>Aperçu des coûts :</strong> Pour consulter votre utilisation actuelle chez OpenAI, cliquez sur le lien vers l’aperçu des coûts situé en haut à droite de cette page.</li><br>
+
+  <li><strong>Sécurité :</strong> Votre enregistrement audio est envoyé directement aux serveurs API d’OpenAI, qui ne stockent pas les données et les utilisent uniquement pour la transcription. Le texte transcrit s’affiche uniquement dans votre navigateur, et <strong>il est supprimé/disparaît dès que vous fermez le navigateur ou rechargez du contenu.</strong></li><br>
+
+  <li><strong>Bouton "Guide" :</strong> Cliquez de nouveau sur le bouton "Guide" pour revenir à l’interface principale.</li>
+</ul><br><br>
+
+<strong>Exemple de prompt :</strong><br>
+Générez une note médicale basée sur la transcription d’un échange entre un médecin et un patient. Elle doit inclure : Contexte, Problématique actuelle, Résultats cliniques, Évaluation et Plan.  
+La note doit être rédigée dans un langage professionnel et avec une terminologie médicale appropriée.<br><br>
+
+Vous pouvez personnaliser ce prompt comme vous le souhaitez, selon votre style de documentation, votre spécialité ou le type de consultation.`,
 };
