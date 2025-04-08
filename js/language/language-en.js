@@ -132,16 +132,30 @@ export const transcribeTranslations = {
   adUnitText: "Your Ad Here",
   guideHeading: "Guide & Instructions",
 guideText: `Welcome to the Whisper Transcription tool. This application allows medical professionals, therapists, and other practitioners to record and transcribe consultations, as well as generate professional notes using an AI-powered note generator.<br><br>
-<strong>How to Use the Functions:</strong>
+
+<strong>How to Use the Functions:</strong><br><br>
+
 <ul>
-  <li><strong>Recording:</strong> Click "Start Recording" to begin capturing audio. Every 2 minutes, a chunk of audio is automatically sent to the OpenAI servers for transcription. The transcripts will appear sequentially in the transcription output field.</li>
-  <li><strong>Completion:</strong> After clicking "Stop/Complete", the recording stops. The Completion Timer counts until the full transcript is received (usually within 5–10 seconds).</li>
-  <li><strong>Note Generation:</strong> Once transcription is complete, click "Generate Note" to create a note based on your transcript and custom prompt.</li>
-  <li><strong>Custom Prompt:</strong> On the right, select a prompt slot (1–10) and enter your custom prompt. Your prompt is saved automatically and linked to your API key.</li>
-  <li><strong>Usage Overview:</strong> To check your current usage at OpenAI, click on the usage overview hyperlink on the main interface.</li>
-  <li><strong>Security:</strong> Your audio recording is sent directly to OpenAI’s API servers, which do not store the data and only use it for the purpose of transcription. The transcribed text displayed in your browser is not saved anywhere and disappears as soon as you close the browser or new text is loaded.</li>
+  <li><strong>Recording:</strong> Click "Start Recording" to begin capturing audio. Every 2 minutes, a chunk of audio is automatically sent to the OpenAI servers for transcription. The transcripts will appear sequentially in the transcription output field.<br><br>
+  <strong><u>Important:</u> The recorder does not work in every web browser. It is recommended to use either <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong>.</strong></li><br>
+
+  <li><strong>Completion:</strong> After clicking "Stop/Complete", the recording stops. The Completion Timer counts until the full transcript is received (usually within 5–10 seconds).</li><br>
+
+  <li><strong>Custom Prompt:</strong> On the right, select a prompt slot (1–10) and enter your custom prompt. Your prompt is saved automatically and linked to your API key. You can create any prompt that fits your documentation style, tone, and clinical focus. This gives you full flexibility over how your notes are generated.</li><br>
+
+  <li><strong>Note Generation:</strong> Once transcription is complete, click "Generate Note" to create a note based on your transcript and selected/custom prompt.</li><br>
+
+  <li><strong>Usage Overview:</strong> To check your current usage at OpenAI, click on the usage overview hyperlink on the main interface.</li><br>
+
+  <li><strong>Security:</strong> Your audio recording is sent directly to OpenAI’s API servers, which do not store the data and only use it for the purpose of transcription. The transcribed text displayed in your browser is not saved anywhere, and it is deleted/disappears as soon as you close the browser or load new content.</li><br>
+
   <li><strong>Guide Toggle:</strong> Click the "Guide" button again to return to the main interface.</li>
-</ul>`
+</ul><br><br>
+
+<strong>Example Prompt:</strong><br>
+Make a medical note based on the doctor–patient conversation transcript. It must contain: Background, Presenting complaint, Clinical findings, Assessment, and Plan. The note must be written in professional language and use appropriate medical terminology.<br><br>
+
+You can customize this prompt however you like to suit your documentation preferences, specialties, or consultation types.`,
 };
 
 export default { indexTranslations, transcribeTranslations };
