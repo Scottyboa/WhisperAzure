@@ -52,66 +52,66 @@ Når du logger inn ved å skrive inn API-nøkkelen, lagres den kun midlertidig i
   
   priceButton: "Pris",
   priceModalHeading: "Kostnadsinformasjon",
-  priceModalText: `
+priceModalText: `
 <div>
   <h1>Kostnadsinformasjon</h1>
   <h2>Tale-til-tekst-prising</h2>
   <ul>
     <li><strong>Kostnad:</strong> $0.006 per minutt. <em>Eksempel:</em> En 15-minutters konsultasjon vil koste 15 × $0.006 = <strong>$0.09</strong> per konsultasjon.</li>
   </ul>
-  <h2>Notisgenereringsprising</h2>
+  <h2>Notatgenereringsprising</h2>
   <ul>
     <li><strong>Token-basert prising:</strong></li>
     <ul>
-      <li><strong>Input (transkripsjon + prompt):</strong> $10 per 1 000 000 tokens (dvs. $0.00001 per token).</li>
-      <li><strong>Output (generert notat):</strong> $30 per 1 000 000 tokens (dvs. $0.00003 per token).</li>
+      <li><strong>Input (transkripsjon + prompt):</strong> $2.50 per 1 000 000 tokens (dvs. $0.0000025 per token).</li>
+      <li><strong>Output (generert notat):</strong> $10.00 per 1 000 000 tokens (dvs. $0.00001 per token).</li>
     </ul>
   </ul>
-  <h3>Eksempelberegning for konsultasjon (kun notisgenerering)</h3>
+  <h3>Eksempelberegning for konsultasjon (kun notatgenerering)</h3>
   <ol>
     <li>
       <strong>Inputberegning:</strong>
       <p>Anta at transkripsjonen av konsultasjonen er på omtrent <strong>700 ord</strong> og at du legger til en <strong>30-ords prompt</strong>.<br>
       Totalt antall ord = 700 + 30 = <strong>730 ord</strong>.<br>
       Estimert antall tokens = 730 × 0.75 ≈ <strong>547.5 tokens</strong>.<br>
-      Inputkostnad = 547.5 tokens × $0.00001 ≈ <strong>$0.0055</strong>.</p>
+      Inputkostnad = 547.5 tokens × $0.0000025 ≈ <strong>$0.0014</strong>.</p>
     </li>
     <li>
       <strong>Outputberegning:</strong>
       <p>Anta at det genererte notatet er på omtrent <strong>250 ord</strong>.<br>
       Estimert antall tokens = 250 × 0.75 ≈ <strong>187.5 tokens</strong>.<br>
-      Outputkostnad = 187.5 tokens × $0.00003 ≈ <strong>$0.0056</strong>.</p>
+      Outputkostnad = 187.5 tokens × $0.00001 ≈ <strong>$0.0019</strong>.</p>
     </li>
     <li>
-      <strong>Total notisgenereringskostnad:</strong>
-      <p>Kombinert kostnad ≈ $0.0055 + $0.0056 = <strong>$0.0111</strong> per konsultasjon.</p>
+      <strong>Total notatgenereringskostnad:</strong>
+      <p>Kombinert kostnad ≈ $0.0014 + $0.0019 = <strong>$0.0033</strong> per konsultasjon.</p>
     </li>
   </ol>
   <h2>Omtrentlig samlet kostnad per konsultasjon</h2>
   <p>(for en 15-minutters konsultasjon/opptak med begge funksjoner)</p>
   <ul>
     <li><strong>Tale-til-tekst:</strong> <strong>$0.09</strong></li>
-    <li><strong>Notisgenerering:</strong> <strong>$0.0111</strong></li>
-    <li><strong>Totalt:</strong> Omtrent <strong>$0.101</strong> per konsultasjon.</li>
+    <li><strong>Notatgenerering:</strong> <strong>$0.0033</strong></li>
+    <li><strong>Totalt:</strong> Omtrent <strong>$0.0933</strong> per konsultasjon.</li>
   </ul>
   <h2>Månedlige kostnadsestimater</h2>
   <p>Dersom du gjennomfører 20 konsultasjoner per dag, 4 dager i uken, over 4 uker i måneden (20 × 4 × 4 = <strong>320 konsultasjoner</strong> per måned):</p>
   <ol>
     <li>
-      <strong>Kun tale-til-tekst</strong> (med notisgenerering via din egen ChatGPT-konto, som i praksis er gratis):<br>
+      <strong>Kun tale-til-tekst</strong> (med notatgenerering via din egen ChatGPT-konto, som i praksis er gratis):<br>
       Månedlig kostnad = 320 × $0.09 = <strong>$28.80</strong>.
     </li>
     <li>
-      <strong>Bruk av både tale-til-tekst og notisgenerering:</strong><br>
-      Månedlig kostnad = 320 × $0.101 ≈ <strong>$32.32</strong>.
+      <strong>Bruk av både tale-til-tekst og notatgenerering:</strong><br>
+      Månedlig kostnad = 320 × $0.0933 ≈ <strong>$29.86</strong>.
     </li>
   </ol>
   <h2>Fleksibilitet i bruken</h2>
   <p>I motsetning til leverandører som krever et månedlig abonnement, betaler du kun for faktisk bruk. Om du tar en fridag, drar på ferie eller har en periode uten aktivitet, vil kostnadene dine være null. Selv om du bruker tjenesten daglig for alle dine pasientkonsultasjoner, forblir kostnaden per oppgave betydelig lavere enn hos andre leverandører.</p>
   <hr>
   <h2>Fordel med direkte tilkobling</h2>
-  <p>Vår webapp kobler deg direkte til OpenAI API – ingen mellomledd, ingen ekstra avgifter. Denne direkte tilkoblingen betyr at du kun betaler for den faktiske AI-behandlingskostnaden, noe som gjør vår tjeneste til en av de mest prisgunstige løsningene for tale-til-tekst og notisgenerering som er tilgjengelig i dag.</p>
-  `,
+  <p>Vår webapp kobler deg direkte til OpenAI API – ingen mellomledd, ingen ekstra avgifter. Denne direkte tilkoblingen betyr at du kun betaler for den faktiske AI-behandlingskostnaden, noe som gjør vår tjeneste til en av de mest prisgunstige løsningene for tale-til-tekst og notatgenerering som er tilgjengelig i dag.</p>
+`,
 };
 
 export const transcribeTranslations = {
