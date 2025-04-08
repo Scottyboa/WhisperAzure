@@ -59,65 +59,67 @@ Damit die Web-App funktioniert, muss Ihre OpenAI-Brieftasche über ausreichende 
 Wenn Sie sich anmelden, indem Sie Ihren API-Schlüssel eingeben, wird dieser nur temporär in Ihrer Browsersitzung gespeichert. Das bedeutet, dass der API-Schlüssel nicht gespeichert wird, wenn Sie die Website verlassen, Ihren Browser schließen oder Ihren Computer ausschalten. Beim nächsten Besuch der Web-App müssen Sie Ihren API-Schlüssel erneut eingeben, um die Sicherheit Ihres Schlüssels zu gewährleisten.`,
   priceButton: "Preis",
   priceModalHeading: "Preis",
-  priceModalText: `
-    <h1>Kosteninformationen</h1>
-    <h2>Preisgestaltung für Sprach-zu-Text</h2>
+priceModalText: `
+<div>
+  <h1>Kosteninformationen</h1>
+  <h2>Preise für Sprach-zu-Text</h2>
+  <ul>
+    <li><strong>Kosten:</strong> 0,006 $ pro Minute. <em>Beispiel:</em> Eine 15-minütige Konsultation kostet 15 × 0,006 $ = <strong>0,09 $</strong> pro Konsultation.</li>
+  </ul>
+  <h2>Preise für die Notizgenerierung</h2>
+  <ul>
+    <li><strong>Tokenbasierte Preisgestaltung:</strong></li>
     <ul>
-      <li><strong>Kosten:</strong> $0.006 pro Minute. <em>Beispiel:</em> Eine 15-minütige Konsultation kostet 15 × $0.006 = <strong>$0.09</strong> pro Konsultation.</li>
+      <li><strong>Eingabe (Transkription + Prompt):</strong> 2,50 $ pro 1.000.000 Tokens (also 0,0000025 $ pro Token).</li>
+      <li><strong>Ausgabe (generierte Notiz):</strong> 10,00 $ pro 1.000.000 Tokens (also 0,00001 $ pro Token).</li>
     </ul>
-    <h2>Preisgestaltung für Notizenerstellung</h2>
-    <ul>
-      <li><strong>Token-basierte Preisgestaltung:</strong></li>
-      <ul>
-        <li><strong>Input (Transkription + Prompt):</strong> $10 pro 1.000.000 Tokens (d.h. $0.00001 pro Token).</li>
-        <li><strong>Output (generierte Notiz):</strong> $30 pro 1.000.000 Tokens (d.h. $0.00003 pro Token).</li>
-      </ul>
-    </ul>
-    <h3>Beispielrechnung (nur Notizenerstellung)</h3>
-    <ol>
-      <li>
-        <strong>Berechnung der Eingabe:</strong><br>
-        Angenommen, die Transkription umfasst etwa <strong>700 Wörter</strong> und Sie fügen einen <strong>30-Wörter-Prompt</strong> hinzu.<br>
-        Gesamtwörter = 700 + 30 = <strong>730 Wörter</strong>.<br>
-        Geschätzte Tokens = 730 × 0.75 ≈ <strong>547,5 Tokens</strong>.<br>
-        Eingabekosten = 547,5 Tokens × $0.00001 ≈ <strong>$0.0055</strong>.
-      </li>
-      <li>
-        <strong>Berechnung der Ausgabe:</strong><br>
-        Angenommen, die generierte Notiz umfasst etwa <strong>250 Wörter</strong>.<br>
-        Geschätzte Tokens = 250 × 0.75 ≈ <strong>187,5 Tokens</strong>.<br>
-        Ausgabekosten = 187,5 Tokens × $0.00003 ≈ <strong>$0.0056</strong>.
-      </li>
-      <li>
-        <strong>Gesamtkosten der Notizenerstellung:</strong><br>
-        Ungefähr $0.0055 + $0.0056 = <strong>$0.0111</strong> pro Konsultation.
-      </li>
-    </ol>
-    <h2>Ungefähre Gesamtkosten pro Konsultation</h2>
-    <p>(für eine 15-minütige Konsultation mit beiden Funktionen)</p>
-    <ul>
-      <li><strong>Sprach-zu-Text:</strong> <strong>$0.09</strong></li>
-      <li><strong>Notizenerstellung:</strong> <strong>$0.0111</strong></li>
-      <li><strong>Gesamt:</strong> Etwa <strong>$0.101</strong> pro Konsultation.</li>
-    </ul>
-    <h2>Monatliche Kostenschätzungen</h2>
-    <p>Bei 20 Konsultationen pro Tag, 4 Tage die Woche, über 4 Wochen im Monat (20 × 4 × 4 = <strong>320 Konsultationen</strong> pro Monat):</p>
-    <ol>
-      <li>
-        <strong>Nur Sprach-zu-Text:</strong><br>
-        Monatliche Kosten = 320 × $0.09 = <strong>$28.80</strong>.
-      </li>
-      <li>
-        <strong>Sprach-zu-Text und Notizenerstellung:</strong><br>
-        Monatliche Kosten = 320 × $0.101 ≈ <strong>$32.32</strong>.
-      </li>
-    </ol>
-    <h2>Flexibilität in der Nutzung</h2>
-    <p>Im Gegensatz zu Anbietern mit monatlichen Abonnements zahlen Sie nur pro Nutzung. Sollten Sie einen Tag aussetzen oder weniger aktiv sein, entstehen keine Kosten. Selbst bei täglicher Nutzung bleiben die Kosten pro Konsultation deutlich geringer als bei anderen Anbietern.</p>
-    <hr>
-    <h2>Vorteil der direkten Verbindung</h2>
-    <p>Unsere Webapp verbindet Sie direkt mit der OpenAI API – ohne Zwischenhändler und zusätzliche Gebühren. Das bedeutet, Sie zahlen nur für die tatsächlichen KI-Verarbeitungskosten, was unseren Service zu einer der preiswertesten Lösungen für Sprach-zu-Text und Notizenerstellung macht.</p>
-  `,
+  </ul>
+  <h3>Beispielrechnung für eine Konsultation (nur Notizgenerierung)</h3>
+  <ol>
+    <li>
+      <strong>Berechnung der Eingabe:</strong>
+      <p>Angenommen, die Transkription einer Konsultation umfasst etwa <strong>700 Wörter</strong> und Sie fügen einen <strong>30-Wörter-Prompt</strong> hinzu.<br>
+      Gesamtanzahl der Wörter = 700 + 30 = <strong>730 Wörter</strong>.<br>
+      Geschätzte Tokenanzahl = 730 × 0,75 ≈ <strong>547,5 Tokens</strong>.<br>
+      Eingabekosten = 547,5 Tokens × 0,0000025 $ ≈ <strong>0,0014 $</strong>.</p>
+    </li>
+    <li>
+      <strong>Berechnung der Ausgabe:</strong>
+      <p>Angenommen, die generierte Notiz umfasst etwa <strong>250 Wörter</strong>.<br>
+      Geschätzte Tokenanzahl = 250 × 0,75 ≈ <strong>187,5 Tokens</strong>.<br>
+      Ausgabekosten = 187,5 Tokens × 0,00001 $ ≈ <strong>0,0019 $</strong>.</p>
+    </li>
+    <li>
+      <strong>Gesamtkosten der Notizgenerierung:</strong>
+      <p>Die kombinierten Kosten betragen ca. 0,0014 $ + 0,0019 $ = <strong>0,0033 $</strong> pro Konsultation.</p>
+    </li>
+  </ol>
+  <h2>Ungefähre Gesamtkosten pro Konsultation</h2>
+  <p>(für eine 15-minütige Konsultation/Aufzeichnung, bei Nutzung beider Funktionen)</p>
+  <ul>
+    <li><strong>Sprach-zu-Text:</strong> <strong>0,09 $</strong></li>
+    <li><strong>Notizgenerierung:</strong> <strong>0,0033 $</strong></li>
+    <li><strong>Gesamt:</strong> Ungefähr <strong>0,0933 $</strong> pro Konsultation.</li>
+  </ul>
+  <h2>Monatliche Kostenschätzungen</h2>
+  <p>Angenommen, Sie führen 20 Konsultationen pro Tag, 4 Tage pro Woche, über 4 Wochen im Monat durch (20 × 4 × 4 = <strong>320 Konsultationen</strong> pro Monat):</p>
+  <ol>
+    <li>
+      <strong>Nur Sprach-zu-Text</strong> (mit Notizgenerierung über Ihr eigenes ChatGPT-Konto, welches im Wesentlichen kostenfrei ist):<br>
+      Monatliche Kosten = 320 × 0,09 $ = <strong>28,80 $</strong>.
+    </li>
+    <li>
+      <strong>Sprach-zu-Text und Notizgenerierung:</strong><br>
+      Monatliche Kosten = 320 × 0,0933 $ ≈ <strong>29,86 $</strong>.
+    </li>
+  </ol>
+  <h2>Nutzungsflexibilität</h2>
+  <p>Im Gegensatz zu Anbietern, die ein monatliches Abonnement erfordern, zahlen Sie nur pro Nutzung. Wenn Sie einen Tag aussetzen, in den Urlaub fahren oder eine Phase ohne Aktivität haben, entstehen keine Kosten. Selbst wenn Sie den Service täglich für alle Ihre Patientenkonsultationen nutzen, bleiben die Kosten pro Nutzung deutlich niedriger als bei anderen Anbietern.</p>
+  <hr>
+  <h2>Vorteil der direkten Verbindung</h2>
+  <p>Unsere Webapp verbindet Sie direkt mit der OpenAI API – kein Zwischenhändler, keine zusätzlichen Gebühren. Diese direkte Verbindung bedeutet, dass Sie nur für die tatsächlichen KI-Verarbeitungskosten zahlen, was unseren Service zu einer der preiswertesten Lösungen für Sprach-zu-Text und Notizgenerierung macht.</p>
+</div>
+`
 };
 
 export const transcribeTranslations = {
