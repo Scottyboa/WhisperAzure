@@ -24,14 +24,14 @@ securityModalText: `Votre vie privée et la sécurité des informations relative
 - <strong>Partage des données avec des tiers et conformité réglementaire :</strong> Nous ne vendons ni ne partageons vos données personnelles avec des tiers. Toute donnée partagée avec des services externes — tels qu'OpenAI pour la transcription et la génération de notes ou Google AdSense pour les publicités personnalisées — se limite à des informations anonymisées relatives uniquement à la personnalisation des publicités et aux préférences des utilisateurs, et n'inclut pas vos enregistrements, transcriptions ou notes générées. Tout partage de données est effectué selon des normes strictes de confidentialité et en totale conformité avec les réglementations sur la protection de la vie privée en vigueur.<br><br>
 Veuillez noter qu'en raison de la conception de notre système, toutes les données sont automatiquement supprimées peu de temps après leur traitement et ne sont pas conservées à long terme.`,
   aboutModalHeading: "À propos",
-  aboutModalText: `Questo sito è stato creato per offrire ai professionisti della salute e ad altri utenti un accesso diretto a trascrizioni vocali di alta qualità e alla generazione di note cliniche — senza costi superflui o intermediari.<br><br>
-Utilizzando la tua chiave API OpenAI personale, ti connetti direttamente alla fonte della tecnologia. Ciò significa che paghi solo il costo effettivo d'uso stabilito da OpenAI, senza maggiorazioni o tariffe di abbonamento.<br><br>
-Molti fornitori esistenti offrono servizi simili, ma addebitano costi significativamente più elevati — spesso 8-10 volte il costo reale della tecnologia sottostante. Questa piattaforma offre la stessa funzionalità a una frazione del prezzo.<br><br>
-<strong>Punti chiave:</strong><br>
-• Nessun abbonamento, nessun account richiesto.<br>
-• Paghi direttamente OpenAI solo per ciò che utilizzi.<br>
-• Il sito stesso è completamente gratuito.<br><br>
-Per mantenere questo modello, gli utenti sono tenuti ad accettare la pubblicità. I ricavi pubblicitari aiutano a coprire i costi di hosting e gestione, permettendo al servizio di rimanere accessibile e gratuito per tutti.`,
+  aboutModalText: `Ce site a été créé pour offrir aux professionnels de santé et autres utilisateurs un accès direct à une transcription vocale de haute qualité et à la génération de notes cliniques—sans frais inutiles ni intermédiaires.<br><br>
+En utilisant votre propre clé API OpenAI, vous vous connectez directement à la source de la technologie. Cela signifie que vous ne payez que le coût réel d’utilisation défini par OpenAI, sans majoration ni abonnement.<br><br>
+De nombreux fournisseurs proposent des services similaires, mais à des tarifs bien plus élevés—souvent 8 à 10 fois plus que le coût réel de la technologie sous-jacente. Cette plateforme offre les mêmes fonctionnalités à une fraction du prix.<br><br>
+<strong>Points clés :</strong><br>
+• Aucun abonnement, aucun compte requis.<br>
+• Vous payez uniquement OpenAI directement pour ce que vous utilisez.<br>
+• Le site lui-même est entièrement gratuit.<br><br>
+Pour continuer à offrir ce service gratuitement, nous vous serions très reconnaissants d’accepter l’affichage de publicités Google Ads. Les revenus publicitaires nous aident à couvrir les frais d’hébergement et de fonctionnement, afin que le service reste accessible à tous.`,
   guideModalHeading: "Comment utiliser",
   guideModalText: `Pour utiliser cette application web, vous devez d'abord créer un profil API OpenAI, générer une clé API et approvisionner votre portefeuille OpenAI. Votre clé API est ensuite copiée et collée dans le champ dédié. Une fois que vous appuyez sur Entrée, l'application web enregistre temporairement la clé pour votre session — cette clé vous connecte aux serveurs d'OpenAI, permettant ainsi la transcription de la parole en texte et la génération de notes. Veuillez noter que chaque tâche effectuée vous est facturée immédiatement. Pour plus d'informations sur les coûts, veuillez consulter la section "Coûts" sur la page d'accueil.
 <br><br>
