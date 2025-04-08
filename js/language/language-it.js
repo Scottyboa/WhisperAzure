@@ -123,6 +123,7 @@ export const transcribeTranslations = {
   transcribeTimer: "Timer di Completamento: 0 sec",
   transcriptionPlaceholder: "Il risultato della trascrizione apparirà qui...",
   startButton: "Avvia Registrazione",
+  readFirstText: "Leggi prima! ➔",
   stopButton: "Ferma/Completa",
   pauseButton: "Pausa Registrazione",
   statusMessage: "Benvenuto! Clicca su \"Avvia Registrazione\" per iniziare.",
