@@ -34,8 +34,19 @@ Motiverad av denna insikt utvecklade jag min egen tal-till-text-lösning, urspru
 Därför är denna webbplats helt gratis att använda – den enda kostnaden du får är OpenAIs direkta användningsavgift för transkriptioner.`,
   
   guideModalHeading: "API-guide – Hur du använder",
-  guideModalText: `För att använda denna webbapp måste du först skapa en API-profil hos OpenAI, generera en API-nyckel och ladda ditt OpenAI-konto med medel. API-nyckeln kopieras och klistras in i det angivna fältet. När du trycker på Enter sparas API-nyckeln temporärt för din session – denna nyckel kopplar dig till OpenAI:s servrar så att tal-till-text-transkription och notisgenerering fungerar. Observera att du debiteras direkt per utförd uppgift. För mer information om kostnader, se avsnittet "Kostnadsinformation" på startsidan.`,
-  
+  guideModalText: `För att använda denna webbapp måste du först skapa en OpenAI API-profil, generera en API-nyckel och ladda ditt OpenAI-konto med pengar. Din API-nyckel kopieras och klistras sedan in i det angivna fältet. När du klickar på Enter sparas nyckeln tillfälligt för din session – denna nyckel kopplar dig till OpenAI:s servrar så att tal-till-text-transkription och notatgenerering kan fungera. Observera att du debiteras direkt per utfört uppdrag. För mer information om kostnader, se avsnittet "Pris" på startsidan.
+<br><br>
+<strong>1. Skapa din OpenAI API-profil</strong><br>
+För att börja måste du skapa en profil på OpenAIs API-plattform. Denna profil fungerar som ditt konto för att hantera API-nycklar och fakturering. För att komma igång, besök <a href="https://platform.openai.com/signup" style="color:blue;">OpenAI API Registrering</a>. Följ instruktionerna för att registrera dig genom att ange din e-postadress, skapa ett lösenord och verifiera ditt konto. När du är registrerad får du tillgång till din kontrollpanel.
+<br><br>
+<strong>2. Generera en API-nyckel</strong><br>
+När du har skapat din profil, generera en API-nyckel genom att gå till sidan <a href="https://platform.openai.com/account/api-keys" style="color:blue;">Hantera API-nycklar</a>. Klicka på knappen för att skapa en ny API-nyckel. Viktigt: Du kommer endast att se nyckeln en gång. Kopiera den direkt och spara den säkert (t.ex. i en textfil) för framtida användning. Om du förlorar nyckeln eller misstänker att den har blivit komprometterad, ta bort den från ditt konto och skapa en ny.
+<br><br>
+<strong>3. Ladda ditt OpenAI-konto</strong><br>
+För att webbappen ska fungera måste ditt OpenAI-konto ha tillräckligt med pengar. Besök <a href="https://platform.openai.com/account/billing/overview" style="color:blue;">Fakturering & betalning</a> för att lägga till medel. Du kan överföra valfritt belopp när som helst. Så länge det finns pengar på kontot kan du använda webbappen – varje uppgift debiteras omedelbart.
+<br><br>
+<strong>Påminnelse om sessionsäkerhet</strong><br>
+När du loggar in genom att ange din API-nyckel lagras den endast tillfälligt i din webbläsarsession. Det innebär att om du lämnar webbplatsen, stänger webbläsaren eller stänger av datorn så sparas inte nyckeln. Du måste ange nyckeln på nytt nästa gång du använder webbappen, vilket säkerställer att din nyckel förblir skyddad.`,  
   priceButton: "Pris",
   priceModalHeading: "Pris",
 priceModalText: `<h1>Kostnadsinformation</h1>
