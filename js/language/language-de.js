@@ -42,7 +42,7 @@ Viele bestehende Anbieter offerieren ähnliche Dienste, verlangen jedoch deutlic
 • Kein Abonnement, kein Konto erforderlich.<br>
 • Sie zahlen nur OpenAI direkt für die tatsächlich genutzte Leistung.<br>
 • Die Website selbst ist völlig kostenlos.<br><br>
-Damit es so bleibt, müssen Nutzer Werbung akzeptieren. Werbeeinnahmen helfen dabei, Hosting- und Betriebskosten zu decken, sodass der Dienst für alle zugänglich und kostenlos bleibt.`,
+Damit wir diesen kostenlosen Dienst weiterhin anbieten können, würden wir uns sehr freuen, wenn du der Anzeige von Werbung über Google Ads zustimmst. Die Werbeeinnahmen helfen uns, die Kosten für Hosting und Betrieb zu decken, damit der Dienst für alle verfügbar bleiben kann.`,
   guideModalHeading: "Anleitung",
  guideModalText: `Um diese Web-App zu nutzen, müssen Sie zunächst ein OpenAI API-Profil erstellen, einen API-Schlüssel generieren und Ihre OpenAI-Brieftasche aufladen. Anschließend kopieren Sie Ihren API-Schlüssel und fügen ihn in das bereitgestellte API-Schlüsselfeld ein. Sobald Sie die Eingabetaste drücken, wird der API-Schlüssel temporär für Ihre Sitzung gespeichert – dieser Schlüssel verbindet Sie mit den OpenAI-Servern, sodass die Sprach-zu-Text-Transkription und die Notizgenerierung funktionieren. Bitte beachten Sie, dass Ihnen pro ausgeführter Aufgabe sofort Kosten in Rechnung gestellt werden. Für weitere Informationen zu den Kosten lesen Sie bitte den Abschnitt "Kosten" auf der Startseite.
 <br><br>
