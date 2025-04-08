@@ -142,15 +142,30 @@ export const transcribeTranslations = {
   customPromptPlaceholder: "Ange anpassad prompt här",
   adUnitText: "Din annons här",
   guideHeading: "Guide & Instruktioner",
-guideText: `Välkommen till Whisper Transkriptionstjänst. Denna applikation låter medicinska experter, terapeuter och andra praktiker spela in och transkribera konsultationer, samt generera professionella notiser med hjälp av en AI-driven notisgenerator.<br><br>
-<strong>Så här använder du funktionerna:</strong>
+guideText: `Välkommen till <strong>Whisper Klinisk Transkription</strong>. Denna applikation gör det möjligt för vårdpersonal, terapeuter och andra yrkesutövare att spela in och transkribera konsultationer, samt generera professionella journalanteckningar med hjälp av en AI-driven notatgenerator.<br><br>
+
+<strong>Så här använder du funktionerna:</strong><br><br>
+
 <ul>
-  <li><strong>Inspelning:</strong> Klicka på "Starta Inspelning" för att börja spela in ljud. Varje 2:a minut skickas en ljudbit automatiskt till OpenAI-servrarna för transkription. Transkriptionerna visas sekventiellt i fältet för transkription.</li>
-  <li><strong>Fullbordan:</strong> Efter att du har klickat på "Stoppa/Avsluta" stoppas inspelningen. Fullbordningstimern räknar tills hela transkriptionen har mottagits (vanligtvis inom 5–10 sekunder).</li>
-  <li><strong>Notisgenerering:</strong> När transkriptionen är klar klickar du på "Generera Notis" för att skapa en notis baserad på din transkription och ditt anpassade prompt.</li>
-  <li><strong>Anpassat Prompt:</strong> Till höger, välj en prompt-slot (1–10) och skriv in ditt anpassade prompt. Ditt prompt sparas automatiskt och länkas till din API-nyckel.</li>
-  <li><strong>Översikt över användning:</strong> För att se din aktuella användning hos OpenAI, klicka på länken för användningsöversikt på huvudsidan.</li>
-  <li><strong>Säkerhet:</strong> Din ljudinspelning skickas direkt till OpenAIs API-servrar, som varken sparar datan eller använder den till något annat än själva transkriberingen. Den transkriberade texten som visas i webbläsaren sparas inte någonstans och försvinner så fort du stänger webbläsaren eller ny text laddas in.</li>
-  <li><strong>Guideväxling:</strong> Klicka på "Guide"-knappen igen för att återgå till huvudsidan.</li>
-</ul>`
+  <li><strong>Inspelning:</strong> Klicka på "Starta inspelning" för att börja spela in ljud. Varje 2 minuter skickas ett ljudavsnitt automatiskt till OpenAIs servrar för transkribering. Transkriptionen visas successivt i textfältet för transkribering.<br><br>
+  <strong><u>Viktigt:</u> Inspelningsfunktionen fungerar inte i alla webbläsare. Vi rekommenderar att du använder <strong>Google Chrome</strong> eller <strong>Microsoft Edge</strong>.</strong></li><br>
+
+  <li><strong>Avslut:</strong> När du klickar på "Stoppa/Klar", avslutas inspelningen. Tidsräknaren för slutförande visar hur lång tid det tar att ta emot hela transkriptionen (vanligtvis inom 5–10 sekunder).</li><br>
+
+  <li><strong>Anpassad prompt:</strong> Till höger kan du välja en promptplats (1–10) och skriva in din egen prompt. Prompten sparas automatiskt och kopplas till din API-nyckel. Du kan skapa vilken prompt du vill som passar din dokumentationsstil, ton och kliniska inriktning. Detta ger dig full flexibilitet i hur anteckningarna genereras.</li><br>
+
+  <li><strong>Generera anteckning:</strong> När transkriptionen är klar, klicka på "Generera anteckning" för att skapa ett journalutdrag baserat på din transkription och valda/skapade prompt.</li><br>
+
+  <li><strong>Kostnadsöversikt:</strong> För att se din nuvarande användning hos OpenAI, klicka på länken för kostnadsöversikt som är placerad uppe till höger på sidan.</li><br>
+
+  <li><strong>Säkerhet:</strong> Din ljudinspelning skickas direkt till OpenAIs API-servrar, som inte lagrar datan och endast använder den för transkribering. Den transkriberade texten visas endast i din webbläsare, och <strong>den raderas/försvinner så snart du stänger webbläsaren eller laddar nytt innehåll.</strong></li><br>
+
+  <li><strong>Guide-knappen:</strong> Klicka på "Guide"-knappen igen för att återgå till huvudsidan.</li>
+</ul><br><br>
+
+<strong>Exempel på prompt:</strong><br>
+Skapa en medicinsk anteckning baserad på samtalet mellan läkare och patient. Den ska innehålla: Bakgrund, Aktuellt, Kliniska fynd, Bedömning och Plan.  
+Anteckningen ska vara skriven med professionellt språk och korrekt medicinsk terminologi.<br><br>
+
+Du kan anpassa denna prompt precis som du vill för att matcha din dokumentationsstil, specialitet eller typ av konsultation.`,
 };
