@@ -124,6 +124,7 @@ export const transcribeTranslations = {
   openaiUsageLinkText: "Översikt över kostnader",
   btnFunctions: "Funktioner",
   btnGuide: "Guide",
+  backToHome: "Tillbaka till startsidan",
   recordingAreaTitle: "Inspelningsområde",
   recordTimer: "Inspelningstimer: 0 sek",
   transcribeTimer: "Fullföljandetimer: 0 sek",
