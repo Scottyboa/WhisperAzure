@@ -46,7 +46,7 @@ For the webapp to function, your OpenAI wallet must have sufficient funds. Visit
 When you log in by entering your API key, it is stored only temporarily in your browser session. This means if you exit the website, close your browser, or turn off your computer, the API key will not be saved. You will need to re-enter your API key the next time you use the webapp, ensuring your key remains secure.`,
   priceButton: "Price",
   priceModalHeading: "Price",
-  priceModalText: `
+priceModalText: `
 <div>
   <h1>Cost Information</h1>
   <h2>Speech-to-Text Pricing</h2>
@@ -57,8 +57,8 @@ When you log in by entering your API key, it is stored only temporarily in your 
   <ul>
     <li><strong>Token-Based Pricing:</strong></li>
     <ul>
-      <li><strong>Input (transcription + prompt):</strong> $10 per 1,000,000 tokens (i.e. $0.00001 per token).</li>
-      <li><strong>Output (generated note):</strong> $30 per 1,000,000 tokens (i.e. $0.00003 per token).</li>
+      <li><strong>Input (transcription + prompt):</strong> $2.50 per 1,000,000 tokens (i.e. $0.0000025 per token).</li>
+      <li><strong>Output (generated note):</strong> $10.00 per 1,000,000 tokens (i.e. $0.00001 per token).</li>
     </ul>
   </ul>
   <h3>Example Consultation Calculation (Note Generation Only)</h3>
@@ -68,25 +68,25 @@ When you log in by entering your API key, it is stored only temporarily in your 
       <p>Assume the consultation transcription is about <strong>700 words</strong> and you add a <strong>30-word prompt</strong>.<br>
       Total words = 700 + 30 = <strong>730 words</strong>.<br>
       Estimated tokens = 730 × 0.75 ≈ <strong>547.5 tokens</strong>.<br>
-      Input cost = 547.5 tokens × $0.00001 ≈ <strong>$0.0055</strong>.</p>
+      Input cost = 547.5 tokens × $0.0000025 ≈ <strong>$0.0014</strong>.</p>
     </li>
     <li>
       <strong>Output Calculation:</strong>
       <p>Assume the generated note is around <strong>250 words</strong>.<br>
       Estimated tokens = 250 × 0.75 ≈ <strong>187.5 tokens</strong>.<br>
-      Output cost = 187.5 tokens × $0.00003 ≈ <strong>$0.0056</strong>.</p>
+      Output cost = 187.5 tokens × $0.00001 ≈ <strong>$0.0019</strong>.</p>
     </li>
     <li>
       <strong>Total Note Generation Cost:</strong>
-      <p>Combined cost ≈ $0.0055 + $0.0056 = <strong>$0.0111</strong> per consultation.</p>
+      <p>Combined cost ≈ $0.0014 + $0.0019 = <strong>$0.0033</strong> per consultation.</p>
     </li>
   </ol>
   <h2>Approximate Combined Cost Per Consultation</h2>
   <p>(for a 15-minute consultation/recording, using both functions)</p>
   <ul>
     <li><strong>Speech-to-Text:</strong> <strong>$0.09</strong></li>
-    <li><strong>Note Generation:</strong> <strong>$0.0111</strong></li>
-    <li><strong>Total:</strong> Approximately <strong>$0.101</strong> per consultation.</li>
+    <li><strong>Note Generation:</strong> <strong>$0.0033</strong></li>
+    <li><strong>Total:</strong> Approximately <strong>$0.0933</strong> per consultation.</li>
   </ul>
   <h2>Monthly Cost Estimates</h2>
   <p>Assuming you conduct 20 consultations per day, 4 days per week, over 4 weeks per month (20 × 4 × 4 = <strong>320 consultations</strong> per month):</p>
@@ -97,7 +97,7 @@ When you log in by entering your API key, it is stored only temporarily in your 
     </li>
     <li>
       <strong>Using Both Speech-to-Text and Note Generation:</strong><br>
-      Monthly cost = 320 × $0.101 ≈ <strong>$32.32</strong>.
+      Monthly cost = 320 × $0.0933 ≈ <strong>$29.86</strong>.
     </li>
   </ol>
   <h2>Usage Flexibility</h2>
