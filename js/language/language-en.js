@@ -118,6 +118,7 @@ export const transcribeTranslations = {
   transcribeTimer: "Completion Timer: 0 sec",
   transcriptionPlaceholder: "Transcription result will appear here...",
   startButton: "Start Recording",
+  readFirstText: "Read first! ➔",
   stopButton: "Stop/Complete",
   pauseButton: "Pause Recording",
   statusMessage: "Welcome! Click \"Start Recording\" to begin.",
