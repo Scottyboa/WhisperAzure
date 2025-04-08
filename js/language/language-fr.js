@@ -129,6 +129,7 @@ export const transcribeTranslations = {
   openaiUsageLinkText: "Aperçu des coûts d'utilisation",
   btnFunctions: "Fonctions",
   btnGuide: "Guide",
+  backToHome: "Retour à la page d'accueil",
   recordingAreaTitle: "Zone d'enregistrement",
   recordTimer: "Chronomètre d'enregistrement : 0 sec",
   transcribeTimer: "Chronomètre d'achèvement : 0 sec",
