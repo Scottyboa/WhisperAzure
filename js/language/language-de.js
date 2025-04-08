@@ -143,15 +143,30 @@ export const transcribeTranslations = {
   customPromptPlaceholder: "Benutzerdefinierten Prompt hier eingeben",
   adUnitText: "Ihre Anzeige hier",
   guideHeading: "Anleitung & Instruktionen",
-guideText: `Willkommen beim Whisper Transkriptionstool. Diese Anwendung ermöglicht es medizinischen Fachkräften, Therapeuten und anderen Anwendern, Konsultationen aufzunehmen und zu transkribieren sowie professionelle Notizen mithilfe eines KI-gestützten Notizgenerators zu erstellen.<br><br>
-<strong>So nutzen Sie die Funktionen:</strong>
+guideText: `Willkommen bei <strong>Whisper Klinische Transkription</strong>. Diese Anwendung ermöglicht es medizinischem Fachpersonal, Therapeut:innen und anderen Anwender:innen, Gespräche aufzuzeichnen und zu transkribieren sowie professionelle Notizen mithilfe eines KI-gestützten Notizgenerators zu erstellen.<br><br>
+
+<strong>So verwendest du die Funktionen:</strong><br><br>
+
 <ul>
-  <li><strong>Aufnahme:</strong> Klicken Sie auf "Aufnahme starten", um die Audioaufnahme zu beginnen. Alle 2 Minuten wird ein Abschnitt der Aufnahme automatisch an die OpenAI-Server zur Transkription gesendet. Die Transkripte werden der Reihe nach im Transkriptions-Ausgabefeld angezeigt.</li>
-  <li><strong>Vollständigkeit:</strong> Nach dem Klick auf "Stoppen/Abschließen" wird die Aufnahme beendet. Der Abschlusstimer zählt, bis das vollständige Transkript empfangen wurde (in der Regel innerhalb von 5–10 Sekunden).</li>
-  <li><strong>Notizgenerierung:</strong> Sobald die Transkription abgeschlossen ist, klicken Sie auf "Notiz generieren", um eine Notiz basierend auf Ihrem Transkript und Ihrem benutzerdefinierten Prompt zu erstellen.</li>
-  <li><strong>Benutzerdefinierter Prompt:</strong> Wählen Sie rechts einen Prompt-Slot (1–10) und geben Sie Ihren benutzerdefinierten Prompt ein. Ihr Prompt wird automatisch gespeichert und mit Ihrem API-Schlüssel verknüpft.</li>
-  <li><strong>Nutzungsübersicht:</strong> Um Ihre aktuelle Nutzung bei OpenAI zu überprüfen, klicken Sie auf den Link zur Nutzungsübersicht im Hauptinterface.</li>
-  <li><strong>Sicherheit:</strong> Ihre Audiodaten werden verschlüsselt und auf sicheren Microsoft Azure-Servern verarbeitet. Außerdem werden Transkripte und Notizen kurz nach der Verarbeitung automatisch gelöscht, um Ihre Privatsphäre zu schützen.</li>
-  <li><strong>Guide-Umschaltung:</strong> Klicken Sie erneut auf die "Guide"-Schaltfläche, um zum Hauptinterface zurückzukehren.</li>
-</ul>`
+  <li><strong>Aufnahme:</strong> Klicke auf "Aufnahme starten", um mit der Tonaufnahme zu beginnen. Alle 2 Minuten wird ein Audioabschnitt automatisch an die Server von OpenAI gesendet, um transkribiert zu werden. Die Transkripte erscheinen fortlaufend im Transkriptionsfeld.<br><br>
+  <strong><u>Wichtig:</u> Die Aufnahmefunktion funktioniert nicht in allen Webbrowsern. Wir empfehlen die Verwendung von <strong>Google Chrome</strong> oder <strong>Microsoft Edge</strong>.</strong></li><br>
+
+  <li><strong>Abschluss:</strong> Wenn du auf "Stopp/Fertig" klickst, wird die Aufnahme beendet. Der Abschlusstimer zählt, bis das vollständige Transkript empfangen wurde (in der Regel innerhalb von 5–10 Sekunden).</li><br>
+
+  <li><strong>Benutzerdefinierter Prompt:</strong> Wähle rechts einen Prompt-Slot (1–10) aus und gib deinen eigenen Prompt ein. Dein Prompt wird automatisch gespeichert und mit deinem API-Schlüssel verknüpft. Du kannst jeden beliebigen Prompt erstellen, der zu deinem Dokumentationsstil, Tonfall und fachlichen Fokus passt. So hast du volle Kontrolle über die Generierung deiner Notizen.</li><br>
+
+  <li><strong>Notiz generieren:</strong> Sobald die Transkription abgeschlossen ist, klicke auf "Notiz generieren", um eine medizinische Notiz basierend auf deinem Transkript und dem gewählten Prompt zu erstellen.</li><br>
+
+  <li><strong>Kostenübersicht:</strong> Um deine aktuellen Nutzungskosten bei OpenAI zu überprüfen, klicke auf den Link zur Kostenübersicht oben rechts auf dieser Seite.</li><br>
+
+  <li><strong>Sicherheit:</strong> Deine Audioaufnahme wird direkt an die API-Server von OpenAI gesendet, die die Daten nicht speichern und nur für die Transkription verwenden. Der transkribierte Text wird nur in deinem Browser angezeigt und <strong>er wird gelöscht/verschwindet, sobald du den Browser schließt oder neue Inhalte lädst.</strong></li><br>
+
+  <li><strong>Guide-Schaltfläche:</strong> Klicke erneut auf die "Guide"-Schaltfläche, um zur Hauptansicht zurückzukehren.</li>
+</ul><br><br>
+
+<strong>Beispiel-Prompt:</strong><br>
+Erstelle eine medizinische Notiz basierend auf dem Transkript eines Arzt-Patienten-Gesprächs. Sie soll folgende Abschnitte enthalten: Hintergrund, Aktuelle Beschwerden, Klinische Befunde, Einschätzung und Plan.  
+Die Notiz soll in professioneller Sprache und mit korrekter medizinischer Terminologie verfasst sein.<br><br>
+
+Du kannst diesen Prompt frei anpassen, um ihn an deinen Dokumentationsstil, deine Fachrichtung oder deine Art der Konsultation anzupassen.`,
 };
