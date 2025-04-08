@@ -27,11 +27,14 @@ Observera att all data automatiskt raderas kort efter bearbetning och inte lagra
 
 
   aboutModalHeading: "Om",
-  aboutModalText: `Jag är en norsk allmänläkare med ett stort intresse för teknologiska framsteg, särskilt inom artificiell intelligens, och jag har noga följt AI-utvecklingen inom vården.<br><br>
-När jag först hörde om tjänster för tal-till-text vid medicinska konsultationer i Norge blev jag optimistisk. Kollegor och användarrecensioner betonade hur dessa lösningar kunde förbättra effektiviteten och arbetsflödet avsevärt. Men efter en närmare undersökning blev jag förvånad över hur höga priserna var – särskilt med tanke på att den underliggande teknologin endast står för en bråkdel av kostnaderna som företagen kräver.<br><br>
-Motiverad av denna insikt utvecklade jag min egen tal-till-text-lösning, ursprungligen för personligt bruk. När jag insåg hur effektiv och kostnadseffektiv den var, bestämde jag mig för att göra den tillgänglig online. Målet var att erbjuda samma hastighet, noggrannhet och kvalitet som premiumtjänster – men utan de oproportionerliga avgifterna.<br><br>
-Även om många etablerade lösningar är användbara, anser jag att de är prissatta långt över vad som är rimligt. Varje dag ser jag kollegor som kämpar för sina patienter, men som tvingas betala mycket mer än nödvändigt för ett verktyg som borde vara tillgängligt för alla.<br><br>
-Därför är denna webbplats helt gratis att använda – den enda kostnaden du får är OpenAIs direkta användningsavgift för transkriptioner.`,
+aboutModalText: `Denna webbplats skapades för att ge vårdpersonal och andra användare direkt tillgång till högkvalitativ tal-till-text-transkription och generering av kliniska notat – utan onödiga kostnader eller mellanhänder.<br><br>
+Genom att använda din egen OpenAI API-nyckel kopplar du dig direkt till källan för teknologin. Det innebär att du endast betalar den faktiska användningskostnaden som sätts av OpenAI, utan påslag eller prenumerationsavgifter.<br><br>
+Många befintliga leverantörer erbjuder liknande tjänster men tar betydligt mer betalt – ofta 8 till 10 gånger den verkliga kostnaden för den underliggande tekniken. Denna plattform erbjuder samma funktionalitet till en bråkdel av priset.<br><br>
+<strong>Viktiga punkter:</strong><br>
+• Ingen prenumeration, inget konto krävs.<br>
+• Du betalar endast direkt till OpenAI för det du använder.<br>
+• Webbplatsen i sig är helt gratis.<br><br>
+För att hålla det så krävs att användare godkänner annonser. Annonsintäkter hjälper till att täcka kostnader för drift och hosting, så att tjänsten kan förbli tillgänglig och gratis för alla.`,
   
   guideModalHeading: "API-guide – Hur du använder",
   guideModalText: `För att använda denna webbapp måste du först skapa en OpenAI API-profil, generera en API-nyckel och ladda ditt OpenAI-konto med pengar. Din API-nyckel kopieras och klistras sedan in i det angivna fältet. När du klickar på Enter sparas nyckeln tillfälligt för din session – denna nyckel kopplar dig till OpenAI:s servrar så att tal-till-text-transkription och notatgenerering kan fungera. Observera att du debiteras direkt per utfört uppdrag. För mer information om kostnader, se avsnittet "Pris" på startsidan.
