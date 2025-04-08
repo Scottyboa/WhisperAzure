@@ -137,17 +137,32 @@ export const transcribeTranslations = {
   customPromptPlaceholder: "Skriv inn tilpasset prompt her",
   adUnitText: "Din annonse her",
   guideHeading: "Guide & Instruksjoner",
-guideText: `Velkommen til Whisper Transkripsjonsverktøyet. Denne applikasjonen gir medisinske fagpersoner, terapeuter og andre behandlere muligheten til å ta opp og transkribere konsultasjoner, samt generere profesjonelle notater ved hjelp av en AI-drevet notatgenerator.<br><br>
-<strong>Slik bruker du funksjonene:</strong>
+guideText: `Velkommen til <strong>Whisper Klinisk Transkripsjon</strong>. Denne applikasjonen lar helsepersonell, terapeuter og andre fagpersoner ta opp og transkribere konsultasjoner, samt generere profesjonelle notater ved hjelp av en AI-basert notatgenerator.<br><br>
+
+<strong>Slik bruker du funksjonene:</strong><br><br>
+
 <ul>
-  <li><strong>Opptak:</strong> Klikk på "Start opptak" for å begynne å fange opp lyd. Hvert 2. minutt blir en lydbit automatisk sendt til OpenAI-serverne for transkripsjon. Transkripsjonene vises sekvensielt i tekstfeltet for transkripsjon.</li>
-  <li><strong>Fullføring:</strong> Etter at du har klikket på "Stopp/Fullfør", stoppes opptaket. Fullføringstimeren teller til hele transkripsjonen er mottatt (vanligvis innen 5–10 sekunder).</li>
-  <li><strong>Notatgenerering:</strong> Når transkripsjonen er fullført, klikker du på "Generer notat" for å lage et notat basert på transkripsjonen din og din tilpassede prompt.</li>
-  <li><strong>Tilpasset prompt:</strong> Til høyre, velg en prompt-slot (1–10) og skriv inn din tilpassede prompt. Din prompt lagres automatisk og knyttes til API-nøkkelen din.</li>
-  <li><strong>Bruksoversikt:</strong> For å sjekke din nåværende bruk hos OpenAI, klikk på lenken for bruksovervåkning på hovedgrensesnittet.</li>
-  <li><strong>Sikkerhet:</strong> Lydopptaket ditt sendes direkte til OpenAIs API-servere, som ikke lagrer dataen og kun bruker den til å utføre selve transkripsjonen. Den transkriberte teksten som vises i nettleseren, lagres ikke noe sted og forsvinner/slettes så snart du lukker nettleseren eller ny tekst lastes inn. Det samme gjelder for generert notat-tekst.</li>
-  <li><strong>Guide-bryter:</strong> Klikk på "Guide"-knappen igjen for å gå tilbake til hovedgrensesnittet.</li>
-</ul>`
+  <li><strong>Opptak:</strong> Klikk på "Start opptak" for å begynne å ta opp lyd. Hvert 2. minutt sendes en lydsekvens automatisk til OpenAI sine servere for transkribering. Transkriberingen vises fortløpende i tekstfeltet for transkripsjon.<br><br>
+  <strong><u>Viktig:</u> Opptaksfunksjonen fungerer ikke i alle nettlesere. Vi anbefaler derfor å bruke <strong>Google Chrome</strong> eller <strong>Microsoft Edge</strong>.</strong></li><br>
+
+  <li><strong>Fullføring:</strong> Når du klikker på "Stopp/Ferdig", stopper opptaket. Fullføringstimeren teller tiden til hele transkripsjonen er mottatt (vanligvis innen 3-7 sekunder).</li><br>
+
+  <li><strong>Tilpasset prompt:</strong> På høyre side kan du velge en promptplass (1–10) og skrive inn din egen prompt. Prompten lagres automatisk og knyttes til din API-nøkkel. Du kan lage hvilken som helst prompt som passer din dokumentasjonsstil, tone og faglige fokus. Dette gir deg full fleksibilitet i hvordan notatene dine genereres.</li><br>
+
+  <li><strong>Notatgenerering:</strong> Når transkripsjonen er fullført, klikker du på "Generer notat" for å lage et notat basert på transkripsjonen og den valgte/tilpassede prompten.</li><br>
+
+  <li><strong>Kostnadsoversikt:</strong> For å se ditt nåværende forbruk hos OpenAI, klikk på lenken for kostnadsoversikt som er plassert oppe til høyre på denne siden.</li><br>
+
+  <li><strong>Sikkerhet:</strong> Lydopptaket ditt sendes direkte til OpenAI sine API-servere, som ikke lagrer dataene og kun bruker dem til transkribering. Den transkriberte teksten vises kun i nettleseren din, og <strong>den slettes/forsvinner så snart du lukker nettleseren eller laster inn nytt innhold.</strong></li><br>
+
+  <li><strong>Guide-knapp:</strong> Klikk på "Guide"-knappen igjen for å gå tilbake til hovedvisningen.</li>
+</ul><br><br>
+
+<strong>Eksempel på prompt:</strong><br>
+Lag et medisinsk notat basert på lege-pasient samtalen(diktatet). Notatet skal inneholde: Bakgrunn, Aktuelt, Funn, Vurdering og Plan.  
+Notatet skal skrives med profesjonelt språk og korrekt medisinsk terminologi.<br><br>
+
+Du kan tilpasse denne prompten slik du selv ønsker, slik at den passer din dokumentasjonsstil, spesialitet eller type konsultasjon.`,
 };
 
 export default { indexTranslations, transcribeTranslations };
