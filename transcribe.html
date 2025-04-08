@@ -243,21 +243,30 @@
     <!-- Main Content (center column) -->
     <main class="main-content">
       <!-- Top Bar inside Main Content -->
-      <div class="top-bar">
-        <button id="backToHomeButton" onclick="window.history.back()">Back to frontpage</button>
-        <button id="btnGuide">Guide</button>
-        <div id="lang-container-transcribe">
-          <img src="language-icon.png" alt="Language Icon" id="lang-icon-transcribe" />
-          <select id="lang-select-transcribe">
-            <option value="en">English</option>
-            <option value="no">Norsk</option>
-            <option value="sv">Svenska</option>
-            <option value="de">Deutsch</option>
-            <option value="fr">Français</option>
-            <option value="it">Italiano</option>
-          </select>
-        </div>
-      </div>
+<!-- Top Bar inside Main Content -->
+<div class="top-bar">
+  <!-- Back to frontpage button stays on the far left -->
+  <button id="backToHomeButton" onclick="window.history.back()">Back to frontpage</button>
+
+  <!-- Group for "Read first! ➔" and Guide button -->
+  <div class="mid-controls" style="display: flex; align-items: center;">
+    <span id="read-first-text" style="font-size: 24px; color: black; margin-right: 10px;">Read first! ➔</span>
+    <button id="btnGuide">Guide</button>
+  </div>
+
+  <!-- Language container remains on the far right -->
+  <div id="lang-container-transcribe">
+    <img src="language-icon.png" alt="Language Icon" id="lang-icon-transcribe" />
+    <select id="lang-select-transcribe">
+      <option value="en">English</option>
+      <option value="no">Norsk</option>
+      <option value="sv">Svenska</option>
+      <option value="de">Deutsch</option>
+      <option value="fr">Français</option>
+      <option value="it">Italiano</option>
+    </select>
+  </div>
+</div>
       <!-- Recording Area -->
       <div class="recording-area">
         <div class="recording-header">
