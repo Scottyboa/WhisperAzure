@@ -136,17 +136,32 @@ export const transcribeTranslations = {
   customPromptPlaceholder: "Inserisci qui il prompt personalizzato",
   adUnitText: "Il tuo annuncio qui",
   guideHeading: "Guida e Istruzioni",
-guideText: `Benvenuto allo strumento di trascrizione Whisper. Questa applicazione consente ai professionisti sanitari, ai terapisti e ad altri operatori di registrare e trascrivere le consultazioni, oltre a generare note professionali utilizzando un generatore di note basato su intelligenza artificiale.<br><br>
-<strong>Come utilizzare le funzioni:</strong>
+guideText: `Benvenuto in <strong>Whisper Trascrizione Clinica</strong>. Questa applicazione consente a professionisti sanitari, terapisti e altri operatori di registrare e trascrivere consulti, nonché di generare note professionali utilizzando un generatore di testi basato su intelligenza artificiale.<br><br>
+
+<strong>Come utilizzare le funzionalità:</strong><br><br>
+
 <ul>
-  <li><strong>Registrazione:</strong> Clicca su "Avvia Registrazione" per iniziare a catturare l'audio. Ogni 2 minuti, un segmento audio viene automaticamente inviato ai server di OpenAI per la trascrizione. I trascritti appariranno in sequenza nel campo di output della trascrizione.</li>
-  <li><strong>Completamento:</strong> Dopo aver cliccato su "Ferma/Completa", la registrazione si interrompe. Il timer di completamento continua a contare fino a quando il trascritto completo non viene ricevuto (solitamente entro 5–10 secondi).</li>
-  <li><strong>Generazione della Nota:</strong> Una volta completata la trascrizione, clicca su "Genera Nota" per creare una nota basata sul tuo trascritto e sul prompt personalizzato.</li>
-  <li><strong>Prompt Personalizzato:</strong> A destra, seleziona uno slot per il prompt (1–10) ed inserisci il tuo prompt personalizzato. Il tuo prompt viene salvato automaticamente e collegato alla tua chiave API.</li>
-  <li><strong>Panoramica dell'Uso:</strong> Per verificare il tuo utilizzo attuale presso OpenAI, clicca sul collegamento per la panoramica dell'uso presente nell'interfaccia principale.</li>
-  <li><strong>Sicurezza:</strong> Il tuo audio viene criptato e processato su server Microsoft Azure sicuri. Inoltre, trascrizioni e note vengono eliminate automaticamente poco dopo la lavorazione per proteggere la tua privacy.</li>
-  <li><strong>Interruttore Guida:</strong> Clicca nuovamente sul pulsante "Guida" per tornare all'interfaccia principale.</li>
-</ul>`
+  <li><strong>Registrazione:</strong> Clicca su "Avvia registrazione" per iniziare a catturare l’audio. Ogni 2 minuti, un segmento audio viene inviato automaticamente ai server di OpenAI per la trascrizione. Le trascrizioni appariranno in sequenza nel campo di output.<br><br>
+  <strong><u>Importante:</u> Il registratore non funziona su tutti i browser. Si consiglia di utilizzare <strong>Google Chrome</strong> o <strong>Microsoft Edge</strong>.</strong></li><br>
+
+  <li><strong>Completamento:</strong> Dopo aver cliccato su "Stop/Completa", la registrazione si interrompe. Il timer di completamento calcola il tempo necessario per ricevere l’intera trascrizione (solitamente entro 5–10 secondi).</li><br>
+
+  <li><strong>Prompt personalizzato:</strong> Sulla destra, seleziona uno slot prompt (1–10) e inserisci il tuo prompt personalizzato. Il prompt viene salvato automaticamente e associato alla tua chiave API. Puoi creare qualsiasi prompt adatto al tuo stile di documentazione, tono e area clinica. Hai piena libertà nel modo in cui vengono generate le note.</li><br>
+
+  <li><strong>Generazione della nota:</strong> Una volta completata la trascrizione, clicca su "Genera nota" per creare una nota basata sulla trascrizione e sul prompt selezionato/personalizzato.</li><br>
+
+  <li><strong>Panoramica dei costi:</strong> Per verificare il tuo attuale utilizzo su OpenAI, clicca sul link alla panoramica dei costi situato in alto a destra di questa pagina.</li><br>
+
+  <li><strong>Sicurezza:</strong> La registrazione audio viene inviata direttamente ai server API di OpenAI, che non memorizzano i dati e li usano solo per la trascrizione. Il testo trascritto è visibile solo nel tuo browser e <strong>viene eliminato/scompare non appena chiudi il browser o carichi nuovi contenuti.</strong></li><br>
+
+  <li><strong>Pulsante "Guida":</strong> Clicca di nuovo sul pulsante "Guida" per tornare all'interfaccia principale.</li>
+</ul><br><br>
+
+<strong>Esempio di prompt:</strong><br>
+Genera una nota medica basata sulla trascrizione di una conversazione tra medico e paziente. Deve includere: Contesto, Problema attuale, Reperti clinici, Valutazione e Piano.  
+La nota deve essere scritta in linguaggio professionale e con terminologia medica adeguata.<br><br>
+
+Puoi personalizzare questo prompt come preferisci, in base al tuo stile di documentazione, alla tua specializzazione o al tipo di consulto.`,
 };
 
 export default { indexTranslations, transcribeTranslations };
