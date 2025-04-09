@@ -92,7 +92,7 @@ priceModalText: `
   <p>Assuming you conduct 20 consultations per day, 4 days per week, over 4 weeks per month (20 × 4 × 4 = <strong>320 consultations</strong> per month):</p>
   <ol>
     <li>
-      <strong>Using Only Speech-to-Text</strong> (with note generation via your own ChatGPT account, which is essentially free):<br>
+      <strong>Using Only Speech-to-Text</strong>:<br>
       Monthly cost = 320 × $0.09 = <strong>$28.80</strong>.
     </li>
     <li>
