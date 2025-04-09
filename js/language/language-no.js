@@ -98,7 +98,7 @@ priceModalText: `
   <p>Dersom du gjennomfører 20 konsultasjoner per dag, 4 dager i uken, over 4 uker i måneden (20 × 4 × 4 = <strong>320 konsultasjoner</strong> per måned):</p>
   <ol>
     <li>
-      <strong>Kun tale-til-tekst</strong> (med notatgenerering via din egen ChatGPT-konto, som i praksis er gratis):<br>
+      <strong>Kun tale-til-tekst</strong>:<br>
       Månedlig kostnad = 320 × $0.09 = <strong>$28.80</strong>.
     </li>
     <li>
