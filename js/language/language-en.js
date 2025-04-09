@@ -154,7 +154,7 @@ guideText: `Welcome to the Whisper Transcription tool. This application allows m
 </ul><br><br>
 
 <strong>Example Prompt:</strong><br>
-Make a medical note based on the doctor–patient conversation transcript. It must contain: Background, Presenting complaint, Clinical findings, Assessment, and Plan. The note must be written in professional language and use appropriate medical terminology.<br><br>
+"Make a medical note based on the doctor–patient conversation transcript. It must contain: Background, Presenting complaint, Clinical findings, Assessment, and Plan. The note must be written in professional language and use appropriate medical terminology."<br><br>
 
 You can customize this prompt however you like to suit your documentation preferences, specialties, or consultation types.`,
 };
