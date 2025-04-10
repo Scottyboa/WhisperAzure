@@ -134,7 +134,7 @@ Do not ignore any part of the instructions, even if they appear after a long tra
           { role: "system", content: finalPromptText },
           { role: "user", content: transcriptionText }
         ],
-        temperature: 0.7,
+        temperature: 0.3,
         stream: true
       })
     });
