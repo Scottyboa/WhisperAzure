@@ -126,14 +126,13 @@ All headings should be plain text with a colon, like 'Bakgrunn:'.`.trim();
         "Authorization": "Bearer " + apiKey
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "chatgpt-4o-latest",
         messages: [
           { role: "system", content: finalPromptText },
           { role: "user", content: transcriptionText }
         ],
         temperature: 0.7,
-        stream: true,
-        max_tokens: 3000
+        stream: true
       })
     });
     const reader = response.body.getReader();
