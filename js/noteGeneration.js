@@ -111,7 +111,12 @@ async function generateNote() {
   }
   
   // Add the fixed formatting instruction as a hidden prompt component.
-  const baseInstruction = "Do not use bold text. Do not use asterisks (*) or Markdown formatting anywhere in the output. All headings should be plain text with a colon, like 'Bakgrunn:'.";
+  const baseInstruction = `
+Do not use bold text. Do not use asterisks (*) or Markdown formatting anywhere in the output.
+All headings should be plain text with a colon, like 'Bakgrunn:'.
+If the user includes specific instructions at the end of the transcript (such as formatting, length, or structure requirements), always follow them carefully.
+Do not ignore any part of the instructions, even if they appear after a long transcript.
+`.trim();
 
   // Append the hidden instruction to the user's prompt so it is always included.
   const finalPromptText = promptText + "\n\n" + baseInstruction;
