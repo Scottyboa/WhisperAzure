@@ -161,7 +161,7 @@ guideText: `Velkommen til <strong>Whisper Klinisk Transkripsjon</strong>. Denne 
 
 <strong>Eksempel på prompt:</strong><br>
 "Lag et medisinsk notat basert på lege-pasient samtalen(diktatet). Notatet skal inneholde: Bakgrunn, Aktuelt, Funn, Vurdering og Plan.  
-Notatet skal skrives med profesjonelt språk og korrekt medisinsk terminologi.Lag et medisinsk notat basert på lege-pasient samtalen(diktatet). Notatet skal inneholde: Bakgrunn, Aktuelt, Funn, Vurdering og Plan. Notatet skal skrives med profesjonelt språk og korrekt medisinsk terminologi. Viktig at du ikke inkluderer undersøkelser eller funn som ikke er inkludert i diktatet."<br><br>
+Notatet skal skrives med profesjonelt språk og korrekt medisinsk terminologi.Lag et medisinsk notat basert på lege-pasient samtalen(diktatet). Notatet skal inneholde: Bakgrunn, Aktuelt, Funn, Vurdering og Plan. Notatet skal skrives med profesjonelt språk og korrekt medisinsk terminologi. Viktig at du ikke legger til undersøkelser eller funn som ikke er inkludert i diktatet."<br><br>
 
 Du kan tilpasse denne prompten slik du selv ønsker, slik at den passer din dokumentasjonsstil, spesialitet eller type konsultasjon.`,
 };
