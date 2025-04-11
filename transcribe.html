@@ -269,10 +269,16 @@
 </div>
       <!-- Recording Area -->
       <div class="recording-area">
-        <div class="recording-header">
-          <h3 id="recordingAreaTitle">Recording Area</h3>
-          <a id="openaiUsageLink" href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer">Cost usage overview</a>
-        </div>
+<div class="recording-header">
+  <h3 id="recordingAreaTitle">Recording Area</h3>
+  <a id="openaiUsageLink" href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer">
+    Cost usage overview
+  </a>
+  <!-- New hyperlink added next to the existing one -->
+  <a id="openaiWalletLink" href="https://platform.openai.com/settings/organization/billing/overview" target="_blank" rel="noopener noreferrer">
+    <!-- The visible text will be set using language translations -->
+  </a>
+</div>
         <div id="recordTimer" class="timer">Recording Timer: 0 sec</div>
         <div id="transcribeTimer" class="timer">Completion Timer: 0 sec</div>
         <textarea id="transcription" placeholder="Transcription result will appear here..."></textarea>
