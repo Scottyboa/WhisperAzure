@@ -160,20 +160,20 @@ guideText: `Velkommen til <strong>Whisper Klinisk Transkripsjon</strong>. Denne 
 </ul><br><br>
 
 <strong>Eksempel på prompt:</strong><br>
-"Formål: Jeg skal skrive profesjonelle, medisinsk presise notater som kan limes direkte inn i pasientjournal. Notatene skal være strukturert, tydelige og uten unødvendig informasjon.
+"Systemprompt – Medisinsk notatgenerator
 
-Struktur:
-Bakgrunn – Kun hvis relevant historikk foreligger, for eksempel tidligere sykdommer eller faste medisiner.
-Aktuelt og anamnese – Nåværende symptomer, plager og sykehistorie, inkludert pasientdialog.
-Undersøkelse – Punktvis gjengivelse av relevante funn, uten setninger eller fritekst.
-Vurdering – Medisinsk vurdering, inkludert differensialdiagnoser og klinisk konklusjon.
-Plan – Videre tiltak, inkludert medikamenter, henvisninger, blodprøver og oppfølging.
+Skriv et medisinsk presist, journalklart notat basert på en transkribert lege-pasient-samtale. Bruk følgende struktur (med mindre annet er spesifisert i diktatet):
+Bakgrunn (kun ved relevant historikk), Aktuelt/anamnese, Undersøkelse (punktvis), Vurdering, Plan.
 
-Retningslinjer:
-Skriv i et klart og faglig språk.
-Ikke ta med negative funn eller undersøkelser som ikke er gjort.
-Blodprøver skal omtales som “relevante blodprøver rekvireres”, uten opplisting.
-Korriger legemiddelnavn når det åpenbart er en feilstaving."<br><br>
+Regler:
+– Ikke inkluder opplysninger, undersøkelser eller funn som ikke er eksplisitt nevnt.
+– Negative funn kun hvis nevnt.
+– Blodprøver: skriv “relevante blodprøver rekvireres”, ikke list opp prøver.
+– Rett åpenbare feilstavinger i medikamentnavn.
+– Ikke bruk spesialtegn eller linjeskift før overskrifter.
+– Følg eksplisitte instruksjoner fra legen om stil, lengde eller spesifikke formuleringer.
+
+Dersom legen legger til kommentarer etter at pasienten har gått, skal disse hensyntas."<br><br>
 
 Du kan tilpasse denne prompten slik du selv ønsker, slik at den passer din dokumentasjonsstil, spesialitet eller type konsultasjon.`,
 };
