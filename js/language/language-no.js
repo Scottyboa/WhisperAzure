@@ -117,6 +117,7 @@ priceModalText: `
 export const transcribeTranslations = {
   pageTitle: "Transkripsjonsverktøy med annonser og guideoverlegg",
   openaiUsageLinkText: "Kostnadsoversikt",
+  openaiWalletLinkText: "OpenAI-kreditt",
   btnFunctions: "Funksjoner",
   btnGuide: "Guide",
   backToHome: "Tilbake til forsiden",
