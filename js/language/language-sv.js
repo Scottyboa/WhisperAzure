@@ -122,6 +122,7 @@ priceModalText: `<h1>Kostnadsinformation</h1>
 export const transcribeTranslations = {
   pageTitle: "Transkriptionstjänst med annonser och guideöverlägg",
   openaiUsageLinkText: "Översikt över kostnader",
+  openaiWalletLinkText: "Plånbokssaldo",
   btnFunctions: "Funktioner",
   btnGuide: "Guide",
   backToHome: "Tillbaka till startsidan",
