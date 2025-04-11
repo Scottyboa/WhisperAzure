@@ -8,7 +8,7 @@ export const indexTranslations = {
   guideButton: "API guide - How to use",
   securityButton: "Security",
   aboutButton: "About",
-  adRevenueMessage: "As this website is free to use and relies solely on ad revenue, please consent to personalized ads to help support the service.",
+  adRevenueMessage: "As this website is free to use and relies solely on ad revenue, please consent to ads to help support the service.",
   securityModalHeading: "Privacy",
 securityModalText: `Your privacy and the security of patient information are our highest priority. We implement robust measures to ensure your data remains confidential and secure:<br><br>
 - <strong>Direct and local processing:</strong> All data processed by our system – including audio recordings, transcripts, and notes – is sent directly to OpenAI via their secure API. No data is processed or stored on our own servers. Transcripts and notes are only displayed and temporarily stored in your browser and are automatically deleted when replaced or when the browser is closed.<br><br>
