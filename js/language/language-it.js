@@ -112,6 +112,7 @@ priceModalText: `
 export const transcribeTranslations = {
   pageTitle: "Strumento di Trascrizione con Annunci e Sovrapposizione della Guida",
   openaiUsageLinkText: "Riepilogo dei costi",
+  openaiWalletLinkText": "Saldo Portafoglio",
   btnFunctions: "Funzioni",
   btnGuide: "Guida",
   backToHome: "Torna alla pagina iniziale",
