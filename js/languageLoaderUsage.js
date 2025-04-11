@@ -140,6 +140,7 @@ export async function initTranscribeLanguage() {
 function updateTranscribeUI(trans) {
   document.getElementById("page-title-transcribe").textContent = trans.pageTitle;
   document.getElementById("openaiUsageLink").textContent = trans.openaiUsageLinkText;
+  document.getElementById("openaiWalletLink").textContent = trans.openaiWalletLinkText;
   document.getElementById("btnGuide").textContent = trans.btnGuide;
   document.getElementById("backToHomeButton").textContent = trans.backToHome;
   document.getElementById("recordingAreaTitle").textContent = trans.recordingAreaTitle;
