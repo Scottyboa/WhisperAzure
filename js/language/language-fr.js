@@ -114,6 +114,7 @@ priceModalText: `
 export const transcribeTranslations = {
   pageTitle: "Outil de transcription avec publicités et superposition de guide",
   openaiUsageLinkText: "Aperçu des coûts d'utilisation",
+  openaiWalletLinkText": "Solde du portefeuille",
   btnFunctions: "Fonctions",
   btnGuide: "Guide",
   backToHome: "Retour à la page d'accueil",
