@@ -20,7 +20,9 @@ securityModalText: `Ihre Privatsphäre und die Sicherheit von Patientendaten hab
 
 - <strong>Schutz vor unbefugtem Zugriff:</strong> Selbst bei unbefugtem Zugriff auf Ihren API-Schlüssel bleiben Ihre Daten durch gerätespezifische Marker verschlüsselt und somit unzugänglich.<br><br>
 
-- <strong>DSGVO-konformes Hosting:</strong> Alle Backend-Prozesse laufen auf dedizierten Microsoft Azure-Servern innerhalb der EU und entsprechen vollständig den Anforderungen der DSGVO.<br><br>
+- <strong>DSGVO-konformes Hosting:</strong> Alle Backend-Prozesse laufen auf dedizierten Microsoft Azure-Servern innerhalb der EU und entsprechen vollständig den Anforderungen der DSGVO. <p>
+  Weitere Informationen darüber, wie wir Ihre Daten schützen, finden Sie unter 
+  <a href="https://openai.com/security-and-privacy/" target="_blank" style="color: blue; text-decoration: underline;">OpenAI Sicherheit und Datenschutz</a>.<br><br>
 
 <strong>Weitere Datenschutzmaßnahmen:</strong><br><br>
 
