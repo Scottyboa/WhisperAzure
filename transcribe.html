@@ -9,19 +9,22 @@
 <script>
   window.googletag = window.googletag || { cmd: [] };
   googletag.cmd.push(function() {
-    // Define Big Top-Left Ad Slot (300x600)
-    googletag.defineSlot('/23295908256/BIG-top-left-ad', [300, 600], 'div-gpt-ad-1744466790139-0')
+    // Big Top Left (300x600)
+    googletag.defineSlot('/23295908256/Big-top-left', [300, 600], 'div-gpt-ad-1744469658576-0')
              .addService(googletag.pubads());
-    // Define Big Top-Right Ad Slot (300x600)
-    googletag.defineSlot('/23295908256/BIG-top-right-ad', [300, 600], 'div-gpt-ad-1744466819379-0')
+
+    // Big Top Right (300x600)
+    googletag.defineSlot('/23295908256/big-top-right', [300, 600], 'div-gpt-ad-1744469682244-0')
              .addService(googletag.pubads());
-    // Define Big Left-Bottom Ad Slot (300x600)
-    googletag.defineSlot('/23295908256/BIG-left-bottom-ad', [300, 600], 'div-gpt-ad-1744466868399-0')
+
+    // Big Bottom Left (300x250)
+    googletag.defineSlot('/23295908256/big-bottom-left', [300, 250], 'div-gpt-ad-1744469599754-0')
              .addService(googletag.pubads());
-    // Define Big Bottom-Right Ad Slot (300x600)
-    googletag.defineSlot('/23295908256/BIG-bottom-right-ad', [300, 600], 'div-gpt-ad-1744466898292-0')
+
+    // Big Bottom Right (300x250)
+    googletag.defineSlot('/23295908256/big-bottom-right', [300, 250], 'div-gpt-ad-1744469576506-0')
              .addService(googletag.pubads());
-    
+
     googletag.pubads().enableSingleRequest();
     googletag.enableServices();
   });
@@ -258,18 +261,18 @@
   <div class="grid-container">
     <!-- Left Sidebar (reserved for ads) with two new ad units -->
     <aside class="sidebar">
-<!-- /23295908256/BIG-top-left-ad --> 
-<div id='div-gpt-ad-1744466790139-0' style='min-width: 300px; min-height: 600px;'>
+<!-- /23295908256/Big-top-left -->
+<div id='div-gpt-ad-1744469658576-0' style='min-width: 300px; min-height: 600px;'>
   <script>
-    googletag.cmd.push(function() { googletag.display('div-gpt-ad-1744466790139-0'); });
+    googletag.cmd.push(function() { googletag.display('div-gpt-ad-1744469658576-0'); });
   </script>
 </div>
-<!-- /23295908256/BIG-left-bottom-ad -->
-<div id='div-gpt-ad-1744466868399-0' style='min-width: 300px; min-height: 600px;'>
+<!-- /23295908256/big-bottom-left -->
+<div id='div-gpt-ad-1744469599754-0' style='min-width: 240px; min-height: 250px;'>
   <script>
-    googletag.cmd.push(function() { googletag.display('div-gpt-ad-1744466868399-0'); });
+    googletag.cmd.push(function() { googletag.display('div-gpt-ad-1744469599754-0'); });
   </script>
-  </div>
+</div>
     </aside>
     <!-- Main Content (center column) -->
     <main class="main-content">
@@ -349,16 +352,16 @@
     </main>
     <!-- Right Sidebar (Ad Area) -->
     <aside class="ad-sidebar">
-<!-- /23295908256/BIG-top-right-ad --> 
-<div id='div-gpt-ad-1744466819379-0' style='min-width: 300px; min-height: 600px;'>
+<!-- /23295908256/big-top-right -->
+<div id='div-gpt-ad-1744469682244-0' style='min-width: 300px; min-height: 600px;'>
   <script>
-    googletag.cmd.push(function() { googletag.display('div-gpt-ad-1744466819379-0'); });
+    googletag.cmd.push(function() { googletag.display('div-gpt-ad-1744469682244-0'); });
   </script>
 </div>
-<!-- /23295908256/BIG-bottom-right-ad -->
-<div id='div-gpt-ad-1744466898292-0' style='min-width: 300px; min-height: 600px;'>
+<!-- /23295908256/big-bottom-right -->
+<div id='div-gpt-ad-1744469576506-0' style='min-width: 240px; min-height: 250px;'>
   <script>
-    googletag.cmd.push(function() { googletag.display('div-gpt-ad-1744466898292-0'); });
+    googletag.cmd.push(function() { googletag.display('div-gpt-ad-1744469576506-0'); });
   </script>
 </div>
     </aside>
