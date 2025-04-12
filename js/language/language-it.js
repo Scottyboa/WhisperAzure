@@ -51,62 +51,62 @@ priceModalText: `
   <h1>Informazioni sui Costi</h1>
   <h2>Prezzi per la Trascrizione da Voce a Testo</h2>
   <ul>
-    <li><strong>Costo:</strong> 0,006 $ al minuto. <em>Esempio:</em> Una consulenza di 15 minuti costerà 15 × 0,006 $ = <strong>0,09 $</strong> per consulenza.</li>
+    <li><strong>Costo:</strong> $0.006 al minuto. <em>Esempio:</em> Una consulenza di 15 minuti costerà 15 × $0.006 = <strong>$0.09</strong> per consulenza.</li>
   </ul>
   <h2>Prezzi per la Generazione delle Note</h2>
   <ul>
     <li><strong>Prezzi basati sui Token:</strong></li>
     <ul>
-      <li><strong>Input (trascrizione + prompt):</strong> 2,50 $ per 1.000.000 di token (cioè 0,0000025 $ per token).</li>
-      <li><strong>Output (nota generata):</strong> 10,00 $ per 1.000.000 di token (cioè 0,00001 $ per token).</li>
+      <li><strong>Input (trascrizione + prompt):</strong> $5.00 per 1.000.000 di token (cioè $0.000005 per token).</li>
+      <li><strong>Output (nota generata):</strong> $15.00 per 1.000.000 di token (cioè $0.000015 per token).</li>
     </ul>
   </ul>
-  <h3>Calcolo Esemplificativo per una Consulenza (Solo Generazione della Nota)</h3>
+  <h3>Calcolo Esemplificativo per una Consulenza (solo generazione della nota)</h3>
   <ol>
     <li>
       <strong>Calcolo dell'Input:</strong>
-      <p>Si supponga che la trascrizione della consulenza contenga circa <strong>700 parole</strong> e che venga aggiunto un prompt di <strong>30 parole</strong>.<br>
+      <p>Supponiamo che la trascrizione della consulenza contenga circa <strong>700 parole</strong> e che venga aggiunto un prompt di <strong>30 parole</strong>.<br>
       Totale parole = 700 + 30 = <strong>730 parole</strong>.<br>
-      Token stimati = 730 × 0,75 ≈ <strong>547,5 token</strong>.<br>
-      Costo dell'input = 547,5 token × 0,0000025 $ ≈ <strong>0,0014 $</strong>.</p>
+      Token stimati = 730 × 0.75 ≈ <strong>547,5 token</strong>.<br>
+      Costo dell'input = 547,5 × $0.000005 ≈ <strong>$0.0027</strong>.</p>
     </li>
     <li>
       <strong>Calcolo dell'Output:</strong>
-      <p>Si supponga che la nota generata contenga circa <strong>250 parole</strong>.<br>
-      Token stimati = 250 × 0,75 ≈ <strong>187,5 token</strong>.<br>
-      Costo dell'output = 187,5 token × 0,00001 $ ≈ <strong>0,0019 $</strong>.</p>
+      <p>Supponiamo che la nota generata contenga circa <strong>250 parole</strong>.<br>
+      Token stimati = 250 × 0.75 ≈ <strong>187,5 token</strong>.<br>
+      Costo dell'output = 187,5 × $0.000015 ≈ <strong>$0.0028</strong>.</p>
     </li>
     <li>
       <strong>Costo Totale per la Generazione della Nota:</strong>
-      <p>Costo combinato ≈ 0,0014 $ + 0,0019 $ = <strong>0,0033 $</strong> per consulenza.</p>
+      <p>Costo combinato ≈ $0.0027 + $0.0028 = <strong>$0.0055</strong> per consulenza.</p>
     </li>
   </ol>
   <h2>Costo Totale Approssimativo per Consulenza</h2>
   <p>(per una consulenza/registrazione di 15 minuti, utilizzando entrambe le funzioni)</p>
   <ul>
-    <li><strong>Trascrizione da Voce a Testo:</strong> <strong>0,09 $</strong></li>
-    <li><strong>Generazione della Nota:</strong> <strong>0,0033 $</strong></li>
-    <li><strong>Totale:</strong> Circa <strong>0,0933 $</strong> per consulenza.</li>
+    <li><strong>Trascrizione da Voce a Testo:</strong> <strong>$0.09</strong></li>
+    <li><strong>Generazione della Nota:</strong> <strong>$0.0055</strong></li>
+    <li><strong>Totale:</strong> Circa <strong>$0.0955</strong> per consulenza.</li>
   </ul>
   <h2>Stime Mensili dei Costi</h2>
   <p>Supponendo di effettuare 20 consulenze al giorno, 4 giorni a settimana, per 4 settimane al mese (20 × 4 × 4 = <strong>320 consulenze</strong> al mese):</p>
   <ol>
     <li>
-      <strong>Utilizzo Solo della Trascrizione da Voce a Testo</strong> (con generazione della nota tramite il tuo account ChatGPT, che è essenzialmente gratuito):<br>
-      Costo mensile = 320 × 0,09 $ = <strong>28,80 $</strong>.
+      <strong>Solo Trascrizione da Voce a Testo:</strong><br>
+      Costo mensile = 320 × $0.09 = <strong>$28.80</strong>.
     </li>
     <li>
-      <strong>Utilizzo di Entrambe le Funzioni (Trascrizione e Generazione della Nota):</strong><br>
-      Costo mensile = 320 × 0,0933 $ ≈ <strong>29,86 $</strong>.
+      <strong>Trascrizione + Generazione Note:</strong><br>
+      Costo mensile = 320 × $0.0955 ≈ <strong>$30.56</strong>.
     </li>
   </ol>
   <h2>Flessibilità d'Uso</h2>
-  <p>A differenza dei fornitori che richiedono un abbonamento mensile, paghi solo per ciò che usi. Se prendi un giorno di pausa, vai in vacanza o hai un periodo senza attività, i costi saranno zero. Anche se utilizzi il servizio quotidianamente per tutte le tue consulenze, il costo per utilizzo rimane significativamente inferiore rispetto ad altri fornitori.</p>
+  <p>A differenza dei fornitori che richiedono un abbonamento mensile, qui paghi solo per ciò che effettivamente utilizzi. Se prendi un giorno libero, vai in vacanza o hai un periodo inattivo, i costi saranno pari a zero. Anche con uso quotidiano, il costo per ogni singola attività resta significativamente più basso rispetto ad altri servizi.</p>
   <hr>
   <h2>Vantaggio della Connessione Diretta</h2>
-  <p>La nostra webapp ti connette direttamente con l'API di OpenAI—senza intermediari e senza costi aggiuntivi. Questo collegamento diretto significa che paghi solo per il costo effettivo di elaborazione dell'IA, rendendo il nostro servizio una delle soluzioni più convenienti per la trascrizione da voce a testo e la generazione di note attualmente disponibili.</p>
+  <p>La nostra webapp si connette direttamente all’API di OpenAI – nessun intermediario, nessun costo aggiuntivo. Questo significa che paghi esclusivamente per l'elaborazione effettiva dell'IA, rendendo il nostro servizio una delle soluzioni più convenienti per la trascrizione e la generazione di note attualmente disponibili.</p>
 </div>
-`
+`,
 };
 
 export const transcribeTranslations = {
