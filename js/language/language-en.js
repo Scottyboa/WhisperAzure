@@ -2,7 +2,7 @@ export const indexTranslations = {
   pageTitle: "Whisper Clinical Transcription",
   headerTitle: "Whisper Clinical Transcription",
   headerSubtitle: "Advanced AI-Powered Speech-to-Text and Clinical Note Generation for Healthcare Consultations",
-  startText: "To use this webapp you will need an API-key. See the button in the bottom-left corner for instructions",
+  startText: "To get started, please enter your OpenAI API key:",
   apiPlaceholder: "Enter API Key here",
   enterButton: "Enter Transcription Tool",
   guideButton: "API guide - How to use",
