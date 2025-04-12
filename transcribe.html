@@ -9,22 +9,22 @@
 <script>
   window.googletag = window.googletag || { cmd: [] };
   googletag.cmd.push(function() {
-    // Big Top Left (300x600)
+    // Big Top Left Ad (Fixed 300x600)
     googletag.defineSlot('/23295908256/Big-top-left', [300, 600], 'div-gpt-ad-1744469658576-0')
              .addService(googletag.pubads());
-
-    // Big Top Right (300x600)
+    
+    // Big Top Right Ad (Fixed 300x600)
     googletag.defineSlot('/23295908256/big-top-right', [300, 600], 'div-gpt-ad-1744469682244-0')
              .addService(googletag.pubads());
-
-    // Big Bottom Left (300x250)
-    googletag.defineSlot('/23295908256/big-bottom-left', [300, 250], 'div-gpt-ad-1744469599754-0')
+    
+    // Big Bottom Left Ad (Supports either 300x250 or 240x400)
+    googletag.defineSlot('/23295908256/big-bottom-left', [[300, 250], [240, 400]], 'div-gpt-ad-1744469599754-0')
              .addService(googletag.pubads());
-
-    // Big Bottom Right (300x250)
-    googletag.defineSlot('/23295908256/big-bottom-right', [300, 250], 'div-gpt-ad-1744469576506-0')
+    
+    // Big Bottom Right Ad (Supports either 300x250 or 240x400)
+    googletag.defineSlot('/23295908256/big-bottom-right', [[300, 250], [240, 400]], 'div-gpt-ad-1744469576506-0')
              .addService(googletag.pubads());
-
+    
     googletag.pubads().enableSingleRequest();
     googletag.enableServices();
   });
