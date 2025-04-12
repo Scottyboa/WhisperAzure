@@ -4,7 +4,7 @@ export const indexTranslations = {
   pageTitle: "Whisper Klinisk Transkripsjon",
   headerTitle: "Whisper Klinisk Transkripsjon",
   headerSubtitle: "Avansert AI-drevet tale-til-tekst og notatgenerering for helsekonsultasjoner",
-  startText: "For å komme i gang, vennligst skriv inn din OpenAI API-nøkkel:",
+  startText: "Har du ikke en API-nøkkel ennå? Klikk på «API nøkkel – Hvordan lage» for enkel veiledning.",
   apiPlaceholder: "Skriv inn API-nøkkel her",
   enterButton: "Gå til transkripsjonsverktøyet",
   guideButton: "API-guide – Slik bruker du den",
@@ -36,19 +36,19 @@ Mange eksisterende leverandører tilbyr lignende tjenester, men tar betydelig me
 • Nettsiden i seg selv er helt gratis.<br><br>
 For at vi skal kunne fortsette å tilby denne gratis tjenesten, så hadde vi satt stor pris på om du godtar at det vises reklame fra Google Ads. Reklameinntektene hjelper oss å dekke kostnader til hosting og drift, slik at tjenesten kan forbli tilgjengelig for alle.`,  
   guideModalHeading: "API nøkkel - Hvordan lage",
-  guideModalText: `For å bruke denne webappen, må du først opprette en OpenAI API-profil, generere en API-nøkkel og sørge for at din OpenAI-lommebok har tilstrekkelige midler. API-nøkkelen kopieres deretter og limes inn i det angitte feltet. Når du trykker på "Enter", lagrer webappen API-nøkkelen midlertidig for økten – denne nøkkelen kobler deg til OpenAI-serverne slik at tale-til-tekst-transkripsjon og notatgenerering kan fungere. Vennligst merk at du belastes umiddelbart per utført oppgave. For mer informasjon om kostnader, se "Kostnad"-seksjonen på forsiden.
+  guideModalText: `For å bruke denne webappen, må du først opprette en OpenAI API-profil, generere en API-nøkkel og sørge for at din OpenAI-lommebok har tilstrekkelige midler. API-nøkkelen kopieres deretter og limes inn i det angitte feltet. Når du trykker på "Enter", lagrer webappen API-nøkkelen midlertidig for økten – denne nøkkelen kobler deg til OpenAI-serverne slik at tale-til-tekst-transkripsjon og notatgenerering kan fungere. Vennligst merk at du belastes umiddelbart per utførte oppgave(tale-til-tekst og/eller) notatgenerering. For mer informasjon om kostnader, se "Kostnadsinformasjon"-seksjonen på forsiden.
 <br><br>
 <strong>1. Opprett din OpenAI API-profil</strong><br>
-For å komme i gang, må du opprette en profil på OpenAI API-plattformen. Denne profilen fungerer som din konto for administrasjon av API-nøkler og fakturering. For å starte, besøk <a href="https://platform.openai.com/signup" style="color:blue;">OpenAI API Registrering</a>. Følg instruksjonene ved å oppgi e-postadressen din, sette et passord og bekrefte kontoen din. Når du er registrert, får du tilgang til dashbordet ditt.
+For å komme i gang, må du opprette en profil på OpenAI API-plattformen. Denne profilen fungerer som din konto for administrasjon av API-nøkler og fakturering. For å starte, besøk <a href="https://platform.openai.com/signup" style="color:blue;">OpenAI API Registrering</a>. Følg instruksjonene og opprett en bruker. Når du er registrert, får du tilgang til dashbordet ditt. Du vil da ha mulighet til å generere en personlig API-nøkkel, samt laste opp kreditt til din OpenAI lommebok.
 <br><br>
 <strong>2. Generer en API-nøkkel</strong><br>
-Etter at du har opprettet profilen din, generer en API-nøkkel ved å gå til <a href="https://platform.openai.com/account/api-keys" style="color:blue;">API-nøkkeladministrasjonen</a>. Klikk på knappen for å opprette en ny API-nøkkel. Viktig: Du vil kun se nøkkelen én gang. Kopier den umiddelbart og oppbevar den sikkert (f.eks. i en tekstfil). Hvis du mister nøkkelen eller mistenker at den har blitt kompromittert, slett den og opprett en ny.
+Etter at du har opprettet profilen din, generer en API-nøkkel ved å gå til <a href="https://platform.openai.com/account/api-keys" style="color:blue;">API-nøkkeladministrasjonen</a>. Klikk på knappen for å opprette en ny API-nøkkel. Viktig: Du vil kun se nøkkelen én gang. Kopier den umiddelbart og oppbevar den sikkert (f.eks. i en tekstfil). Hvis du mister nøkkelen eller mistenker at den har blitt kompromittert, kan du enkelt deaktivere/slette den på samme sted som du genererte den og samtidig opprette en ny.
 <br><br>
 <strong>3. Sett inn midler på din OpenAI-lommebok</strong><br>
-For at webappen skal fungere, må din OpenAI-lommebok ha tilstrekkelige midler. Besøk <a href="https://platform.openai.com/account/billing/overview" style="color:blue;">Fakturerings- og betalingsside</a> for å sette inn midler. Du kan overføre hvilket som helst beløp når som helst. Så lenge midlene er tilgjengelige, vil du kunne bruke siden – hver oppgave belastes umiddelbart.
+For at webappen skal fungere, må din OpenAI-lommebok ha tilstrekkelige midler. Besøk <a href="https://platform.openai.com/account/billing/overview" style="color:blue;">Fakturerings- og betalingsside</a> for å sette inn midler. Du kan overføre hvilket som helst beløp når som helst. Så lenge midlene er tilgjengelige, vil du kunne bruke funksjonene i denne webapp – hver oppgave belastes umiddelbart. For detaljert prisoversikt, se "Kostnadsinformasjon".
 <br><br>
 <strong>Sikkerhetsmerknad for økten</strong><br>
-Når du logger inn ved å skrive inn API-nøkkelen, lagres den kun midlertidig i nettleserøkten din. Dette betyr at hvis du forlater nettsiden, lukker nettleseren eller slår av datamaskinen, vil ikke API-nøkkelen bli lagret. Du må skrive den inn på nytt neste gang du bruker webappen, noe som sikrer at nøkkelen din forblir sikker.`,
+Når du logger inn ved å skrive inn API-nøkkelen i feltet på denne forsiden og klikker på enter, så lagres denne kun midlertidig i nettleserøkten din. Dette betyr at hvis du forlater nettsiden, lukker nettleseren eller slår av datamaskinen, vil ikke API-nøkkelen bli lagret. Du må da klippe og lime den inn på nytt neste gang du bruker webappen, noe som sikrer at nøkkelen din forblir sikker.`,
   
   priceButton: "Pris",
   priceModalHeading: "Kostnadsinformasjon",
