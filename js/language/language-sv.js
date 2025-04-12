@@ -52,70 +52,66 @@ För att webbappen ska fungera måste ditt OpenAI-konto ha tillräckligt med pen
 När du loggar in genom att ange din API-nyckel lagras den endast tillfälligt i din webbläsarsession. Det innebär att om du lämnar webbplatsen, stänger webbläsaren eller stänger av datorn så sparas inte nyckeln. Du måste ange nyckeln på nytt nästa gång du använder webbappen, vilket säkerställer att din nyckel förblir skyddad.`,  
   priceButton: "Pris",
   priceModalHeading: "Pris",
-priceModalText: `<h1>Kostnadsinformation</h1>
-<h2>Speech-to-text prissättning</h2>
-<ul>
-  <li><strong>Kostnad:</strong> $0.006 per minut.<br>
-      <em>Exempel:</em> En 15-minuters konsultation kostar 15 × $0.006 = <strong>$0.09</strong> per konsultation.
-  </li>
-</ul>
-<h2>Notisgenereringsprissättning</h2>
-<ul>
-  <li><strong>Tokenbaserad prissättning:</strong>
+priceModalText: `
+<div>
+  <h1>Kostnadsinformation</h1>
+  <h2>Tal-till-text-prissättning</h2>
+  <ul>
+    <li><strong>Kostnad:</strong> $0.006 per minut. <em>Exempel:</em> En 15-minuters konsultation kostar 15 × $0.006 = <strong>$0.09</strong> per konsultation.</li>
+  </ul>
+  <h2>Pris för notisgenerering</h2>
+  <ul>
+    <li><strong>Tokenbaserad prissättning:</strong></li>
     <ul>
-      <li><strong>Input (transkription + prompt):</strong> $2.50 per 1 000 000 tokens (d.v.s. $0.0000025 per token).</li>
-      <li><strong>Output (genererad notis):</strong> $10.00 per 1 000 000 tokens (d.v.s. $0.00001 per token).</li>
+      <li><strong>Input (transkription + prompt):</strong> $5.00 per 1 000 000 tokens (d.v.s. $0.000005 per token).</li>
+      <li><strong>Output (genererad notis):</strong> $15.00 per 1 000 000 tokens (d.v.s. $0.000015 per token).</li>
     </ul>
-  </li>
-</ul>
-<h3>Exempelkalkyl (endast notisgenerering)</h3>
-<ol>
-  <li>
-    <strong>Inputkalkyl:</strong>
-    <ul>
-      <li>Anta att transkriptionen av konsultationen är ca. <strong>700 ord</strong> och att du lägger till en <strong>30-ords prompt</strong>.</li>
-      <li>Totalt antal ord = 700 + 30 = <strong>730 ord</strong>.</li>
-      <li>Uppskattade tokens = 730 × 0.75 ≈ <strong>547,5 tokens</strong>.</li>
-      <li>Inputkostnad = 547,5 tokens × $0.0000025 ≈ <strong>$0.0014</strong>.</li>
-    </ul>
-  </li>
-  <li>
-    <strong>Outputkalkyl:</strong>
-    <ul>
-      <li>Anta att den genererade notisen är ca. <strong>250 ord</strong>.</li>
-      <li>Uppskattade tokens = 250 × 0.75 ≈ <strong>187,5 tokens</strong>.</li>
-      <li>Outputkostnad = 187,5 tokens × $0.00001 ≈ <strong>$0.0019</strong>.</li>
-    </ul>
-  </li>
-  <li>
-    <strong>Total kostnad för notisgenerering:</strong><br>
-    Sammanlagd kostnad ≈ $0.0014 + $0.0019 = <strong>$0.0033</strong> per konsultation.
-  </li>
-</ol>
-<h2>Ungefärliga totala kostnader per konsultation</h2>
-<p>(för en 15-minuters konsultation/inspelning med båda funktionerna)</p>
-<ul>
-  <li><strong>Speech-to-text:</strong> <strong>$0.09</strong></li>
-  <li><strong>Notisgenerering:</strong> <strong>$0.0033</strong></li>
-  <li><strong>Total:</strong> Ungefär <strong>$0.0933</strong> per konsultation.</li>
-</ul>
-<h2>Månatliga kostnadsuppskattningar</h2>
-<p>Om du genomför 20 konsultationer per dag, 4 dagar i veckan, under 4 veckor per månad (20 × 4 × 4 = <strong>320 konsultationer</strong> per månad):</p>
-<ol>
-  <li>
-    <strong>Endast speech-to-text</strong> (med notisgenerering via ditt eget ChatGPT-konto, vilket i praktiken är gratis):<br>
-    Månadskostnad = 320 × $0.09 = <strong>$28.80</strong>.
-  </li>
-  <li>
-    <strong>Både speech-to-text och notisgenerering:</strong><br>
-    Månadskostnad = 320 × $0.0933 ≈ <strong>$29.86</strong>.
-  </li>
-</ol>
-<h2>Användarvänlighet</h2>
-<p>Till skillnad från leverantörer som kräver ett månatligt abonnemang betalar du endast för faktiskt bruk. Om du tar en ledig dag, är på semester eller har en period utan aktivitet blir dina kostnader noll. Även om du använder tjänsten dagligen för alla dina patientkonsultationer, förblir kostnaden per konsultation avsevärt lägre jämfört med andra leverantörer.</p>
-<hr>
-<h2>Direktanslutningsfördel</h2>
-<p>Vår webbapp kopplar dig direkt till OpenAI API – utan mellanhänder, utan extra avgifter. Denna direkta anslutning innebär att du endast betalar för den faktiska AI-behandlingskostnaden, vilket gör vår tjänst till en av de mest prisvärda lösningarna för speech-to-text och notisgenerering som finns tillgängliga idag.</p>
+  </ul>
+  <h3>Exempelkalkyl för en konsultation (endast notisgenerering)</h3>
+  <ol>
+    <li>
+      <strong>Inputkalkyl:</strong>
+      <p>Anta att transkriptionen av konsultationen är cirka <strong>700 ord</strong> och att du lägger till en <strong>30-ords prompt</strong>.<br>
+      Totalt antal ord = 700 + 30 = <strong>730 ord</strong>.<br>
+      Uppskattade tokens = 730 × 0.75 ≈ <strong>547.5 tokens</strong>.<br>
+      Kostnad för input = 547.5 tokens × $0.000005 ≈ <strong>$0.0027</strong>.</p>
+    </li>
+    <li>
+      <strong>Outputkalkyl:</strong>
+      <p>Anta att den genererade notisen är cirka <strong>250 ord</strong>.<br>
+      Uppskattade tokens = 250 × 0.75 ≈ <strong>187.5 tokens</strong>.<br>
+      Kostnad för output = 187.5 tokens × $0.000015 ≈ <strong>$0.0028</strong>.</p>
+    </li>
+    <li>
+      <strong>Total kostnad för notisgenerering:</strong>
+      <p>Kombinerad kostnad ≈ $0.0027 + $0.0028 = <strong>$0.0055</strong> per konsultation.</p>
+    </li>
+  </ol>
+  <h2>Ungefärlig total kostnad per konsultation</h2>
+  <p>(för en 15-minuters konsultation/inspelning med båda funktionerna)</p>
+  <ul>
+    <li><strong>Tal-till-text:</strong> <strong>$0.09</strong></li>
+    <li><strong>Notisgenerering:</strong> <strong>$0.0055</strong></li>
+    <li><strong>Total:</strong> Cirka <strong>$0.0955</strong> per konsultation.</li>
+  </ul>
+  <h2>Månatliga kostnadsuppskattningar</h2>
+  <p>Om du genomför 20 konsultationer per dag, 4 dagar i veckan, under 4 veckor (20 × 4 × 4 = <strong>320 konsultationer</strong> per månad):</p>
+  <ol>
+    <li>
+      <strong>Endast tal-till-text:</strong><br>
+      Månadskostnad = 320 × $0.09 = <strong>$28.80</strong>.
+    </li>
+    <li>
+      <strong>Både tal-till-text och notisgenerering:</strong><br>
+      Månadskostnad = 320 × $0.0955 ≈ <strong>$30.56</strong>.
+    </li>
+  </ol>
+  <h2>Flexibilitet i användningen</h2>
+  <p>Till skillnad från leverantörer som kräver ett månadsabonnemang betalar du endast för faktisk användning. Om du tar en ledig dag, åker på semester eller har en period utan aktivitet blir dina kostnader noll. Även vid daglig användning för alla konsultationer är kostnaden per uppgift betydligt lägre än hos andra leverantörer.</p>
+  <hr>
+  <h2>Fördel med direktanslutning</h2>
+  <p>Vår webbapp kopplar dig direkt till OpenAI:s API – inga mellanhänder, inga extra avgifter. Denna direkta anslutning innebär att du endast betalar för den faktiska AI-behandlingskostnaden, vilket gör vår tjänst till en av de mest prisvärda lösningarna för tal-till-text och notisgenerering som finns tillgängliga idag.</p>
+</div>
 `,
 };
 
