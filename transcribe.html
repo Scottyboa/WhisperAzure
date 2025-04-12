@@ -49,8 +49,8 @@
     .grid-container {
       display: grid;
       grid-template-columns: 300px 1fr 300px; /* Left sidebar, main content, right sidebar */
-      grid-template-rows: 100%;               /* Only one row */
-      height: 100vh;                          /* Fill the viewport height */
+      grid-template-rows: auto; /* Allow rows to size based on content */
+      min-height: 1200px;       /* Ensure the grid is always at least 1200px tall */
     }
     /* Left Sidebar - Updated: No padding and no gap so ads fill the space */
     .sidebar {
