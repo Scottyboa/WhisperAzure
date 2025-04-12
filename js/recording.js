@@ -32,6 +32,7 @@ const MAX_CHUNK_DURATION = 120000; // 120 seconds
 const watchdogThreshold = 1500;   // 1.5 seconds with no frame
 
 let mediaStream = null;
+let processedAnyAudioFrames = false;
 let audioReader = null;
 let recordingStartTime = 0;
 // Accumulate time from all active segments
@@ -289,6 +290,9 @@ async function processAudioChunkInternal(force = false) {
     logDebug("No audio frames to process.");
     return;
   }
+  // Mark that we have processed at least one frame set.
+  processedAnyAudioFrames = true;
+  
   logInfo(`Processing ${audioFrames.length} audio frames for chunk ${chunkNumber}.`);
   const framesToProcess = audioFrames;
   audioFrames = []; // Clear the buffer
