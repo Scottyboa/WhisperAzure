@@ -545,25 +545,46 @@ function initRecording() {
     }
   });
 
-  stopButton.addEventListener("click", async () => {
-    updateStatusMessage("Finishing transcription...", "blue");
-    manualStop = true;
-    clearTimeout(chunkTimeoutId);
-    clearInterval(recordingTimerInterval);
-    stopMicrophone();
-    chunkStartTime = 0;
-    lastFrameTime = 0;
-    await new Promise(resolve => setTimeout(resolve, 200));
-    if (chunkProcessingLock) {
-      pendingStop = true;
-      logDebug("Chunk processing locked at stop; setting pendingStop.");
+stopButton.addEventListener("click", async () => {
+  updateStatusMessage("Finishing transcription...", "blue");
+  manualStop = true;
+  clearTimeout(chunkTimeoutId);
+  clearInterval(recordingTimerInterval);
+  stopMicrophone();
+  chunkStartTime = 0;
+  lastFrameTime = 0;
+  await new Promise(resolve => setTimeout(resolve, 200));
+  if (chunkProcessingLock) {
+    pendingStop = true;
+    logDebug("Chunk processing locked at stop; setting pendingStop.");
+  } else {
+    await safeProcessAudioChunk(true);
+    // Check if any audio frames were processed
+    if (!processedAnyAudioFrames) {
+      // No frames processed: clear the completion timer and reset its display.
+      if (completionTimerInterval) {
+        clearInterval(completionTimerInterval);
+        completionTimerInterval = null;
+      }
+      const timerElem = document.getElementById("transcribeTimer");
+      if (timerElem) {
+        timerElem.innerText = "Completion Timer: 0 sec";
+      }
+      // Re-enable the start button and disable stop/pause buttons
+      const startButton = document.getElementById("startButton");
+      if (startButton) startButton.disabled = false;
+      if (stopButton) stopButton.disabled = true;
+      const pauseResumeButton = document.getElementById("pauseResumeButton");
+      if (pauseResumeButton) pauseResumeButton.disabled = true;
+      logInfo("No audio frames processed. Resetting completion timer and re-enabling start.");
+      // Reset the flag for the next recording session
+      processedAnyAudioFrames = false;
     } else {
-      await safeProcessAudioChunk(true);
       finalChunkProcessed = true;
       finalizeStop();
       logInfo("Stop button processed; final chunk handled.");
     }
-  });
-}
+  }
+});
 
 export { initRecording };
