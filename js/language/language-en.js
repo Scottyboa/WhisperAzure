@@ -55,56 +55,56 @@ priceModalText: `
   </ul>
   <h2>Note Generation Pricing</h2>
   <ul>
-    <li><strong>Token-Based Pricing:</strong></li>
+    <li><strong>Token-based pricing:</strong></li>
     <ul>
-      <li><strong>Input (transcription + prompt):</strong> $2.50 per 1,000,000 tokens (i.e. $0.0000025 per token).</li>
-      <li><strong>Output (generated note):</strong> $10.00 per 1,000,000 tokens (i.e. $0.00001 per token).</li>
+      <li><strong>Input (transcription + prompt):</strong> $5.00 per 1,000,000 tokens (i.e., $0.000005 per token).</li>
+      <li><strong>Output (generated note):</strong> $15.00 per 1,000,000 tokens (i.e., $0.000015 per token).</li>
     </ul>
   </ul>
-  <h3>Example Consultation Calculation (Note Generation Only)</h3>
+  <h3>Example Calculation for a Consultation (Note Generation Only)</h3>
   <ol>
     <li>
       <strong>Input Calculation:</strong>
-      <p>Assume the consultation transcription is about <strong>700 words</strong> and you add a <strong>30-word prompt</strong>.<br>
+      <p>Assume the consultation transcription is approximately <strong>700 words</strong> and you add a <strong>30-word prompt</strong>.<br>
       Total words = 700 + 30 = <strong>730 words</strong>.<br>
-      Estimated tokens = 730 × 0.75 ≈ <strong>547.5 tokens</strong>.<br>
-      Input cost = 547.5 tokens × $0.0000025 ≈ <strong>$0.0014</strong>.</p>
+      Estimated token count = 730 × 0.75 ≈ <strong>547.5 tokens</strong>.<br>
+      Input cost = 547.5 tokens × $0.000005 ≈ <strong>$0.0027</strong>.</p>
     </li>
     <li>
       <strong>Output Calculation:</strong>
-      <p>Assume the generated note is around <strong>250 words</strong>.<br>
-      Estimated tokens = 250 × 0.75 ≈ <strong>187.5 tokens</strong>.<br>
-      Output cost = 187.5 tokens × $0.00001 ≈ <strong>$0.0019</strong>.</p>
+      <p>Assume the generated note is approximately <strong>250 words</strong>.<br>
+      Estimated token count = 250 × 0.75 ≈ <strong>187.5 tokens</strong>.<br>
+      Output cost = 187.5 tokens × $0.000015 ≈ <strong>$0.0028</strong>.</p>
     </li>
     <li>
       <strong>Total Note Generation Cost:</strong>
-      <p>Combined cost ≈ $0.0014 + $0.0019 = <strong>$0.0033</strong> per consultation.</p>
+      <p>Combined cost ≈ $0.0027 + $0.0028 = <strong>$0.0055</strong> per consultation.</p>
     </li>
   </ol>
-  <h2>Approximate Combined Cost Per Consultation</h2>
-  <p>(for a 15-minute consultation/recording, using both functions)</p>
+  <h2>Approximate Total Cost per Consultation</h2>
+  <p>(for a 15-minute consultation/recording using both features)</p>
   <ul>
     <li><strong>Speech-to-Text:</strong> <strong>$0.09</strong></li>
-    <li><strong>Note Generation:</strong> <strong>$0.0033</strong></li>
-    <li><strong>Total:</strong> Approximately <strong>$0.0933</strong> per consultation.</li>
+    <li><strong>Note Generation:</strong> <strong>$0.0055</strong></li>
+    <li><strong>Total:</strong> Approximately <strong>$0.0955</strong> per consultation.</li>
   </ul>
   <h2>Monthly Cost Estimates</h2>
-  <p>Assuming you conduct 20 consultations per day, 4 days per week, over 4 weeks per month (20 × 4 × 4 = <strong>320 consultations</strong> per month):</p>
+  <p>If you conduct 20 consultations per day, 4 days per week, for 4 weeks per month (20 × 4 × 4 = <strong>320 consultations</strong> per month):</p>
   <ol>
     <li>
-      <strong>Using Only Speech-to-Text</strong>:<br>
+      <strong>Speech-to-Text Only:</strong><br>
       Monthly cost = 320 × $0.09 = <strong>$28.80</strong>.
     </li>
     <li>
       <strong>Using Both Speech-to-Text and Note Generation:</strong><br>
-      Monthly cost = 320 × $0.0933 ≈ <strong>$29.86</strong>.
+      Monthly cost = 320 × $0.0955 ≈ <strong>$30.56</strong>.
     </li>
   </ol>
-  <h2>Usage Flexibility</h2>
-  <p>Unlike providers that require a monthly subscription, you only pay per usage. If you take a day off, go on vacation, or have a period of no activity, your costs will be zero. Even if you use the service every day for all your patient consultations, the per-use cost remains significantly lower compared to other providers.</p>
+  <h2>Flexible Usage</h2>
+  <p>Unlike providers that require a monthly subscription, you only pay for what you actually use. If you take a day off, go on vacation, or have a period with no activity, your costs will be zero. Even if you use the service daily for all your consultations, the per-task cost remains significantly lower than other providers.</p>
   <hr>
   <h2>Direct Connection Advantage</h2>
-  <p>Our webapp connects you directly with the OpenAI API—no intermediary, no extra fees. This direct link means you only pay for the actual AI processing cost, making our service one of the most affordable speech-to-text and note generation solutions available today.</p>
+  <p>Our web app connects you directly to the OpenAI API—no intermediaries, no extra fees. This direct connection means you only pay for the actual AI processing cost, making our service one of the most cost-effective solutions for speech-to-text and note generation available today.</p>
 `,
 };
 
