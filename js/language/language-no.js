@@ -17,7 +17,12 @@ securityModalText: `Personvernet ditt og sikkerheten til pasientinformasjon er v
 - <strong>Direkte og lokal behandling:</strong> All data som behandles av vårt system – inkludert lydopptak, transkripsjoner og notater – sendes direkte til OpenAI via deres sikre API. Ingen data prosesseres eller lagres på egne servere. Transkripsjoner og notater vises og lagres midlertidig kun i nettleseren din, og slettes automatisk når de erstattes eller når nettleseren lukkes.<br><br>
 - <strong>Automatisk sletting:</strong> Så snart en transkripsjon eller et notat er generert og vist på skjermen din, slettes det automatisk fra nettleserens minne når det erstattes av nytt innhold eller når du forlater siden. Lydfiler behandles kun midlertidig i nettleseren for å muliggjøre opplasting til OpenAI, og beholdes ikke etter bruk.<br><br>
 - <strong>Beskyttelse mot uautorisert tilgang:</strong> Dine data prosesseres direkte av OpenAI og vises kun lokalt i din nettleser. Selv om noen skulle få tilgang til API-nøkkelen din, vil ingen data kunne hentes fra vår tjeneste.<br><br>
-- <strong>GDPR-kompatibel databehandling:</strong> All databehandling skjer gjennom OpenAI sine API-er og vises kun i din nettleser. OpenAI tilbyr databehandling i henhold til GDPR-regelverket, og benytter ikke innholdet ditt til modelltrening eller videreutvikling.<br><br>
+- <strong>GDPR-kompatibel databehandling:</strong> All databehandling skjer gjennom OpenAI sine API-er og vises kun i din nettleser. OpenAI tilbyr databehandling i henhold til GDPR-regelverket, og benytter ikke innholdet ditt til modelltrening eller videreutvikling. Du kan lese mer om dette ved å besøke 
+ <a href="https://openai.com/security-and-privacy/" target="_blank" style="color: blue; text-decoration: underline;">
+    OpenAI sikkerhet og personvern
+  </a>.
+</p>
+<br><br>
 <strong>Ytterligere personvernpraksis:</strong><br><br>
 - <strong>Minimal datainnsamling:</strong> Vi samler kun inn den informasjonen som er nødvendig for å levere våre tjenester. Dette inkluderer ditt språkvalg og en enhetstoken som kun brukes for å lagre brukerpreferanser lokalt i nettleseren. Din OpenAI API-nøkkel lagres aldri av oss, men holdes midlertidig i din nettleser under økten. Ingen ytterligere personopplysninger lagres eller behandles.<br><br>
 - <strong>Bruk av informasjonskapsler:</strong> Informasjonskapsler på dette nettstedet brukes utelukkende til å vise personlige annonser og forbedre din brukeropplevelse. Vi bruker ikke disse informasjonskapslene til å samle inn eller lagre personopplysninger utover det som kreves for dette formålet. I tillegg benytter nettstedet informasjonskapsler for å lagre brukerpreferanser – som språkvalg og tilpassede prompts – samt for å håndtere samtykke.<br><br>
