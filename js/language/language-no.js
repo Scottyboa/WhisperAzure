@@ -63,8 +63,8 @@ priceModalText: `
   <ul>
     <li><strong>Token-basert prising:</strong></li>
     <ul>
-      <li><strong>Input (transkripsjon + prompt):</strong> $2.50 per 1 000 000 tokens (dvs. $0.0000025 per token).</li>
-      <li><strong>Output (generert notat):</strong> $10.00 per 1 000 000 tokens (dvs. $0.00001 per token).</li>
+      <li><strong>Input (transkripsjon + prompt):</strong> $5.00 per 1 000 000 tokens (dvs. $0.000005 per token).</li>
+      <li><strong>Output (generert notat):</strong> $15.00 per 1 000 000 tokens (dvs. $0.000015 per token).</li>
     </ul>
   </ul>
   <h3>Eksempelberegning for konsultasjon (kun notatgenerering)</h3>
@@ -74,28 +74,28 @@ priceModalText: `
       <p>Anta at transkripsjonen av konsultasjonen er på omtrent <strong>700 ord</strong> og at du legger til en <strong>30-ords prompt</strong>.<br>
       Totalt antall ord = 700 + 30 = <strong>730 ord</strong>.<br>
       Estimert antall tokens = 730 × 0.75 ≈ <strong>547.5 tokens</strong>.<br>
-      Inputkostnad = 547.5 tokens × $0.0000025 ≈ <strong>$0.0014</strong>.</p>
+      Inputkostnad = 547.5 tokens × $0.000005 ≈ <strong>$0.0027</strong>.</p>
     </li>
     <li>
       <strong>Outputberegning:</strong>
       <p>Anta at det genererte notatet er på omtrent <strong>250 ord</strong>.<br>
       Estimert antall tokens = 250 × 0.75 ≈ <strong>187.5 tokens</strong>.<br>
-      Outputkostnad = 187.5 tokens × $0.00001 ≈ <strong>$0.0019</strong>.</p>
+      Outputkostnad = 187.5 tokens × $0.000015 ≈ <strong>$0.0028</strong>.</p>
     </li>
     <li>
       <strong>Total notatgenereringskostnad:</strong>
-      <p>Kombinert kostnad ≈ $0.0014 + $0.0019 = <strong>$0.0033</strong> per konsultasjon.</p>
+      <p>Kombinert kostnad ≈ $0.0027 + $0.0028 = <strong>$0.0055</strong> per konsultasjon.</p>
     </li>
   </ol>
   <h2>Omtrentlig samlet kostnad per konsultasjon</h2>
   <p>(for en 15-minutters konsultasjon/opptak med begge funksjoner)</p>
   <ul>
     <li><strong>Tale-til-tekst:</strong> <strong>$0.09</strong></li>
-    <li><strong>Notatgenerering:</strong> <strong>$0.0033</strong></li>
-    <li><strong>Totalt:</strong> Omtrent <strong>$0.0933</strong> per konsultasjon.</li>
+    <li><strong>Notatgenerering:</strong> <strong>$0.0055</strong></li>
+    <li><strong>Totalt:</strong> Omtrent <strong>$0.0955</strong> per konsultasjon.</li>
   </ul>
   <h2>Månedlige kostnadsestimater</h2>
-  <p>Dersom du gjennomfører 20 konsultasjoner per dag, 4 dager i uken, over 4 uker i måneden (20 × 4 × 4 = <strong>320 konsultasjoner</strong> per måned):</p>
+  <p>Dersom du gjennomfører 20 konsultasjoner per dag, 4 dager i uken, i 4 uker (20 × 4 × 4 = <strong>320 konsultasjoner</strong> per måned):</p>
   <ol>
     <li>
       <strong>Kun tale-til-tekst</strong>:<br>
@@ -103,14 +103,14 @@ priceModalText: `
     </li>
     <li>
       <strong>Bruk av både tale-til-tekst og notatgenerering:</strong><br>
-      Månedlig kostnad = 320 × $0.0933 ≈ <strong>$29.86</strong>.
+      Månedlig kostnad = 320 × $0.0955 ≈ <strong>$30.56</strong>.
     </li>
   </ol>
   <h2>Fleksibilitet i bruken</h2>
   <p>I motsetning til leverandører som krever et månedlig abonnement, betaler du kun for faktisk bruk. Om du tar en fridag, drar på ferie eller har en periode uten aktivitet, vil kostnadene dine være null. Selv om du bruker tjenesten daglig for alle dine pasientkonsultasjoner, forblir kostnaden per oppgave betydelig lavere enn hos andre leverandører.</p>
   <hr>
   <h2>Fordel med direkte tilkobling</h2>
-  <p>Vår webapp kobler deg direkte til OpenAI API – ingen mellomledd, ingen ekstra avgifter. Denne direkte tilkoblingen betyr at du kun betaler for den faktiske AI-behandlingskostnaden, noe som gjør vår tjeneste til en av de mest prisgunstige løsningene for tale-til-tekst og notatgenerering som er tilgjengelig i dag.</p>
+  <p>Vår webapp kobler deg direkte til OpenAI API – ingen mellomledd, ingen ekstra avgifter. Denne direkte tilkoblingen betyr at du kun betaler for den faktiske AI-behandlingskostnaden, noe som gjør vår tjeneste til den mest rimeligste løsningen for tale-til-tekst og notatgenerering som er tilgjengelig i dag.</p>
 `,
 };
 
