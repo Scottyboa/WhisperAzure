@@ -204,13 +204,20 @@ async function processAudioUsingOfflineContext(pcmFloat32, originalSampleRate, n
   const source = offlineCtx.createBufferSource();
   source.buffer = monoBuffer;
   
-  // Create a gain node to apply a 0.3-second fade‑in and fade‑out
-  const gainNode = offlineCtx.createGain();
-  const fadeDuration = 0.3;
-  gainNode.gain.setValueAtTime(0, 0);
-  gainNode.gain.linearRampToValueAtTime(1, fadeDuration);
-  gainNode.gain.setValueAtTime(1, duration - fadeDuration);
-  gainNode.gain.linearRampToValueAtTime(0, duration);
+// Modified code snippet to fix the negative time error:
+const gainNode = offlineCtx.createGain();
+const fadeDuration = 0.3;
+gainNode.gain.setValueAtTime(0, 0);
+gainNode.gain.linearRampToValueAtTime(1, fadeDuration);
+
+// Compute fade-out start time, ensuring it's non-negative
+const fadeOutStart = Math.max(0, duration - fadeDuration);
+if (duration < fadeDuration * 2) {
+  console.warn(`[Audio] Short chunk (${duration.toFixed(2)}s) — fade-in/out may be squished`);
+}
+
+gainNode.gain.setValueAtTime(1, fadeOutStart);
+gainNode.gain.linearRampToValueAtTime(0, duration);
   
   source.connect(gainNode).connect(offlineCtx.destination);
   source.start(0);
