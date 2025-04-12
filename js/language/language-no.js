@@ -4,7 +4,7 @@ export const indexTranslations = {
   pageTitle: "Whisper Klinisk Transkripsjon",
   headerTitle: "Whisper Klinisk Transkripsjon",
   headerSubtitle: "Avansert AI-drevet tale-til-tekst og notatgenerering for helsekonsultasjoner",
-  startText: "For å komme i gang, vennligst skriv inn din OpenAI API-nøkkel:",
+  startText: "For å bruke denne webappen trenger du en API-nøkkel. Les hvordan du enkelt kan opprette denne på knappen nederst til venstre",
   apiPlaceholder: "Skriv inn API-nøkkel her",
   enterButton: "Gå til transkripsjonsverktøyet",
   guideButton: "API-guide – Slik bruker du den",
