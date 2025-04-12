@@ -15,10 +15,7 @@ securityModalText: `Your privacy and the security of patient information are our
 - <strong>Automatic deletion:</strong> As soon as a transcript or note is generated and displayed on your screen, it is automatically removed from your browser's memory when replaced with new content or when you leave the page. Audio files are processed only temporarily in the browser to enable upload to OpenAI and are not retained after use.<br><br>
 - <strong>Protection against unauthorized access:</strong> Your data is processed directly by OpenAI and is only visible locally in your browser. Nothing is stored on our servers. Even if someone gains access to your API key, no data can be retrieved from our service.<br><br>
 - <strong>GDPR-compliant data processing:</strong> All data processing is handled through OpenAI’s APIs and displayed only in your browser. OpenAI provides GDPR-compliant data handling and does not use your content for model training or further development. <p>
-  You can read more about this at <a href="https://openai.com/security-and-privacy/" target="_blank" style="color: blue; text-decoration: underline;">
-    OpenAI Security and Privacy Policy
-  </a>.
-</p>
+  You can read more about this at <a href="https://openai.com/security-and-privacy/" target="_blank" style="color: blue; text-decoration: underline;">OpenAI Security and Privacy Policy</a>.
 <br><br>
 <strong>Additional privacy practices:</strong><br><br>
 - <strong>Minimal data collection:</strong> We collect only the information necessary to deliver our services. This includes your language preference and a device token used solely to store user preferences locally in your browser. Your OpenAI API key is never stored by us but is temporarily held in your browser during the session. No additional personal information is collected or processed.<br><br>
