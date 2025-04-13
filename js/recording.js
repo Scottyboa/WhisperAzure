@@ -554,55 +554,77 @@ stopButton.addEventListener("click", async () => {
   chunkStartTime = 0;
   lastFrameTime = 0;
   await new Promise(resolve => setTimeout(resolve, 200));
-  
-  // NEW: Immediate check if no audio frames were captured.
+
+  // If no audio frames were captured and none were processed, perform a full reset.
   if (audioFrames.length === 0 && !processedAnyAudioFrames) {
-    // No audio frames captured: reset the completion timer and UI immediately.
+    // Reset internal state for a new recording session.
+    resetRecordingState();
+    
+    // Clear and reset the completion timer.
     if (completionTimerInterval) {
       clearInterval(completionTimerInterval);
       completionTimerInterval = null;
     }
-    const timerElem = document.getElementById("transcribeTimer");
-    if (timerElem) {
-      timerElem.innerText = "Completion Timer: 0 sec";
+    const compTimerElem = document.getElementById("transcribeTimer");
+    if (compTimerElem) {
+      compTimerElem.innerText = "Completion Timer: 0 sec";
     }
-    // Re-enable the start button and disable stop/pause buttons.
+
+    // Clear and reset the recording timer.
+    const recTimerElem = document.getElementById("recordTimer");
+    if (recTimerElem) {
+      recTimerElem.innerText = "Recording Timer: 0 sec";
+    }
+    
+    // Update the status message.
+    updateStatusMessage("Recording reset. Ready to start.", "green");
+
+    // Re-enable the Start button and disable the Stop and Pause/Resume buttons.
     const startButton = document.getElementById("startButton");
     if (startButton) startButton.disabled = false;
     stopButton.disabled = true;
     const pauseResumeButton = document.getElementById("pauseResumeButton");
     if (pauseResumeButton) pauseResumeButton.disabled = true;
-    logInfo("No audio frames captured. Resetting completion timer and re-enabling start.");
-    return; // Exit the stop handler early.
-  }
-  
-  // If there might be some audio, then proceed normally.
-  if (chunkProcessingLock) {
-    pendingStop = true;
-    logDebug("Chunk processing locked at stop; setting pendingStop.");
+
+    logInfo("No audio frames captured. Full reset performed.");
+    // Reset the flag for the next session.
+    processedAnyAudioFrames = false;
+    return; // Exit the stop handler.
   } else {
-    await safeProcessAudioChunk(true);
-    if (!processedAnyAudioFrames) {
-      // Even after processing, if no frames were captured, reset the timer and UI.
-      if (completionTimerInterval) {
-        clearInterval(completionTimerInterval);
-        completionTimerInterval = null;
-      }
-      const timerElem = document.getElementById("transcribeTimer");
-      if (timerElem) {
-        timerElem.innerText = "Completion Timer: 0 sec";
-      }
-      const startButton = document.getElementById("startButton");
-      if (startButton) startButton.disabled = false;
-      stopButton.disabled = true;
-      const pauseResumeButton = document.getElementById("pauseResumeButton");
-      if (pauseResumeButton) pauseResumeButton.disabled = true;
-      logInfo("No audio frames processed. Resetting completion timer and re-enabling start.");
-      processedAnyAudioFrames = false;
+    // Otherwise, if there might be some audio, proceed normally.
+    if (chunkProcessingLock) {
+      pendingStop = true;
+      logDebug("Chunk processing locked at stop; setting pendingStop.");
     } else {
-      finalChunkProcessed = true;
-      finalizeStop();
-      logInfo("Stop button processed; final chunk handled.");
+      await safeProcessAudioChunk(true);
+      // After processing, if still no frames have been captured...
+      if (!processedAnyAudioFrames) {
+        resetRecordingState();
+        if (completionTimerInterval) {
+          clearInterval(completionTimerInterval);
+          completionTimerInterval = null;
+        }
+        const compTimerElem = document.getElementById("transcribeTimer");
+        if (compTimerElem) {
+          compTimerElem.innerText = "Completion Timer: 0 sec";
+        }
+        const recTimerElem = document.getElementById("recordTimer");
+        if (recTimerElem) {
+          recTimerElem.innerText = "Recording Timer: 0 sec";
+        }
+        updateStatusMessage("Recording reset. Ready to start.", "green");
+        const startButton = document.getElementById("startButton");
+        if (startButton) startButton.disabled = false;
+        stopButton.disabled = true;
+        const pauseResumeButton = document.getElementById("pauseResumeButton");
+        if (pauseResumeButton) pauseResumeButton.disabled = true;
+        logInfo("No audio frames processed after safeProcessAudioChunk. Full reset performed.");
+        processedAnyAudioFrames = false;
+      } else {
+        finalChunkProcessed = true;
+        finalizeStop();
+        logInfo("Stop button processed; final chunk handled.");
+      }
     }
   }
 });
