@@ -586,6 +586,7 @@ stopButton.addEventListener("click", async () => {
     }
   }
 });
+}
 
 export { initRecording };
 
