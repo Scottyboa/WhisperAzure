@@ -438,38 +438,6 @@
       });
     </script>
 
-  <!-- Ad Refresh Script -->
-    <script>
-      // Set the minimum refresh interval to 7 minutes (in milliseconds)
-      const MIN_REFRESH_INTERVAL = 7 * 60 * 1000;
-      let lastAdRefreshTime = Date.now();
-
-      function refreshAdsIfEligible() {
-        const now = Date.now();
-        if (now - lastAdRefreshTime >= MIN_REFRESH_INTERVAL) {
-          // Refresh all GAM ad slots
-          googletag.cmd.push(function() {
-            googletag.pubads().refresh();
-          });
-          lastAdRefreshTime = now;
-          console.log("GAM ads refreshed at", new Date(now).toLocaleTimeString());
-        } else {
-          console.log("Refresh not triggered. Please wait for at least 7 minutes.");
-        }
-      }
-
-      // Attach the refresh function to selected button clicks
-      document.addEventListener("DOMContentLoaded", function () {
-        const triggerButtons = ["startButton", "stopButton", "pauseResumeButton", "generateNoteButton"];
-        triggerButtons.forEach(function(id) {
-          const button = document.getElementById(id);
-          if (button) {
-            button.addEventListener("click", refreshAdsIfEligible);
-          }
-        });
-      });
-    </script>
-
   <!-- Import the main module to initialize language, recording, note generation, and UI functionalities -->
   <script type="module" src="./js/main.js"></script>
 </body>
