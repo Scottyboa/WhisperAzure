@@ -440,7 +440,7 @@
 
   <!-- Ad Refresh Script -->
     <script>
-      // Set the minimum refresh interval to 2 minutes (in milliseconds)
+      // Set the minimum refresh interval to 7 minutes (in milliseconds)
       const MIN_REFRESH_INTERVAL = 7 * 60 * 1000;
       let lastAdRefreshTime = Date.now();
 
@@ -454,7 +454,7 @@
           lastAdRefreshTime = now;
           console.log("GAM ads refreshed at", new Date(now).toLocaleTimeString());
         } else {
-          console.log("Refresh not triggered. Please wait for at least 2 minutes.");
+          console.log("Refresh not triggered. Please wait for at least 7 minutes.");
         }
       }
 
