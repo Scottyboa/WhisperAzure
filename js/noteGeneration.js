@@ -126,7 +126,7 @@ All headings should be plain text with a colon, like 'Bakgrunn:'.`.trim();
         "Authorization": "Bearer " + apiKey
       },
       body: JSON.stringify({
-        model: "gpt-4-latest",
+        model: "gpt-4.1",
         messages: [
           { role: "system", content: finalPromptText },
           { role: "user", content: transcriptionText }
