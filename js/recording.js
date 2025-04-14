@@ -519,32 +519,75 @@ function initRecording() {
     }
   });
 
-  pauseResumeButton.addEventListener("click", async () => {
-    if (!mediaStream) return;
-    const track = mediaStream.getAudioTracks()[0];
-    if (track.enabled) {
-      await safeProcessAudioChunk(false);
-      accumulatedRecordingTime += Date.now() - recordingStartTime;
-      track.enabled = false;
-      recordingPaused = true;
-      clearInterval(recordingTimerInterval);
-      clearTimeout(chunkTimeoutId);
-      pauseResumeButton.innerText = "Resume Recording";
-      updateStatusMessage("Recording paused", "orange");
-      logInfo("Recording paused; current chunk uploaded.");
-    } else {
-      track.enabled = true;
+pauseResumeButton.addEventListener("click", async () => {
+  // If there is no mediaStream or we're currently paused, then we want to RESUME recording.
+  if (!mediaStream || recordingPaused) {
+    try {
+      // RESUME LOGIC: Request microphone access again
+      mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const newTrack = mediaStream.getAudioTracks()[0];
+      const processor = new MediaStreamTrackProcessor({ track: newTrack });
+      audioReader = processor.readable.getReader();
+
+      // Start the read loop for audio frames
+      function readLoop() {
+        audioReader.read().then(({ done, value }) => {
+          if (done) {
+            logInfo("Audio track reading complete.");
+            return;
+          }
+          lastFrameTime = Date.now();
+          audioFrames.push(value);
+          readLoop();
+        }).catch(err => {
+          logError("Error reading audio frames", err);
+        });
+      }
+      readLoop();
+
+      // Reset timing variables for the resumed segment
       recordingPaused = false;
       recordingStartTime = Date.now();
-      lastFrameTime = Date.now(); 
+      lastFrameTime = Date.now();
       recordingTimerInterval = setInterval(updateRecordingTimer, 1000);
+      
+      // Update UI to reflect resumed state
       pauseResumeButton.innerText = "Pause Recording";
       updateStatusMessage("Recording...", "green");
       chunkStartTime = Date.now();
       scheduleChunk();
       logInfo("Recording resumed.");
+
+      // Leave startButton and stopButton states unchanged; startButton remains disabled.
+    } catch (error) {
+      updateStatusMessage("Error resuming recording: " + error, "red");
+      logError("Error resuming microphone on resume", error);
     }
-  });
+  } else {
+    // PAUSE LOGIC: Process pending audio, then stop the microphone so that the red dot goes away.
+    await safeProcessAudioChunk(false);
+    accumulatedRecordingTime += Date.now() - recordingStartTime;
+    
+    // Fully stop the media stream to release the microphone
+    stopMicrophone();
+    
+    recordingPaused = true;
+    clearInterval(recordingTimerInterval);
+    clearTimeout(chunkTimeoutId);
+    
+    // Update UI to reflect paused state:
+    pauseResumeButton.innerText = "Resume Recording";
+    updateStatusMessage("Recording paused", "orange");
+    logInfo("Recording paused; current chunk processed and media stream stopped.");
+
+    // Ensure that the pause/resume button stays enabled while startButton remains disabled and stopButton remains enabled.
+    const startButton = document.getElementById("startButton");
+    const stopButton = document.getElementById("stopButton");
+    if (startButton) startButton.disabled = true;         // Remain disabled
+    if (stopButton) stopButton.disabled = false;            // Remain enabled
+    pauseResumeButton.disabled = false;                    // Allow user to resume
+  }
+});
 
 stopButton.addEventListener("click", async () => {
   updateStatusMessage("Finishing transcription...", "blue");
