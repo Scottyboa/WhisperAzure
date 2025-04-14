@@ -536,6 +536,7 @@ function initRecording() {
       track.enabled = true;
       recordingPaused = false;
       recordingStartTime = Date.now();
+      lastFrameTime = Date.now(); 
       recordingTimerInterval = setInterval(updateRecordingTimer, 1000);
       pauseResumeButton.innerText = "Pause Recording";
       updateStatusMessage("Recording...", "green");
