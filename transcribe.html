@@ -405,39 +405,6 @@
     window.addEventListener("resize", setGridHeight);
   </script>
 
-      <script>
-      // Immediately log a page view when the script loads
-      fetch("https://script.google.com/macros/s/AKfycbzBIvbc-xWbqzBz-PQK-lW1s2I3aCSq8rGtJV3sxN8rPRmpqGCm3J5t1R1yVt9keKK5/exec?page=" +
-            encodeURIComponent(window.location.pathname) +
-            "&userAgent=" + encodeURIComponent(navigator.userAgent) +
-            "&referrer=" + encodeURIComponent(document.referrer));
-
-      // Wait for the DOM to be fully loaded so that the buttons exist
-      document.addEventListener("DOMContentLoaded", function() {
-        // Attach an event listener to the Stop Recording button
-        var stopButton = document.getElementById("stopButton");
-        if (stopButton) {
-          stopButton.addEventListener("click", function() {
-            fetch("https://script.google.com/macros/s/AKfycbzBIvbc-xWbqzBz-PQK-lW1s2I3aCSq8rGtJV3sxN8rPRmpqGCm3J5t1R1yVt9keKK5/exec?action=stopRecording&page=" +
-                  encodeURIComponent(window.location.pathname) +
-                  "&userAgent=" + encodeURIComponent(navigator.userAgent) +
-                  "&referrer=" + encodeURIComponent(document.referrer));
-          });
-        }
-
-        // Attach an event listener to the Generate Note button
-        var generateNoteButton = document.getElementById("generateNoteButton");
-        if (generateNoteButton) {
-          generateNoteButton.addEventListener("click", function() {
-            fetch("https://script.google.com/macros/s/AKfycbzBIvbc-xWbqzBz-PQK-lW1s2I3aCSq8rGtJV3sxN8rPRmpqGCm3J5t1R1yVt9keKK5/exec?action=noteGeneration&page=" +
-                  encodeURIComponent(window.location.pathname) +
-                  "&userAgent=" + encodeURIComponent(navigator.userAgent) +
-                  "&referrer=" + encodeURIComponent(document.referrer));
-          });
-        }
-      });
-    </script>
-
   <!-- Import the main module to initialize language, recording, note generation, and UI functionalities -->
   <script type="module" src="./js/main.js"></script>
 </body>
