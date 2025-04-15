@@ -599,12 +599,27 @@ stopButton.addEventListener("click", async () => {
   lastFrameTime = 0;
   await new Promise(resolve => setTimeout(resolve, 200));
 
+  // If the recording is paused, no extra chunk processing is needed.
+  if (recordingPaused) {
+    finalChunkProcessed = true;
+    // Immediately show that transcription is complete.
+    const compTimerElem = document.getElementById("transcribeTimer");
+    if (compTimerElem) {
+      compTimerElem.innerText = "Completion Timer: 0 sec";
+    }
+    updateStatusMessage("Transcription finished!", "green");
+    const startButton = document.getElementById("startButton");
+    if (startButton) startButton.disabled = false;
+    stopButton.disabled = true;
+    const pauseResumeButton = document.getElementById("pauseResumeButton");
+    if (pauseResumeButton) pauseResumeButton.disabled = true;
+    logInfo("Recording paused and stop pressed; transcription complete without extra processing.");
+    return;
+  }
+
   // If no audio frames were captured and none were processed, perform a full reset.
   if (audioFrames.length === 0 && !processedAnyAudioFrames) {
-    // Reset internal state for a new recording session.
     resetRecordingState();
-    
-    // Clear and reset the completion timer.
     if (completionTimerInterval) {
       clearInterval(completionTimerInterval);
       completionTimerInterval = null;
@@ -613,35 +628,26 @@ stopButton.addEventListener("click", async () => {
     if (compTimerElem) {
       compTimerElem.innerText = "Completion Timer: 0 sec";
     }
-
-    // Clear and reset the recording timer.
     const recTimerElem = document.getElementById("recordTimer");
     if (recTimerElem) {
       recTimerElem.innerText = "Recording Timer: 0 sec";
     }
-    
-    // Update the status message.
     updateStatusMessage("Recording reset. Ready to start.", "green");
-
-    // Re-enable the Start button and disable the Stop and Pause/Resume buttons.
     const startButton = document.getElementById("startButton");
     if (startButton) startButton.disabled = false;
     stopButton.disabled = true;
     const pauseResumeButton = document.getElementById("pauseResumeButton");
     if (pauseResumeButton) pauseResumeButton.disabled = true;
-
     logInfo("No audio frames captured. Full reset performed.");
-    // Reset the flag for the next session.
     processedAnyAudioFrames = false;
-    return; // Exit the stop handler.
+    return;
   } else {
-    // Otherwise, if there might be some audio, proceed normally.
+    // Process the last chunk if any frames are pending, or wait if processing is locked.
     if (chunkProcessingLock) {
       pendingStop = true;
       logDebug("Chunk processing locked at stop; setting pendingStop.");
     } else {
       await safeProcessAudioChunk(true);
-      // After processing, if still no frames have been captured...
       if (!processedAnyAudioFrames) {
         resetRecordingState();
         if (completionTimerInterval) {
