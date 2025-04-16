@@ -177,7 +177,7 @@ Regler:
 – Ikke bruk spesialtegn eller linjeskift før overskrifter.
 – Følg eksplisitte instruksjoner fra legen om stil, lengde eller spesifikke formuleringer.
 
-Dersom legen legger til kommentarer etter at pasienten har gått, skal disse hensyntas."<br><br>
+Dersom legen legger til kommentarer etter at pasienten har gått, skal disse hensyntas. Det er viktig at det brukes godt språk i notatet."<br><br>
 
 Du kan tilpasse denne prompten slik du selv ønsker, slik at den passer din dokumentasjonsstil, spesialitet eller type konsultasjon.`,
 };
