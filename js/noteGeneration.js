@@ -132,8 +132,7 @@ All headings should be plain text with a colon, like 'Bakgrunn:'.`.trim();
           { role: "user", content: transcriptionText }
         ],
         temperature: 0.7,
-        stream: true,
-        store: false
+        stream: true
       })
     });
     const reader = response.body.getReader();
