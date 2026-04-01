@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const STATE_KEY = '__ui_state_v1';
   const AUTO_GENERATE_KEY = 'auto_generate_enabled';
 
-
   function getApp() {
     const existing = window.__app || {};
     const app = (window.__app = existing);
@@ -113,6 +112,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function syncNoteActionButtons() {
     const generateNoteButton = document.getElementById('generateNoteButton');
     const abortNoteButton = document.getElementById('abortNoteButton');
+    const noteProviderSelect = document.getElementById('noteProvider');
+    const openaiModelSelect = document.getElementById('openaiModel');
+    const noteModeSelect = document.getElementById('noteProviderMode');
+    const vertexModelSelect = document.getElementById('vertexModel');
+    const bedrockModelSelect = document.getElementById('bedrockModel');
     const busy = !!getApp().noteGenerationInFlight;
 
     if (generateNoteButton) {
@@ -124,6 +128,18 @@ document.addEventListener('DOMContentLoaded', () => {
       abortNoteButton.disabled = !busy;
       abortNoteButton.title = busy ? '' : 'No active note generation to abort.';
     }
+
+    [
+      noteProviderSelect,
+      openaiModelSelect,
+      noteModeSelect,
+      vertexModelSelect,
+      bedrockModelSelect,
+    ].forEach((el) => {
+      if (!el) return;
+      el.disabled = busy;
+      el.title = busy ? 'Provider settings are locked while a note is generating.' : '';
+    });
   }
 
   function beginNoteGeneration(meta = {}) {
@@ -204,14 +220,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function getSelectedSonioxRegion() {
     return String(
       document.getElementById('sonioxRegion')?.value ||
-      readSession('soniox_region', DEFAULTS.sonioxRegion)
+        readSession('soniox_region', DEFAULTS.sonioxRegion)
     ).toLowerCase();
   }
 
   function getSelectedSonioxSpeakerLabels() {
     return String(
       document.getElementById('sonioxSpeakerLabels')?.value ||
-      readSession('soniox_speaker_labels', DEFAULTS.sonioxSpeakerLabels)
+        readSession('soniox_speaker_labels', DEFAULTS.sonioxSpeakerLabels)
     ).toLowerCase();
   }
 
@@ -229,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function getSelectedNoteProviderUi() {
     return String(
       document.getElementById('noteProvider')?.value ||
-      inferNoteProviderUi(getSelectedEffectiveNoteProvider())
+        inferNoteProviderUi(getSelectedEffectiveNoteProvider())
     ).toLowerCase();
   }
 
@@ -246,14 +262,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function getSelectedVertexModel() {
     return String(
       document.getElementById('vertexModel')?.value ||
-      readSession('vertex_model', '')
+        readSession('vertex_model', '')
     ).toLowerCase();
   }
 
   function getSelectedBedrockModel() {
     return String(
       document.getElementById('bedrockModel')?.value ||
-      readSession('bedrock_model', '')
+        readSession('bedrock_model', '')
     ).toLowerCase();
   }
 
@@ -501,6 +517,12 @@ document.addEventListener('DOMContentLoaded', () => {
   app.initNoteProvider = initNoteProvider;
 
   app.switchNoteProvider = async function switchNoteProvider(next) {
+    if (getApp().noteGenerationInFlight) {
+      console.warn('[note:switch] Ignored provider switch while note generation is active.');
+      syncNoteActionButtons();
+      return;
+    }
+
     resetNoteGenerationState();
     delete getApp().__noteStartPulseBound;
 
