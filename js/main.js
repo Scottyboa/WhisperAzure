@@ -1,68 +1,125 @@
 import { initTranscribeLanguage } from './languageLoaderUsage.js';
-// Removed initConsentBanner import since it's no longer needed
-// import { initConsentBanner } from './ui.js';
+import {
+  DEFAULTS,
+  deriveNoteUiStateFromEffectiveProvider,
+  getNoteProviderLogLabel,
+  inferNoteProviderUi,
+  normalizeTranscribeProvider,
+  resolveNoteModulePath as resolveNoteModulePathFromRegistry,
+  resolveTranscribeModulePath as resolveTranscribeModulePathFromRegistry,
+} from './core/provider-registry.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize language support for the transcribe page.
   initTranscribeLanguage();
 
-  // Simple UI state persistence helpers (used for provider switching & reload fallback).
-  const stateKey = "__ui_state_v1";
+  const STATE_KEY = '__ui_state_v1';
+  const AUTO_GENERATE_KEY = 'auto_generate_enabled';
+
+
+  function getApp() {
+    const existing = window.__app || {};
+    const app = (window.__app = existing);
+    app.cachedModules = app.cachedModules || {};
+    return app;
+  }
+
+  function readSession(key, fallback = '') {
+    try {
+      const value = sessionStorage.getItem(key);
+      return value == null ? fallback : value;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  function writeSession(key, value) {
+    try {
+      sessionStorage.setItem(key, String(value ?? ''));
+    } catch (_) {}
+  }
+
+  function reloadWithSavedState(reason = '') {
+    if (reason) {
+      console.warn(reason);
+    }
+
+    try {
+      saveState();
+    } catch (_) {}
+
+    window.location.reload();
+  }
+
   function saveState() {
     const grab = (id) => {
       const el = document.getElementById(id);
       if (!el) return null;
       return {
-        value: el.value ?? "",
+        value: el.value ?? '',
         selStart: el.selectionStart ?? null,
         selEnd: el.selectionEnd ?? null,
-        scrollTop: el.scrollTop ?? 0
+        scrollTop: el.scrollTop ?? 0,
       };
     };
+
     const payload = {
-      transcription: grab("transcription"),
-      generatedNote: grab("generatedNote"),
-      customPrompt:  grab("customPrompt"),
-      ts: Date.now()
+      transcription: grab('transcription'),
+      generatedNote: grab('generatedNote'),
+      customPrompt: grab('customPrompt'),
+      ts: Date.now(),
     };
-    try { sessionStorage.setItem(stateKey, JSON.stringify(payload)); } catch {}
+
+    try {
+      sessionStorage.setItem(STATE_KEY, JSON.stringify(payload));
+    } catch {}
   }
 
   function restoreState() {
     let raw = null;
-    try { raw = sessionStorage.getItem(stateKey); } catch {}
+    try {
+      raw = sessionStorage.getItem(STATE_KEY);
+    } catch {}
     if (!raw) return;
+
     try {
       const s = JSON.parse(raw);
       const put = (id, sObj) => {
         if (!sObj) return;
         const el = document.getElementById(id);
         if (!el) return;
-        el.value = sObj.value || "";
-        if (typeof sObj.scrollTop === "number") el.scrollTop = sObj.scrollTop;
-        // Defer selection so the element is in DOM and sized
+
+        el.value = sObj.value || '';
+        if (typeof sObj.scrollTop === 'number') el.scrollTop = sObj.scrollTop;
+
         setTimeout(() => {
-          if (typeof sObj.selStart === "number" && typeof sObj.selEnd === "number") {
-            try { el.setSelectionRange(sObj.selStart, sObj.selEnd); } catch {}
+          if (typeof sObj.selStart === 'number' && typeof sObj.selEnd === 'number') {
+            try {
+              el.setSelectionRange(sObj.selStart, sObj.selEnd);
+            } catch {}
           }
         }, 0);
       };
-      put("transcription", s.transcription);
-      put("generatedNote", s.generatedNote);
-      put("customPrompt",  s.customPrompt);
+
+      put('transcription', s.transcription);
+      put('generatedNote', s.generatedNote);
+      put('customPrompt', s.customPrompt);
     } finally {
-      try { sessionStorage.removeItem(stateKey); } catch {}
+      try {
+        sessionStorage.removeItem(STATE_KEY);
+      } catch {}
     }
   }
 
   function syncNoteActionButtons() {
     const generateNoteButton = document.getElementById('generateNoteButton');
     const abortNoteButton = document.getElementById('abortNoteButton');
-    const busy = !!window.__app?.noteGenerationInFlight;
+    const busy = !!getApp().noteGenerationInFlight;
+
     if (generateNoteButton) {
       generateNoteButton.disabled = busy;
       generateNoteButton.title = busy ? 'A note is currently generating.' : '';
     }
+
     if (abortNoteButton) {
       abortNoteButton.disabled = !busy;
       abortNoteButton.title = busy ? '' : 'No active note generation to abort.';
@@ -70,11 +127,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function beginNoteGeneration(meta = {}) {
-    const app = (window.__app = window.__app || {});
-
-    if (app.noteGenerationInFlight) {
-      return null;
-    }
+    const app = getApp();
+    if (app.noteGenerationInFlight) return null;
 
     const controller = new AbortController();
     app.noteGenerationInFlight = true;
@@ -85,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function finishNoteGeneration() {
-    const app = (window.__app = window.__app || {});
+    const app = getApp();
     app.noteGenerationInFlight = false;
     app.noteGenerationAbortController = null;
     app.noteGenerationMeta = null;
@@ -93,10 +147,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function abortNoteGeneration() {
-    const app = (window.__app = window.__app || {});
-    const controller = app.noteGenerationAbortController;
+    const controller = getApp().noteGenerationAbortController;
     if (controller) {
-      try { controller.abort(); } catch (_) {}
+      try {
+        controller.abort();
+      } catch (_) {}
     }
   }
 
@@ -130,22 +185,377 @@ document.addEventListener('DOMContentLoaded', () => {
     finishNoteGeneration();
   }
 
-  window.__app = window.__app || {};
-  window.__app.saveState = saveState;
-  window.__app.restoreState = restoreState;
-  window.__app.noteGenerationInFlight = false;
-  window.__app.noteGenerationAbortController = null;
-  window.__app.noteGenerationMeta = null;
-  window.__app.syncNoteActionButtons = syncNoteActionButtons;
-  window.__app.beginNoteGeneration = beginNoteGeneration;
-  window.__app.finishNoteGeneration = finishNoteGeneration;
-  window.__app.abortNoteGeneration = abortNoteGeneration;
-  window.__app.emitNoteFinished = emitNoteFinished;
-  window.__app.resetNoteGenerationState = resetNoteGenerationState;
-  window.__app.isNoteGenerationBusy = () => !!window.__app?.noteGenerationInFlight;
+  function getSelectedTranscribeProvider() {
+    const fromUi = document.getElementById('transcribeProvider')?.value;
+    const normalized = normalizeTranscribeProvider(
+      fromUi || readSession('transcribe_provider', DEFAULTS.transcribeProvider)
+    );
+
+    if (normalized !== readSession('transcribe_provider', DEFAULTS.transcribeProvider)) {
+      writeSession('transcribe_provider', normalized);
+    }
+    if (normalized === 'soniox' && readSession('soniox_speaker_labels', '') !== 'on') {
+      // no-op; legacy migration is handled inside normalizeTranscribeProvider + provider persistence
+    }
+
+    return normalized;
+  }
+
+  function getSelectedSonioxRegion() {
+    return String(
+      document.getElementById('sonioxRegion')?.value ||
+      readSession('soniox_region', DEFAULTS.sonioxRegion)
+    ).toLowerCase();
+  }
+
+  function getSelectedSonioxSpeakerLabels() {
+    return String(
+      document.getElementById('sonioxSpeakerLabels')?.value ||
+      readSession('soniox_speaker_labels', DEFAULTS.sonioxSpeakerLabels)
+    ).toLowerCase();
+  }
+
+  function getSelectedEffectiveNoteProvider() {
+    return String(readSession('note_provider', DEFAULTS.noteProvider)).toLowerCase();
+  }
+
+  function getDerivedNoteUiState() {
+    return deriveNoteUiStateFromEffectiveProvider(
+      getSelectedEffectiveNoteProvider(),
+      readSession('note_provider_mode', DEFAULTS.noteMode)
+    );
+  }
+
+  function getSelectedNoteProviderUi() {
+    return String(
+      document.getElementById('noteProvider')?.value ||
+      inferNoteProviderUi(getSelectedEffectiveNoteProvider())
+    ).toLowerCase();
+  }
+
+  function getSelectedOpenAiModel() {
+    const domValue = String(document.getElementById('openaiModel')?.value || '').toLowerCase();
+    if (domValue) return domValue;
+
+    const stored = String(readSession('openai_model', '')).toLowerCase();
+    if (stored) return stored;
+
+    return getDerivedNoteUiState().openaiModel;
+  }
+
+  function getSelectedVertexModel() {
+    return String(
+      document.getElementById('vertexModel')?.value ||
+      readSession('vertex_model', '')
+    ).toLowerCase();
+  }
+
+  function getSelectedBedrockModel() {
+    return String(
+      document.getElementById('bedrockModel')?.value ||
+      readSession('bedrock_model', '')
+    ).toLowerCase();
+  }
+
+  function getSelectedNoteProviderMode() {
+    const domValue = String(document.getElementById('noteProviderMode')?.value || '').toLowerCase();
+    if (domValue) return domValue;
+
+    const stored = String(readSession('note_provider_mode', '')).toLowerCase();
+    if (stored) return stored;
+
+    return getDerivedNoteUiState().mode;
+  }
+
+  function getTranscribeProviderSnapshot() {
+    return {
+      transcribeProvider: getSelectedTranscribeProvider(),
+      sonioxRegion: getSelectedSonioxRegion(),
+      sonioxSpeakerLabels: getSelectedSonioxSpeakerLabels(),
+    };
+  }
+
+  function getNoteProviderSnapshot() {
+    const effective = getSelectedEffectiveNoteProvider();
+    const uiProvider = getSelectedNoteProviderUi();
+    const vertexModel = getSelectedVertexModel();
+    const bedrockModel = getSelectedBedrockModel();
+    const openaiModel = getSelectedOpenAiModel();
+    const noteProviderMode = getSelectedNoteProviderMode();
+
+    return {
+      noteProviderUi: uiProvider,
+      noteProviderEffective: effective,
+      noteProviderMode,
+      openaiModel,
+      vertexModel,
+      bedrockModel,
+      noteProviderLogLabel: getNoteProviderLogLabel({
+        effectiveProvider: effective,
+        openaiModel,
+        vertexModel,
+        bedrockModel,
+      }),
+    };
+  }
+
+  function resolveTranscribeModulePath(provider) {
+    return resolveTranscribeModulePathFromRegistry(provider, {
+      sonioxSpeakerLabels: getSelectedSonioxSpeakerLabels(),
+    });
+  }
+
+  function resolveNoteModulePath(choice) {
+    return resolveNoteModulePathFromRegistry(choice || getSelectedEffectiveNoteProvider());
+  }
+
+  async function loadCachedModule(path) {
+    const app = getApp();
+    if (!app.cachedModules[path]) {
+      app.cachedModules[path] = await import(path);
+    }
+    return app.cachedModules[path];
+  }
+
+  function replaceButtonWithClone(id, beforeReplace) {
+    const btn = document.getElementById(id);
+    if (!btn || !btn.parentNode) return null;
+
+    const clone = btn.cloneNode(true);
+    if (typeof beforeReplace === 'function') beforeReplace(clone, btn);
+    btn.parentNode.replaceChild(clone, btn);
+    return clone;
+  }
+
+  async function initRecordingProvider(provider) {
+    const normalized = normalizeTranscribeProvider(provider || getSelectedTranscribeProvider());
+    const path = resolveTranscribeModulePath(normalized);
+
+    console.info('[recording:init] provider:', normalized, 'module:', path);
+
+    try {
+      const mod = await loadCachedModule(path);
+      if (mod && typeof mod.initRecording === 'function') {
+        mod.initRecording();
+      } else {
+        console.error('Selected recording module lacks initRecording()');
+      }
+    } catch (e) {
+      console.error('Failed to load recording module for provider:', normalized, e);
+    }
+  }
+
+  async function initNoteProvider(choice) {
+    const path = resolveNoteModulePath(choice || getSelectedEffectiveNoteProvider());
+
+    try {
+      const mod = await loadCachedModule(path);
+      if (mod && typeof mod.initNoteGeneration === 'function') {
+        mod.initNoteGeneration();
+      } else {
+        console.warn(`Module ${path} missing initNoteGeneration(); falling back to GPT-4-latest`);
+        const fallback = await loadCachedModule('./noteGeneration.js');
+        fallback.initNoteGeneration?.();
+      }
+    } catch (e) {
+      console.warn(`Failed to load ${path}; falling back to GPT-4-latest`, e);
+      const fallback = await loadCachedModule('./noteGeneration.js');
+      fallback.initNoteGeneration?.();
+    }
+  }
+
+  function isTranscribeBusy() {
+    const stopBtn = document.getElementById('stopButton');
+    if (stopBtn && stopBtn.disabled === false) return true;
+
+    const status = (document.getElementById('statusMessage')?.innerText || '').trim();
+    if (!status) return false;
+    if (/finishing transcription/i.test(status)) return true;
+    if (/(transcribing|processing|uploading)/i.test(status) && !/transcription finished/i.test(status)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function getAutoGenerateEnabled() {
+    return readSession(AUTO_GENERATE_KEY, '') === '1';
+  }
+
+  function setAutoGenerateEnabled(enabled) {
+    writeSession(AUTO_GENERATE_KEY, enabled ? '1' : '0');
+    const el = document.getElementById('autoGenerateToggle');
+    if (el && el.type === 'checkbox') el.checked = !!enabled;
+  }
+
+  function initAutoGenerateToggle() {
+    const el = document.getElementById('autoGenerateToggle');
+    if (!el || el.type !== 'checkbox') return;
+
+    if (el.dataset.bound === '1') return;
+    el.dataset.bound = '1';
+
+    if (readSession(AUTO_GENERATE_KEY, null) == null) {
+      writeSession(AUTO_GENERATE_KEY, '0');
+    }
+
+    el.checked = getAutoGenerateEnabled();
+    el.addEventListener('change', () => {
+      writeSession(AUTO_GENERATE_KEY, el.checked ? '1' : '0');
+    });
+  }
+
+  function emitTranscriptionFinished(opts) {
+    try {
+      window.dispatchEvent(new CustomEvent('transcription:finished', { detail: opts || {} }));
+    } catch (err) {
+      try {
+        const ev = document.createEvent('CustomEvent');
+        ev.initCustomEvent('transcription:finished', false, false, opts || {});
+        window.dispatchEvent(ev);
+      } catch {}
+    }
+  }
+
+  function tryAutoGenerateNote(eventDetail) {
+    if (!getAutoGenerateEnabled()) return;
+
+    const genBtn = document.getElementById('generateNoteButton');
+    if (!genBtn || genBtn.disabled) return;
+
+    const transcript = (document.getElementById('transcription')?.value || '').trim();
+    if (!transcript) return;
+
+    if (typeof getApp().isTranscribeBusy === 'function' && getApp().isTranscribeBusy()) {
+      return;
+    }
+
+    const now = Date.now();
+    const fp = `${eventDetail?.provider || 'unknown'}:${eventDetail?.transcriptLength || transcript.length}`;
+    const last = getApp().__lastAutoGenerate || null;
+    if (last && last.fp === fp && (now - last.at) < 2000) return;
+    getApp().__lastAutoGenerate = { fp, at: now };
+
+    if (getApp().isNoteGenerationBusy?.()) return;
+    genBtn.click();
+  }
+
+  function initAutoGenerateOnFinishListener() {
+    const app = getApp();
+    if (app.__autoGenerateListenerBound) return;
+    app.__autoGenerateListenerBound = true;
+
+    window.addEventListener('transcription:finished', (e) => {
+      try {
+        tryAutoGenerateNote(e && e.detail ? e.detail : null);
+      } catch (err) {
+        console.warn('Auto-generate failed', err);
+      }
+    });
+  }
+
+  const app = getApp();
+  app.saveState = saveState;
+  app.restoreState = restoreState;
+  app.reloadWithSavedState = reloadWithSavedState;
+  app.noteGenerationInFlight = false;
+  app.noteGenerationAbortController = null;
+  app.noteGenerationMeta = null;
+  app.syncNoteActionButtons = syncNoteActionButtons;
+  app.beginNoteGeneration = beginNoteGeneration;
+  app.finishNoteGeneration = finishNoteGeneration;
+  app.abortNoteGeneration = abortNoteGeneration;
+  app.emitNoteFinished = emitNoteFinished;
+  app.resetNoteGenerationState = resetNoteGenerationState;
+  app.isNoteGenerationBusy = () => !!getApp().noteGenerationInFlight;
+  app.isTranscribeBusy = isTranscribeBusy;
+  app.getAutoGenerateEnabled = getAutoGenerateEnabled;
+  app.setAutoGenerateEnabled = setAutoGenerateEnabled;
+  app.initAutoGenerateToggle = initAutoGenerateToggle;
+  app.emitTranscriptionFinished = emitTranscriptionFinished;
+  app.tryAutoGenerateNote = tryAutoGenerateNote;
+  app.initAutoGenerateOnFinishListener = initAutoGenerateOnFinishListener;
+  app.getSelectedTranscribeProvider = getSelectedTranscribeProvider;
+  app.getSelectedSonioxRegion = getSelectedSonioxRegion;
+  app.getSelectedSonioxSpeakerLabels = getSelectedSonioxSpeakerLabels;
+  app.getSelectedEffectiveNoteProvider = getSelectedEffectiveNoteProvider;
+  app.getSelectedNoteProviderUi = getSelectedNoteProviderUi;
+  app.getSelectedOpenAiModel = getSelectedOpenAiModel;
+  app.getSelectedVertexModel = getSelectedVertexModel;
+  app.getSelectedBedrockModel = getSelectedBedrockModel;
+  app.getSelectedNoteProviderMode = getSelectedNoteProviderMode;
+  app.getTranscribeProviderSnapshot = getTranscribeProviderSnapshot;
+  app.getNoteProviderSnapshot = getNoteProviderSnapshot;
+  app.resolveTranscribeModulePath = resolveTranscribeModulePath;
+  app.resolveNoteModulePath = resolveNoteModulePath;
+  app.providerRegistry = {
+    defaults: DEFAULTS,
+    deriveNoteUiStateFromEffectiveProvider,
+    inferNoteProviderUi,
+    normalizeTranscribeProvider,
+    resolveTranscribeModulePath,
+    resolveNoteModulePath,
+  };
+  app.loadCachedModule = loadCachedModule;
+  app.initRecordingProvider = initRecordingProvider;
+  app.initNoteProvider = initNoteProvider;
+
+  app.switchNoteProvider = async function switchNoteProvider(next) {
+    resetNoteGenerationState();
+    delete getApp().__noteStartPulseBound;
+
+    replaceButtonWithClone('generateNoteButton', (clone) => {
+      delete clone.dataset.noteStartPulseBound;
+      clone.removeAttribute('data-note-start-pulse-bound');
+    });
+
+    const abortBtn = document.getElementById('abortNoteButton');
+    if (abortBtn) abortBtn.disabled = true;
+
+    writeSession('note_provider', String(next || DEFAULTS.noteProvider).toLowerCase());
+    const choice = getSelectedEffectiveNoteProvider();
+    const path = resolveNoteModulePath(choice);
+
+    try {
+      const mod = await loadCachedModule(path);
+      if (mod && typeof mod.initNoteGeneration === 'function') {
+        mod.initNoteGeneration();
+        getApp().bindNoteStartPulse?.();
+        syncNoteActionButtons();
+      } else {
+        throw new Error('initNoteGeneration() missing');
+      }
+    } catch (e) {
+      reloadWithSavedState('Switch note provider failed, falling back to reload');
+    }
+  };
+
+  app.switchTranscribeProvider = async function switchTranscribeProvider(next) {
+    ['startButton', 'stopButton', 'pauseResumeButton', 'abortButton'].forEach((id) => {
+      replaceButtonWithClone(id);
+    });
+
+    writeSession('transcribe_provider', String(next || DEFAULTS.transcribeProvider).toLowerCase());
+    const provider = getSelectedTranscribeProvider();
+    const path = resolveTranscribeModulePath(provider);
+
+    console.info('[recording:switch] provider:', provider, 'module:', path);
+
+    try {
+      const mod = await loadCachedModule(path);
+      if (mod && typeof mod.initRecording === 'function') {
+        mod.initRecording();
+      } else {
+        throw new Error('initRecording() missing');
+      }
+    } catch (e) {
+      reloadWithSavedState('Switch transcribe provider failed, falling back to reload');
+    }
+  };
 
   const abortNoteButton = document.getElementById('abortNoteButton');
-  if (abortNoteButton) {
+  if (abortNoteButton && abortNoteButton.dataset.mainAbortBound !== '1') {
+    abortNoteButton.dataset.mainAbortBound = '1';
     abortNoteButton.addEventListener('click', () => {
       abortNoteGeneration();
     });
@@ -156,333 +566,32 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   syncNoteActionButtons();
+  restoreState();
+  initAutoGenerateToggle();
+  initAutoGenerateOnFinishListener();
 
-  // True while the current recording/transcription session is still "in flight".
-  // Used to decide whether provider changes must hard-reload to prevent stale async writes.
-  window.__app.isTranscribeBusy = function isTranscribeBusy() {
-    // Actively recording = Stop enabled
-    const stopBtn = document.getElementById('stopButton');
-    if (stopBtn && stopBtn.disabled === false) return true;
+  initRecordingProvider(getSelectedTranscribeProvider());
+  initNoteProvider(getSelectedEffectiveNoteProvider());
 
-    const status = (document.getElementById('statusMessage')?.innerText || '').trim();
-    if (!status) return false;
-
-    // Post-stop window where async transcription chunks are still completing
-    if (/finishing transcription/i.test(status)) return true;
-
-    // Extra safety: treat generic "transcribing/processing/uploading" as busy
-    if (/(transcribing|processing|uploading)/i.test(status) && !/transcription finished/i.test(status)) {
-      return true;
-    }
-
-    return false;
-  };
-
-  // --- Auto-generate toggle (session-scoped) ---
-  // Persist per-tab session: OFF by default.
-  const AUTO_GENERATE_KEY = "auto_generate_enabled";
-
-  window.__app.getAutoGenerateEnabled = function getAutoGenerateEnabled() {
-    return sessionStorage.getItem(AUTO_GENERATE_KEY) === "1";
-  };
-
-  window.__app.setAutoGenerateEnabled = function setAutoGenerateEnabled(enabled) {
-    sessionStorage.setItem(AUTO_GENERATE_KEY, enabled ? "1" : "0");
-    // Keep UI in sync if checkbox exists
-    const el = document.getElementById("autoGenerateToggle");
-    if (el && el.type === "checkbox") el.checked = !!enabled;
-  };
-
-  window.__app.initAutoGenerateToggle = function initAutoGenerateToggle() {
-    const el = document.getElementById("autoGenerateToggle");
-    if (!el || el.type !== "checkbox") return;
-
-    // Avoid double binding (provider switching can re-init scripts)
-    if (el.dataset.bound === "1") return;
-    el.dataset.bound = "1";
-
-    // Default OFF for new sessions
-    if (sessionStorage.getItem(AUTO_GENERATE_KEY) == null) {
-      sessionStorage.setItem(AUTO_GENERATE_KEY, "0");
-    }
-
-    // Initialize UI from storage
-    el.checked = window.__app.getAutoGenerateEnabled();
-
-    // Persist changes
-    el.addEventListener("change", () => {
-      sessionStorage.setItem(AUTO_GENERATE_KEY, el.checked ? "1" : "0");
-    });
-  };
-
-  // Canonical "transcription finished" signal.
-  // STT providers may set status text; we convert that into an event for auto-generate and other hooks.
-  // Emits: window event "transcription:finished" with minimal metadata.
-  window.__app.emitTranscriptionFinished = function emitTranscriptionFinished(opts) {
-    try {
-      window.dispatchEvent(new CustomEvent("transcription:finished", { detail: opts || {} }));
-    } catch (err) {
-      // Older browsers may not support CustomEvent constructor without polyfill.
-      try {
-        const ev = document.createEvent("CustomEvent");
-        ev.initCustomEvent("transcription:finished", false, false, opts || {});
-        window.dispatchEvent(ev);
-      } catch {}
-    }
-  };
-
-  // --- Auto-generate listener (Step 5/6) ---
-  window.__app.tryAutoGenerateNote = function tryAutoGenerateNote(eventDetail) {
-    // Toggle must be ON
-    if (!window.__app.getAutoGenerateEnabled?.()) return;
-
-    const genBtn = document.getElementById("generateNoteButton");
-    if (!genBtn || genBtn.disabled) return; // respect consent / provider readiness
-
-    // Avoid generating on an empty transcript
-    const transcript = (document.getElementById("transcription")?.value || "").trim();
-    if (!transcript) return;
-
-    // If app considers itself busy, don't chain generation (avoids races)
-    if (typeof window.__app.isTranscribeBusy === "function" && window.__app.isTranscribeBusy()) {
-      return;
-    }
-
-    // De-dupe: prevent double generation for repeated "finished" events
-    const now = Date.now();
-    const fp = `${eventDetail?.provider || "unknown"}:${eventDetail?.transcriptLength || transcript.length}`;
-    const last = window.__app.__lastAutoGenerate || null;
-    if (last && last.fp === fp && (now - last.at) < 2000) return;
-    window.__app.__lastAutoGenerate = { fp, at: now };
-
-    // Trigger the same path as manual generation
-    if (genBtn) {
-      if (window.__app?.isNoteGenerationBusy?.()) {
+  if (!document.body.dataset.recordHotkeyBound) {
+    document.body.dataset.recordHotkeyBound = '1';
+    document.addEventListener('keydown', (event) => {
+      const activeElement = document.activeElement;
+      if (
+        activeElement &&
+        (activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA' ||
+          activeElement.isContentEditable)
+      ) {
         return;
       }
-      genBtn.click();
-    }
-  };
 
-  window.__app.initAutoGenerateOnFinishListener = function initAutoGenerateOnFinishListener() {
-    // Attach only once even if main.js runs init logic multiple times.
-    if (window.__app.__autoGenerateListenerBound) return;
-    window.__app.__autoGenerateListenerBound = true;
-
-    window.addEventListener("transcription:finished", (e) => {
-      try {
-        window.__app.tryAutoGenerateNote?.(e && e.detail ? e.detail : null);
-      } catch (err) {
-        console.warn("Auto-generate failed", err);
+      if (event.key.toLowerCase() === 'r') {
+        const startButton = document.getElementById('startButton');
+        if (startButton) {
+          startButton.click();
+        }
       }
     });
-  };
-
-  // Restore any persisted state (e.g., after a fallback reload).
-  restoreState();
-
-  // Initialize session-scoped UI toggles.
-  window.__app.initAutoGenerateToggle?.();
-  window.__app.initAutoGenerateOnFinishListener?.();
-
-  // Initialize the recording functionality dynamically by provider.
-  (async function initRecordingByProvider() {
-    let provider = (sessionStorage.getItem('transcribe_provider') || 'soniox').toLowerCase();
-    // Back-compat: old stored value "soniox_dia" becomes "soniox" + speaker labels on
-    if (provider === 'soniox_dia') {
-      provider = 'soniox';
-      sessionStorage.setItem('transcribe_provider', 'soniox');
-      sessionStorage.setItem('soniox_speaker_labels', 'on');
-    }
-    try {
-      function getSonioxPath() {
-        const v = (sessionStorage.getItem('soniox_speaker_labels') || 'off').toLowerCase();
-        return (v === 'on') ? './SONIOX_UPDATE_dia.js' : './SONIOX_UPDATE.js';
-      }
-      const path =
-        provider === 'soniox'   ? getSonioxPath()          :
-        provider === 'lemonfox' ? './LemonfoxSTT.js'       :
-        provider === 'voxtral'  ? './VoxtralminiSTT.js'    :
-        provider === 'openai'   ? './recording.js'         :
-        provider === 'deepgram' ? './deepgram_nova3.js'    :
-                                  './recording.js';
-      console.info('[recording:init] provider:', provider, 'module:', path);
-      const mod = await import(path);
-      if (mod && typeof mod.initRecording === 'function') {
-        mod.initRecording();
-      } else {
-        console.error('Selected recording module lacks initRecording()');
-      }
-    } catch (e) {
-      console.error('Failed to load recording module for provider:', provider, e);
-    }
-  })();
-
-  // Phase 3: Initialize note generation based on note_provider.
-  (async function initNoteByProvider() {
-    const choice = (sessionStorage.getItem('note_provider') || 'aws-bedrock').toLowerCase();
-    // Map dropdown choice → module path (ALL note modules are in /js)
-    const path =
-      choice === 'gpt4'           ? './noteGeneration.js'          :
-      choice === 'lemonfox'       ? './LemonfoxTXT.js'             :
-      choice === 'mistral'        ? './MistralTXT.js'              :
-      choice === 'gpt52'          ? './noteGeneration_gpt52.js'    :
-      choice === 'gpt52-ns'       ? './noteGeneration_gpt52_NS.js' :
-      choice === 'gpt54'          ? './noteGeneration_gpt54.js'    :
-      choice === 'gpt5-ns'        ? './noteGeneration_gpt5_NS.js'  :
-      choice === 'gemini3'        ? './Gemini3.js'                 :
-      choice === 'gemini3-vertex' ? './GeminiVertex.js'            :
-      choice === 'aws-bedrock'    ? './AWSBedrock.js'              :
-                                    './notegeneration%20gpt-5.js'; // default
-
-    try {
-      const mod = await import(path);
-      if (mod && typeof mod.initNoteGeneration === 'function') {
-        mod.initNoteGeneration();
-      } else {
-        console.warn(`Module ${path} missing initNoteGeneration(); falling back to GPT-4-latest`);
-        const fallback = await import('./noteGeneration.js');
-        fallback.initNoteGeneration();
-      }
-    } catch (e) {
-      console.warn(`Failed to load ${path}; falling back to GPT-4-latest`, e);
-      const fallback = await import('./noteGeneration.js');
-      fallback.initNoteGeneration();
-    }
-  })();
-
-  // Live-switch helpers (used by dropdown handlers in transcribe.html)
-  // --- Note Provider Switch (cached import version) ---
-  window.__app.cachedModules = window.__app.cachedModules || {};
-  window.__app.switchNoteProvider = async function(next) {
-    // Reset note run state when switching providers.
-    resetNoteGenerationState();
-    delete window.__app.__noteStartPulseBound;
-
-    // Remove old listeners safely before reinitializing the generate button.
-    // Keep abortNoteButton as the same DOM node because its click handler is
-    // owned centrally by main.js and should survive provider switches.
-    const btn = document.getElementById('generateNoteButton');
-    if (btn && btn.parentNode) {
-      const clone = btn.cloneNode(true);
-      delete clone.dataset.noteStartPulseBound;
-      clone.removeAttribute('data-note-start-pulse-bound');
-      btn.parentNode.replaceChild(clone, btn);
-    }
-    const abortBtn = document.getElementById('abortNoteButton');
-    if (abortBtn) {
-      abortBtn.disabled = true;
-    }
-
-    sessionStorage.setItem('note_provider', (next || 'aws-bedrock').toLowerCase());
-
-    const choice = (sessionStorage.getItem('note_provider') || 'aws-bedrock').toLowerCase();
-    const path =
-      choice === 'gpt4'           ? './noteGeneration.js'          :
-      choice === 'lemonfox'       ? './LemonfoxTXT.js'             :
-      choice === 'mistral'        ? './MistralTXT.js'              :
-      choice === 'gpt52'          ? './noteGeneration_gpt52.js'    :
-      choice === 'gpt52-ns'       ? './noteGeneration_gpt52_NS.js' :
-      choice === 'gpt54'          ? './noteGeneration_gpt54.js'    :
-      choice === 'gpt5-ns'        ? './noteGeneration_gpt5_NS.js'  :
-      choice === 'gemini3'        ? './Gemini3.js'                 :
-      choice === 'gemini3-vertex' ? './GeminiVertex.js'            :
-      choice === 'aws-bedrock'    ? './AWSBedrock.js'              :
-                                    './notegeneration%20gpt-5.js';
-
-    // Load the module only once per session, then reuse from cache
-    if (!window.__app.cachedModules[path]) {
-      window.__app.cachedModules[path] = await import(path);
-    }
-
-    try {
-      const mod = window.__app.cachedModules[path];
-      if (mod && typeof mod.initNoteGeneration === 'function') {
-        mod.initNoteGeneration();
-        window.__app.bindNoteStartPulse?.();
-        syncNoteActionButtons();
-      } else {
-        throw new Error('initNoteGeneration() missing');
-      }
-    } catch (e) {
-      console.warn('Switch note provider failed, falling back to reload', e);
-      if (typeof window.__app.saveState === 'function') window.__app.saveState();
-      window.location.reload();
-    }
-  };
-
-  // --- Recording Provider Switch (cached import version) ---
-  window.__app.switchTranscribeProvider = async function(next) {
-    // Clean up old button listeners safely
-    ['startButton','stopButton','pauseResumeButton','abortButton'].forEach(id => {
-      const b = document.getElementById(id);
-      if (b) {
-        const clone = b.cloneNode(true);
-        b.parentNode.replaceChild(clone, b);
-      }
-    });
-
-    sessionStorage.setItem('transcribe_provider', (next || 'soniox').toLowerCase());
-    let provider = (sessionStorage.getItem('transcribe_provider') || 'soniox').toLowerCase();
-    // Back-compat: old stored value "soniox_dia"
-    if (provider === 'soniox_dia') {
-      provider = 'soniox';
-      sessionStorage.setItem('transcribe_provider', 'soniox');
-      sessionStorage.setItem('soniox_speaker_labels', 'on');
-    }
-
-    function getSonioxPath() {
-      const v = (sessionStorage.getItem('soniox_speaker_labels') || 'off').toLowerCase();
-      return (v === 'on') ? './SONIOX_UPDATE_dia.js' : './SONIOX_UPDATE.js';
-    }
-
-    const path =
-      provider === 'soniox'   ? getSonioxPath()          :
-      provider === 'lemonfox' ? './LemonfoxSTT.js'       :
-      provider === 'voxtral'  ? './VoxtralminiSTT.js'    :
-      provider === 'openai'   ? './recording.js'         :
-      provider === 'deepgram' ? './deepgram_nova3.js'    :
-                                './recording.js';
-    console.info('[recording:switch] provider:', provider, 'module:', path);
-
-    try {
-      // Cache and reuse modules
-      if (!window.__app.cachedModules[path]) {
-        window.__app.cachedModules[path] = await import(path);
-      }
-
-      const mod = window.__app.cachedModules[path];
-      if (mod && typeof mod.initRecording === 'function') {
-        mod.initRecording();
-      } else {
-        throw new Error('initRecording() missing');
-      }
-    } catch (e) {
-      console.warn('Switch transcribe provider failed, falling back to reload', e);
-      if (typeof window.__app.saveState === 'function') window.__app.saveState();
-      window.location.reload();
-    }
-  };
-
-  // Add hotkey for the "r" key to trigger the "Start Recording" button,
-  // but only when not inside an editable text field.
-  document.addEventListener('keydown', (event) => {
-    const activeElement = document.activeElement;
-    // Check if the active element is an input, textarea, or a contentEditable element.
-    if (
-      activeElement &&
-      (activeElement.tagName === 'INPUT' ||
-       activeElement.tagName === 'TEXTAREA' ||
-       activeElement.isContentEditable)
-    ) {
-      return;
-    }
-    // Check if the pressed key is "r" (case-insensitive).
-    if (event.key.toLowerCase() === 'r') {
-      const startButton = document.getElementById('startButton');
-      if (startButton) {
-        startButton.click();
-      }
-    }
-  });
+  }
 });

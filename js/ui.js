@@ -1,12 +1,12 @@
 // ui.js
 
-// Enable functional buttons on the page.
 function enableFunctionalButtons() {
   const startButton = document.getElementById("startButton");
   if (startButton) {
     startButton.disabled = false;
     startButton.title = "";
   }
+
   const generateNoteButton = document.getElementById("generateNoteButton");
   if (generateNoteButton) {
     generateNoteButton.disabled = false;
@@ -14,27 +14,73 @@ function enableFunctionalButtons() {
   }
 }
 
-// Initialize info modals (using an accordion UI in this case).
-function initInfoModals() {
-  console.log("initInfoModals: Accordion UI is enabled; modal initialization is disabled.");
+function renderActiveAccordionContent() {
+  const contentContainer = document.querySelector(".accordion-content-container");
+  if (!contentContainer) return;
+
+  const activeHeader = document.querySelector(".accordion-header.active");
+  if (!activeHeader) {
+    contentContainer.innerHTML = "";
+    return;
+  }
+
+  const contentId = activeHeader.getAttribute("data-content-id");
+  const hiddenContent = contentId ? document.getElementById(contentId) : null;
+  contentContainer.innerHTML = hiddenContent ? hiddenContent.innerHTML : "";
 }
 
-// Ad injection functions are now handled directly in transcribe.html.
-// The following functions remain as no‑ops to avoid breaking other parts of the code.
+function toggleAccordionHeader(header) {
+  const contentContainer = document.querySelector(".accordion-content-container");
+  if (!header || !contentContainer) return;
 
-function loadAdSenseAds() {
-  // No ad loading here. Ads are dynamically injected in transcribe.html.
+  const isActive = header.classList.contains("active");
+  document.querySelectorAll(".accordion-header.active").forEach((activeHeader) => {
+    activeHeader.classList.remove("active");
+  });
+
+  if (isActive) {
+    contentContainer.innerHTML = "";
+    return;
+  }
+
+  header.classList.add("active");
+  renderActiveAccordionContent();
 }
 
-function initAdUnits() {
-  // No ad injection here. Ad units are managed in transcribe.html.
+function bindAccordionHeaders() {
+  const headers = document.querySelectorAll(".accordion-header");
+  headers.forEach((header) => {
+    if (header.dataset.accordionBound === "1") return;
+    header.dataset.accordionBound = "1";
+    header.addEventListener("click", () => toggleAccordionHeader(header));
+  });
 }
 
-function initConsentBanner() {
-  // Since ads are now managed in transcribe.html, simply enable functional buttons.
-  enableFunctionalButtons();
-  console.log("Consent banner removed; ads are managed in transcribe.html.");
+function bindGuideDelegation() {
+  if (document.documentElement.dataset.indexGuideDelegationBound === "1") return;
+  document.documentElement.dataset.indexGuideDelegationBound = "1";
+
+  document.addEventListener("click", (event) => {
+    const trigger = event.target.closest("[data-open-guide]");
+    if (!trigger) return;
+
+    event.preventDefault();
+
+    const which = trigger.getAttribute("data-open-guide");
+    const id =
+      which === "bedrock" ? "bedrock-guide-link" :
+      which === "vertex" ? "vertex-guide-link" :
+      null;
+
+    const realLink = id ? document.getElementById(id) : null;
+    realLink?.click();
+  });
 }
 
-// Export functions for use in other modules.
-export { enableFunctionalButtons, initInfoModals, loadAdSenseAds, initAdUnits, initConsentBanner };
+function initIndexAccordions() {
+  bindAccordionHeaders();
+  bindGuideDelegation();
+  renderActiveAccordionContent();
+}
+
+export { enableFunctionalButtons, initIndexAccordions };

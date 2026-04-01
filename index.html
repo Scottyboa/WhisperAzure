@@ -837,7 +837,9 @@
   </div>
 
   <!-- Inline Script for API Key Handling and Consent -->
-  <script>
+  <script type="module">
+    import { PromptManager } from "./js/promptManager.js";
+
     // Helper function to set a cookie
     function setCookie(name, value, days) {
       var expires = "";
@@ -870,13 +872,6 @@
         var bedrockBackendSecret= ((document.getElementById("bedrockBackendSecretInput")|| {}).value || "").trim();
 
 
-        // If profile ID is blank -> remove it so the app falls back to legacy prompt behavior.
-        try {
-          if (promptProfileId) localStorage.setItem("prompt_profile_id", promptProfileId);
-          else localStorage.removeItem("prompt_profile_id");
-        } catch {}
-
-
         // Store all keys (even if empty) for later provider selection
         sessionStorage.setItem("openai_api_key", openaiKey);
         sessionStorage.setItem("soniox_api_key", sonioxKey);
@@ -896,38 +891,18 @@
         setCookie("user_consent", "accepted", 365);
 
 
-        // NEW: First-time migration UX fix.
-        // If the chosen profile has no prompts yet, copy legacy (OpenAI-key) prompts into it.
-        // This prevents "my prompts disappeared" when a user tries profiles the first time.
+        // Prompt profile persistence + legacy prompt migration are centralized in PromptManager.
+        // Important: do this AFTER storing sessionStorage.openai_api_key so legacy migration
+        // can read the correct legacy namespace if the user is moving from key-scoped prompts.
         try {
-          if (promptProfileId && openaiKey) {
-            // Legacy namespace: hash(raw openai_api_key)
-            const hashString = (str) => {
-              let hash = 0;
-              for (let i = 0; i < str.length; i++) {
-                hash = ((hash << 5) - hash) + str.charCodeAt(i);
-                hash |= 0;
-              }
-              return hash.toString();
-            };
-
-            const legacyNs = hashString(openaiKey);
-            const profileNs = hashString(`profile:${promptProfileId}`);
-            const migratedFlagKey = `prompt_migrated_${profileNs}`;
-
-            if (localStorage.getItem(migratedFlagKey) !== "1") {
-              for (let i = 1; i <= 10; i++) {
-                const slot = String(i);
-                const oldKey = `customPrompt_${legacyNs}_${slot}`;
-                const newKey = `customPrompt_${profileNs}_${slot}`;
-                const newVal = localStorage.getItem(newKey) || "";
-                if (newVal && newVal.trim()) continue;
-                const oldVal = localStorage.getItem(oldKey) || "";
-                if (!oldVal) continue;
-                localStorage.setItem(newKey, oldVal);
-              }
-              localStorage.setItem(migratedFlagKey, "1");
-            }
+          if (typeof PromptManager?.commitPromptProfileInput === "function") {
+            PromptManager.commitPromptProfileInput(promptProfileId);
+          } else if (typeof PromptManager?.setPromptProfileId === "function") {
+            PromptManager.setPromptProfileId(promptProfileId);
+          } else if (promptProfileId) {
+            localStorage.setItem("prompt_profile_id", promptProfileId);
+          } else {
+            localStorage.removeItem("prompt_profile_id");
           }
         } catch {}
         
@@ -950,10 +925,18 @@
     const bedrockBackendUrlInput    = document.getElementById("bedrockBackendUrlInput");
     const bedrockBackendSecretInput = document.getElementById("bedrockBackendSecretInput");
 
-    // 0) Prefill prompt profile from localStorage (device persistent)
+    // 0) Hydrate prompt profile input from centralized PromptManager storage (device persistent)
     if (promptProfileInput) {
-      const storedProfile = (localStorage.getItem("prompt_profile_id") || "").trim();
-      if (storedProfile && !promptProfileInput.value) promptProfileInput.value = storedProfile;
+      try {
+        if (typeof PromptManager?.hydratePromptProfileInput === "function") {
+          PromptManager.hydratePromptProfileInput(promptProfileInput);
+        } else {
+          const storedProfile = (typeof PromptManager?.getPromptProfileId === "function")
+            ? (PromptManager.getPromptProfileId() || "").trim()
+            : ((localStorage.getItem("prompt_profile_id") || "").trim());
+          if (storedProfile && !promptProfileInput.value) promptProfileInput.value = storedProfile;
+        }
+      } catch {}
     }
 
 
@@ -1249,50 +1232,7 @@
     }
   });
 </script>
-  
-  <!-- New Horizontal Accordion Script -->
-  <script>
-    document.querySelectorAll('.accordion-header').forEach(header => {
-      header.addEventListener('click', () => {
-        const contentContainer = document.querySelector('.accordion-content-container');
-        if (header.classList.contains('active')) {
-          header.classList.remove('active');
-          contentContainer.innerHTML = '';
-        } else {
-          document.querySelectorAll('.accordion-header.active').forEach(activeHeader => {
-            activeHeader.classList.remove('active');
-          });
-          header.classList.add('active');
-          const contentId = header.getAttribute('data-content-id');
-          const hiddenContent = document.getElementById(contentId);
-          if (hiddenContent) {
-            contentContainer.innerHTML = hiddenContent.innerHTML;
-          }
-        }
-      });
-    });
 
-
-    // Allow "Guide" links inside injected accordion HTML to open the same modals
-    // as the header links next to the input fields.
-    document.addEventListener("click", (e) => {
-      const el = e.target.closest('[data-open-guide]');
-      if (!el) return;
-      e.preventDefault();
-
-      const which = el.getAttribute("data-open-guide"); // "bedrock" | "vertex"
-      const id =
-        which === "bedrock" ? "bedrock-guide-link" :
-        which === "vertex"  ? "vertex-guide-link"  :
-        null;
-
-      const realLink = id ? document.getElementById(id) : null;
-      if (realLink) realLink.click();
-    });
-    
-  </script>
-  
-  
   <!-- AWS Bedrock Guide Modal -->
   <div id="bedrockGuideView" aria-hidden="true">
   <button id="bedrockGuideClose" type="button" aria-label="Close">&times;</button>

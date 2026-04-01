@@ -1,5 +1,5 @@
 import { loadLanguageModule } from './languageLoader.js';
-import { initInfoModals } from './ui.js';
+import { initIndexAccordions } from './ui.js';
 
 // For the index page
 export async function initIndexLanguage() {
@@ -17,8 +17,8 @@ export async function initIndexLanguage() {
     return;
   }
   updateIndexUI(indexTranslations);
-  // Reinitialize info modal (now accordion) event listeners after UI update
-  initInfoModals();
+  // Reinitialize accordion behavior after UI text updates.
+  initIndexAccordions();
   
   // Listen for language changes
   langSelect.addEventListener("change", async function() {
@@ -32,7 +32,7 @@ export async function initIndexLanguage() {
       return;
     }
     updateIndexUI(indexTranslations);
-    initInfoModals();
+    initIndexAccordions();
   });
 }
 

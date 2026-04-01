@@ -1,3 +1,10 @@
+import {
+  createRecordingUiBindingScope,
+  createRecordingUiHelpers,
+  flushPendingVadSegmentsGuarded,
+  installSafeRecordingLoadStop,
+} from './core/recording-runner.js';
+
 // SONIOX_UPDATE.js
 
 let transcriptionError = false;
@@ -24,41 +31,33 @@ const DEBUG = true;
 let pendingVADLastFlushToken = 0;
 
 function flushPendingVADOnce(reason, extraAudioFloat32 = null) {
-  // Token-based guard: callers can pass Date.now() to ensure one flush per action.
   const token = Date.now();
   if (token === pendingVADLastFlushToken) return;
   pendingVADLastFlushToken = token;
 
-  if (pendingVADLock) return;
-  if ((!pendingVADChunks || pendingVADChunks.length === 0) && !(extraAudioFloat32 && extraAudioFloat32.length)) return;
+  if (extraAudioFloat32 && extraAudioFloat32.length) {
+    const last = pendingVADChunks[pendingVADChunks.length - 1];
+    const looksSame = last && last.length === extraAudioFloat32.length;
+    if (!looksSame) pendingVADChunks.push(extraAudioFloat32);
+  }
 
-  pendingVADLock = true;
-  try {
-    // Optional fallback: only append extra audio if we have nothing buffered,
-    // or it doesn't look identical to the last segment (cheap heuristic).
-    if (extraAudioFloat32 && extraAudioFloat32.length) {
-      const last = pendingVADChunks[pendingVADChunks.length - 1];
-      const looksSame = last && last.length === extraAudioFloat32.length;
-      if (!looksSame) pendingVADChunks.push(extraAudioFloat32);
-    }
+  const nextChunkNumber = flushPendingVadSegmentsGuarded({
+    segments: pendingVADChunks,
+    sampleRate: 16000,
+    floatTo16BitPCM,
+    encodeWAV,
+    enqueueTranscription,
+    chunkNumber,
+    isLocked: () => pendingVADLock,
+    setLocked: (value) => { pendingVADLock = value; },
+  });
 
-    if (pendingVADChunks.length === 0) return;
-    const totalSamples = pendingVADChunks.reduce((sum, seg) => sum + seg.length, 0);
-    const combined     = new Float32Array(totalSamples);
-    let offset         = 0;
-    for (const seg of pendingVADChunks) {
-      combined.set(seg, offset);
-      offset += seg.length;
-    }
-    const wavBlob = encodeWAV(floatTo16BitPCM(combined), 16000, 1);
-    enqueueTranscription(wavBlob, chunkNumber++);
-    pendingVADChunks = [];
+  if (nextChunkNumber !== chunkNumber) {
+    chunkNumber = nextChunkNumber;
     logInfo(`[VAD] Flushed pending segments (${reason}).`);
-  } finally {
-    pendingVADLock = false;
   }
 }
- // Minimum total speech duration before sending (in seconds)
+// Minimum total speech duration before sending (in seconds)
  const MIN_CHUNK_DURATION_SECONDS = 90;
  // Configure callbacks for speech start/end
  const sileroVADOptions = {
@@ -194,35 +193,19 @@ function beginFreshTranscriptionSession() {
   
 
 // --- Utility Functions ---
-function updateStatusMessage(message, color = "#333") {
-  const statusElem = document.getElementById("statusMessage");
-  if (statusElem) {
-    statusElem.innerText = message;
-    statusElem.style.color = color;
-  }
-}
-
-function setAbortButtonDisabled(disabled) {
-  const abortButton = document.getElementById("abortButton");
-  if (abortButton) abortButton.disabled = disabled;
-}
-
-function setStopPauseDisabled(disabled) {
-  const stopButton = document.getElementById("stopButton");
-  const pauseResumeButton = document.getElementById("pauseResumeButton");
-  if (stopButton) stopButton.disabled = disabled;
-  if (pauseResumeButton) pauseResumeButton.disabled = disabled;
-}
-
-function setRecordingControlsIdle() {
-  const startButton = document.getElementById("startButton");
-  const stopButton = document.getElementById("stopButton");
-  const pauseResumeButton = document.getElementById("pauseResumeButton");
-  setAbortButtonDisabled(true);
-  if (startButton) startButton.disabled = false;
-  if (stopButton) stopButton.disabled = true;
-  if (pauseResumeButton) pauseResumeButton.disabled = true;
-}
+const {
+  updateStatusMessage,
+  setAbortButtonDisabled,
+  setStopPauseDisabled,
+  setRecordingControlsIdle,
+  stopMicrophone,
+} = createRecordingUiHelpers({
+  logInfo,
+  getMediaStream: () => mediaStream,
+  setMediaStream: (value) => { mediaStream = value; },
+  getAudioReader: () => audioReader,
+  setAudioReader: (value) => { audioReader = value; },
+});
 
 // ───── Completion timer helpers (single-signal control) ──────────────────────
 function startCompletionTimer() {
@@ -305,18 +288,6 @@ function formatTime(ms) {
   }
 }
 
-function stopMicrophone() {
-  if (mediaStream) {
-    mediaStream.getTracks().forEach(track => track.stop());
-    mediaStream = null;
-    logInfo("Microphone stopped.");
-  }
-  if (audioReader) {
-    audioReader.cancel();
-    audioReader = null;
-  }
-}
-  
 // --- Base64 Helper Functions (kept for legacy) ---
 function arrayBufferToBase64(buffer) {
   let binary = "";
@@ -1348,9 +1319,7 @@ stopButton.addEventListener("click", async () => {
 export { initRecording };
 
 // As soon as the page loads, ensure we never auto-open the mic:
-window.addEventListener("load", () => {
-  stopMicrophone();
-  if (sileroVAD && typeof sileroVAD.pause === "function") {
-    sileroVAD.pause().catch(() => {});
-  }
+installSafeRecordingLoadStop({
+  stopMicrophone,
+  getSileroVAD: () => sileroVAD,
 });

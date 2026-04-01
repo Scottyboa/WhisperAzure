@@ -6,6 +6,16 @@
 //   bedrock_backend_secret
 //   bedrock_model  (haiku-4-5 | sonnet-4 | sonnet-4-5 | sonnet-4-6 | opus-4-5 | opus-4-6)
 
+import {
+  beginNoteRun,
+  bindGenerateNoteButton,
+  finishNoteAbort,
+  getSessionStorageValue,
+  pushNormalizedNoteUsage,
+  resolveCommonNoteInputs,
+  startNoteTimer
+} from "./core/note-runner.js";
+
 // Only allow known model keys to be sent to the backend.
 // (Prevents weird/stale values from sessionStorage from causing confusing backend errors.)
 const ALLOWED_BEDROCK_MODEL_KEYS = new Set([
@@ -29,7 +39,6 @@ const BEDROCK_USD_PER_MTOK = {
 
 function formatUsd(amount) {
   if (!Number.isFinite(amount)) return "$0.00";
-  // Show more precision for tiny calls.
   const decimals = amount < 0.01 ? 6 : 4;
   return `$${amount.toFixed(decimals)}`;
 }
@@ -37,11 +46,14 @@ function formatUsd(amount) {
 function estimateOnDemandUsd({ modelKey, inputTokens, outputTokens }) {
   const rates = BEDROCK_USD_PER_MTOK[modelKey];
   if (!rates) return null;
+
   const inTok = Number(inputTokens);
   const outTok = Number(outputTokens);
   if (!Number.isFinite(inTok) || !Number.isFinite(outTok)) return null;
+
   const inputUsd = (inTok / 1_000_000) * rates.input;
   const outputUsd = (outTok / 1_000_000) * rates.output;
+
   return {
     rates,
     inputUsd,
@@ -50,90 +62,115 @@ function estimateOnDemandUsd({ modelKey, inputTokens, outputTokens }) {
   };
 }
 
-function formatTime(ms) {
-  const seconds = Math.floor(ms / 1000);
-  if (seconds < 60) return `${seconds} sec`;
-  const minutes = Math.floor(seconds / 60);
-  const remainder = seconds % 60;
-  return `${minutes} min ${remainder} sec`;
-}
+function getConfiguredModelKey() {
+  const modelSelect = document.getElementById("bedrockModel");
+  let modelKey =
+    getSessionStorageValue("bedrock_model", "").trim() ||
+    (modelSelect ? String(modelSelect.value || "").trim() : "");
 
-function getNoteCoordinator() {
-  return window.__app || {};
-}
-
-function handleNoteAbort(generatedNoteField, noteTimerElement, noteTimerInterval, modelKey) {
-  clearInterval(noteTimerInterval);
-  if (noteTimerElement) noteTimerElement.innerText = "Text generation aborted.";
-  if (generatedNoteField && !generatedNoteField.value.trim()) {
-    generatedNoteField.value = "Note generation aborted.";
+  if (modelKey && !ALLOWED_BEDROCK_MODEL_KEYS.has(modelKey)) {
+    modelKey = "";
   }
-  getNoteCoordinator().emitNoteFinished?.({
-    provider: "aws-bedrock",
-    model: modelKey || "backend_default",
-    aborted: true
+
+  return modelKey;
+}
+
+function getBedrockBackendConfig() {
+  return {
+    backendUrl: getSessionStorageValue("bedrock_backend_url", "").trim(),
+    backendSecret: getSessionStorageValue("bedrock_backend_secret", "").trim()
+  };
+}
+
+function buildBedrockCustomPrompt(promptText, supplementaryRaw) {
+  const trimmedPrompt = typeof promptText === "string" ? promptText : "";
+  const trimmedSupplementary = typeof supplementaryRaw === "string" ? supplementaryRaw.trim() : "";
+
+  if (!trimmedSupplementary) {
+    return trimmedPrompt;
+  }
+
+  const wrappedSupplementary = `Tilleggsopplysninger(brukes som kontekst):"${trimmedSupplementary}"`;
+  return trimmedPrompt ? `${trimmedPrompt}\n\n${wrappedSupplementary}` : wrappedSupplementary;
+}
+
+function pushBedrockUsageToUi(modelId, usage) {
+  if (!usage) {
+    return;
+  }
+
+  pushNormalizedNoteUsage({
+    providerKey: "aws-bedrock",
+    modelId,
+    usage: {
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens
+    }
   });
+}
+
+function logBedrockUsageAndCost(modelKey, usage) {
+  if (!usage) {
+    return;
+  }
+
+  const inputTokens = usage.inputTokens;
+  const outputTokens = usage.outputTokens;
+
+  console.log(`Input tokens: ${inputTokens}`);
+  console.log(`Output tokens: ${outputTokens}`);
+
+  const estimate = estimateOnDemandUsd({
+    modelKey,
+    inputTokens,
+    outputTokens,
+  });
+
+  if (estimate) {
+    console.log(
+      `[Bedrock cost estimate] model=${modelKey} ` +
+        `rates=$${estimate.rates.input}/MTok in, $${estimate.rates.output}/MTok out ` +
+        `input=${formatUsd(estimate.inputUsd)} output=${formatUsd(estimate.outputUsd)} total=${formatUsd(estimate.totalUsd)}`
+    );
+  } else {
+    console.log(
+      `[Bedrock cost estimate] Skipped (unknown modelKey="${modelKey}" or missing token counts).`
+    );
+  }
 }
 
 async function generateNote() {
-  // Clear previous token/cost display immediately on new run
-  try { window.__app?.clearNoteUsageAndCost?.(); } catch (_) {}
-
-  const app = getNoteCoordinator();
-  const controller = app.beginNoteGeneration?.({
+  const initialModelKey = getConfiguredModelKey() || "backend_default";
+  const runMeta = {
     provider: "aws-bedrock",
-    model: (sessionStorage.getItem("bedrock_model") || "backend_default").trim() || "backend_default"
-  });
+    model: initialModelKey
+  };
+
+  const { app, controller } = beginNoteRun(runMeta);
   if (!controller) {
     return;
   }
 
-  const transcriptionElem = document.getElementById("transcription");
-  if (!transcriptionElem) {
-    app.finishNoteGeneration?.();
-    alert("No transcription text available.");
-    return;
-  }
-  const transcriptionText = transcriptionElem.value.trim();
-  if (!transcriptionText) {
-    app.finishNoteGeneration?.();
-    alert("No transcription text available.");
+  const common = resolveCommonNoteInputs(app);
+  if (!common) {
     return;
   }
 
-  const customPromptTextarea = document.getElementById("customPrompt");
-  const promptText = customPromptTextarea ? customPromptTextarea.value : "";
-
-  const supplementaryElem = document.getElementById("supplementaryInfo");
-  const supplementaryRaw = supplementaryElem ? supplementaryElem.value.trim() : "";
-  const supplementaryWrapped = supplementaryRaw
-    ? `Tilleggsopplysninger(brukes som kontekst):\"${supplementaryRaw}\"`
-    : "";
-
-  const generatedNoteField = document.getElementById("generatedNote");
-  if (!generatedNoteField) {
-    app.finishNoteGeneration?.();
-    return;
-  }
+  const {
+    transcriptionText,
+    promptText,
+    supplementaryRaw,
+    generatedNoteField,
+    noteTimerElement
+  } = common;
 
   generatedNoteField.value = "";
-  const noteTimerElement = document.getElementById("noteTimer");
-  const noteStartTime = Date.now();
-  if (noteTimerElement) noteTimerElement.innerText = "Note Generation Timer: 0 sec";
+  const noteTimer = startNoteTimer(noteTimerElement);
 
-  const noteTimerInterval = setInterval(() => {
-    if (noteTimerElement) {
-      noteTimerElement.innerText =
-        "Note Generation Timer: " + formatTime(Date.now() - noteStartTime);
-    }
-  }, 1000);
-
-  const backendUrl = (sessionStorage.getItem("bedrock_backend_url") || "").trim();
-  const backendSecret = (sessionStorage.getItem("bedrock_backend_secret") || "").trim();
+  const { backendUrl, backendSecret } = getBedrockBackendConfig();
 
   if (!backendUrl) {
-    clearInterval(noteTimerInterval);
-    if (noteTimerElement) noteTimerElement.innerText = "";
+    noteTimer.stop("");
     app.finishNoteGeneration?.();
     alert(
       "No Bedrock backend URL configured.\n\n" +
@@ -143,8 +180,7 @@ async function generateNote() {
   }
 
   if (!backendSecret) {
-    clearInterval(noteTimerInterval);
-    if (noteTimerElement) noteTimerElement.innerText = "";
+    noteTimer.stop("");
     app.finishNoteGeneration?.();
     alert(
       "No Bedrock backend secret configured.\n\n" +
@@ -153,17 +189,8 @@ async function generateNote() {
     return;
   }
 
-  const modelSelect = document.getElementById("bedrockModel");
-  let modelKey =
-    (sessionStorage.getItem("bedrock_model") || "").trim() ||
-    (modelSelect ? modelSelect.value : "");
-  if (modelKey && !ALLOWED_BEDROCK_MODEL_KEYS.has(modelKey)) {
-    modelKey = "";
-  }
-
-  const combinedPrompt =
-    (promptText || "") +
-    (supplementaryWrapped ? "\n\n" + supplementaryWrapped : "");
+  const modelKey = getConfiguredModelKey();
+  const customPrompt = buildBedrockCustomPrompt(promptText, supplementaryRaw);
 
   let resolvedModelKey = modelKey || "backend_default";
 
@@ -176,7 +203,7 @@ async function generateNote() {
       },
       body: JSON.stringify({
         transcription: transcriptionText,
-        customPrompt: combinedPrompt,
+        customPrompt,
         modelKey: modelKey || undefined,
       }),
       signal: controller.signal,
@@ -188,76 +215,48 @@ async function generateNote() {
     }
 
     const data = await resp.json().catch(() => ({}));
-    const noteText = (data && (data.noteText || data.text || data.output || data.note)) || "";
+    const noteText =
+      (data && (data.noteText || data.text || data.output || data.note)) ||
+      "[No text returned from Bedrock backend]";
+
+    const effectiveModelKey =
+      (data && (data.modelKey || data.model)) ||
+      modelKey ||
+      "backend_default";
+    resolvedModelKey = effectiveModelKey;
 
     const usage = data && data.usage;
-    if (usage) {
-      const inputTokens = usage.inputTokens;
-      const outputTokens = usage.outputTokens;
-      console.log(`Input tokens: ${inputTokens}`);
-      console.log(`Output tokens: ${outputTokens}`);
-      // Report tokens to UI (USD is calculated centrally in transcribe.html using selected Bedrock model)
-      try {
-        window.__app?.setNoteUsageAndCost?.({
-          providerKey: "aws-bedrock",
-          modelId: (sessionStorage.getItem("bedrock_model") || null),
-          usage: { inputTokens, outputTokens }
-        });
-      } catch (_) {}
+    pushBedrockUsageToUi(effectiveModelKey, usage);
+    logBedrockUsageAndCost(effectiveModelKey, usage);
 
-      // Prefer the model key reported by the backend (if it returns it), otherwise use the request selection.
-      const effectiveModelKey =
-        (data && (data.modelKey || data.model)) ||
-        modelKey ||
-        "backend_default";
-      resolvedModelKey = effectiveModelKey;
-
-      const estimate = estimateOnDemandUsd({
-        modelKey: effectiveModelKey,
-        inputTokens,
-        outputTokens,
-      });
-
-      if (estimate) {
-        console.log(
-          `[Bedrock cost estimate] model=${effectiveModelKey} ` +
-            `rates=$${estimate.rates.input}/MTok in, $${estimate.rates.output}/MTok out ` +
-            `input=${formatUsd(estimate.inputUsd)} output=${formatUsd(estimate.outputUsd)} total=${formatUsd(estimate.totalUsd)}`
-        );
-      } else {
-        console.log(
-          `[Bedrock cost estimate] Skipped (unknown modelKey="${effectiveModelKey}" or missing token counts).`
-        );
-      }
-    }
-
-    clearInterval(noteTimerInterval);
-    if (noteTimerElement) noteTimerElement.innerText = "Text generation completed!";
-
-    generatedNoteField.value = noteText || "[No text returned from Bedrock backend]";
-    app.emitNoteFinished?.({ provider: "aws-bedrock", model: resolvedModelKey });
-    
-
-    
+    generatedNoteField.value = noteText;
+    noteTimer.stop("Text generation completed!");
+    app.emitNoteFinished?.({
+      provider: "aws-bedrock",
+      model: resolvedModelKey
+    });
   } catch (err) {
     if (err?.name === "AbortError") {
-      handleNoteAbort(generatedNoteField, noteTimerElement, noteTimerInterval, resolvedModelKey);
+      finishNoteAbort({
+        generatedNoteField,
+        noteTimer,
+        runMeta: {
+          provider: "aws-bedrock",
+          model: resolvedModelKey
+        }
+      });
       return;
     }
 
     console.error("Bedrock note error:", err);
-    clearInterval(noteTimerInterval);
-    if (noteTimerElement) noteTimerElement.innerText = "";
+    noteTimer.stop("");
     generatedNoteField.value = "Error generating note via AWS Bedrock: " + String(err);
     app.finishNoteGeneration?.();
   }
 }
 
 function initNoteGeneration() {
-  const generateNoteButton = document.getElementById("generateNoteButton");
-  if (!generateNoteButton) return;
-
-  generateNoteButton.addEventListener("click", generateNote);
+  bindGenerateNoteButton(generateNote);
 }
 
 export { initNoteGeneration };

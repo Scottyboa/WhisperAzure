@@ -1,3 +1,10 @@
+import {
+  createRecordingUiBindingScope,
+  createRecordingUiHelpers,
+  flushPendingVadSegmentsGuarded,
+  installSafeRecordingLoadStop,
+} from './core/recording-runner.js';
+
 
 // LemonfoxSTT.js
 // Updated recording module without encryption/HMAC mechanisms,
@@ -125,28 +132,19 @@ let isProcessingQueue = false;
 let enqueuedChunks = 0;  
 
 // --- Utility Functions ---
-function updateStatusMessage(message, color = "#333") {
-  const statusElem = document.getElementById("statusMessage");
-  if (statusElem) {
-    statusElem.innerText = message;
-    statusElem.style.color = color;
-  }
-}
-
-function setAbortButtonDisabled(disabled) {
-  const abortButton = document.getElementById("abortButton");
-  if (abortButton) abortButton.disabled = disabled;
-}
-
-function setRecordingControlsIdle() {
-  const startButton = document.getElementById("startButton");
-  const stopButton = document.getElementById("stopButton");
-  const pauseResumeButton = document.getElementById("pauseResumeButton");
-  if (startButton) startButton.disabled = false;
-  if (stopButton) stopButton.disabled = true;
-  if (pauseResumeButton) pauseResumeButton.disabled = true;
-  setAbortButtonDisabled(true);
-}
+const {
+  updateStatusMessage,
+  setAbortButtonDisabled,
+  setStopPauseDisabled,
+  setRecordingControlsIdle,
+  stopMicrophone,
+} = createRecordingUiHelpers({
+  logInfo,
+  getMediaStream: () => mediaStream,
+  setMediaStream: (value) => { mediaStream = value; },
+  getAudioReader: () => audioReader,
+  setAudioReader: (value) => { audioReader = value; },
+});
 
 // ────────────────────────────────
 // ADD THIS HELPER JUST BELOW updateStatusMessage()
@@ -173,19 +171,19 @@ function formatTime(ms) {
   }
 }
 
-
-
-function stopMicrophone() {
-  if (mediaStream) {
-    mediaStream.getTracks().forEach(track => track.stop());
-    mediaStream = null;
-    logInfo("Microphone stopped.");
-  }
-  if (audioReader) {
-    audioReader.cancel();
-    audioReader = null;
-  }
+function flushPendingVADSegments() {
+  chunkNumber = flushPendingVadSegmentsGuarded({
+    segments: pendingVADChunks,
+    sampleRate: 16000,
+    floatTo16BitPCM,
+    encodeWAV,
+    enqueueTranscription,
+    chunkNumber,
+    isLocked: () => pendingVADLock,
+    setLocked: (value) => { pendingVADLock = value; },
+  });
 }
+
   
 // --- Base64 Helper Functions (kept for legacy) ---
 function arrayBufferToBase64(buffer) {
@@ -635,9 +633,7 @@ function initRecording() {
   const abortButton       = document.getElementById("abortButton");
   if (!startButton || !stopButton || !pauseResumeButton) return;
 
-  window.__lemonfoxUIAbort?.abort("re-init");
-  window.__lemonfoxUIAbort = new AbortController();
-  const uiSignal = window.__lemonfoxUIAbort.signal;
+  const uiSignal = createRecordingUiBindingScope("__recordingUIAbort_lemonfox");
 
   // --- PULL readLoop INTO SHARED SCOPE ---
   async function readLoop() {
@@ -742,23 +738,7 @@ pauseResumeButton.addEventListener("click", async () => {
   } else {
    // — FLUSH any pending VAD segments before pausing — 
    // — FLUSH any pending VAD segments before pausing —
-if (pendingVADChunks.length > 0 && !pendingVADLock) {
-  pendingVADLock = true;
-  try {
-    const totalSamples = pendingVADChunks.reduce((sum, seg) => sum + seg.length, 0);
-    const combined     = new Float32Array(totalSamples);
-    let offset         = 0;
-    for (const seg of pendingVADChunks) {
-      combined.set(seg, offset);
-      offset += seg.length;
-    }
-    const wavBlob = encodeWAV(floatTo16BitPCM(combined), 16000, 1);
-    enqueueTranscription(wavBlob, chunkNumber++);
-    pendingVADChunks = [];
-  } finally {
-    pendingVADLock = false;
-  }
-}
+flushPendingVADSegments();
 
     // PAUSE: stop VAD and flush any buffered speech
     updateStatusMessage("Pausing recording…", "orange");
@@ -775,23 +755,7 @@ if (pendingVADChunks.length > 0 && !pendingVADLock) {
     // **new**: cut the mic feed so the browser indicator goes off
     stopMicrophone();
     // Stop the mic stream so the browser tab indicator turns off
-if (pendingVADChunks.length > 0 && !pendingVADLock) {
-  pendingVADLock = true;
-  try {
-    const totalSamples = pendingVADChunks.reduce((sum, seg) => sum + seg.length, 0);
-    const combined = new Float32Array(totalSamples);
-    let offset = 0;
-    for (const seg of pendingVADChunks) {
-      combined.set(seg, offset);
-      offset += seg.length;
-    }
-    const wavBlob = encodeWAV(floatTo16BitPCM(combined), 16000, 1);
-    enqueueTranscription(wavBlob, chunkNumber++);
-    pendingVADChunks = [];
-  } finally {
-    pendingVADLock = false;
-  }
-}
+flushPendingVADSegments();
 
     recordingPaused = true;
     
@@ -903,43 +867,11 @@ stopButton.addEventListener("click", async () => {
   stopMicrophone();
 
     // — FLUSH and SEND any pending VAD segments before stopping —
-if (pendingVADChunks.length > 0 && !pendingVADLock) {
-  pendingVADLock = true;
-  try {
-    const totalSamples = pendingVADChunks.reduce((sum, seg) => sum + seg.length, 0);
-    const combined     = new Float32Array(totalSamples);
-    let offset         = 0;
-    for (const seg of pendingVADChunks) {
-      combined.set(seg, offset);
-      offset += seg.length;
-    }
-    const wavBlob = encodeWAV(floatTo16BitPCM(combined), 16000, 1);
-    enqueueTranscription(wavBlob, chunkNumber++);
-    pendingVADChunks = [];
-  } finally {
-    pendingVADLock = false;
-  }
-}
+flushPendingVADSegments();
 
   
     // Flush remaining buffered segments even if below threshold
-if (pendingVADChunks.length > 0 && !pendingVADLock) {
-  pendingVADLock = true;
-  try {
-    const totalSamples = pendingVADChunks.reduce((sum, seg) => sum + seg.length, 0);
-    const combined = new Float32Array(totalSamples);
-    let offset = 0;
-    for (const seg of pendingVADChunks) {
-      combined.set(seg, offset);
-      offset += seg.length;
-    }
-    const wavBlob = encodeWAV(floatTo16BitPCM(combined), 16000, 1);
-    enqueueTranscription(wavBlob, chunkNumber++);
-    pendingVADChunks = [];
-  } finally {
-    pendingVADLock = false;
-  }
-}
+flushPendingVADSegments();
 
    // ─── NOW compute how many chunks we’re actually waiting on ───
     expectedChunks = enqueuedChunks;
@@ -1030,10 +962,7 @@ if (pendingVADChunks.length > 0 && !pendingVADLock) {
 
 export { initRecording };
 
-// As soon as the page loads, ensure we never auto-open the mic:
-window.addEventListener("load", () => {
-  stopMicrophone();
-  if (sileroVAD && typeof sileroVAD.pause === "function") {
-    sileroVAD.pause().catch(() => {});
-  }
+installSafeRecordingLoadStop({
+  stopMicrophone,
+  getSileroVAD: () => sileroVAD,
 });

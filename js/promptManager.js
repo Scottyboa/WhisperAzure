@@ -2,18 +2,61 @@
 
 export const PromptManager = (() => {
   const PROMPT_PROFILE_STORAGE_KEY = "prompt_profile_id";
+  const DEFAULT_PROFILE_ID = "default";
   const PROMPT_SLOT_COUNT = 20;
-  // Slot labels are stored per profile in localStorage under this key format:
-  //   prompt_slot_names::<profileId>
-  // (This matches transcribe.html's prompt label UI implementation.)
+
+  function readLocalStorage(key, fallback = "") {
+    try {
+      const value = localStorage.getItem(key);
+      return value == null ? fallback : value;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function writeLocalStorage(key, value) {
+    try {
+      localStorage.setItem(key, String(value ?? ""));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function removeLocalStorage(key) {
+    try {
+      localStorage.removeItem(key);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function emitPromptManagerEvent(name, detail = {}) {
+    try {
+      window.dispatchEvent(new CustomEvent(name, { detail }));
+    } catch {}
+  }
+
+  function normalizeProfileId(profileId) {
+    return String(profileId || "").trim();
+  }
+
+  function getEffectiveProfileId(profileId) {
+    return normalizeProfileId(profileId) || DEFAULT_PROFILE_ID;
+  }
+
   function getSlotNamesStorageKey(profileId) {
-    const pid = (profileId || "").trim() || "default";
-    return `prompt_slot_names::${pid}`;
+    return `prompt_slot_names::${getEffectiveProfileId(profileId)}`;
+  }
+
+  function getSelectedSlotStorageKey(profileId) {
+    return `prompt_selected_slot::${getEffectiveProfileId(profileId)}`;
   }
 
   function loadSlotNames(profileId) {
     try {
-      const raw = localStorage.getItem(getSlotNamesStorageKey(profileId));
+      const raw = readLocalStorage(getSlotNamesStorageKey(profileId), "");
       const parsed = raw ? JSON.parse(raw) : {};
       return (parsed && typeof parsed === "object") ? parsed : {};
     } catch {
@@ -22,15 +65,46 @@ export const PromptManager = (() => {
   }
 
   function saveSlotNames(profileId, map) {
-    try {
-      localStorage.setItem(getSlotNamesStorageKey(profileId), JSON.stringify(map || {}));
-    } catch {}
+    const safeMap = (map && typeof map === "object") ? map : {};
+    writeLocalStorage(getSlotNamesStorageKey(profileId), JSON.stringify(safeMap));
+    emitPromptManagerEvent("prompt-slot-names-changed", {
+      profileId: getEffectiveProfileId(profileId),
+      slotNames: safeMap,
+    });
   }
 
   function clearSlotNames(profileId) {
-    try {
-      localStorage.removeItem(getSlotNamesStorageKey(profileId));
-    } catch {}
+    removeLocalStorage(getSlotNamesStorageKey(profileId));
+    emitPromptManagerEvent("prompt-slot-names-changed", {
+      profileId: getEffectiveProfileId(profileId),
+      slotNames: {},
+    });
+  }
+
+  function getSlotNames(profileId) {
+    return loadSlotNames(profileId);
+  }
+
+  function getSlotDisplayName(slot, profileId) {
+    const names = loadSlotNames(profileId);
+    return String(names[String(slot)] || "").trim();
+  }
+
+  function setSlotDisplayName(slot, name, profileId) {
+    const key = String(slot || "").trim();
+    if (!key) return false;
+
+    const names = loadSlotNames(profileId);
+    const nextName = String(name || "").trim();
+
+    if (nextName) {
+      names[key] = nextName;
+    } else {
+      delete names[key];
+    }
+
+    saveSlotNames(profileId, names);
+    return true;
   }
 
   function hashString(str) {
@@ -43,93 +117,147 @@ export const PromptManager = (() => {
   }
 
   function getPromptProfileId() {
-    try {
-      return (localStorage.getItem(PROMPT_PROFILE_STORAGE_KEY) || "").trim();
-    } catch {
-      return "";
-    }
+    return normalizeProfileId(readLocalStorage(PROMPT_PROFILE_STORAGE_KEY, ""));
   }
 
-  // Namespace helpers (needed for migration)
   function getLegacyNamespaceHash() {
-    // IMPORTANT: legacy behavior is hash(raw openai_api_key)
     const apiKey = sessionStorage.getItem("openai_api_key") || "";
     return hashString(apiKey);
   }
 
   function getProfileNamespaceHash(profileId) {
-    return hashString(`profile:${(profileId || "").trim()}`);
+    return hashString(`profile:${normalizeProfileId(profileId)}`);
   }
 
   function migrateLegacyPromptsToProfileIfNeeded(profileId) {
-    const pid = (profileId || "").trim();
-    if (!pid) return;
+    const pid = normalizeProfileId(profileId);
+    if (!pid) return false;
 
     const newNs = getProfileNamespaceHash(pid);
     const migratedFlagKey = `prompt_migrated_${newNs}`;
 
-    try {
-      if (localStorage.getItem(migratedFlagKey) === "1") return;
-    } catch {
-      // If localStorage isn't available, do nothing.
-      return;
+    if (readLocalStorage(migratedFlagKey, "") === "1") {
+      return false;
     }
 
     const oldNs = getLegacyNamespaceHash();
+    let copiedAny = false;
 
-    // Copy slot 1–10: legacy storage only ever had 10 slots.
-    // Keep this at 10 so we don't accidentally pull unrelated keys.
     for (let i = 1; i <= 10; i++) {
       const slot = String(i);
       const oldKey = `customPrompt_${oldNs}_${slot}`;
       const newKey = `customPrompt_${newNs}_${slot}`;
 
-      let newVal = "";
-      let oldVal = "";
-      try { newVal = (localStorage.getItem(newKey) || ""); } catch {}
+      const newVal = readLocalStorage(newKey, "");
       if (newVal && newVal.trim()) continue;
 
-      try { oldVal = (localStorage.getItem(oldKey) || ""); } catch {}
+      const oldVal = readLocalStorage(oldKey, "");
       if (!oldVal) continue;
 
-      try { localStorage.setItem(newKey, oldVal); } catch {}
+      if (writeLocalStorage(newKey, oldVal)) {
+        copiedAny = true;
+      }
     }
 
-    // Mark migration as done for this profile namespace
-    try { localStorage.setItem(migratedFlagKey, "1"); } catch {}
-  }
+    writeLocalStorage(migratedFlagKey, "1");
 
+    if (copiedAny) {
+      emitPromptManagerEvent("prompt-profile-migrated", {
+        profileId: pid,
+        namespaceHash: newNs,
+      });
+    }
+
+    return copiedAny;
+  }
 
   function setPromptProfileId(profileId) {
-    const v = (profileId || "").trim();
-    try {
-      if (v) localStorage.setItem(PROMPT_PROFILE_STORAGE_KEY, v);
-      else localStorage.removeItem(PROMPT_PROFILE_STORAGE_KEY);
-    } catch {}
-    // One-time migration: if a profile is being set, copy legacy prompts into it (non-destructive).
-    if (v) {
-      migrateLegacyPromptsToProfileIfNeeded(v);
+    const next = normalizeProfileId(profileId);
+    const previous = getPromptProfileId();
+
+    if (next) {
+      writeLocalStorage(PROMPT_PROFILE_STORAGE_KEY, next);
+      migrateLegacyPromptsToProfileIfNeeded(next);
+    } else {
+      removeLocalStorage(PROMPT_PROFILE_STORAGE_KEY);
     }
-    return v;
+
+    const active = next || "";
+    emitPromptManagerEvent("prompt-profile-changed", {
+      previousProfileId: previous,
+      profileId: active,
+      effectiveProfileId: getEffectiveProfileId(active),
+    });
+
+    return active;
   }
 
-  // Centralized namespace logic:
-  // - If profileId exists -> hash("profile:" + profileId)
-  // - Else -> legacy hash(openai_api_key) (IMPORTANT: do not change legacy hashing)
-  function getPromptNamespaceHash() {
-    const profileId = getPromptProfileId();
-    if (profileId) {
-      return getProfileNamespaceHash(profileId);
+  function resolveInputElement(inputOrSelector) {
+    if (!inputOrSelector) return null;
+    if (typeof inputOrSelector === "string") {
+      try {
+        return document.querySelector(inputOrSelector);
+      } catch {
+        return null;
+      }
     }
-    // Legacy fallback (do NOT change): hash(raw openai_api_key)
+    if (typeof inputOrSelector === "object" && "value" in inputOrSelector) {
+      return inputOrSelector;
+    }
+    return null;
+  }
+
+  function hydratePromptProfileInput(inputOrSelector) {
+    const input = resolveInputElement(inputOrSelector);
+    if (!input) return "";
+
+    const value = getPromptProfileId();
+    if (typeof input.value === "string" && input.value !== value) {
+      input.value = value;
+    }
+    return value;
+  }
+
+  function commitPromptProfileInput(inputOrValue) {
+    if (typeof inputOrValue === "string") {
+      return setPromptProfileId(inputOrValue);
+    }
+
+    const input = resolveInputElement(inputOrValue);
+    const value = input && typeof input.value === "string" ? input.value : "";
+    return setPromptProfileId(value);
+  }
+
+  function getPromptNamespaceHash(profileId) {
+    const pid = normalizeProfileId(profileId) || getPromptProfileId();
+    if (pid) {
+      return getProfileNamespaceHash(pid);
+    }
     return getLegacyNamespaceHash();
   }
 
-
-
-  function getPromptStorageKey(slot) {
-    const ns = getPromptNamespaceHash();
+  function getPromptStorageKey(slot, profileId) {
+    const ns = getPromptNamespaceHash(profileId);
     return `customPrompt_${ns}_${slot}`;
+  }
+
+  function getSelectedPromptSlot(profileId) {
+    const raw = readLocalStorage(getSelectedSlotStorageKey(profileId), "");
+    const normalized = normalizeSlotNumber(raw);
+    return String(normalized || 1);
+  }
+
+  function setSelectedPromptSlot(slot, profileId) {
+    const normalized = normalizeSlotNumber(slot);
+    if (!normalized) return null;
+
+    const key = getSelectedSlotStorageKey(profileId);
+    writeLocalStorage(key, String(normalized));
+    emitPromptManagerEvent("prompt-slot-selection-changed", {
+      profileId: getEffectiveProfileId(profileId),
+      slot: String(normalized),
+    });
+    return String(normalized);
   }
 
   function sanitizeForFilename(s) {
@@ -154,9 +282,6 @@ export const PromptManager = (() => {
   }
 
   async function saveTextFileWithPicker(filename, text, mime = "application/json") {
-    // Prefer a "Save As…" dialog (lets user choose folder + name + overwrite),
-    // but fall back to the legacy auto-download approach if unsupported.
-    // Note: showSaveFilePicker generally requires a secure context (https/localhost).
     if (typeof window.showSaveFilePicker === "function") {
       try {
         const handle = await window.showSaveFilePicker({
@@ -173,68 +298,70 @@ export const PromptManager = (() => {
         await writable.close();
         return;
       } catch (err) {
-        // User cancelled the dialog -> do nothing.
         if (err && (err.name === "AbortError" || err.code === 20)) return;
         console.warn("Save picker failed; falling back to auto-download:", err);
-        // Continue to fallback below.
       }
     }
+
     downloadTextFile(filename, text, mime);
   }
 
   async function exportPromptsToFile() {
-    // Behavior: export prompts for CURRENT profile namespace only.
-    // UI should ensure a profile is set (Behavior 1 design).
     const profileId = getPromptProfileId();
     if (!profileId) {
       console.warn("Cannot export prompts: prompt profile id not set.");
-      return;
+      return false;
     }
 
     const slots = {};
     for (let i = 1; i <= PROMPT_SLOT_COUNT; i++) {
       const key = getPromptStorageKey(String(i));
-      const val = localStorage.getItem(key) || "";
-      slots[String(i)] = val;
+      slots[String(i)] = readLocalStorage(key, "");
     }
-    // NEW: include prompt slot labels (if any exist for this profile)
+
     const slotNames = loadSlotNames(profileId);
     const hasAnySlotNames = slotNames && Object.keys(slotNames).length > 0;
-
 
     const payload = {
       version: 2,
       exportedAt: new Date().toISOString(),
-      // profileId included as metadata only (Behavior 1 import will ignore it)
       profileId,
       slots,
       ...(hasAnySlotNames ? { slotNames } : {})
     };
 
     const safe = sanitizeForFilename(profileId);
-    const date = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const date = new Date().toISOString().slice(0, 10);
+
     await saveTextFileWithPicker(
       `prompts-${safe}-${date}.json`,
       JSON.stringify(payload, null, 2),
       "application/json"
     );
+
+    emitPromptManagerEvent("prompt-slots-exported", {
+      profileId,
+      slotCount: PROMPT_SLOT_COUNT,
+    });
+
+    return true;
   }
+
   async function importPromptsFromFile(file) {
-    // Behavior 1: import into CURRENT profile namespace (ignores file.profileId).
     const profileId = getPromptProfileId();
     if (!profileId) {
       console.warn("Cannot import prompts: prompt profile id not set.");
-      return;
+      return false;
     }
 
-    if (!file) return;
+    if (!file) return false;
 
     let text = "";
     try {
       text = await file.text();
     } catch (e) {
       console.warn("Failed to read import file:", e);
-      return;
+      return false;
     }
 
     let parsed;
@@ -242,39 +369,39 @@ export const PromptManager = (() => {
       parsed = JSON.parse(text);
     } catch (e) {
       window.alert("Import failed: file is not valid JSON.");
-      return;
+      return false;
     }
 
     const slotsObj = parsed && parsed.slots;
     if (!slotsObj || typeof slotsObj !== "object") {
       window.alert("Import failed: missing 'slots' object.");
-      return;
+      return false;
     }
 
     const ok = window.confirm("Replace existing prompts in this profile?");
-    if (!ok) return;
+    if (!ok) return false;
 
-    // Write slots 1–PROMPT_SLOT_COUNT into current namespace.
-    // Back-compat: if the import JSON only contains 1–10, the missing 11–20 import as "".
     for (let i = 1; i <= PROMPT_SLOT_COUNT; i++) {
       const k = String(i);
       const v = (k in slotsObj) ? (slotsObj[k] ?? "") : "";
-      try {
-        localStorage.setItem(getPromptStorageKey(k), String(v));
-      } catch {}
+      writeLocalStorage(getPromptStorageKey(k), String(v));
     }
-    // NEW IMPORT RULE:
-    // - If the import file includes slotNames: apply/overwrite labels
-    // - If it does NOT include slotNames: clear any existing labels for this profile
+
     const importedSlotNames = parsed && parsed.slotNames;
     if (importedSlotNames && typeof importedSlotNames === "object") {
-      // Only overwrite labels if the file explicitly contains them.
       saveSlotNames(profileId, importedSlotNames);
     } else {
       clearSlotNames(profileId);
     }
-  }
 
+    emitPromptManagerEvent("prompt-slots-imported", {
+      profileId,
+      slotCount: PROMPT_SLOT_COUNT,
+      hasSlotNames: !!(importedSlotNames && typeof importedSlotNames === "object"),
+    });
+
+    return true;
+  }
 
   function normalizeSlotNumber(slot) {
     const n = Number.parseInt(String(slot), 10);
@@ -282,18 +409,16 @@ export const PromptManager = (() => {
     return n;
   }
 
-  function getSlotPromptValue(slot) {
-    try {
-      return localStorage.getItem(getPromptStorageKey(String(slot))) || "";
-    } catch {
-      return "";
-    }
+  function getSlotPromptValue(slot, profileId) {
+    return readLocalStorage(getPromptStorageKey(String(slot), profileId), "");
   }
 
-  function setSlotPromptValue(slot, value) {
-    try {
-      localStorage.setItem(getPromptStorageKey(String(slot)), String(value ?? ""));
-    } catch {}
+  function setSlotPromptValue(slot, value, profileId) {
+    writeLocalStorage(getPromptStorageKey(String(slot), profileId), String(value ?? ""));
+    emitPromptManagerEvent("prompt-slot-value-changed", {
+      profileId: getEffectiveProfileId(profileId || getPromptProfileId()),
+      slot: String(slot),
+    });
   }
 
   function reorderPromptSlots(fromSlot, toSlot) {
@@ -349,32 +474,50 @@ export const PromptManager = (() => {
     }
 
     saveSlotNames(profileId, slotNames);
+    emitPromptManagerEvent("prompt-slots-reordered", {
+      profileId,
+      from: String(from),
+      to: String(to),
+    });
     return to;
   }
 
+  function getPrompt(slot) {
+    return getSlotPromptValue(slot);
+  }
+
   function loadPrompt(slot) {
-    const key = getPromptStorageKey(slot);
-    const val = localStorage.getItem(key);
+    const val = getPrompt(slot);
     const textarea = document.getElementById("customPrompt");
     if (textarea) {
       textarea.value = val || "";
       textarea.dispatchEvent(new Event("input"));
     }
+    return val;
   }
 
   function savePrompt(slot, value) {
-    const key = getPromptStorageKey(slot);
-    try { localStorage.setItem(key, value || ""); } catch {}
+    setSlotPromptValue(slot, value);
   }
 
-  // Expose profile helpers for the UI (index.html / transcribe.html) to set and read.
   return {
+    PROMPT_SLOT_COUNT,
+    getPrompt,
     loadPrompt,
     savePrompt,
     getPromptProfileId,
     setPromptProfileId,
+    hydratePromptProfileInput,
+    commitPromptProfileInput,
+    getPromptNamespaceHash,
+    getPromptStorageKey,
+    getSelectedPromptSlot,
+    setSelectedPromptSlot,
+    getSlotNames,
+    getSlotDisplayName,
+    setSlotDisplayName,
     reorderPromptSlots,
     exportPromptsToFile,
-    importPromptsFromFile
+    importPromptsFromFile,
   };
 })();
