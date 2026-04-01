@@ -150,6 +150,12 @@ function updateMiniPanelUi() {
   }
 }
 
+function requestUiRefresh() {
+  window.setTimeout(updateMiniPanelUi, 20);
+  window.setTimeout(updateMiniPanelUi, 120);
+  window.setTimeout(updateMiniPanelUi, 300);
+}
+
 function startRefreshLoop() {
   stopRefreshLoop();
   refreshTimer = window.setInterval(() => {
@@ -174,8 +180,7 @@ function callAppAction(actionName) {
 
   try {
     app[actionName]();
-    window.setTimeout(updateMiniPanelUi, 40);
-    window.setTimeout(updateMiniPanelUi, 200);
+    requestUiRefresh();
     return true;
   } catch (err) {
     console.warn(`[mini-panel] action failed: ${actionName}`, err);
@@ -430,7 +435,7 @@ async function openMiniPanel() {
     try {
       miniWindow.focus();
     } catch (_) {}
-    updateMiniPanelUi();
+    requestUiRefresh();
     return;
   }
 
@@ -461,8 +466,7 @@ async function openMiniPanel() {
 }
 
 function handleStateRelevantEvent() {
-  window.setTimeout(updateMiniPanelUi, 20);
-  window.setTimeout(updateMiniPanelUi, 200);
+  requestUiRefresh();
 }
 
 function bindMainWindowEvents() {
@@ -481,6 +485,7 @@ function bindMainWindowEvents() {
   window.addEventListener('note-generation-finished', handleStateRelevantEvent);
   window.addEventListener('note:finished', handleStateRelevantEvent);
   window.addEventListener('transcription:finished', handleStateRelevantEvent);
+  window.addEventListener('app:state-changed', handleStateRelevantEvent);
 
   document.addEventListener('click', (event) => {
     const target = event.target;
@@ -498,6 +503,7 @@ function bindMainWindowEvents() {
 
     if (target.id && watchedIds.has(target.id)) {
       handleStateRelevantEvent();
+
       if (target.id === 'copyNoteButton') {
         window.setTimeout(() => {
           flashCopiedIndicator();
