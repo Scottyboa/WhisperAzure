@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta property="og:title" content="Transcribe Notes">
+  <meta property="og:description" content="Secure AI-powered transcription and note generation for healthcare consultation. No subscription, just pay per use.">
+  <meta property="og:image" content="https://transcribe-notes.netlify.app/Preview.png">
+  <meta property="og:url" content="https://transcribe-notes.netlify.app/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Transcribe Notes">
+  <meta name="twitter:description" content="Secure AI-powered transcription and note generation for healthcare consultation. No subscription, just pay per use.">
+  <meta name="twitter:image" content="https://transcribe-notes.netlify.app/Preview.png">
+  <!-- New: Meta description for crawlers -->
+  <meta name="description"
+        content="Secure, AI-powered medical transcription and clinical note generation for healthcare professionals. Ideal for documenting hypertension, diabetes, COPD, and medication regimens." />
+
+  <!-- New: Meta keywords (for legacy bidders) -->
+  <meta name="keywords"
+        content="medical transcription, clinical notes, AI for doctors, pharmaceutical, medications, hypertension, diabetes, COPD, healthcare professional, semaglutide, Ozempic, apixaban, Eliquis, lisdexamfetamine, Aduvanz, omalizumab, Xolair, fremanezumab, Ajovy, rivaroxaban, Xarelto, alirocumab, Praluent, methylphenidate, Ritalin, dapagliflozin, Forxiga, atorvastatin, Lipitor, mirabegron, Betmiga, methotrexate, Metex, valsartan, sakubitril, Entresto, empagliflozin, Jardiance, tree pollen, Itulazax, mesalazine, Asacol, grass pollen, Grazax, erenumab, Aimovig, metoprolol, Selo-Zok, formoterol, glykopyrroniumbromid"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="google-site-verification" content="googlecbb704de00a7add2" />
+  <title id="page-title">Transcribe Notes – AI Medical Transcription & Clinical Notes for Doctors</title>
+
+
+  <!-- Import Google Fonts -->
+  <link rel="icon" href="./favicon.ico" sizes="any">
+  
+  <link rel="icon" type="image/png" href="./favicon-16x16.png" sizes="16x16">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Vollkorn&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=Merriweather:wght@300;400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+  <!-- New: JSON-LD schema for medical/pharma context -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+  "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://transcribe-notes.netlify.app/#organization",
+        "name": "Transcribe Notes",
+        "url": "https://transcribe-notes.netlify.app/"
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://transcribe-notes.netlify.app/#website",
+        "url": "https://transcribe-notes.netlify.app/",
+        "name": "Transcribe Notes",
+      "publisher": {
+          "@id": "https://transcribe-notes.netlify.app/#organization"
+        }
+      },
+      {
+        "@type": "MedicalWebPage",
+        "@id": "https://transcribe-notes.netlify.app/#medicalwebpage",
+        "url": "https://transcribe-notes.netlify.app/",
+        "name": "Transcribe Notes – Medical Transcription for Clinicians",
+        "description": "An AI-powered medical transcription and clinical note tool for doctors, covering conditions like hypertension, diabetes, COPD, and medication management."
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://transcribe-notes.netlify.app/#software",
+        "name": "Transcribe Notes",
+        "applicationCategory": "MedicalApplication",
+        "operatingSystem": "All",
+        "description": "Secure AI-powered medical transcription and note generation for healthcare professionals. Supports documentation of medications such as Atorvastatin, Metformin, Seretide.",
+        "url": "https://transcribe-notes.netlify.app/",
+        "author": {
+          "@id": "https://transcribe-notes.netlify.app/#organization"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0.00",
+         "priceCurrency": "USD"
+        },
+        "audience": {
+         "@type": "Audience",
+          "audienceType": "Healthcare Professional"
+        },
+        "keywords": "semaglutide, Ozempic, apixaban, Eliquis, lisdexamfetamine, Aduvanz, omalizumab, Xolair, fremanezumab, Ajovy, rivaroxaban, Xarelto, alirocumab, Praluent, methylphenidate, Ritalin, dapagliflozin, Forxiga, atorvastatin, Lipitor, mirabegron, Betmiga, methotrexate, Metex, valsartan, sakubitril, Entresto, empagliflozin, Jardiance, tree pollen, Itulazax, mesalazine, Asacol, grass pollen, Grazax, erenumab, Aimovig, metoprolol, Selo-Zok, formoterol"
+      }
+    ]
+  }
+  </script>
+  <style>
+    /* Base styles */
+    body {
+      font-family: 'Inter', 'Roboto', sans-serif;
+      font-weight: 400;
+      background-color: #f8f8f8;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      position: relative;
+    }
+
+    /* Make all form UI use the same font as the page text */
+    input, select, textarea, button {
+      font-family: inherit;
+      font-weight: 400;
+    }
+
+    /* Most “field header” labels should not look bold */
+    label {
+      font-family: inherit;
+      font-weight: 400;
+    }
+    header {
+      background: linear-gradient(135deg, #5a9 0%, #489 100%);
+      color: #fff;
+      padding: 40px 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    .header-center {
+      display: inline-grid;
+      grid-template-columns: auto auto auto; /* mic | title | spacer */
+      column-gap: 12px; /* adjust “snugness” here */
+      align-items: center;
+      position: relative;
+      left: 65px; /* move the whole group right; tweak value */
+      top: 9px;   /* move the whole group DOWN; tweak value */
+      transform: scale(1.15); /* change this: 1.00 normal, 1.05, 1.10, etc */
+      transform-origin: center;
+    }
+    .title-block {
+      display: inline-block;
+      text-align: left;
+      max-width: 900px;
+    }
+    header h1 {
+      font-family: 'Inter', 'Roboto', sans-serif;
+      font-weight: 450;
+      font-size: 48px;
+      line-height: 1.05;
+      margin: 0;
+      letter-spacing: 0.2px;
+    }
+    header p {
+      font-family: 'Inter', 'Roboto', sans-serif;
+      font-weight: 500;
+      margin-top: 10px;
+    }
+    .header-mic {
+      width: 82px; /* adjust size here */
+      height: auto;
+      opacity: 0.95;
+      pointer-events: none;
+      user-select: none;
+    }
+    .header-mic-spacer {
+      width: 82px; /* adjust size here */
+      height: 1px;
+    }
+
+    @media (max-width: 850px) {
+      .header-mic, .header-mic-spacer { display: none; }
+    }
+    /* Language Icon & Dropdown */
+    #lang-container {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      z-index: 1000;
+    }
+.accordion-header:first-child {
+  outline: 2px solid #333;
+  outline-offset: 2px;
+}
+    #lang-container img {
+      width: 36px;
+      height: 36px;
+      margin-right: 8px;
+    }
+    #lang-select {
+      padding: 5px;
+      font-size: 18px;
+    }
+    .container {
+      max-width: 960px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    p {
+      font-size: 16px;
+    }
+    input[type="text"] {
+      width: 300px;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+    }
+    input[type="text"]:focus {
+      border-color: #66afe9;
+      box-shadow: 0 0 8px rgba(102,175,233,0.6);
+      outline: none;
+    }
+
+    /* Provider credentials: 2-column layout */
+    .provider-columns {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 32px;
+      margin-top: 10px;
+    }
+    fieldset.provider-column {
+      flex: 0 1 460px;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0 16px;
+      border: 0; /* remove default fieldset border */
+      min-width: 0; /* prevents overflow in flex containers */
+    }
+    fieldset.provider-column legend {
+      padding: 0;
+      margin: 0 0 6px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .provider-column.non-gdpr {
+      border-left: 1px solid rgba(0, 0, 0, 0.12);
+      padding-left: 32px;
+    }    
+    .provider-column .column-footnote {
+      margin: 0 0 18px;
+      font-size: 13px;
+      color: #666;
+    }
+    .provider-column p {
+      margin: 12px 0 6px;
+    }
+    .credentials-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    @media (max-width: 900px) {
+      .provider-columns {
+        flex-direction: column;
+        gap: 18px;
+      }
+      fieldset.provider-column {
+        flex-basis: auto;
+        max-width: 100%;
+      }
+      .provider-column.non-gdpr {
+        border-left: 0;
+        padding-left: 16px;
+        border-top: 1px solid rgba(0, 0, 0, 0.12);
+        padding-top: 18px;
+      }
+    }
+    button {
+      background-color: #5a9;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.1s;
+      margin: 10px;
+    }
+    button:hover {
+      background-color: #489;
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    .keys-io-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 10px 0 0 0;
+    }
+    .keys-io-row button {
+      margin: 0; /* override the global 10px to keep the row tight */
+    }
+    /* Smaller Import/Export buttons only */
+    .keys-io-btn {
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 8px;
+      min-width: 110px;
+    }
+
+    /* Mini Import Keys modal (compact + neat) */
+    #importKeysModalBackdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      z-index: 3500;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    #importKeysModalBackdrop.active {
+      display: flex;
+    }
+    #importKeysModal {
+      width: min(92vw, 460px);
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+      padding: 14px 16px 16px;
+      text-align: left;
+    }
+    #importKeysModal .mini-modal__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    #importKeysModalTitle {
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0;
+    }
+    #importKeysModalX {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 26px;
+      line-height: 1;
+      padding: 0 6px;
+      color: #d11;
+    }
+    .mini-modal__option {
+      display: block;
+      width: 100%;
+      text-align: left;
+      margin: 0;
+    }
+    .mini-modal__help {
+      margin: 6px 0 12px;
+      font-size: 12px;
+      color: #555;
+      line-height: 1.35;
+    }
+    #importKeysJsonText {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      resize: vertical;
+      min-height: 110px;
+      max-height: 240px;
+    }
+    .mini-modal__actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    /* Discreet "ghost" button for Clear keys */
+    .keys-io-btn--ghost-green {
+      background: transparent;
+      color: #2e7d32;
+      border: 1px solid rgba(46, 125, 50, 0.45);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-width: 120px;
+      opacity: 0.9;
+    }
+    .keys-io-btn--ghost-green:hover {
+      /* Overrides the global button:hover background */
+      background-color: rgba(46, 125, 50, 0.10);
+      opacity: 1;
+    }
+    .keys-io-btn--ghost-green .btn-icon {
+      font-size: 14px;
+      line-height: 1;
+    }
+    #keysIoHint {
+      font-size: 12px;
+      color: #666;
+      margin-top: 8px;
+    }
+    #keysIoStatus {
+      font-size: 12px;
+      margin-top: 6px;
+    }
+    .ad-revenue-message {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #555;
+      display: none !important; /* TEMP: hide ad-revenue message */
+    }
+   /* New Horizontal Accordion (Tabbed Interface) */
+    .accordion {
+      margin: 20px auto;
+      /* make this section wider so 5 tabs fit without wrapping/scrolling */
+      max-width: 1280px;              /* tweak: 1100 / 1200 / 1400 */
+      width: calc(100% - 40px);       /* keeps nice side padding on small screens */
+    }
+    .accordion-headers {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+     flex-wrap: nowrap;           /* keep all 5 on ONE line */
+     overflow-x: auto;            /* if too tight, scroll instead of wrapping */
+     -webkit-overflow-scrolling: touch;
+     padding: 4px 0;              /* tiny vertical breathing room */
+    }
+    .accordion-header {
+      background-color: #5a9;
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    white-space: nowrap;
+    flex: 0 0 auto;
+    }
+
+    /* Slightly tighter tabs on smaller screens */
+    @media (max-width: 900px) {
+      .accordion-header {
+        padding: 8px 14px;
+        font-size: 16px;
+      }
+    }
+    .accordion-header:hover {
+      background-color: #489;
+    }
+    .accordion-header.active {
+      background-color: #489;
+    }
+    /* New CSS for the API Guide Button */
+    #apiGuideButton {
+      border: 2px solid #333;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+    }
+    .accordion-content-container {
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 15px;
+      text-align: left;
+      min-height: 100px;
+    }
+    .accordion-hidden-content {
+      display: none;
+   }
+  
+    /* AWS Bedrock Guide Modal (opened from the "Guide" link next to AWS Bedrock) */
+    #bedrockGuideView {
+      display: none;
+      position: fixed;
+      top: 10%;
+      left: 10%;
+      width: 80%;
+      height: 80%;
+      background: white;
+      border: 2px solid #ccc;
+      padding: 20px;
+      overflow-y: auto;
+      z-index: 3000;
+      text-align: left; /* override body { text-align: center; } */
+    }
+    #bedrockGuideView.active {
+      display: block;
+    }
+    #bedrockGuideView .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      background: white;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    #bedrockGuideClose {
+      /* Keep the close button visible while scrolling inside the modal */
+      position: sticky;
+      top: 12px;
+      float: right;
+      font-size: 30px;
+      line-height: 1;
+      border: none;
+      background: transparent;
+      color: #d11;            /* RED so it's visible on white */
+      cursor: pointer;
+      padding: 0 6px;
+      margin: 0;              /* global button adds margin */
+      z-index: 3001;          /* ensure it's above content */
+    }
+    /* Prevent the floated close button from affecting the layout below */
+    #bedrockGuideHeading {
+      clear: both;
+    }
+    #bedrockGuideClose:hover {
+      opacity: 0.8;
+    }
+    #bedrockGuideText {
+      white-space: pre-wrap;
+      font-family: 'Inter', 'Roboto', sans-serif;
+      font-size: 14px;
+      line-height: 1.4;
+      margin: 0;
+      text-align: left; /* ensure wrapped lines start at left edge */
+     }
+
+    /* Inline "Guide" buttons should look like links (and must NOT navigate / change hash) */
+    .inline-guide-link {
+      background: transparent;
+      border: 0;
+      padding: 0;
+      margin: 0;
+      border-radius: 0;
+      color: #06c;
+      text-decoration: underline;
+      cursor: pointer;
+      font: inherit;
+      line-height: inherit;
+      transition: none;
+    }
+    .inline-guide-link:hover { opacity: 0.85; }
+
+    /* Google Vertex Guide Modal (opened from the "Guide" link next to Google Vertex) */
+    #vertexGuideView {
+      display: none;
+      position: fixed;
+      top: 10%;
+      left: 10%;
+      width: 80%;
+      height: 80%;
+      background: white;
+      border: 2px solid #ccc;
+      padding: 20px;
+      overflow-y: auto;
+      z-index: 3002;
+      text-align: left; /* override body { text-align: center; } */
+    }
+    #vertexGuideView.active {
+      display: block;
+    }
+    #vertexGuideClose {
+      position: sticky;
+      top: 12px;
+      float: right;
+      font-size: 30px;
+      line-height: 1;
+      border: none;
+      background: transparent;
+      color: #d11;
+      cursor: pointer;
+      padding: 0 6px;
+      margin: 0;
+      z-index: 3003;
+    }
+    #vertexGuideClose:hover {
+      opacity: 0.8;
+    }
+    #vertexGuideText {
+      white-space: pre-wrap;
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.4;
+      margin: 0;
+      text-align: left; /* ensure wrapped lines start at left edge */
+    }
+
+</style>
+ 
+</head>
+<body>
+  <!-- Language Dropdown -->
+  <div id="lang-container">
+    <img src="language-icon.png" alt="Language Icon">
+    <select id="lang-select">
+      <option value="en">English</option>
+      <option value="no">Norsk</option>
+      <option value="sv">Svenska</option>
+      <option value="de">Deutsch</option>
+      <option value="fr">Français</option>
+      <option value="it">Italiano</option>
+    </select>
+  </div>
+  
+  <header>    
+    <div class="header-center">
+      <img class="header-mic" src="mic-icon.png" alt="" aria-hidden="true">
+      <div class="title-block">
+        <h1 id="header-title">Transcribe Notes</h1>
+        <p id="header-subtitle">Advanced AI-Powered Speech-to-Text & Clinical Note Generation for Healthcare Consultations</p>
+      </div>
+      <div class="header-mic-spacer" aria-hidden="true"></div>
+    </div>
+  </header>
+  
+  <div class="container">
+    <!-- This text is replaced by the language file (e.g. "Dont have an API-key yet? ...") -->
+    <p id="start-text">To get started, please enter your OpenAI API key:</p>
+
+    <!-- New: Prompt Profile ID (optional) -->
+    <p id="prompt-profile-label">Prompt profile ID (optional):</p>
+    <input
+      type="text"
+      id="promptProfileInput"
+      placeholder='e.g. "David1"'
+      autocomplete="off"
+    >
+    <p id="prompt-profile-hint" style="font-size: 14px; color: #666; margin-top: -10px;">
+      Used to save your custom prompts on this device, independent of your API key.
+    </p>
+
+    <div class="keys-io-row">
+      <button type="button" id="importKeysBtn" class="keys-io-btn">Import keys</button>
+      <button type="button" id="exportKeysBtn" class="keys-io-btn">Export keys</button>
+      <button
+        type="button"
+        id="clearKeysBtn"
+        class="keys-io-btn keys-io-btn--ghost-green"
+        title="Clears key/secret/url fields (does not affect Prompt profile)"
+      >
+        <span>Clear keys</span>
+      </button>
+      <input type="file" id="importKeysFile" accept="application/json" style="display:none">
+    </div>
+
+    <!-- Compact Import Keys modal -->
+    <div id="importKeysModalBackdrop" aria-hidden="true">
+      <div id="importKeysModal" role="dialog" aria-modal="true" aria-labelledby="importKeysModalTitle">
+        <div class="mini-modal__header">
+          <div id="importKeysModalTitle">Import keys</div>
+          <button type="button" id="importKeysModalX" aria-label="Close">×</button>
+        </div>
+
+        <!-- Step 1: Choose import method -->
+        <div id="importKeysModalChoice">
+          <button type="button" id="importChoiceFile" class="keys-io-btn mini-modal__option">
+            Import from JSON file
+          </button>
+          <div class="mini-modal__help">
+            Choose a keys .json file from this device. Keys are stored only in this tab (session storage).
+          </div>
+
+          <button type="button" id="importChoicePaste" class="keys-io-btn mini-modal__option">
+            Paste JSON content
+          </button>
+          <div class="mini-modal__help">
+            Use this on shared computers to avoid downloading a file. Open the JSON in Dropbox (or similar),
+            copy the contents, paste it here, then click Fetch. Keys are stored only in this tab.
+          </div>
+        </div>
+
+        <!-- Step 2: Paste JSON -->
+        <div id="importKeysModalPaste" style="display:none">
+          <textarea id="importKeysJsonText" placeholder='Paste JSON here (example: {"data": {...}})'></textarea>
+          <div class="mini-modal__actions">
+            <button type="button" id="importKeysFetchBtn" class="keys-io-btn">Fetch</button>
+            <button type="button" id="importKeysModalCloseBtn" class="keys-io-btn keys-io-btn--ghost-green">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p id="keysIoHint">
+      Export keys to a file and store it securely. Next time, import the file to refill the fields, which saves time and avoids retyping.
+    </p>
+    <p id="keysIoStatus" aria-live="polite"></p>
+
+    <!-- Provider credentials (two columns) -->
+    <div class="provider-columns" id="provider-columns">
+      <!-- GDPR compliant -->
+      <fieldset class="provider-column gdpr">
+        <legend><span id="gdpr-column-title">GDPR compliant:</span></legend>
+        <p class="column-footnote" id="gdpr-column-footnote">(Full EU data residency/processing + zero data retention)</p>
+
+        <!-- New (Phase 1): Optional Soniox API Key -->
+        <p id="soniox-text">Soniox API key:</p>
+        <input type="text" id="sonioxKeyInput" placeholder="Enter Soniox API Key here" autocomplete="off">
+        <br>
+      
+        <!-- New: AWS Bedrock proxy configuration (per-user) -->
+        <p id="bedrock-text">
+          AWS Bedrock (
+          <button
+            type="button"
+            id="bedrock-guide-link"
+            class="inline-guide-link"
+          >Guide</button>
+          ):
+        </p>
+        <div class="credentials-row">
+          <input
+            type="text"
+            id="bedrockBackendUrlInput"
+            placeholder="Bedrock backend URL (https://…lambda-url.eu-north-1.on.aws/)"
+            autocomplete="off"
+          >
+          <input
+            type="text"
+            id="bedrockBackendSecretInput"
+            placeholder="Bedrock backend secret"
+            autocomplete="off"
+          >
+        </div>
+
+        <!-- New: Vertex Cloud Run configuration (per-user) -->
+        <p id="vertex-text">
+          Google Vertex (
+          <button
+            type="button"
+            id="vertex-guide-link"
+            class="inline-guide-link"
+          >Guide</button>
+          ):
+        </p>
+        <div class="credentials-row">
+          <input
+            type="text"
+            id="vertexBackendUrlInput"
+            placeholder="Vertex backend URL (https://…run.app)"
+            autocomplete="off"
+          >
+          <input
+            type="text"
+            id="vertexBackendSecretInput"
+            placeholder="Vertex backend secret"
+            autocomplete="off"
+          >
+        </div>
+        <!-- New: Optional Mistral (Voxtral) API Key -->
+        <p id="mistral-text">Mistral API key:</p>
+        <input type="text" id="mistralKeyInput" placeholder="Enter Mistral API Key here" autocomplete="off">
+        <br>
+      </fieldset>
+
+      <!-- Non-GDPR compliant -->
+      <fieldset class="provider-column non-gdpr">
+        <legend><span id="nongdpr-column-title">Non-GDPR compliant:</span></legend>
+        <p class="column-footnote" id="nongdpr-column-footnote">(Varying degrees of data retention + data processing/residency in US)</p>
+
+        <!-- New explicit label above the OpenAI field -->
+        <p id="openai-label">OpenAI API key:</p>
+        <input type="text" id="apiKeyInput" placeholder="Enter API Key here" autocomplete="off">
+        <br>
+
+        <!-- New: Optional Google Gemini / Vertex Credentials -->
+        <p id="gemini-text">Google Gemini API key:</p>
+        <div class="credentials-row">
+          <input
+            type="text"
+            id="geminiKeyInput"
+            placeholder="Enter Google Gemini API Key here"
+            autocomplete="off"
+          >
+        </div>
+        <br>
+
+        <!-- New: Optional Lemonfox API Key -->
+        <p id="lemonfox-text">Lemonfox API key:</p>
+        <input type="text" id="lemonfoxKeyInput" placeholder="Enter Lemonfox API Key here" autocomplete="off">
+        <br>
+      
+        <!-- New: Optional Deepgram API Key -->
+        <p id="deepgram-text">Deepgram API key:</p>
+        <input type="text" id="deepgramKeyInput" placeholder="Enter Deepgram API Key here" autocomplete="off">
+        <br>
+      </fieldset>
+    </div>
+    
+    <button id="enterTranscriptionBtn">Enter Transcription Tool</button>
+    <br>
+    <p class="ad-revenue-message" id="ad-revenue-message">
+      As this website is free to use and relies solely on ad revenue, please consent to personalized ads to help support the service.
+    </p>
+    <div id="offerText"></div>
+  </div>
+
+  <!-- New Horizontal Accordion -->
+  <div class="accordion">
+    <div class="accordion-headers">
+      <button class="accordion-header" data-content-id="modelsModalText">AI-models</button>
+      <button class="accordion-header" data-content-id="guide-p1">API Guide</button>
+      <button class="accordion-header" data-content-id="priceModalText">Price Information</button>
+      <button class="accordion-header" data-content-id="securityModalText">Security Information</button>
+      <button class="accordion-header" data-content-id="aboutModalText">About</button>
+    </div>
+    <div class="accordion-content-container">
+      <!-- Active content will be displayed here -->
+    </div>
+  </div>
+
+  <!-- Hidden Content Containers for Accordion -->
+  <div id="modelsModalText" class="accordion-hidden-content">
+    <!-- AI-models content (placeholder) -->
+    <div id="modelsModalText-content">test, test</div>
+  </div>
+  <div id="guide-p1" class="accordion-hidden-content">
+    <!-- API Guide content will be injected here -->
+    <div id="guide-p1-content"></div>
+  </div>
+  <div id="priceModalText" class="accordion-hidden-content">
+    <!-- Price Information content will be injected here -->
+    <div id="priceModalText-content"></div>
+  </div>
+  <div id="securityModalText" class="accordion-hidden-content">
+    <!-- Security Information content will be injected here -->
+    <div id="securityModalText-content"></div>
+  </div>
+  <div id="aboutModalText" class="accordion-hidden-content">
+    <!-- About content will be injected here -->
+    <div id="aboutModalText-content"></div>
+  </div>
+
+  <!-- Inline Script for API Key Handling and Consent -->
+  <script>
+    // Helper function to set a cookie
+    function setCookie(name, value, days) {
+      var expires = "";
+      if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days*24*60*60*1000));
+        expires = "; expires=" + date.toUTCString();
+      }
+      document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+    }
+
+    // Phase 1: Store all keys on click; keep OpenAI as default user_api_key (no validation).
+    (function wireEnterButtonOnce() {
+      var btn = document.getElementById("enterTranscriptionBtn");
+      if (!btn) return;
+      if (btn._multiKeyWired) return;  // guard against double-binding
+      btn._multiKeyWired = true;
+
+      btn.addEventListener("click", function () {
+        var promptProfileId      = ((document.getElementById("promptProfileInput")      || {}).value || "").trim();
+        var openaiKey            = ((document.getElementById("apiKeyInput")             || {}).value || "").trim();
+        var sonioxKey            = ((document.getElementById("sonioxKeyInput")          || {}).value || "").trim();
+        var lemonKey             = ((document.getElementById("lemonfoxKeyInput")        || {}).value || "").trim();
+        var mistralKey           = ((document.getElementById("mistralKeyInput")         || {}).value || "").trim();
+        var deepgramKey          = ((document.getElementById("deepgramKeyInput")        || {}).value || "").trim();
+        var geminiKey            = ((document.getElementById("geminiKeyInput")           || {}).value || "").trim();
+        var vertexBackendUrl     = ((document.getElementById("vertexBackendUrlInput")    || {}).value || "").trim();
+        var vertexBackendSecret  = ((document.getElementById("vertexBackendSecretInput") || {}).value || "").trim();
+        var bedrockBackendUrl   = ((document.getElementById("bedrockBackendUrlInput")   || {}).value || "").trim();
+        var bedrockBackendSecret= ((document.getElementById("bedrockBackendSecretInput")|| {}).value || "").trim();
+
+
+        // If profile ID is blank -> remove it so the app falls back to legacy prompt behavior.
+        try {
+          if (promptProfileId) localStorage.setItem("prompt_profile_id", promptProfileId);
+          else localStorage.removeItem("prompt_profile_id");
+        } catch {}
+
+
+        // Store all keys (even if empty) for later provider selection
+        sessionStorage.setItem("openai_api_key", openaiKey);
+        sessionStorage.setItem("soniox_api_key", sonioxKey);
+        sessionStorage.setItem("lemonfox_api_key", lemonKey);
+        sessionStorage.setItem("mistral_api_key", mistralKey);
+        sessionStorage.setItem("deepgram_api_key", deepgramKey);
+        sessionStorage.setItem("gemini_api_key", geminiKey);
+        sessionStorage.setItem("vertex_backend_url", vertexBackendUrl);
+        sessionStorage.setItem("vertex_backend_secret", vertexBackendSecret);
+        sessionStorage.setItem("bedrock_backend_url", bedrockBackendUrl);
+        sessionStorage.setItem("bedrock_backend_secret", bedrockBackendSecret);
+        
+        // Back-compat: default active key remains OpenAI for now
+        sessionStorage.setItem("user_api_key", openaiKey);
+
+        // Consent cookie (kept as before, but now only set once here)
+        setCookie("user_consent", "accepted", 365);
+
+
+        // NEW: First-time migration UX fix.
+        // If the chosen profile has no prompts yet, copy legacy (OpenAI-key) prompts into it.
+        // This prevents "my prompts disappeared" when a user tries profiles the first time.
+        try {
+          if (promptProfileId && openaiKey) {
+            // Legacy namespace: hash(raw openai_api_key)
+            const hashString = (str) => {
+              let hash = 0;
+              for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                hash |= 0;
+              }
+              return hash.toString();
+            };
+
+            const legacyNs = hashString(openaiKey);
+            const profileNs = hashString(`profile:${promptProfileId}`);
+            const migratedFlagKey = `prompt_migrated_${profileNs}`;
+
+            if (localStorage.getItem(migratedFlagKey) !== "1") {
+              for (let i = 1; i <= 10; i++) {
+                const slot = String(i);
+                const oldKey = `customPrompt_${legacyNs}_${slot}`;
+                const newKey = `customPrompt_${profileNs}_${slot}`;
+                const newVal = localStorage.getItem(newKey) || "";
+                if (newVal && newVal.trim()) continue;
+                const oldVal = localStorage.getItem(oldKey) || "";
+                if (!oldVal) continue;
+                localStorage.setItem(newKey, oldVal);
+              }
+              localStorage.setItem(migratedFlagKey, "1");
+            }
+          }
+        } catch {}
+        
+        // Proceed to the transcription tool regardless of empties
+        window.location.href = "transcribe.html";
+      });
+    })();
+
+  document.addEventListener("DOMContentLoaded", function() {
+    const enterTranscriptionBtn    = document.getElementById("enterTranscriptionBtn");
+    const promptProfileInput       = document.getElementById("promptProfileInput");
+    const apiKeyInput              = document.getElementById("apiKeyInput");
+    const sonioxKeyInput           = document.getElementById("sonioxKeyInput");
+    const lemonfoxKeyInput         = document.getElementById("lemonfoxKeyInput");
+    const mistralKeyInput          = document.getElementById("mistralKeyInput");
+    const deepgramKeyInput         = document.getElementById("deepgramKeyInput");
+    const geminiKeyInput           = document.getElementById("geminiKeyInput");
+    const vertexBackendUrlInput    = document.getElementById("vertexBackendUrlInput");
+    const vertexBackendSecretInput = document.getElementById("vertexBackendSecretInput");
+    const bedrockBackendUrlInput    = document.getElementById("bedrockBackendUrlInput");
+    const bedrockBackendSecretInput = document.getElementById("bedrockBackendSecretInput");
+
+    // 0) Prefill prompt profile from localStorage (device persistent)
+    if (promptProfileInput) {
+      const storedProfile = (localStorage.getItem("prompt_profile_id") || "").trim();
+      if (storedProfile && !promptProfileInput.value) promptProfileInput.value = storedProfile;
+    }
+
+
+    // 1) Prefill all fields from sessionStorage (keys only live for this tab)
+    if (apiKeyInput) {
+      const storedOpenai = sessionStorage.getItem("openai_api_key") || "";
+      if (storedOpenai && !apiKeyInput.value) apiKeyInput.value = storedOpenai;
+    }
+    if (sonioxKeyInput) {
+      const storedSoniox = sessionStorage.getItem("soniox_api_key") || "";
+      if (storedSoniox && !sonioxKeyInput.value) sonioxKeyInput.value = storedSoniox;
+    }
+    if (lemonfoxKeyInput) {
+      const storedLemon = sessionStorage.getItem("lemonfox_api_key") || "";
+      if (storedLemon && !lemonfoxKeyInput.value) lemonfoxKeyInput.value = storedLemon;
+    }
+    if (mistralKeyInput) {
+      const storedMistral = sessionStorage.getItem("mistral_api_key") || "";
+      if (storedMistral && !mistralKeyInput.value) mistralKeyInput.value = storedMistral;
+    }
+    if (deepgramKeyInput) {
+      const storedDeepgram = sessionStorage.getItem("deepgram_api_key") || "";
+      if (storedDeepgram && !deepgramKeyInput.value) deepgramKeyInput.value = storedDeepgram;
+    }
+    if (geminiKeyInput) {
+      const storedGemini = sessionStorage.getItem("gemini_api_key") || "";
+      if (storedGemini && !geminiKeyInput.value) geminiKeyInput.value = storedGemini;
+    }
+    // Vertex backend URL / secret
+    if (vertexBackendUrlInput) {
+      const storedUrl = sessionStorage.getItem("vertex_backend_url") || "";
+      if (storedUrl && !vertexBackendUrlInput.value) vertexBackendUrlInput.value = storedUrl;
+    }
+    if (vertexBackendSecretInput) {
+      const storedSecret = sessionStorage.getItem("vertex_backend_secret") || "";
+      if (storedSecret && !vertexBackendSecretInput.value) vertexBackendSecretInput.value = storedSecret;
+    }
+
+    // Bedrock backend URL / secret
+    if (bedrockBackendUrlInput) {
+      const storedUrl = sessionStorage.getItem("bedrock_backend_url") || "";
+      if (storedUrl && !bedrockBackendUrlInput.value) bedrockBackendUrlInput.value = storedUrl;
+    }
+    if (bedrockBackendSecretInput) {
+      const storedSecret = sessionStorage.getItem("bedrock_backend_secret") || "";
+      if (storedSecret && !bedrockBackendSecretInput.value) bedrockBackendSecretInput.value = storedSecret;
+    }
+
+    // Import/Export key bundle (local JSON file that YOU store; not uploaded anywhere)
+    const exportKeysBtn  = document.getElementById("exportKeysBtn");
+    const importKeysBtn  = document.getElementById("importKeysBtn");
+    const clearKeysBtn   = document.getElementById("clearKeysBtn");
+    const importKeysFile = document.getElementById("importKeysFile");
+    const keysIoStatus   = document.getElementById("keysIoStatus");
+
+    const KEY_FIELDS = [
+      { id: "apiKeyInput",               storageKey: "openai_api_key" },
+      { id: "sonioxKeyInput",            storageKey: "soniox_api_key" },
+      { id: "lemonfoxKeyInput",          storageKey: "lemonfox_api_key" },
+      { id: "mistralKeyInput",           storageKey: "mistral_api_key" },
+      { id: "deepgramKeyInput",          storageKey: "deepgram_api_key" },
+      { id: "geminiKeyInput",            storageKey: "gemini_api_key" },
+      { id: "vertexBackendUrlInput",     storageKey: "vertex_backend_url" },
+      { id: "vertexBackendSecretInput",  storageKey: "vertex_backend_secret" },
+      { id: "bedrockBackendUrlInput",    storageKey: "bedrock_backend_url" },
+      { id: "bedrockBackendSecretInput", storageKey: "bedrock_backend_secret" }
+    ];
+
+    function setKeysIoStatus(message, isError) {
+      if (!keysIoStatus) return;
+      keysIoStatus.textContent = message || "";
+      keysIoStatus.style.color = isError ? "#b00020" : "#2e7d32";
+    }
+
+    function buildKeyBundle() {
+      const data = {};
+      KEY_FIELDS.forEach(({ id, storageKey }) => {
+        const el = document.getElementById(id);
+        const val = (el && typeof el.value === "string") ? el.value.trim() : "";
+        data[storageKey] = val;
+      });
+      return {
+        schema: "whisper-dev.keys",
+        version: 1,
+        createdAt: new Date().toISOString(),
+        data
+      };
+    }
+
+    function applyKeyBundle(bundle) {
+      if (!bundle) throw new Error("Empty file");
+
+      // Support both {data:{...}} and legacy flat {openai_api_key:"..."} shapes
+      const data = (bundle.data && typeof bundle.data === "object") ? bundle.data : bundle;
+
+      KEY_FIELDS.forEach(({ id, storageKey }) => {
+        if (!(storageKey in data)) return;
+        const el = document.getElementById(id);
+        if (el && typeof data[storageKey] === "string") {
+          el.value = data[storageKey];
+        }
+        // Keep behavior consistent with your Enter button: put values in sessionStorage.
+        try { sessionStorage.setItem(storageKey, (data[storageKey] || "").toString()); } catch {}
+      });
+
+      // Back-compat: default active key remains OpenAI
+      try { sessionStorage.setItem("user_api_key", (data.openai_api_key || "").toString()); } catch {}
+    }
+    function clearAllKeyFields() {
+      // Confirm to prevent accidental wipe
+      const ok = window.confirm(
+        "Clear all key/secret/url fields and remove them from this tab’s session-storage?"
+      );
+      if (!ok) return;
+
+      KEY_FIELDS.forEach(({ id, storageKey }) => {
+        const el = document.getElementById(id);
+        if (el && typeof el.value === "string") el.value = "";
+        try { sessionStorage.removeItem(storageKey); } catch {}
+      });
+
+      // Also clear the derived active key
+      try { sessionStorage.removeItem("user_api_key"); } catch {}
+
+      setKeysIoStatus("Cleared keys from fields and session.", false);
+    }
+
+
+    if (exportKeysBtn) {
+  exportKeysBtn.addEventListener("click", async function () {
+    try {
+      const bundle = buildKeyBundle();
+      const pretty = JSON.stringify(bundle, null, 2);
+
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, "0");
+      const d = String(now.getDate()).padStart(2, "0");
+      const filename = `whisper-keys-${y}${m}${d}.json`;
+
+      // Prefer a user-chosen save location (Chromium-based browsers).
+      // Fallback keeps the current download behavior for other browsers.
+      const canPickSaveLocation = typeof window.showSaveFilePicker === "function";
+      if (canPickSaveLocation) {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [
+            {
+              description: "JSON",
+              accept: { "application/json": [".json"] },
+            },
+          ],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(pretty);
+        await writable.close();
+      } else {
+        const blob = new Blob([pretty], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      setKeysIoStatus("Exported keys file. Store it somewhere safe.", false);
+    } catch (e) {
+      console.error(e);
+      setKeysIoStatus(
+        "Export failed: " + (e && e.message ? e.message : "Unknown error"),
+        true
+      );
+    }
+  });
+}
+    if (clearKeysBtn) {
+      clearKeysBtn.addEventListener("click", clearAllKeyFields);
+    }
+
+
+    if (importKeysBtn && importKeysFile) {
+      // Modal elements
+      const importKeysModalBackdrop = document.getElementById("importKeysModalBackdrop");
+      const importKeysModalX = document.getElementById("importKeysModalX");
+      const importChoiceFile = document.getElementById("importChoiceFile");
+      const importChoicePaste = document.getElementById("importChoicePaste");
+      const importKeysModalChoice = document.getElementById("importKeysModalChoice");
+      const importKeysModalPaste = document.getElementById("importKeysModalPaste");
+      const importKeysJsonText = document.getElementById("importKeysJsonText");
+      const importKeysFetchBtn = document.getElementById("importKeysFetchBtn");
+      const importKeysModalCloseBtn = document.getElementById("importKeysModalCloseBtn");
+
+      function openImportKeysModal() {
+        if (!importKeysModalBackdrop) return;
+        // Reset to choice view each time
+        if (importKeysModalChoice) importKeysModalChoice.style.display = "";
+        if (importKeysModalPaste) importKeysModalPaste.style.display = "none";
+        if (importKeysJsonText) importKeysJsonText.value = "";
+        importKeysModalBackdrop.classList.add("active");
+        importKeysModalBackdrop.setAttribute("aria-hidden", "false");
+        // Focus first option for keyboard users
+        if (importChoiceFile) importChoiceFile.focus();
+      }
+
+      function closeImportKeysModal() {
+        if (!importKeysModalBackdrop) return;
+        importKeysModalBackdrop.classList.remove("active");
+        importKeysModalBackdrop.setAttribute("aria-hidden", "true");
+      }
+
+      function showPasteView() {
+        if (importKeysModalChoice) importKeysModalChoice.style.display = "none";
+        if (importKeysModalPaste) importKeysModalPaste.style.display = "";
+        if (importKeysJsonText) importKeysJsonText.focus();
+      }
+
+      importKeysBtn.addEventListener("click", openImportKeysModal);
+
+      // Close behaviors
+      if (importKeysModalX) importKeysModalX.addEventListener("click", closeImportKeysModal);
+      if (importKeysModalCloseBtn) importKeysModalCloseBtn.addEventListener("click", closeImportKeysModal);
+      if (importKeysModalBackdrop) {
+        importKeysModalBackdrop.addEventListener("click", function (e) {
+          // Only close when clicking the dimmed backdrop, not inside the modal card
+          if (e.target === importKeysModalBackdrop) closeImportKeysModal();
+        });
+      }
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && importKeysModalBackdrop && importKeysModalBackdrop.classList.contains("active")) {
+          closeImportKeysModal();
+        }
+      });
+
+      // Choice: import from file (same as old behavior)
+      if (importChoiceFile) {
+        importChoiceFile.addEventListener("click", function () {
+          closeImportKeysModal();
+          importKeysFile.value = ""; // allow re-importing the same file
+          importKeysFile.click();
+        });
+      }
+
+      // Choice: paste JSON content
+      if (importChoicePaste) {
+        importChoicePaste.addEventListener("click", showPasteView);
+      }
+
+      // Fetch pasted JSON -> applyKeyBundle (sessionStorage behavior remains unchanged)
+      if (importKeysFetchBtn) {
+        importKeysFetchBtn.addEventListener("click", function () {
+          try {
+            const raw = String(importKeysJsonText && importKeysJsonText.value ? importKeysJsonText.value : "").trim();
+            if (!raw) {
+              setKeysIoStatus("Paste JSON content first.", true);
+              return;
+            }
+            const parsed = JSON.parse(raw);
+            applyKeyBundle(parsed);
+            setKeysIoStatus("Imported keys. Review the fields, then click Enter.", false);
+            closeImportKeysModal();
+          } catch (e) {
+            console.error(e);
+            setKeysIoStatus("Import failed: invalid JSON content.", true);
+          }
+        });
+      }
+
+      importKeysFile.addEventListener("change", function () {
+        const file = importKeysFile.files && importKeysFile.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onerror = function () {
+          setKeysIoStatus("Import failed: could not read file.", true);
+        };
+        reader.onload = function () {
+          try {
+            const text = String(reader.result || "");
+            const parsed = JSON.parse(text);
+            applyKeyBundle(parsed);
+            setKeysIoStatus("Imported keys. Review the fields, then click Enter.", false);
+          } catch (e) {
+            console.error(e);
+            setKeysIoStatus("Import failed: invalid JSON file.", true);
+          }
+        };
+        reader.readAsText(file);
+      });
+    }
+  });
+</script>
+  
+  <!-- New Horizontal Accordion Script -->
+  <script>
+    document.querySelectorAll('.accordion-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const contentContainer = document.querySelector('.accordion-content-container');
+        if (header.classList.contains('active')) {
+          header.classList.remove('active');
+          contentContainer.innerHTML = '';
+        } else {
+          document.querySelectorAll('.accordion-header.active').forEach(activeHeader => {
+            activeHeader.classList.remove('active');
+          });
+          header.classList.add('active');
+          const contentId = header.getAttribute('data-content-id');
+          const hiddenContent = document.getElementById(contentId);
+          if (hiddenContent) {
+            contentContainer.innerHTML = hiddenContent.innerHTML;
+          }
+        }
+      });
+    });
+
+
+    // Allow "Guide" links inside injected accordion HTML to open the same modals
+    // as the header links next to the input fields.
+    document.addEventListener("click", (e) => {
+      const el = e.target.closest('[data-open-guide]');
+      if (!el) return;
+      e.preventDefault();
+
+      const which = el.getAttribute("data-open-guide"); // "bedrock" | "vertex"
+      const id =
+        which === "bedrock" ? "bedrock-guide-link" :
+        which === "vertex"  ? "vertex-guide-link"  :
+        null;
+
+      const realLink = id ? document.getElementById(id) : null;
+      if (realLink) realLink.click();
+    });
+    
+  </script>
+  
+  
+  <!-- AWS Bedrock Guide Modal -->
+  <div id="bedrockGuideView" aria-hidden="true">
+  <button id="bedrockGuideClose" type="button" aria-label="Close">&times;</button>
+  <h3>AWS Bedrock setup guide</h3>
+  <pre id="bedrockGuideText">Loading…</pre>
+</div>
+
+  <!-- Google Vertex Guide Modal -->
+  <div id="vertexGuideView" aria-hidden="true">
+    <button id="vertexGuideClose" type="button" aria-label="Close">&times;</button>
+    <h3>Google Vertex setup guide</h3>
+    <pre id="vertexGuideText">Loading…</pre>
+  </div>
+
+
+  <script type="module" src="./js/main-index.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+
+      // --- Analytics: log "Guide" clicks to Google Sheet (same endpoint as transcribe.html) ---
+      let visitorId = localStorage.getItem('visitorId');
+      if (!visitorId) {
+        visitorId = (crypto.randomUUID && crypto.randomUUID()) ||
+                    Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('visitorId', visitorId);
+      }
+
+      function logEvent(params = {}) {
+        const baseUrl = 'https://script.google.com/macros/s/AKfycbz3bpMrPJXAtyNCIoj6h2v3GewLRF90dQeEpC81F_m9rNClLVMUuQEGVO8yinlhssc/exec';
+        const qs = new URLSearchParams({
+          visitorId,
+          page: window.location.pathname,
+          userAgent: navigator.userAgent,
+          referrer: document.referrer,
+          ...params
+        }).toString();
+        fetch(`${baseUrl}?${qs}`, { mode: 'no-cors', keepalive: true });
+      }
+      // AWS Bedrock "Guide" modal (opened from the link next to AWS Bedrock)
+      const bedrockGuideLink = document.getElementById("bedrock-guide-link");
+      const bedrockGuideView = document.getElementById("bedrockGuideView");
+      const bedrockGuideClose = document.getElementById("bedrockGuideClose");
+      const bedrockGuideTextEl = document.getElementById("bedrockGuideText");
+
+      // Track which language we loaded last, so switching language loads the correct guide
+        let bedrockGuideLoadedLang = null;
+
+      function getCurrentLang() {
+        // Your site already stores language here via initIndexLanguage()
+        return localStorage.getItem("siteLanguage") || "en";
+      }
+
+
+      // Deep-link support for the AWS Bedrock guide modal.
+      // If the page is opened with #bedrock-update-stack, automatically open the modal
+      // and scroll to the "Update stack" section inside the guide text.
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function renderBedrockGuideText(rawText) {
+        if (!bedrockGuideTextEl) return;
+
+        const wantsUpdateStack = (location.hash === "#bedrock-update-stack");
+
+        // Default: keep it as plain text.
+        if (!wantsUpdateStack) {
+          bedrockGuideTextEl.textContent = rawText;
+          return;
+        }
+      
+        // Try to locate the relevant section header inside the guide.
+        const patterns = [
+          /\(cloudformation\)/i,
+        ];
+
+        let html = escapeHtml(rawText);
+        let marked = false;
+
+        for (const re of patterns) {
+          const m = rawText.match(re);
+          if (!m) continue;
+
+          const needle = escapeHtml(m[0]);
+          if (html.includes(needle)) {
+            html = html.replace(needle, `<mark id="bedrock-update-stack">${needle}</mark>`);
+            marked = true;
+            break;
+          }
+        }
+
+        bedrockGuideTextEl.innerHTML = html;
+
+        // Scroll within the modal after the DOM updates.
+        requestAnimationFrame(() => {
+          const anchor = document.getElementById("bedrock-update-stack");
+          if (anchor) {
+            anchor.scrollIntoView({ block: "start" });
+          } else if (bedrockGuideView) {
+            // Fallback: scroll to the bottom if we couldn't find the section header.
+            bedrockGuideView.scrollTop = bedrockGuideView.scrollHeight;
+          }
+        });
+      }
+
+      async function loadBedrockGuideForCurrentLanguage() {
+        if (!bedrockGuideTextEl) return;
+
+        const lang = getCurrentLang();
+        if (bedrockGuideLoadedLang === lang) return;
+
+        bedrockGuideTextEl.textContent = "Loading…";
+
+        // Norwegian only when lang === "no". All other languages default to English.
+        const candidates = (lang === "no")
+          ? ["./bedrock-guide.no.txt", "./bedrock-guide.txt"]
+          : ["./bedrock-guide.txt"];
+
+        try {
+          let loaded = false;
+          for (const url of candidates) {
+            const res = await fetch(url, { cache: "no-store" });
+            if (!res.ok) continue;
+            const txt = await res.text();
+            renderBedrockGuideText(txt);
+            loaded = true;
+            break;
+          }
+          if (!loaded) throw new Error("No guide file could be loaded.");
+          bedrockGuideLoadedLang = lang;
+        } catch (err) {
+          console.error("Failed to load bedrock guide text:", err);
+          bedrockGuideTextEl.textContent =
+            "Could not load the guide text.\n\n" +
+            "If you are the site owner: make sure bedrock-guide.txt exists next to index.html (and optionally bedrock-guide.no.txt).";
+          bedrockGuideLoadedLang = null;
+        }
+      }
+
+      function openBedrockGuide() {
+        if (!bedrockGuideView) return;
+        bedrockGuideView.classList.add("active");
+        bedrockGuideView.setAttribute("aria-hidden", "false");
+        loadBedrockGuideForCurrentLanguage();
+      }
+
+      function closeBedrockGuide() {
+        if (!bedrockGuideView) return;
+        bedrockGuideView.classList.remove("active");
+        bedrockGuideView.setAttribute("aria-hidden", "true");
+      }
+
+      if (bedrockGuideLink && bedrockGuideView) {
+        bedrockGuideLink.addEventListener("click", (e) => {
+          e.preventDefault();
+          logEvent({ action: "AWS guide" });
+          openBedrockGuide();
+        });
+      }
+
+      if (bedrockGuideClose) {
+        bedrockGuideClose.addEventListener("click", closeBedrockGuide);
+      }
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && bedrockGuideView?.classList.contains("active")) {
+          closeBedrockGuide();
+        }
+      });
+
+      // Deep-link: open the Bedrock guide modal automatically when requested
+      if (location.hash === "#bedrock-update-stack") {
+        openBedrockGuide();
+      }
+
+
+      // Google Vertex "Guide" modal (opened from the link next to Google Vertex)
+      const vertexGuideLink = document.getElementById("vertex-guide-link");
+      const vertexGuideView = document.getElementById("vertexGuideView");
+      const vertexGuideClose = document.getElementById("vertexGuideClose");
+      const vertexGuideTextEl = document.getElementById("vertexGuideText");
+
+      // Track which language we loaded last, so switching language loads the correct guide
+      let vertexGuideLoadedLang = null;
+
+      async function loadVertexGuideForCurrentLanguage() {
+        if (!vertexGuideTextEl) return;
+
+        const lang = getCurrentLang();
+        if (vertexGuideLoadedLang === lang) return;
+
+        vertexGuideTextEl.textContent = "Loading…";
+
+        // Norwegian only when lang === "no". All other languages default to English.
+        const candidates = (lang === "no")
+          ? ["./vertex-guide.no.txt", "./vertex-guide.txt"]
+          : ["./vertex-guide.txt"];
+
+        try {
+          let loaded = false;
+          for (const url of candidates) {
+            const res = await fetch(url, { cache: "no-store" });
+            if (!res.ok) continue;
+            vertexGuideTextEl.textContent = await res.text();
+            loaded = true;
+            break;
+          }
+          if (!loaded) throw new Error("No guide file could be loaded.");
+          vertexGuideLoadedLang = lang;
+        } catch (err) {
+          console.error("Failed to load vertex guide text:", err);
+          vertexGuideTextEl.textContent =
+            "Could not load the guide text.\n\n" +
+            "If you are the site owner: make sure vertex-guide.txt exists next to index.html (and optionally vertex-guide.no.txt).";
+          vertexGuideLoadedLang = null;
+        }
+      }
+
+      function openVertexGuide() {
+        if (!vertexGuideView) return;
+        vertexGuideView.classList.add("active");
+        vertexGuideView.setAttribute("aria-hidden", "false");
+        loadVertexGuideForCurrentLanguage();
+      }
+
+      function closeVertexGuide() {
+        if (!vertexGuideView) return;
+        vertexGuideView.classList.remove("active");
+        vertexGuideView.setAttribute("aria-hidden", "true");
+      }
+
+      if (vertexGuideLink && vertexGuideView) {
+        vertexGuideLink.addEventListener("click", (e) => {
+          e.preventDefault();
+          logEvent({ action: "Vertex Guide" });
+          openVertexGuide();
+        });
+      }
+
+      if (vertexGuideClose) {
+        vertexGuideClose.addEventListener("click", closeVertexGuide);
+      }
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && vertexGuideView?.classList.contains("active")) {
+          closeVertexGuide();
+        }
+      });
+
+
+      // If the user changes language while a guide modal is open, refresh the modal content
+      // immediately (so they don't need to close/reopen).
+      const langSelectEl = document.getElementById("lang-select");
+      const refreshOpenGuidesForLanguage = () => {
+        // Defer to the next frame so any other language-change handler can update storage/DOM first.
+        requestAnimationFrame(() => {
+          bedrockGuideLoadedLang = null;
+          vertexGuideLoadedLang = null;
+
+          if (bedrockGuideView?.classList.contains("active")) {
+            loadBedrockGuideForCurrentLanguage();
+          }
+          if (vertexGuideView?.classList.contains("active")) {
+            loadVertexGuideForCurrentLanguage();
+          }
+        });
+      };
+      langSelectEl?.addEventListener("change", refreshOpenGuidesForLanguage);
+      // Some browsers/UI patterns can fire `input` earlier than `change` for selects.
+      langSelectEl?.addEventListener("input", refreshOpenGuidesForLanguage);
+      document.addEventListener("keydown", function(e) {
+        // Check if the pressed key is "Enter"
+        if (e.key === "Enter") {
+          // Optionally, you can check if the active element is not an input, textarea, or editable element
+          const btn = document.getElementById("enterTranscriptionBtn");
+          if (btn) {
+            btn.click();
+          }
+        }
+      });
+    });
+  </script>
+  
+</body>
+</html>
+

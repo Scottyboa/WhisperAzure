@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Text Bundle Builder (Selectable Files)</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --muted: #94a3b8;
+      --text: #e5e7eb;
+      --accent: #22c55e;
+      --accent2: #3b82f6;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --border: #334155;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(180deg, #020617, #0f172a 35%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 1.5rem;
+    }
+
+    .sub {
+      margin: 0 0 20px 0;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .panel {
+      background: rgba(17, 24, 39, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    }
+
+    .dropzone {
+      border: 2px dashed #475569;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      transition: 0.15s ease;
+      background: rgba(15, 23, 42, 0.55);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .dropzone.dragover {
+      border-color: var(--accent2);
+      background: rgba(59, 130, 246, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .dropzone p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .row {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr 1fr;
+      margin-top: 12px;
+    }
+
+    .row-3 {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1.1fr 1fr 1fr;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 760px) {
+      .row, .row-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      color: #cbd5e1;
+    }
+
+    input[type="text"], select, textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: #0b1220;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .controls.compact {
+      margin-top: 10px;
+      gap: 8px;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      background: #1f2937;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button:hover:not(:disabled) {
+      filter: brightness(1.06);
+    }
+
+    button.primary {
+      background: #14532d;
+      border-color: #166534;
+    }
+
+    button.primary:hover:not(:disabled) {
+      background: #166534;
+    }
+
+    button.blue {
+      background: #1d4ed8;
+      border-color: #2563eb;
+    }
+
+    button.blue:hover:not(:disabled) {
+      background: #2563eb;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .small {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .pill {
+      border: 1px solid var(--border);
+      background: #0b1220;
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+
+    .file-list {
+      margin-top: 12px;
+      max-height: 340px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #0b1220;
+    }
+
+    .file-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto auto;
+      gap: 8px;
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+      align-items: center;
+      font-size: 0.9rem;
+    }
+
+    .file-item:last-child { border-bottom: none; }
+
+    .path {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .badge {
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      border: 1px solid #475569;
+      color: #cbd5e1;
+      background: rgba(148, 163, 184, 0.08);
+    }
+
+    .badge.ok {
+      border-color: #166534;
+      color: #bbf7d0;
+      background: rgba(34, 197, 94, 0.12);
+    }
+
+    .badge.skip {
+      border-color: #92400e;
+      color: #fde68a;
+      background: rgba(245, 158, 11, 0.12);
+    }
+
+    .badge.off {
+      border-color: #64748b;
+      color: #cbd5e1;
+      background: rgba(100, 116, 139, 0.10);
+    }
+
+    .badge.err {
+      border-color: #991b1b;
+      color: #fecaca;
+      background: rgba(239, 68, 68, 0.12);
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .preview {
+      width: 100%;
+      min-height: 220px;
+      background: #020617;
+      color: #e2e8f0;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      white-space: pre-wrap;
+      overflow: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.85rem;
+      line-height: 1.35;
+    }
+
+    .warning {
+      color: #fcd34d;
+      margin-top: 10px;
+      font-size: 0.9rem;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+
+    .checkboxes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 10px;
+    }
+
+    .checkboxes label {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      color: #cbd5e1;
+    }
+
+    .checkboxes input {
+      transform: translateY(1px);
+    }
+
+    .select-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+    }
+
+    .muted-row {
+      opacity: 0.65;
+    }
+
+    .toolbar-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .toolbar-line .small-input {
+      width: 260px;
+      max-width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+    }
+
+    .toolbar-title {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-right: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Text Bundle Builder</h1>
+    <p class="sub">
+      Drag and drop files/folders, choose what to include, then click <strong>Bundle</strong>.
+      Folder paths are preserved when available (best with <strong>Choose Folder</strong> or folder drag/drop).
+    </p>
+
+    <div class="panel">
+      <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Drop files here or click to select">
+        <p><strong>Drop files/folders here</strong> or click to choose files</p>
+        <p class="small">Text/code files work best. Binary files are skipped or noted.</p>
+      </div>
+
+      <input id="fileInput" type="file" multiple hidden />
+      <input id="folderInput" type="file" webkitdirectory hidden />
+
+      <div class="controls">
+        <button id="pickFilesBtn" type="button">Choose Files</button>
+        <button id="pickFolderBtn" type="button">Choose Folder</button>
+        <button id="clearBtn" type="button">Clear</button>
+      </div>
+
+      <div class="stats" id="stats">
+        <span class="pill">Files: 0</span>
+        <span class="pill">Included: 0</span>
+        <span class="pill">Excluded: 0</span>
+        <span class="pill">Text-ready: 0</span>
+      </div>
+
+      <div class="toolbar-line">
+        <span class="toolbar-title">Selection:</span>
+        <button id="selectAllBtn" type="button">Select all</button>
+        <button id="selectNoneBtn" type="button">Select none</button>
+        <button id="selectTextBtn" type="button">Select text/code only</button>
+        <button id="excludeCommonBtn" type="button">Exclude common junk</button>
+        <label class="small" style="display:flex;align-items:center;gap:6px;margin:0 0 0 6px;">
+          <input id="hideExcludedToggle" type="checkbox" />
+          Hide excluded in list
+        </label>
+      </div>
+
+      <div class="toolbar-line">
+        <span class="toolbar-title">Quick filter:</span>
+        <input id="extFilterInput" class="small-input mono" type="text" placeholder=".js,.html,.css (optional)" />
+        <button id="keepOnlyExtBtn" type="button">Keep only ext</button>
+        <button id="excludeExtBtn" type="button">Exclude ext</button>
+      </div>
+
+      <div id="fileList" class="file-list" hidden></div>
+    </div>
+
+    <div class="panel">
+      <div class="row-3">
+        <div>
+          <label for="bundleName">Bundle name (file name)</label>
+          <input id="bundleName" type="text" value="bundle" placeholder="bundle" />
+        </div>
+        <div>
+          <label for="formatSelect">Output format</label>
+          <select id="formatSelect">
+            <option value="md" selected>Markdown (.md)</option>
+            <option value="txt">Plain text (.txt)</option>
+          </select>
+        </div>
+        <div>
+          <label for="purpose">Purpose (optional)</label>
+          <input id="purpose" type="text" placeholder="Debug frontend issue" />
+        </div>
+      </div>
+
+      <div class="checkboxes">
+        <label><input id="includeIndex" type="checkbox" checked /> Include file index</label>
+        <label><input id="includeTree" type="checkbox" checked /> Include project tree</label>
+        <label><input id="includeSkippedNotes" type="checkbox" checked /> Include skipped-file notes</label>
+        <label><input id="trimLargeFiles" type="checkbox" /> Trim very large files</label>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="notes">Notes to include at top (optional)</label>
+          <textarea id="notes" placeholder="What GPT should do, expected behavior, errors, etc."></textarea>
+        </div>
+        <div>
+          <label for="previewBox">Bundle preview (first part)</label>
+          <pre id="previewBox" class="preview">No bundle generated yet.</pre>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="bundleBtn" class="primary" type="button" disabled>Bundle</button>
+        <button id="downloadBtn" class="blue" type="button" disabled>Download bundle</button>
+      </div>
+
+      <div id="bundleInfo" class="footer-note"></div>
+      <div class="warning">
+        Do not include secrets (API keys, tokens, passwords, cookies). This tool runs locally in your browser.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const dropzone = document.getElementById("dropzone");
+      const fileInput = document.getElementById("fileInput");
+      const folderInput = document.getElementById("folderInput");
+      const pickFilesBtn = document.getElementById("pickFilesBtn");
+      const pickFolderBtn = document.getElementById("pickFolderBtn");
+      const clearBtn = document.getElementById("clearBtn");
+
+      const selectAllBtn = document.getElementById("selectAllBtn");
+      const selectNoneBtn = document.getElementById("selectNoneBtn");
+      const selectTextBtn = document.getElementById("selectTextBtn");
+      const excludeCommonBtn = document.getElementById("excludeCommonBtn");
+      const hideExcludedToggle = document.getElementById("hideExcludedToggle");
+      const extFilterInput = document.getElementById("extFilterInput");
+      const keepOnlyExtBtn = document.getElementById("keepOnlyExtBtn");
+      const excludeExtBtn = document.getElementById("excludeExtBtn");
+
+      const fileListEl = document.getElementById("fileList");
+      const statsEl = document.getElementById("stats");
+
+      const bundleNameEl = document.getElementById("bundleName");
+      const formatSelectEl = document.getElementById("formatSelect");
+      const purposeEl = document.getElementById("purpose");
+      const notesEl = document.getElementById("notes");
+
+      const includeIndexEl = document.getElementById("includeIndex");
+      const includeTreeEl = document.getElementById("includeTree");
+      const includeSkippedNotesEl = document.getElementById("includeSkippedNotes");
+      const trimLargeFilesEl = document.getElementById("trimLargeFiles");
+
+      const bundleBtn = document.getElementById("bundleBtn");
+      const downloadBtn = document.getElementById("downloadBtn");
+      const previewBox = document.getElementById("previewBox");
+      const bundleInfoEl = document.getElementById("bundleInfo");
+
+      /**
+       * Stored files
+       * { file: File, path: string, included: boolean, sourceDrop?: number }
+       */
+      let selectedEntries = [];
+      let bundleText = "";
+      let bundleMime = "text/plain;charset=utf-8";
+      let bundleFilename = "bundle.md";
+      let dropCounter = 0;
+
+      const MAX_FILE_READ_BYTES = 2 * 1024 * 1024;
+      const TRIM_TO_CHARS = 200 * 1024;
+
+      const TEXT_EXTENSIONS = new Set([
+        "txt","md","markdown","rst","log",
+        "html","htm","css","scss","sass","less",
+        "js","mjs","cjs","jsx","ts","tsx","vue","svelte",
+        "json","jsonc","yaml","yml","toml","ini","cfg","conf","env","gitignore",
+        "xml","svg","csv","tsv",
+        "py","rb","php","java","kt","kts","c","h","cpp","hpp","cs","go","rs","swift","scala","sh","bash","zsh","ps1","sql",
+        "dockerfile","makefile"
+      ]);
+
+      const COMMON_BINARY_EXTENSIONS = new Set([
+        "png","jpg","jpeg","gif","webp","bmp","ico","pdf","doc","docx","xls","xlsx","ppt","pptx",
+        "zip","rar","7z","tar","gz","bz2","xz",
+        "mp3","wav","ogg","m4a","flac","mp4","mkv","mov","avi","webm",
+        "ttf","otf","woff","woff2","eot",
+        "exe","dll","so","dylib","bin","class","jar","war",
+        "psd","ai","sketch","fig"
+      ]);
+
+      const EXCLUDE_DIR_PATTERNS = [
+        "/node_modules/",
+        "/.git/",
+        "/dist/",
+        "/build/",
+        "/coverage/",
+        "/.next/",
+        "/.nuxt/",
+        "/out/",
+        "/vendor/",
+        "/target/",
+        "/.cache/"
+      ];
+
+      const EXCLUDE_FILE_SUFFIXES = [
+        ".min.js",
+        ".min.css",
+        ".lock",
+        "package-lock.json",
+        "pnpm-lock.yaml",
+        "yarn.lock"
+      ];
+
+      function getExt(path) {
+        const base = path.split("/").pop() || path;
+        if (!base.includes(".")) {
+          const lowered = base.toLowerCase();
+          if (TEXT_EXTENSIONS.has(lowered)) return lowered;
+          return "";
+        }
+        return base.slice(base.lastIndexOf(".") + 1).toLowerCase();
+      }
+
+      function isProbablyTextFile(file, path) {
+        const ext = getExt(path);
+        if (COMMON_BINARY_EXTENSIONS.has(ext)) return false;
+        if (TEXT_EXTENSIONS.has(ext)) return true;
+
+        const t = (file.type || "").toLowerCase();
+        if (t.startsWith("text/")) return true;
+        if (t.includes("json") || t.includes("xml") || t.includes("javascript") || t.includes("typescript") || t.includes("svg")) return true;
+
+        return true;
+      }
+
+      function detectMarkdownFenceLang(path) {
+        const ext = getExt(path);
+        const map = {
+          js: "javascript", mjs: "javascript", cjs: "javascript",
+          ts: "typescript", tsx: "tsx", jsx: "jsx",
+          html: "html", htm: "html",
+          css: "css", scss: "scss", sass: "sass", less: "less",
+          json: "json", jsonc: "json",
+          yml: "yaml", yaml: "yaml",
+          xml: "xml", svg: "xml",
+          md: "markdown", markdown: "markdown",
+          py: "python", sh: "bash", bash: "bash", zsh: "bash", ps1: "powershell",
+          rb: "ruby", php: "php", java: "java", kt: "kotlin", kts: "kotlin",
+          c: "c", h: "c", cpp: "cpp", hpp: "cpp", cs: "csharp",
+          go: "go", rs: "rust", swift: "swift", scala: "scala",
+          sql: "sql", csv: "csv", tsv: "tsv", log: "text", txt: "text",
+          toml: "toml", ini: "ini", cfg: "ini", conf: "ini"
+        };
+        return map[ext] || "";
+      }
+
+      function normalizeNewlines(s) {
+        return s.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+      }
+
+      function safeFilenameBase(name) {
+        return (name || "bundle")
+          .trim()
+          .replace(/[<>:"/\\|?*\x00-\x1F]/g, "_")
+          .replace(/\s+/g, "_")
+          .replace(/_+/g, "_")
+          .replace(/^_+|_+$/g, "") || "bundle";
+      }
+
+      function formatBytes(bytes) {
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+      }
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function parseExtList(raw) {
+        return raw
+          .split(",")
+          .map(s => s.trim().toLowerCase())
+          .filter(Boolean)
+          .map(s => s.startsWith(".") ? s.slice(1) : s);
+      }
+
+      function shouldExcludeCommonPath(path) {
+        const p = "/" + path.replace(/\\/g, "/").toLowerCase();
+        if (EXCLUDE_DIR_PATTERNS.some(seg => p.includes(seg))) return true;
+
+        const base = path.split("/").pop().toLowerCase();
+        if (COMMON_BINARY_EXTENSIONS.has(getExt(path))) return true;
+        if (EXCLUDE_FILE_SUFFIXES.some(sfx => base.endsWith(sfx))) return true;
+
+        return false;
+      }
+
+      function updateStats(renderItems = null) {
+        const total = selectedEntries.length;
+        const includedCount = selectedEntries.filter(e => e.included).length;
+        const excludedCount = total - includedCount;
+
+        let textReadyCount = 0;
+        if (renderItems) {
+          const map = new Map(renderItems.map(i => [i.path, i]));
+          for (const e of selectedEntries) {
+            if (!e.included) continue;
+            const r = map.get(e.path);
+            const textReady = r ? (r.status === "ok") : isProbablyTextFile(e.file, e.path);
+            if (textReady) textReadyCount++;
+          }
+        } else {
+          textReadyCount = selectedEntries.filter(e => e.included && isProbablyTextFile(e.file, e.path)).length;
+        }
+
+        statsEl.innerHTML = `
+          <span class="pill">Files: ${total}</span>
+          <span class="pill">Included: ${includedCount}</span>
+          <span class="pill">Excluded: ${excludedCount}</span>
+          <span class="pill">Text-ready: ${textReadyCount}</span>
+        `;
+      }
+
+      function getVisibleEntriesSorted() {
+        const hiddenExcluded = hideExcludedToggle.checked;
+        return selectedEntries
+          .slice()
+          .sort((a, b) => a.path.localeCompare(b.path))
+          .filter(e => !(hiddenExcluded && !e.included));
+      }
+
+      function renderSelectedList(preStatuses = null) {
+        if (!selectedEntries.length) {
+          fileListEl.hidden = true;
+          fileListEl.innerHTML = "";
+          updateStats(preStatuses ? Array.from(preStatuses.values()) : null);
+          bundleBtn.disabled = true;
+          downloadBtn.disabled = true;
+          return;
+        }
+
+        fileListEl.hidden = false;
+        const visible = getVisibleEntriesSorted();
+
+        const rows = visible.map((entry, idx) => {
+          const { file, path, included } = entry;
+          let status = preStatuses?.get(path) || (isProbablyTextFile(file, path) ? "ok" : "skip");
+          if (!included) status = "off";
+          const statusClass = status === "ok" ? "ok" : status === "skip" ? "skip" : status === "off" ? "off" : "err";
+          const statusText =
+            status === "ok" ? "text" :
+            status === "skip" ? "binary?" :
+            status === "off" ? "excluded" : "error";
+
+          return `
+            <div class="file-item ${included ? "" : "muted-row"}">
+              <div class="select-cell">
+                <input type="checkbox" data-path="${escapeHtml(path)}" class="include-toggle" ${included ? "checked" : ""} />
+              </div>
+              <div class="path mono" title="${escapeHtml(path)}">${escapeHtml(path)}</div>
+              <div class="badge ${statusClass}">${statusText}</div>
+              <div class="small">${formatBytes(file.size)}</div>
+              <button type="button" class="small-action" data-action="toggle" data-path="${escapeHtml(path)}" style="padding:4px 8px;border-radius:8px;">
+                ${included ? "Exclude" : "Include"}
+              </button>
+            </div>
+          `;
+        });
+
+        if (!rows.length) {
+          fileListEl.innerHTML = `<div class="file-item"><div class="small" style="grid-column: 1 / -1;">No files visible (all hidden by filter).</div></div>`;
+        } else {
+          fileListEl.innerHTML = rows.join("");
+        }
+
+        updateStats();
+        bundleBtn.disabled = selectedEntries.filter(e => e.included).length === 0;
+      }
+
+      function setIncludeByPath(path, value) {
+        const entry = selectedEntries.find(e => e.path === path);
+        if (!entry) return;
+        entry.included = Boolean(value);
+      }
+
+      function applySelection(fn) {
+        for (const e of selectedEntries) {
+          e.included = !!fn(e);
+        }
+        renderSelectedList();
+        previewBox.textContent = "Selection changed. Click “Bundle” to regenerate preview.";
+        downloadBtn.disabled = true;
+        bundleInfoEl.textContent = "";
+      }
+
+      function applyExtFilter(mode) {
+        const exts = parseExtList(extFilterInput.value || "");
+        if (!exts.length) return;
+
+        const extSet = new Set(exts);
+        if (mode === "keepOnly") {
+          applySelection((e) => extSet.has(getExt(e.path)));
+        } else if (mode === "exclude") {
+          for (const e of selectedEntries) {
+            if (extSet.has(getExt(e.path))) e.included = false;
+          }
+          renderSelectedList();
+          previewBox.textContent = "Selection changed. Click “Bundle” to regenerate preview.";
+          downloadBtn.disabled = true;
+          bundleInfoEl.textContent = "";
+        }
+      }
+
+      function dedupeAndAddFiles(fileList, sourceLabel = "manual") {
+        const existing = new Set(selectedEntries.map(e => e.path));
+        let added = 0;
+        dropCounter += 1;
+
+        for (const file of Array.from(fileList)) {
+          const path = (file.webkitRelativePath && file.webkitRelativePath.trim()) || file.name;
+          if (existing.has(path)) continue;
+
+          selectedEntries.push({
+            file,
+            path,
+            included: true,
+            sourceDrop: dropCounter
+          });
+          existing.add(path);
+          added++;
+        }
+
+        renderSelectedList();
+        if (added > 0) {
+          previewBox.textContent = "Files added. Exclude/include what you want, then click “Bundle”.";
+          bundleInfoEl.textContent = "";
+          downloadBtn.disabled = true;
+        }
+      }
+
+      async function extractFileEntriesFromDrop(event) {
+        const items = Array.from(event.dataTransfer?.items || []);
+        if (!items.length) {
+          dedupeAndAddFiles(event.dataTransfer?.files || []);
+          return;
+        }
+
+        const supportsEntries = items.some(it => typeof it.webkitGetAsEntry === "function");
+        if (!supportsEntries) {
+          dedupeAndAddFiles(event.dataTransfer.files || []);
+          return;
+        }
+
+        const collected = [];
+
+        async function walkEntry(entry, parentPath = "") {
+          if (!entry) return;
+          if (entry.isFile) {
+            await new Promise((resolve) => {
+              entry.file((file) => {
+                const path = parentPath ? `${parentPath}/${file.name}` : file.name;
+                try {
+                  Object.defineProperty(file, "webkitRelativePath", {
+                    value: path,
+                    configurable: true
+                  });
+                } catch {}
+                collected.push(file);
+                resolve();
+              }, () => resolve());
+            });
+          } else if (entry.isDirectory) {
+            const reader = entry.createReader();
+            const dirName = entry.name;
+            const nextParent = parentPath ? `${parentPath}/${dirName}` : dirName;
+
+            while (true) {
+              const entries = await new Promise((resolve) => reader.readEntries(resolve, () => resolve([])));
+              if (!entries.length) break;
+              for (const child of entries) {
+                await walkEntry(child, nextParent);
+              }
+            }
+          }
+        }
+
+        for (const item of items) {
+          const entry = item.webkitGetAsEntry?.();
+          if (entry) {
+            await walkEntry(entry, "");
+          } else {
+            const f = item.getAsFile?.();
+            if (f) collected.push(f);
+          }
+        }
+
+        dedupeAndAddFiles(collected, "drop");
+      }
+
+      async function readTextFile(file) {
+        if (file.size > MAX_FILE_READ_BYTES) {
+          throw new Error(`File too large (${formatBytes(file.size)} > ${formatBytes(MAX_FILE_READ_BYTES)})`);
+        }
+
+        let text = await file.text();
+        if (/\u0000/.test(text)) {
+          throw new Error("Contains null bytes (likely binary)");
+        }
+
+        text = normalizeNewlines(text);
+
+        if (trimLargeFilesEl.checked && text.length > TRIM_TO_CHARS) {
+          const headLen = Math.floor(TRIM_TO_CHARS * 0.7);
+          const tailLen = Math.floor(TRIM_TO_CHARS * 0.3);
+          const head = text.slice(0, headLen);
+          const tail = text.slice(-tailLen);
+          text = `${head}\n\n[...TRIMMED ${text.length - head.length - tail.length} CHARS...]\n\n${tail}`;
+        }
+
+        return text;
+      }
+
+      function buildProjectTree(paths) {
+        const root = {};
+
+        for (const p of paths.sort()) {
+          const parts = p.split("/").filter(Boolean);
+          let node = root;
+          for (const part of parts) {
+            if (!node[part]) node[part] = {};
+            node = node[part];
+          }
+        }
+
+        function render(node, prefix = "") {
+          const keys = Object.keys(node).sort((a, b) => a.localeCompare(b));
+          const lines = [];
+          keys.forEach((k, idx) => {
+            const last = idx === keys.length - 1;
+            const connector = last ? "└─ " : "├─ ";
+            lines.push(prefix + connector + k);
+            const child = node[k];
+            if (Object.keys(child).length) {
+              lines.push(...render(child, prefix + (last ? "   " : "│  ")));
+            }
+          });
+          return lines;
+        }
+
+        return render(root).join("\n");
+      }
+
+      function mdFenceForContent(content) {
+        return content.includes("```") ? "````" : "```";
+      }
+
+      async function generateBundle() {
+        const includedEntries = selectedEntries.filter(e => e.included);
+        if (!includedEntries.length) return;
+
+        bundleBtn.disabled = true;
+        downloadBtn.disabled = true;
+        previewBox.textContent = "Bundling...";
+        bundleInfoEl.textContent = "";
+
+        const fmt = formatSelectEl.value;
+        const now = new Date();
+        const stamp = now.toISOString();
+
+        const sorted = includedEntries.slice().sort((a, b) => a.path.localeCompare(b.path));
+        const results = []; // included files processing results
+
+        for (const entry of sorted) {
+          const { file, path } = entry;
+          if (!isProbablyTextFile(file, path)) {
+            results.push({ path, status: "skip", error: "Likely binary (skipped)", size: file.size });
+            continue;
+          }
+          try {
+            const text = await readTextFile(file);
+            results.push({ path, status: "ok", text, size: file.size });
+          } catch (err) {
+            results.push({
+              path,
+              status: "skip",
+              error: err instanceof Error ? err.message : String(err),
+              size: file.size
+            });
+          }
+        }
+
+        const statusMap = new Map(results.map(r => [r.path, r]));
+        renderSelectedList(statusMap);
+
+        const okFiles = results.filter(r => r.status === "ok");
+        const skippedIncluded = results.filter(r => r.status !== "ok");
+        const manuallyExcluded = selectedEntries.filter(e => !e.included);
+
+        const headerName = safeFilenameBase(bundleNameEl.value || "bundle");
+        const purpose = (purposeEl.value || "").trim();
+        const notes = normalizeNewlines(notesEl.value || "").trim();
+
+        let out = "";
+
+        if (fmt === "md") {
+          out += `# BUNDLE: ${headerName}\n\n`;
+          out += `Created: ${stamp}\n`;
+          if (purpose) out += `Purpose: ${purpose}\n`;
+          out += `Format: Markdown bundle\n`;
+          out += `Files selected: ${includedEntries.length}\n`;
+          out += `Files included (readable): ${okFiles.length}\n`;
+          out += `Selected but skipped: ${skippedIncluded.length}\n`;
+          out += `Manually excluded: ${manuallyExcluded.length}\n\n`;
+
+          if (notes) {
+            out += `## Notes\n\n${notes}\n\n`;
+          }
+
+          if (includeIndexEl.checked) {
+            out += `## Index\n\n`;
+            let n = 1;
+            for (const r of okFiles) out += `${n++}. \`${r.path}\`\n`;
+            if (includeSkippedNotesEl.checked && skippedIncluded.length) {
+              for (const r of skippedIncluded) out += `${n++}. \`${r.path}\` *(selected but skipped)*\n`;
+            }
+            out += `\n`;
+          }
+
+          if (includeTreeEl.checked) {
+            out += `## Project Tree (selected files)\n\n`;
+            out += "```text\n";
+            out += buildProjectTree(includedEntries.map(e => e.path)) + "\n";
+            out += "```\n\n";
+          }
+
+          for (const r of okFiles) {
+            const lang = detectMarkdownFenceLang(r.path);
+            const fence = mdFenceForContent(r.text);
+            out += `## FILE: ${r.path}\n\n`;
+            out += `${fence}${lang ? lang : ""}\n${r.text}\n${fence}\n\n`;
+          }
+
+          if (includeSkippedNotesEl.checked) {
+            if (skippedIncluded.length) {
+              out += `## Selected But Skipped\n\n`;
+              for (const r of skippedIncluded) {
+                out += `- \`${r.path}\` — ${r.error || "Skipped"} (${formatBytes(r.size)})\n`;
+              }
+              out += `\n`;
+            }
+
+            if (manuallyExcluded.length) {
+              out += `## Manually Excluded Files\n\n`;
+              for (const e of manuallyExcluded.sort((a,b)=>a.path.localeCompare(b.path))) {
+                out += `- \`${e.path}\` (${formatBytes(e.file.size)})\n`;
+              }
+              out += `\n`;
+            }
+          }
+        } else {
+          out += `BUNDLE: ${headerName}\n`;
+          out += `Created: ${stamp}\n`;
+          if (purpose) out += `Purpose: ${purpose}\n`;
+          out += `Format: Plain text bundle\n`;
+          out += `Files selected: ${includedEntries.length}\n`;
+          out += `Files included (readable): ${okFiles.length}\n`;
+          out += `Selected but skipped: ${skippedIncluded.length}\n`;
+          out += `Manually excluded: ${manuallyExcluded.length}\n\n`;
+
+          if (notes) {
+            out += `NOTES\n${notes}\n\n`;
+          }
+
+          if (includeIndexEl.checked) {
+            out += `INDEX\n`;
+            let n = 1;
+            for (const r of okFiles) out += `${n++}. ${r.path}\n`;
+            if (includeSkippedNotesEl.checked && skippedIncluded.length) {
+              for (const r of skippedIncluded) out += `${n++}. ${r.path} (selected but skipped)\n`;
+            }
+            out += `\n`;
+          }
+
+          if (includeTreeEl.checked) {
+            out += `PROJECT TREE (SELECTED FILES)\n`;
+            out += buildProjectTree(includedEntries.map(e => e.path)) + "\n\n";
+          }
+
+          for (const r of okFiles) {
+            out += `===== BEGIN FILE: ${r.path} =====\n`;
+            out += `${r.text}\n`;
+            out += `===== END FILE: ${r.path} =====\n\n`;
+          }
+
+          if (includeSkippedNotesEl.checked) {
+            if (skippedIncluded.length) {
+              out += `===== SELECTED BUT SKIPPED =====\n`;
+              for (const r of skippedIncluded) {
+                out += `- ${r.path} | ${r.error || "Skipped"} | ${formatBytes(r.size)}\n`;
+              }
+              out += `===== END SELECTED BUT SKIPPED =====\n\n`;
+            }
+
+            if (manuallyExcluded.length) {
+              out += `===== MANUALLY EXCLUDED FILES =====\n`;
+              for (const e of manuallyExcluded.sort((a,b)=>a.path.localeCompare(b.path))) {
+                out += `- ${e.path} | ${formatBytes(e.file.size)}\n`;
+              }
+              out += `===== END MANUALLY EXCLUDED FILES =====\n\n`;
+            }
+          }
+        }
+
+        bundleText = out;
+        bundleMime = "text/plain;charset=utf-8";
+        bundleFilename = `${headerName}.${fmt === "md" ? "md" : "txt"}`;
+
+        previewBox.textContent = out.slice(0, 12000) + (out.length > 12000 ? "\n\n...[preview truncated]..." : "");
+        bundleInfoEl.textContent = `Bundle ready: ${bundleFilename} (${formatBytes(new Blob([bundleText]).size)})`;
+        downloadBtn.disabled = false;
+        bundleBtn.disabled = false;
+      }
+
+      function downloadBundle() {
+        if (!bundleText) return;
+        const blob = new Blob([bundleText], { type: bundleMime });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = bundleFilename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+      }
+
+      function clearAll() {
+        selectedEntries = [];
+        bundleText = "";
+        bundleFilename = "bundle.md";
+        previewBox.textContent = "No bundle generated yet.";
+        bundleInfoEl.textContent = "";
+        fileInput.value = "";
+        folderInput.value = "";
+        renderSelectedList();
+      }
+
+      // File list interactions (checkboxes + include/exclude buttons)
+      fileListEl.addEventListener("change", (e) => {
+        const target = e.target;
+        if (!(target instanceof HTMLInputElement)) return;
+        if (!target.classList.contains("include-toggle")) return;
+        const path = target.dataset.path;
+        if (!path) return;
+        setIncludeByPath(path, target.checked);
+        renderSelectedList();
+        previewBox.textContent = "Selection changed. Click “Bundle” to regenerate preview.";
+        downloadBtn.disabled = true;
+        bundleInfoEl.textContent = "";
+      });
+
+      fileListEl.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-action='toggle']");
+        if (!btn) return;
+        const path = btn.dataset.path;
+        if (!path) return;
+        const entry = selectedEntries.find(x => x.path === path);
+        if (!entry) return;
+        entry.included = !entry.included;
+        renderSelectedList();
+        previewBox.textContent = "Selection changed. Click “Bundle” to regenerate preview.";
+        downloadBtn.disabled = true;
+        bundleInfoEl.textContent = "";
+      });
+
+      // Top controls
+      pickFilesBtn.addEventListener("click", () => fileInput.click());
+      pickFolderBtn.addEventListener("click", () => folderInput.click());
+      clearBtn.addEventListener("click", clearAll);
+
+      selectAllBtn.addEventListener("click", () => applySelection(() => true));
+      selectNoneBtn.addEventListener("click", () => applySelection(() => false));
+      selectTextBtn.addEventListener("click", () => applySelection((e) => isProbablyTextFile(e.file, e.path)));
+      excludeCommonBtn.addEventListener("click", () => {
+        for (const e of selectedEntries) {
+          if (shouldExcludeCommonPath(e.path)) e.included = false;
+        }
+        renderSelectedList();
+        previewBox.textContent = "Selection changed. Click “Bundle” to regenerate preview.";
+        downloadBtn.disabled = true;
+        bundleInfoEl.textContent = "";
+      });
+
+      hideExcludedToggle.addEventListener("change", () => renderSelectedList());
+
+      keepOnlyExtBtn.addEventListener("click", () => applyExtFilter("keepOnly"));
+      excludeExtBtn.addEventListener("click", () => applyExtFilter("exclude"));
+
+      fileInput.addEventListener("change", (e) => {
+        dedupeAndAddFiles(e.target.files || []);
+      });
+
+      folderInput.addEventListener("change", (e) => {
+        dedupeAndAddFiles(e.target.files || []);
+      });
+
+      dropzone.addEventListener("click", () => fileInput.click());
+      dropzone.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          fileInput.click();
+        }
+      });
+
+      ["dragenter", "dragover"].forEach(type => {
+        dropzone.addEventListener(type, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.add("dragover");
+        });
+      });
+
+      ["dragleave", "dragend", "drop"].forEach(type => {
+        dropzone.addEventListener(type, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (type !== "drop") dropzone.classList.remove("dragover");
+        });
+      });
+
+      dropzone.addEventListener("drop", async (e) => {
+        dropzone.classList.remove("dragover");
+        await extractFileEntriesFromDrop(e);
+      });
+
+      bundleBtn.addEventListener("click", generateBundle);
+      downloadBtn.addEventListener("click", downloadBundle);
+
+      renderSelectedList();
+    })();
+  </script>
+</body>
+</html>

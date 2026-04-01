@@ -1,0 +1,132 @@
+Vertex Backend Update Runbook (Maintainer)
+======================================
+
+Purpose
+-------
+This is a personal, step-by-step checklist for updating the Vertex backend repo
+(vertex-note-tools/Vertex-note) so that:
+- NEW users deploying from the guide get the newest backend automatically, and
+- EXISTING users can update by re-applying their Infrastructure Manager deployment.
+
+Key idea (golden rule)
+----------------------
+Users only get new backend behavior when:
+1) A NEW container image is published (new tag), AND
+2) infra/main.tf on branch "main" is updated to point at that new image tag, AND
+3) Existing users re-apply their Infrastructure Manager deployment.
+
+So every backend update is:
+CODE CHANGE -> PUBLISH IMAGE TAG -> BUMP TERRAFORM IMAGE TAG
+
+
+A) Release procedure (when you change index.js or backend behavior)
+-------------------------------------------------------------------
+
+A1) Make the code change (GitHub UI OK)
+- Edit index.js (and any other backend files as needed).
+- Commit the changes to branch: main
+- Sanity check: backend contract still works (POST -> returns note + your metadata).
+
+A2) Publish a new backend image (GitHub UI only)
+Goal: create a new git tag like v1.0.3 that triggers the publish workflow.
+
+1) GitHub repo -> Releases
+2) Click: "Draft a new release" / "Create a new release"
+3) Choose a tag: vX.Y.Z (example v1.0.3)
+4) Create new tag on publish
+5) Target: main
+6) Publish release
+
+Verification:
+- GitHub -> Actions -> confirm workflow(s) for tag vX.Y.Z finish green (✅).
+- If it fails: fix secrets/permissions and re-run.
+
+Notes:
+- The image tag should match the git tag (vX.Y.Z).
+- Don’t edit files while viewing a tag; always switch to branch main to edit.
+
+A3) Update Terraform template to use the new image tag (required)
+Goal: new users deploying from guide get your latest backend.
+
+1) In GitHub (branch main), open: infra/main.tf
+2) Find container_image line, e.g.:
+   container_image = ".../gemini-vertex-backend:v1.0.2"
+3) Change to the new tag:
+   ...:v1.0.3
+4) Commit to branch: main
+
+A4) Quick end-to-end smoke test (recommended)
+- In a throwaway GCP project:
+  - Deploy via Infrastructure Manager using:
+    repo URL, directory=infra, ref=main
+- Confirm Cloud Run service works and your app can generate a note.
+- Confirm console logging / token/cost logging behavior you expect.
+
+
+B) What existing users must do to update (guide-based deployments)
+-------------------------------------------------------------------
+
+Normal update path (recommended)
+1) Google Cloud Console -> Infrastructure Manager
+2) Open their deployment
+3) Click Edit/Update (if shown) and ensure source is still:
+   - Repo: https://github.com/vertex-note-tools/Vertex-note
+   - Directory: infra
+   - Ref: main
+4) Click Apply/Deploy/Update
+5) Wait for status: Active
+
+Verification:
+- Cloud Run -> Service -> Revisions:
+  New revision created and running (image digest changes).
+- Usually service_url and backend_secret remain the same (unless deployment/state was deleted).
+
+Common failure fixes (what you learned today)
+--------------------------------------------
+
+1) 403 SERVICE_DISABLED: "Service Usage API disabled"
+- Enable Service Usage API in that project:
+  APIs & Services -> Library -> Service Usage API -> Enable
+- Retry Apply.
+
+2) 409 alreadyExists: Service account exists (vertex-gemini-backend)
+- IAM & Admin -> Service Accounts -> delete:
+  vertex-gemini-backend@<project>.iam.gserviceaccount.com
+- Retry Apply.
+- Warning: deleting this breaks any Cloud Run service using it.
+
+3) 409 alreadyExists: Cloud Run service exists (gemini-vertex-backend)
+- Cloud Run -> Services -> delete: gemini-vertex-backend
+- Retry Apply.
+
+When to use the 409 cleanup steps
+--------------------------------
+These conflicts mainly happen if:
+- The user previously deployed manually (Cloud Run source deploy), OR
+- A prior deployment partially created resources but state didn’t match.
+
+For a clean "new user" simulation, use a fresh GCP project.
+
+
+C) Quick tips / reminders
+-------------------------
+
+- Never assume a new commit to index.js changes deployed backends.
+  It doesn’t until you publish a new image tag + bump infra/main.tf.
+
+- Infrastructure Manager "revisions" (r-1, r-2, ...) are NOT your backend version.
+  They’re just Terraform apply runs.
+
+- Cloud Run often shows image as @sha256 digest rather than vX.Y.Z tag.
+  Digest changing means a new image was deployed.
+
+- Optional future improvement:
+  Add a /version endpoint in index.js so users can verify version easily:
+  https://<service-url>/version -> { backendVersion: "vX.Y.Z" }
+
+
+Template update summary (the 3 must-do steps)
+---------------------------------------------
+1) Merge backend code changes to main
+2) Create a release/tag vX.Y.Z to publish the container image
+3) Update infra/main.tf on main to point container_image to vX.Y.Z

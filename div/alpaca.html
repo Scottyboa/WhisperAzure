@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alpaca Batch Command Helper</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #131a2d;
+      --text: #e8ecf8;
+      --muted: #a7b0c9;
+      --border: #2b3558;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      --link: #8dc2ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      background: linear-gradient(180deg, #0b1020 0%, #0d1428 100%);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 1050px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .card {
+      background: rgba(19, 26, 45, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    h2 { margin: 0 0 12px; font-size: 18px; }
+    p, li { color: var(--muted); line-height: 1.5; }
+    a { color: var(--link); }
+    label {
+      display: block;
+      margin: 14px 0 6px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    input, textarea, button {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #0d1326;
+      color: var(--text);
+      padding: 12px 14px;
+      font: inherit;
+    }
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+      font-family: var(--mono);
+      line-height: 1.45;
+    }
+    #output { min-height: 420px; }
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    button {
+      width: auto;
+      min-width: 180px;
+      cursor: pointer;
+      background: linear-gradient(180deg, #1d4ed8, #1a3cb0);
+      border: 1px solid #4669df;
+      font-weight: 700;
+    }
+    button.secondary {
+      background: #13203f;
+      border-color: #36538f;
+    }
+    button.ghost {
+      background: transparent;
+      border-color: var(--border);
+    }
+    .status {
+      white-space: pre-wrap;
+      padding: 12px;
+      border-radius: 12px;
+      background: #0c1328;
+      border: 1px solid var(--border);
+      min-height: 52px;
+      font-size: 14px;
+    }
+    .hint, .warn {
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 14px;
+    }
+    .hint {
+      background: rgba(169, 255, 214, 0.08);
+      border: 1px solid rgba(169, 255, 214, 0.18);
+      color: #defef1;
+    }
+    .warn {
+      background: rgba(255, 158, 161, 0.08);
+      border: 1px solid rgba(255, 158, 161, 0.22);
+      color: #ffd9db;
+    }
+    .small { font-size: 13px; color: var(--muted); }
+    code {
+      font-family: var(--mono);
+      background: #09101f;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2px 6px;
+    }
+    .examples code {
+      display: block;
+      padding: 8px 10px;
+      margin: 8px 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Alpaca Batch Command Helper</h1>
+      <p>Paste API key, API secret, and one or more Alpaca commands. Each non-empty line in <strong>COMMAND</strong> is treated as a separate request. A command can be a near-raw Alpaca path, a full Alpaca URL, or a simplified method+path request.</p>
+      <div class="hint">
+        Intended workflow:
+        <br>1. Your trading assistant tells you exactly what to paste into <strong>COMMAND</strong>
+        <br>2. You click <strong>Run commands</strong>
+        <br>3. If browser fetch fails for one or more lines, click <strong>Copy cURL fallback</strong> and run the generated batch in terminal
+        <br>4. Copy the <strong>OUTPUT</strong> back into GPT
+      </div>
+      <p class="small">Reference: <a href="https://docs.alpaca.markets/docs/getting-started" target="_blank" rel="noopener noreferrer">Alpaca Getting Started docs</a></p>
+    </div>
+
+    <div class="card">
+      <h2>Inputs</h2>
+      <label for="key">API KEY</label>
+      <input id="key" type="password" placeholder="Paste Alpaca API key" autocomplete="off" spellcheck="false" />
+
+      <label for="secret">API SECRET</label>
+      <input id="secret" type="password" placeholder="Paste Alpaca API secret" autocomplete="off" spellcheck="false" />
+
+      <label for="command">COMMAND</label>
+      <textarea id="command" placeholder="Paste one or more Alpaca paths or URLs here, one per line"></textarea>
+
+      <div class="small">
+        Accepted command styles:
+        <br>• One command per line
+        <br>• Path only, starting with <code>/</code>
+        <br>• Full Alpaca URL
+        <br>• Optional leading method, e.g. <code>GET /v2/stocks/bars?symbols=NVDA&timeframe=5Min&limit=30</code>
+        <br>• Optional base shortcuts: <code>/v2/stocks/...</code>, <code>/v2/crypto/...</code>, <code>/v2/options/...</code>, <code>/v2/account</code>, <code>/v2/orders</code>
+        <br>• Lines starting with <code>#</code> are ignored as comments
+      </div>
+
+      <div class="buttons">
+        <button id="runBtn">Run commands</button>
+        <button id="copyOutputBtn" class="secondary">Copy OUTPUT</button>
+        <button id="downloadTxtBtn" class="secondary">Download OUTPUT .txt</button>
+        <button id="copyCurlBtn" class="ghost">Copy cURL fallback</button>
+        <button id="useJsonBtn" class="ghost">Use JSON from terminal</button>
+        <button id="clearBtn" class="ghost">Clear</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Status</h2>
+      <div id="status" class="status">Waiting.</div>
+    </div>
+
+    <div class="card">
+      <h2>OUTPUT</h2>
+      <textarea id="output" placeholder="Output will appear here"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>Command examples</h2>
+      <div class="examples">
+        <code>GET /v2/account</code>
+        <code>GET /v2/orders?status=open&limit=20&direction=desc</code>
+        <code>GET /v2/stocks/snapshots?symbols=LNG,XOM,ITA</code>
+        <code>GET /v2/stocks/bars?symbols=LNG,XOM,ITA&timeframe=1Day&limit=10&feed=iex&adjustment=raw&sort=asc</code>
+        <code># Example batch
+GET /v2/account
+GET /v2/orders?status=open&limit=20&direction=desc
+GET /v2/stocks/snapshots?symbols=LNG,XOM,ITA</code>
+      </div>
+      <p class="small">
+        The helper is intentionally generic. It does not hardcode only one small subset of endpoints. If a line points to a valid Alpaca endpoint and the browser permits the request, the helper will attempt it and return a combined output block containing, for each command:
+        <br>• the resolved URL
+        <br>• a compact summary when possible
+        <br>• the raw JSON
+      </p>
+      <div class="warn">
+        Direct browser fetch may fail because a local HTML file can hit browser security/CORS restrictions. The cURL fallback is included for that reason.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const state = {
+      requests: [],
+      curls: [],
+      output: '',
+      results: []
+    };
+
+    function setStatus(msg) {
+      $('status').textContent = msg;
+    }
+
+    function normalizeCommand(input) {
+      const raw = (input || '').trim();
+      if (!raw) throw new Error('COMMAND is empty.');
+
+      let method = 'GET';
+      let remainder = raw;
+
+      const methodMatch = raw.match(/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s+(.+)$/i);
+      if (methodMatch) {
+        method = methodMatch[1].toUpperCase();
+        remainder = methodMatch[2].trim();
+      }
+
+      let url = '';
+      if (/^https?:\/\//i.test(remainder)) {
+        url = remainder;
+      } else if (remainder.startsWith('/')) {
+        url = inferBaseAndJoin(remainder);
+      } else {
+        throw new Error('COMMAND must be a full URL or a path starting with "/".');
+      }
+
+      return { method, url, raw };
+    }
+
+    function inferBaseAndJoin(path) {
+      const lower = path.toLowerCase();
+
+      if (
+        lower.startsWith('/v2/account') ||
+        lower.startsWith('/v2/orders') ||
+        lower.startsWith('/v2/positions') ||
+        lower.startsWith('/v2/assets') ||
+        lower.startsWith('/v2/watchlists') ||
+        lower.startsWith('/v2/portfolio')
+      ) {
+        return 'https://paper-api.alpaca.markets' + path;
+      }
+
+      if (
+        lower.startsWith('/v2/stocks/') ||
+        lower.startsWith('/v2/crypto/') ||
+        lower.startsWith('/v2/options/') ||
+        lower.startsWith('/v1beta1/')
+      ) {
+        return 'https://data.alpaca.markets' + path;
+      }
+
+      return 'https://data.alpaca.markets' + path;
+    }
+
+    function buildCurl(method, url, key, secret) {
+      const isWindows = navigator.userAgent.includes('Windows');
+      if (isWindows) {
+        return `curl --request ${method} "${url}" ^\n  --header "APCA-API-KEY-ID: ${key}" ^\n  --header "APCA-API-SECRET-KEY: ${secret}"`;
+      }
+      return `curl --request ${method} '${url}' \\\n  --header 'APCA-API-KEY-ID: ${key}' \\\n  --header 'APCA-API-SECRET-KEY: ${secret}'`;
+    }
+
+    function summarizeGeneric(json, url) {
+      try {
+        const u = new URL(url);
+        const path = u.pathname.toLowerCase();
+
+        if (json && json.bars && !Array.isArray(json.bars)) {
+          const barsVal = json.bars;
+          const keys = Object.keys(barsVal);
+          if (keys.length && !Array.isArray(barsVal[keys[0]])) {
+            return keys.sort().map(sym => {
+              const b = barsVal[sym];
+              return `${sym}: time=${b.t} open=${b.o} high=${b.h} low=${b.l} close=${b.c} volume=${b.v}`;
+            }).join('\n');
+          }
+          return keys.sort().map(sym => {
+            const arr = Array.isArray(barsVal[sym]) ? barsVal[sym] : [];
+            const lines = arr.map(b => `${b.t}: O=${b.o} H=${b.h} L=${b.l} C=${b.c} V=${b.v}`);
+            return `${sym}:\n${lines.join('\n')}`;
+          }).join('\n\n');
+        }
+
+        if (json && json.quotes) {
+          return Object.keys(json.quotes).sort().map(sym => {
+            const q = json.quotes[sym];
+            return `${sym}: time=${q.t} bid=${q.bp} bid_size=${q.bs} ask=${q.ap} ask_size=${q.as}`;
+          }).join('\n');
+        }
+
+        if (json && json.trades) {
+          return Object.keys(json.trades).sort().map(sym => {
+            const t = json.trades[sym];
+            return `${sym}: time=${t.t} price=${t.p} size=${t.s} exchange=${t.x}`;
+          }).join('\n');
+        }
+
+        if (json && !Array.isArray(json) && json.snapshots) {
+          return Object.keys(json.snapshots).sort().map(sym => {
+            const s = json.snapshots[sym] || {};
+            const latestTrade = s.latestTrade ? `latest_trade_price=${s.latestTrade.p}` : 'latest_trade_price=n/a';
+            const latestQuote = s.latestQuote ? `bid=${s.latestQuote.bp} ask=${s.latestQuote.ap}` : 'bid=n/a ask=n/a';
+            const minuteBar = s.minuteBar ? `minute_close=${s.minuteBar.c} minute_volume=${s.minuteBar.v}` : 'minute_close=n/a minute_volume=n/a';
+            const dailyBar = s.dailyBar ? `daily_close=${s.dailyBar.c}` : 'daily_close=n/a';
+            return `${sym}: ${latestTrade} ${latestQuote} ${minuteBar} ${dailyBar}`;
+          }).join('\n');
+        }
+
+        if (path.includes('/v2/account') && json && typeof json === 'object') {
+          return [
+            `account_number=${json.account_number ?? 'n/a'}`,
+            `status=${json.status ?? 'n/a'}`,
+            `currency=${json.currency ?? 'n/a'}`,
+            `cash=${json.cash ?? 'n/a'}`,
+            `portfolio_value=${json.portfolio_value ?? 'n/a'}`,
+            `buying_power=${json.buying_power ?? 'n/a'}`
+          ].join('\n');
+        }
+
+        if (Array.isArray(json)) {
+          return `Array response with ${json.length} items.`;
+        }
+
+        if (json && typeof json === 'object') {
+          return `JSON object response with keys: ${Object.keys(json).join(', ')}`;
+        }
+
+        return String(json);
+      } catch (e) {
+        return 'Summary unavailable.';
+      }
+    }
+
+    function splitCommands(text) {
+      return (text || '')
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(line => line && !line.startsWith('#'));
+    }
+
+    function prepareRequests() {
+      const key = $('key').value.trim();
+      const secret = $('secret').value.trim();
+      if (!key || !secret) throw new Error('API KEY and API SECRET are required.');
+
+      const commands = splitCommands($('command').value);
+      if (!commands.length) throw new Error('COMMAND is empty. Enter one or more commands, one per line.');
+
+      const requests = commands.map((command, index) => {
+        const parsed = normalizeCommand(command);
+        return {
+          index: index + 1,
+          command,
+          method: parsed.method,
+          url: parsed.url,
+          raw: parsed.raw
+        };
+      });
+
+      state.requests = requests;
+      state.curls = requests.map(req => `# Command ${req.index}: ${req.command}\n${buildCurl(req.method, req.url, key, secret)}`);
+      return { key, secret, requests };
+    }
+
+    function buildCombinedOutput(results) {
+      const output = results.map((result) => {
+        if (result.ok) {
+          const summary = summarizeGeneric(result.json, result.url);
+          return [
+            `ALPACA API OUTPUT ${result.index}`,
+            `Original command: ${result.command}`,
+            `Method: ${result.method}`,
+            `Resolved URL: ${result.url}`,
+            '',
+            'Condensed result:',
+            summary || '(No condensed result available.)',
+            '',
+            'Raw JSON:',
+            JSON.stringify(result.json)
+          ].join('\n');
+        }
+
+        return [
+          `ALPACA API OUTPUT ${result.index}`,
+          `Original command: ${result.command}`,
+          `Method: ${result.method}`,
+          `Resolved URL: ${result.url}`,
+          '',
+          'Error:',
+          result.error,
+          '',
+          'Generated cURL:',
+          result.curl || '(Unavailable)'
+        ].join('\n');
+      }).join('\n\n' + '='.repeat(80) + '\n\n');
+
+      state.output = output;
+      state.results = results;
+      $('output').value = output;
+      return output;
+    }
+
+    async function runCommands() {
+      const { key, secret, requests } = prepareRequests();
+      const results = [];
+
+      setStatus(`Running ${requests.length} command(s)...`);
+
+      for (let i = 0; i < requests.length; i += 1) {
+        const req = requests[i];
+        setStatus(`Running ${i + 1} of ${requests.length}: ${req.command}`);
+
+        try {
+          const res = await fetch(req.url, {
+            method: req.method,
+            headers: {
+              'APCA-API-KEY-ID': key,
+              'APCA-API-SECRET-KEY': secret
+            }
+          });
+
+          const text = await res.text();
+          let json;
+          try {
+            json = JSON.parse(text);
+          } catch {
+            throw new Error(`Response was not valid JSON. HTTP ${res.status}. Body: ${text.slice(0, 500)}`);
+          }
+
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${JSON.stringify(json)}`);
+          }
+
+          results.push({
+            ...req,
+            ok: true,
+            json,
+            curl: buildCurl(req.method, req.url, key, secret)
+          });
+        } catch (err) {
+          results.push({
+            ...req,
+            ok: false,
+            error: String(err.message || err),
+            curl: buildCurl(req.method, req.url, key, secret)
+          });
+        }
+      }
+
+      buildCombinedOutput(results);
+
+      const okCount = results.filter(r => r.ok).length;
+      const failCount = results.length - okCount;
+      if (failCount === 0) {
+        setStatus(`Success. ${okCount}/${results.length} commands completed.`);
+      } else {
+        setStatus(`Completed with issues. ${okCount}/${results.length} succeeded, ${failCount} failed. Use cURL fallback for failed commands if needed.`);
+      }
+    }
+
+    async function copyText(text, successMessage) {
+      try {
+        await navigator.clipboard.writeText(text);
+        setStatus(successMessage);
+      } catch {
+        setStatus('Clipboard copy failed. Copy manually.');
+      }
+    }
+
+    async function useJsonFromTerminal() {
+      const pasted = window.prompt(
+        'Paste JSON from terminal here. You can paste either: \n1) a single JSON response object/array, or \n2) a JSON array like [{"command":"GET /v2/account","json":{...}}, {"command":"GET /v2/orders","json":[...]}]'
+      );
+      if (!pasted || !pasted.trim()) {
+        setStatus('No JSON pasted.');
+        return;
+      }
+
+      let parsed;
+      try {
+        parsed = JSON.parse(pasted);
+      } catch {
+        setStatus('Pasted text was not valid JSON.');
+        return;
+      }
+
+      let results;
+      if (Array.isArray(parsed)) {
+        results = parsed.map((item, idx) => {
+          if (item && typeof item === 'object' && 'json' in item) {
+            const command = item.command || `Pasted result ${idx + 1}`;
+            const normalized = (() => {
+              try { return normalizeCommand(command); } catch { return { method: 'GET', url: item.url || 'pasted://json', raw: command }; }
+            })();
+            return {
+              index: idx + 1,
+              command,
+              method: item.method || normalized.method,
+              url: item.url || normalized.url,
+              ok: true,
+              json: item.json,
+              curl: ''
+            };
+          }
+          return {
+            index: idx + 1,
+            command: `Pasted result ${idx + 1}`,
+            method: 'GET',
+            url: 'pasted://json',
+            ok: true,
+            json: item,
+            curl: ''
+          };
+        });
+      } else {
+        results = [{
+          index: 1,
+          command: 'Pasted result 1',
+          method: 'GET',
+          url: 'pasted://json',
+          ok: true,
+          json: parsed,
+          curl: ''
+        }];
+      }
+
+      buildCombinedOutput(results);
+      setStatus(`OUTPUT built from pasted terminal JSON for ${results.length} result(s).`);
+    }
+
+
+    function downloadOutputTxt() {
+      const val = $('output').value;
+      if (!val || !val.trim()) {
+        setStatus('There is no OUTPUT to download.');
+        return;
+      }
+
+      const safeTs = new Date().toISOString().replace(/[:]/g, '-');
+      const blob = new Blob([val], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `alpaca-output-${safeTs}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setStatus('Downloaded OUTPUT as .txt');
+    }
+
+    function clearAll() {
+      $('command').value = '';
+      $('output').value = '';
+      setStatus('Cleared.');
+      state.requests = [];
+      state.curls = [];
+      state.output = '';
+      state.results = [];
+    }
+
+    $('runBtn').addEventListener('click', async () => {
+      try {
+        await runCommands();
+      } catch (e) {
+        setStatus(e.message || String(e));
+      }
+    });
+
+    $('copyOutputBtn').addEventListener('click', async () => {
+      const val = $('output').value.trim();
+      if (!val) return setStatus('There is no OUTPUT to copy.');
+      await copyText(val, 'OUTPUT copied.');
+    });
+
+    $('downloadTxtBtn').addEventListener('click', downloadOutputTxt);
+
+    $('copyCurlBtn').addEventListener('click', async () => {
+      try {
+        if (!state.curls.length) prepareRequests();
+        await copyText(state.curls.join('\n\n'), 'cURL fallback copied.');
+      } catch (e) {
+        setStatus(e.message || String(e));
+      }
+    });
+
+    $('useJsonBtn').addEventListener('click', async () => {
+      await useJsonFromTerminal();
+    });
+
+    $('clearBtn').addEventListener('click', clearAll);
+
+    $('command').value = `# Example batch\nGET /v2/account\nGET /v2/orders?status=open&limit=20&direction=desc\nGET /v2/stocks/snapshots?symbols=LNG,XOM,ITA`;
+  </script>
+</body>
+</html>

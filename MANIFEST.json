@@ -1,0 +1,248 @@
+{
+  "created_utc": "2026-04-01T10:54:32.502267Z",
+  "file_count": 40,
+  "files": [
+    "ARCHITECTURE.md",
+    "REFACTOR_STATUS.md",
+    "Whisper-dev-master_SMOKE_TEST_CHECKLIST.md",
+    "index.html",
+    "js/AWSBedrock.js",
+    "js/Gemini3.js",
+    "js/GeminiVertex.js",
+    "js/LemonfoxSTT.js",
+    "js/LemonfoxTXT.js",
+    "js/MistralTXT.js",
+    "js/SONIOX_UPDATE.js",
+    "js/SONIOX_UPDATE_dia.js",
+    "js/VoxtralminiSTT.js",
+    "js/core/note-runner.js",
+    "js/core/provider-registry.js",
+    "js/core/recording-runner.js",
+    "js/deepgram_nova3.js",
+    "js/features/ad-refresh.js",
+    "js/features/analytics.js",
+    "js/features/editor-tools.js",
+    "js/features/field-feedback.js",
+    "js/features/note-usage-cost.js",
+    "js/features/overlays.js",
+    "js/features/page-ui.js",
+    "js/features/prompt-slots-ui.js",
+    "js/features/provider-persistence.js",
+    "js/features/recording-ui.js",
+    "js/languageLoaderUsage.js",
+    "js/main-index.js",
+    "js/main.js",
+    "js/noteGeneration.js",
+    "js/noteGeneration_gpt52.js",
+    "js/noteGeneration_gpt52_NS.js",
+    "js/noteGeneration_gpt54.js",
+    "js/noteGeneration_gpt5_NS.js",
+    "js/notegeneration gpt-5.js",
+    "js/promptManager.js",
+    "js/recording.js",
+    "js/ui.js",
+    "transcribe.html"
+  ],
+  "sources": {
+    "ARCHITECTURE.md": {
+      "source_artifact": "step9_patch/Whisper-dev-master/ARCHITECTURE.md",
+      "size_bytes": 5785,
+      "sha256": "15aace5efaa96b2fdf5097a98501c9bf4062f28d98fa854fc603c37c070967cb"
+    },
+    "REFACTOR_STATUS.md": {
+      "source_artifact": "step9_patch/Whisper-dev-master/REFACTOR_STATUS.md",
+      "size_bytes": 3801,
+      "sha256": "d7eca3124f01c76b3e6a737f55842533eb380caf94192046c7b488d18338599e"
+    },
+    "Whisper-dev-master_SMOKE_TEST_CHECKLIST.md": {
+      "source_artifact": "Whisper-dev-master_SMOKE_TEST_CHECKLIST.md",
+      "size_bytes": 9595,
+      "sha256": "d1df129475c00d33a099dd033c06d1b0b44fdb0913a84e534f0e07d59818170d"
+    },
+    "index.html": {
+      "source_artifact": "step8_patch/index.html",
+      "size_bytes": 56668,
+      "sha256": "26d07eed033f30ba8d83cbd1b3d3e7ea2333f903fa4cb1dd457c59b835cdd15b"
+    },
+    "js/AWSBedrock.js": {
+      "source_artifact": "step5j_patch/js/AWSBedrock.js",
+      "size_bytes": 7133,
+      "sha256": "0659ec7491f349cb4388b1e4f72fcd3726c27cd7a93072137a2eba08971975ea"
+    },
+    "js/Gemini3.js": {
+      "source_artifact": "step5k_patch/js/Gemini3.js",
+      "size_bytes": 6143,
+      "sha256": "c086e8e65923be60e117aade1ef16f8d90b80d0c4a779b62245cb3251128d7a6"
+    },
+    "js/GeminiVertex.js": {
+      "source_artifact": "step5i_patch/js/GeminiVertex.js",
+      "size_bytes": 6833,
+      "sha256": "86c7b48adaadc58b87ce0d13bb814663c5d051a4342234085f3052909721fde7"
+    },
+    "js/LemonfoxSTT.js": {
+      "source_artifact": "step6b_patch/js/LemonfoxSTT.js",
+      "size_bytes": 32262,
+      "sha256": "f8a487ab1f6a4eda272cfb0c62a5245e75b1ca2764e435f653cbfd384eec8823"
+    },
+    "js/LemonfoxTXT.js": {
+      "source_artifact": "step5h_patch/js/LemonfoxTXT.js",
+      "size_bytes": 2461,
+      "sha256": "0961de5ec44697603b7577d881f62ca881e25b7bcea8550a9e0d4f7f6dd78b73"
+    },
+    "js/MistralTXT.js": {
+      "source_artifact": "step5g_patch/js/MistralTXT.js",
+      "size_bytes": 2821,
+      "sha256": "4312c1a776ccfe152563ec069f7a9a20ffbcd4dc3f72048776ac36c5c77c7a03"
+    },
+    "js/SONIOX_UPDATE.js": {
+      "source_artifact": "step6c_patch/js/SONIOX_UPDATE.js",
+      "size_bytes": 46099,
+      "sha256": "0fb3dca66c3a6ad048e19cd293306aa9874df24e314f2e387de40ba992b85835"
+    },
+    "js/SONIOX_UPDATE_dia.js": {
+      "source_artifact": "step6c_patch/js/SONIOX_UPDATE_dia.js",
+      "size_bytes": 48998,
+      "sha256": "81b201c643d32c1dd9a43b84a9d2cc1ea3f6ac5c60a5fee4672719ab452c793e"
+    },
+    "js/VoxtralminiSTT.js": {
+      "source_artifact": "step6c_patch/js/VoxtralminiSTT.js",
+      "size_bytes": 38392,
+      "sha256": "44b1323824c7d567202d20a25e1bddbb0ab009fbb13cbff7bc9b9fa88e89a418"
+    },
+    "js/core/note-runner.js": {
+      "source_artifact": "step5k_patch/js/core/note-runner.js",
+      "size_bytes": 13923,
+      "sha256": "5715ec5adcf16a1512a9c5f5caf1784d0542f516839a2cbe9e58544c74d200f9"
+    },
+    "js/core/provider-registry.js": {
+      "source_artifact": "step7b_patch/js/core/provider-registry.js",
+      "size_bytes": 9806,
+      "sha256": "4572973e534b88444a28bf7412bc592d95203165c5f8c7bb158340c96d9c40e1"
+    },
+    "js/core/recording-runner.js": {
+      "source_artifact": "step6b_patch/js/core/recording-runner.js",
+      "size_bytes": 4624,
+      "sha256": "29536c872d9a726218d9e992a379bdfa07e8d817c064688c6382b096a5a771f7"
+    },
+    "js/deepgram_nova3.js": {
+      "source_artifact": "step6b_patch/js/deepgram_nova3.js",
+      "size_bytes": 36105,
+      "sha256": "26584c5d40ae4591733f3c8762941ace162f85af0c5516457b93e9f17c826b2d"
+    },
+    "js/features/ad-refresh.js": {
+      "source_artifact": "step2k_patch/js/features/ad-refresh.js",
+      "size_bytes": 1743,
+      "sha256": "547d90851bf37bc10b713e34af5f6a7592039f921d5d74b837cc81297f8b0abb"
+    },
+    "js/features/analytics.js": {
+      "source_artifact": "step7b_patch/js/features/analytics.js",
+      "size_bytes": 5367,
+      "sha256": "1fdc4174896bbb1ba918f9023a0c979d292ada1afda689ac1da946633c826e00"
+    },
+    "js/features/editor-tools.js": {
+      "source_artifact": "step2j_patch/js/features/editor-tools.js",
+      "size_bytes": 57633,
+      "sha256": "7b07b879c095f31149445c92a380347c491d9684ef562066761f984240079daa"
+    },
+    "js/features/field-feedback.js": {
+      "source_artifact": "step3c_patch/js/features/field-feedback.js",
+      "size_bytes": 9495,
+      "sha256": "c421857ebf4208d06273e7b50f33effd2093f32c6fa1a14892776c9fe9ea2cf3"
+    },
+    "js/features/note-usage-cost.js": {
+      "source_artifact": "step7b_patch/js/features/note-usage-cost.js",
+      "size_bytes": 16116,
+      "sha256": "5a3614ddf4c813aa3cc9d06e3c8a16b0c91af71c4572b2d04a4443e96126753f"
+    },
+    "js/features/overlays.js": {
+      "source_artifact": "step2f_patch/js/features/overlays.js",
+      "size_bytes": 12103,
+      "sha256": "f953a8fa3d85a4ff13fae9b1c73e5884598f22f20e7e769bb0242ff59fa6be42"
+    },
+    "js/features/page-ui.js": {
+      "source_artifact": "step2d_patch/js/features/page-ui.js",
+      "size_bytes": 8648,
+      "sha256": "080584f927a70071ca2a010175e27dbfdecebd04f7a30b29c5069e93f6f39f42"
+    },
+    "js/features/prompt-slots-ui.js": {
+      "source_artifact": "step4b_patch/js/features/prompt-slots-ui.js",
+      "size_bytes": 19226,
+      "sha256": "672f34bf4c913e216a49cd8250ec66848970e0680ca6bb3a60b53d1744d1ffd9"
+    },
+    "js/features/provider-persistence.js": {
+      "source_artifact": "step7_patch/js/features/provider-persistence.js",
+      "size_bytes": 15725,
+      "sha256": "ead6a12ea53985bad0ac05cc0360674f12551cb5b7e1525d52d47feddd6866c3"
+    },
+    "js/features/recording-ui.js": {
+      "source_artifact": "step3g_patch/js/features/recording-ui.js",
+      "size_bytes": 6319,
+      "sha256": "12484397f037c3fb192dc6b01838327864e336db29c70e71b76914a10c6c96b8"
+    },
+    "js/languageLoaderUsage.js": {
+      "source_artifact": "step8_patch/js/languageLoaderUsage.js",
+      "size_bytes": 22002,
+      "sha256": "6d8afaad13f2ea82991b2c1f032e15d391dc1792fde71ad11adb1e0af96e1a4a"
+    },
+    "js/main-index.js": {
+      "source_artifact": "step8_patch/js/main-index.js",
+      "size_bytes": 156,
+      "sha256": "2884ffc1917165d134640969afa0cbab69eb3ac663f596385160d1bc8dc8467b"
+    },
+    "js/main.js": {
+      "source_artifact": "step7_patch/js/main.js",
+      "size_bytes": 19008,
+      "sha256": "d7f5965e334b9669e468764faaa8f6285a6419b7f968eaaa929ae5b54c83569a"
+    },
+    "js/noteGeneration.js": {
+      "source_artifact": "step5_patch/js/noteGeneration.js",
+      "size_bytes": 2410,
+      "sha256": "ccc601b6e583e2661f70cc8965b5155720f4e75c415655dcca1d4cfbe524c3a2"
+    },
+    "js/noteGeneration_gpt52.js": {
+      "source_artifact": "step5b_patch/js/noteGeneration_gpt52.js",
+      "size_bytes": 3422,
+      "sha256": "d2c510bc92a718a01b957536fc005625dca3c2babed56aae0ced2a82d8f183d7"
+    },
+    "js/noteGeneration_gpt52_NS.js": {
+      "source_artifact": "step5c_patch/js/noteGeneration_gpt52_NS.js",
+      "size_bytes": 3248,
+      "sha256": "a9024a2d8033290d404decc39f340899b991ab9f49cc3a52669ce7b217eb1201"
+    },
+    "js/noteGeneration_gpt54.js": {
+      "source_artifact": "step5d_patch/js/noteGeneration_gpt54.js",
+      "size_bytes": 4153,
+      "sha256": "e71554995e658a47bb2bbe45538e8548a0cf8ac95a7ce28af0d19d897ddbfaff"
+    },
+    "js/noteGeneration_gpt5_NS.js": {
+      "source_artifact": "step5e_patch/js/noteGeneration_gpt5_NS.js",
+      "size_bytes": 3199,
+      "sha256": "abef992d1fea6bd07926f622ed353b98cbdf6e00be246962ebc611343707bb66"
+    },
+    "js/notegeneration gpt-5.js": {
+      "source_artifact": "step5f_patch/js/notegeneration%20gpt-5.js",
+      "size_bytes": 3437,
+      "sha256": "4e19ae071182b39d6e58eefca24ac47c7387b7c64fc1c5aa038e3e69a3eba585"
+    },
+    "js/promptManager.js": {
+      "source_artifact": "step4d_patch/js/promptManager.js",
+      "size_bytes": 14346,
+      "sha256": "1372f250f0d13df3ca553000dc13f966218b6651db08c6133a2b1610368a0f07"
+    },
+    "js/recording.js": {
+      "source_artifact": "step6_patch/js/recording.js",
+      "size_bytes": 36348,
+      "sha256": "d0d871ffdcfb56111f74fc49c9efd84047559145611a258379ca6695ff70f4c9"
+    },
+    "js/ui.js": {
+      "source_artifact": "step8_patch/js/ui.js",
+      "size_bytes": 2548,
+      "sha256": "4e0ec03e7a56f9cd512834e5a4589e3ad6450603b05060659a27589cb09e6824"
+    },
+    "transcribe.html": {
+      "source_artifact": "step2k_patch/transcribe.html",
+      "size_bytes": 76879,
+      "sha256": "55adceb3b8652db2dea5fc90a557889a043c874fc914196095149d248698aa61"
+    }
+  }
+}

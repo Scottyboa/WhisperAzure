@@ -1,0 +1,4 @@
+[[redirects]]
+from = "/api/soniox-eu/*"
+to = "/.netlify/functions/soniox-eu/:splat"
+status = 200

@@ -1,0 +1,104 @@
+Her er en “gjør-det-selv”-guide du kan følge hver gang du vil rulle ut en ny oppdatering via samme S3-link i guiden (samme templateURL + samme param_CodeS3Bucket/param_CodeS3Key).
+
+Guide: Oppdatere Bedrock Lambda via S3 (uten å endre link i guiden)
+
+Forutsetninger
+	•	Du bruker CloudFormation/SAM-template i S3: templates/bedrock-note-proxy.yaml
+	•	Lambda-koden ligger som ZIP i S3: artifacts/bedrock-note-proxy.zip
+	•	Template har CodeUri.Version (pinner ZIP til en spesifikk S3 VersionId)
+
+⸻
+
+Del A: Klargjør ny ZIP (med kodeendringer)
+	1.	Last ned gjeldende ZIP
+	•	S3 → bucket → artifacts/bedrock-note-proxy.zip → Download
+	2.	Pakk ut ZIP lokalt
+	•	Pakk ut til en mappe (f.eks. bedrock-note-proxy/)
+	3.	Gjør kodeendringer
+	•	Rediger filene inni mappa (f.eks. index.js)
+	•	Lagre
+	4.	Zip på nytt (riktig struktur!)
+	•	Viktig: index.js skal ligge i rot av ZIP, ikke inni en ekstra toppmappe.
+	•	Mac/Linux (stå inni mappa som inneholder index.js):
+
+zip -r bedrock-note-proxy.zip .
+
+
+	•	Windows: marker filene inni mappa → “Send to → Compressed (zipped) folder”
+
+⸻
+
+Del B: Last opp ny ZIP til S3 (samme key)
+	5.	Last opp og overskriv ZIP
+	•	S3 → artifacts/ → Upload → velg din nye bedrock-note-proxy.zip
+	•	Sørg for at objektet ender på samme path:
+	•	artifacts/bedrock-note-proxy.zip
+	6.	Hent ny VersionId
+	•	Klikk objektet bedrock-note-proxy.zip
+	•	Gå til Versions (eller Properties → Version ID)
+	•	Kopier Version ID for “Current version”
+	•	Eksempel-format: Q2Gle.d45PGNwkz9cRUZRStLoC6.vw5D
+
+Hvis du ikke ser Version ID: sjekk at bucket har Versioning = Enabled.
+
+⸻
+
+Del C: Oppdater YAML-template til å peke på ny ZIP-versjon
+	7.	Åpne template-fila
+	•	S3 → templates/bedrock-note-proxy.yaml → Download eller Edit
+	8.	Oppdater kun CodeUri.Version
+	•	Finn:
+
+CodeUri:
+  Bucket: !Ref CodeS3Bucket
+  Key: !Ref CodeS3Key
+  Version: "GAMMEL_VERSION_ID"
+
+
+	•	Bytt til:
+
+Version: "NY_VERSION_ID_FRA_STEG_6"
+
+
+	9.	Last opp og overskriv YAML
+	•	Last opp tilbake til samme path:
+	•	templates/bedrock-note-proxy.yaml
+
+⸻
+
+Del D: Rask verifisering (anbefalt)
+	10.	Åpne YAML i S3 og sjekk
+
+	•	S3 → templates/bedrock-note-proxy.yaml → “Open”
+	•	Søk etter Version: og bekreft at den viser ny VersionId.
+
+	11.	Test med ny stack (valgfritt, men lurt)
+
+	•	Bruk guiden-linken (samme som alltid) og opprett en test-stack
+	•	Kjør en request og sjekk at ny funksjonalitet er med
+
+⸻
+
+Del E: Hva skjer med brukerne?
+	•	Nye brukere: får oppdateringen automatisk når de oppretter stack via samme guide-link.
+	•	Eksisterende brukere: må gjøre Update stack for å hente ny template/ny code version.
+
+⸻
+
+Vanlige feil (og hvordan unngå dem)
+	•	“Jeg lastet opp ny ZIP, men ingenting endrer seg”
+	•	Du glemte å oppdatere CodeUri.Version i YAML.
+	•	Lambda feiler fordi index.js ikke finnes
+	•	Du zippet mappa i stedet for innholdet (da ligger index.js en mappe for dypt).
+	•	Brukere får gammel versjon
+	•	De har ikke kjørt “Update stack” (gjelder eksisterende stacks).
+
+⸻
+
+(Valgfritt) Forenkling til neste gang
+
+Hvis du vil slippe å oppdatere Version: hver gang, kan du fjerne Version-linjen fra YAML. Da bruker template alltid “latest” på Key. (Ulempen er mindre deterministiske builds / vanskeligere rollback.)
+
+⸻
+
+Hvis du vil, kan jeg lage en kort “release-notat”-mal du kan lime inn i repoet ditt (dato, endring, ny VersionId, testet/ikke testet), så du alltid har kontroll på hvilke stacks som peker på hva.

@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zero-G Syringe / Venting Gas Simulation</title>
+<style>
+  :root{
+    --bg:#0f1320;
+    --panel:#171d2f;
+    --panel2:#1f2740;
+    --text:#e8edf7;
+    --muted:#a9b4cb;
+    --accent:#79b8ff;
+    --accent2:#ffd166;
+    --inside:#7ee787;
+    --escaped:#ff9b73;
+  }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    overflow: hidden;
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  #controls {
+    display: grid;
+    grid-template-columns: auto auto auto auto auto auto 1fr;
+    gap: 10px 16px;
+    align-items: center;
+    padding: 12px 14px;
+    background: linear-gradient(180deg, var(--panel), var(--panel2));
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  button {
+    background: #25314f;
+    color: var(--text);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  button:hover { background: #2a3960; }
+  button:disabled { opacity: 0.55; cursor: default; }
+
+  input[type="range"] {
+    width: 150px;
+    cursor: pointer;
+  }
+
+  label {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  #stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    justify-content: flex-end;
+    align-items: center;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .stat {
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+    font-variant-numeric: tabular-nums;
+  }
+
+  #canvasWrap {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background:
+      linear-gradient(transparent 0, transparent calc(100% - 1px), rgba(255,255,255,0.03) 100%),
+      linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), rgba(255,255,255,0.03) 100%);
+    background-size: 80px 80px, 80px 80px;
+  }
+
+  #caption {
+    position: absolute;
+    left: 14px;
+    bottom: 12px;
+    padding: 8px 10px;
+    font-size: 13px;
+    color: var(--muted);
+    background: rgba(10,12,18,0.5);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    pointer-events: none;
+    line-height: 1.35;
+  }
+
+  .value {
+    min-width: 34px;
+    display: inline-block;
+    text-align: right;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="controls">
+    <div class="group">
+      <button id="openBtn">Open nozzle</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+
+    <div class="group">
+      <label for="countSlider">Particles</label>
+      <input id="countSlider" type="range" min="20" max="1500" step="1" value="400">
+      <span class="value" id="countValue">400</span>
+    </div>
+
+    <div class="group">
+      <label for="speedSlider">Initial speed</label>
+      <input id="speedSlider" type="range" min="80" max="1000" step="1" value="400">
+      <span class="value" id="speedValue">400</span>
+    </div>
+
+    <div class="group">
+      <label for="massSlider">Particle mass</label>
+      <input id="massSlider" type="range" min="1" max="10" step="1" value="4">
+      <span class="value" id="massValue">4</span>
+    </div>
+
+    <div class="group">
+      <label><input id="vectorsCheck" type="checkbox"> Show velocity vectors</label>
+    </div>
+
+    <div class="group">
+      <label><input id="ppCollisionsCheck" type="checkbox" checked> Particle collisions</label>
+    </div>
+
+    <div id="stats">
+      <div class="stat" id="speedStat">|v| = 0.00</div>
+      <div class="stat" id="posStat">pos = (0.0, 0.0)</div>
+      <div class="stat" id="angStat">ω = 0.000</div>
+      <div class="stat" id="countStat">inside = 0, escaped = 0</div>
+    </div>
+  </div>
+
+  <div id="canvasWrap">
+    <canvas id="canvas"></canvas>
+    <div id="caption">
+      Smaller particles, larger particle-count range, and particle-particle collisions added.<br>
+      Closed container: impacts mostly average out. Open nozzle: escaping particles carry momentum away and push the container opposite the opening.
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+
+  const openBtn = document.getElementById("openBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const countSlider = document.getElementById("countSlider");
+  const speedSlider = document.getElementById("speedSlider");
+  const massSlider = document.getElementById("massSlider");
+  const vectorsCheck = document.getElementById("vectorsCheck");
+  const ppCollisionsCheck = document.getElementById("ppCollisionsCheck");
+
+  const countValue = document.getElementById("countValue");
+  const speedValue = document.getElementById("speedValue");
+  const massValue = document.getElementById("massValue");
+
+  const speedStat = document.getElementById("speedStat");
+  const posStat = document.getElementById("posStat");
+  const angStat = document.getElementById("angStat");
+  const countStat = document.getElementById("countStat");
+
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function rand(min, max) { return min + Math.random() * (max - min); }
+  function dot(ax, ay, bx, by) { return ax * bx + ay * by; }
+  function cross2(ax, ay, bx, by) { return ax * by - ay * bx; }
+  function hypot(x, y) { return Math.hypot(x, y); }
+
+  function rotateLocalToWorld(x, y, angle) {
+    const c = Math.cos(angle), s = Math.sin(angle);
+    return { x: x * c - y * s, y: x * s + y * c };
+  }
+
+  function worldToLocal(wx, wy, body) {
+    const dx = wx - body.x;
+    const dy = wy - body.y;
+    const c = Math.cos(-body.angle), s = Math.sin(-body.angle);
+    return { x: dx * c - dy * s, y: dx * s + dy * c };
+  }
+
+  function localToWorld(lx, ly, body) {
+    const c = Math.cos(body.angle), s = Math.sin(body.angle);
+    return {
+      x: body.x + lx * c - ly * s,
+      y: body.y + lx * s + ly * c
+    };
+  }
+
+  const sim = {
+    container: null,
+    particles: [],
+    nozzleOpen: false,
+    escapedCount: 0,
+    time: 0
+  };
+
+  const FIXED_DT = 1 / 240;
+  let accumulator = 0;
+  let lastTime = performance.now();
+
+  // Smaller dots than before
+  const PARTICLE_RADIUS = 1.2;
+
+  function resizeCanvas() {
+    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+
+  function updateDisplayedValues() {
+    countValue.textContent = countSlider.value;
+    speedValue.textContent = speedSlider.value;
+    massValue.textContent = massSlider.value;
+  }
+
+  function resetSimulation() {
+    const rect = canvas.getBoundingClientRect();
+    const startX = rect.width * 0.62;
+    const startY = rect.height * 0.56;
+
+    const w = 320;
+    const h = 120;
+    const particleCount = +countSlider.value;
+    const baseSpeed = +speedSlider.value;
+
+    // Particle mass from slider (1..10)
+    const particleMass = +massSlider.value;
+
+    const containerMass = 140;
+    const apertureHalf = h * 0.27;
+
+    sim.container = {
+      x: startX,
+      y: startY,
+      vx: 0,
+      vy: 0,
+      angle: 0,
+      angVel: 0,
+      w,
+      h,
+      mass: containerMass,
+      inertia: containerMass * (w * w + h * h) / 12,
+      apertureHalf
+    };
+
+    sim.particles = [];
+    sim.nozzleOpen = false;
+    sim.escapedCount = 0;
+    sim.time = 0;
+
+    const locals = [];
+    const maxTries = 10000;
+    const marginX = 12;
+    const marginY = 10;
+    const r = PARTICLE_RADIUS;
+
+    // Place particles without overlaps.
+    for (let i = 0; i < particleCount; i++) {
+      let placed = false;
+      for (let t = 0; t < maxTries && !placed; t++) {
+        const lx = rand(-w * 0.5 + r + marginX, w * 0.5 - r - marginX - 14);
+        const ly = rand(-h * 0.5 + r + marginY, h * 0.5 - r - marginY);
+
+        let ok = true;
+        for (let j = 0; j < locals.length; j++) {
+          const dx = lx - locals[j].x;
+          const dy = ly - locals[j].y;
+          const minDist = r * 2.2;
+          if (dx * dx + dy * dy < minDist * minDist) {
+            ok = false;
+            break;
+          }
+        }
+        if (ok) {
+          locals.push({ x: lx, y: ly });
+          placed = true;
+        }
+      }
+    }
+
+    // Random initial velocities
+    const velocities = [];
+    for (let i = 0; i < locals.length; i++) {
+      const a = rand(0, Math.PI * 2);
+      const s = baseSpeed * rand(0.8, 1.2);
+      velocities.push({ x: Math.cos(a) * s, y: Math.sin(a) * s });
+    }
+
+    // Remove net linear momentum
+    let meanVx = 0, meanVy = 0;
+    for (let i = 0; i < velocities.length; i++) {
+      meanVx += velocities[i].x;
+      meanVy += velocities[i].y;
+    }
+    meanVx /= velocities.length || 1;
+    meanVy /= velocities.length || 1;
+    for (let i = 0; i < velocities.length; i++) {
+      velocities[i].x -= meanVx;
+      velocities[i].y -= meanVy;
+    }
+
+    // Remove net angular momentum relative to particle COM
+    let cmx = 0, cmy = 0;
+    for (let i = 0; i < locals.length; i++) {
+      cmx += locals[i].x;
+      cmy += locals[i].y;
+    }
+    cmx /= locals.length || 1;
+    cmy /= locals.length || 1;
+
+    let L = 0;
+    let I = 0;
+    for (let i = 0; i < locals.length; i++) {
+      const rx = locals[i].x - cmx;
+      const ry = locals[i].y - cmy;
+      L += particleMass * cross2(rx, ry, velocities[i].x, velocities[i].y);
+      I += particleMass * (rx * rx + ry * ry);
+    }
+    const omegaCorr = I > 1e-9 ? L / I : 0;
+
+    for (let i = 0; i < locals.length; i++) {
+      const rx = locals[i].x - cmx;
+      const ry = locals[i].y - cmy;
+      velocities[i].x -= -omegaCorr * ry;
+      velocities[i].y -=  omegaCorr * rx;
+    }
+
+    // Re-remove any tiny net linear momentum introduced by the angular correction
+    meanVx = 0;
+    meanVy = 0;
+    for (let i = 0; i < velocities.length; i++) {
+      meanVx += velocities[i].x;
+      meanVy += velocities[i].y;
+    }
+    meanVx /= velocities.length || 1;
+    meanVy /= velocities.length || 1;
+    for (let i = 0; i < velocities.length; i++) {
+      velocities[i].x -= meanVx;
+      velocities[i].y -= meanVy;
+    }
+
+    for (let i = 0; i < locals.length; i++) {
+      const world = localToWorld(locals[i].x, locals[i].y, sim.container);
+      sim.particles.push({
+        x: world.x,
+        y: world.y,
+        vx: velocities[i].x,
+        vy: velocities[i].y,
+        radius: PARTICLE_RADIUS,
+        mass: particleMass,
+        escaped: false
+      });
+    }
+
+    openBtn.disabled = false;
+    updateDisplayedValues();
+    updateStats();
+  }
+
+  function getContainerCollisionCandidate(p, body) {
+    const q = worldToLocal(p.x, p.y, body);
+    const r = p.radius;
+    const halfW = body.w * 0.5;
+    const halfH = body.h * 0.5;
+    const apertureHalf = body.apertureHalf;
+
+    if (sim.nozzleOpen && q.x > halfW + r * 1.1 && Math.abs(q.y) < apertureHalf - r * 0.15) {
+      p.escaped = true;
+      sim.escapedCount++;
+      return null;
+    }
+
+    let best = null;
+    function consider(candidate) {
+      if (!candidate || candidate.penetration <= 0) return;
+      if (!best || candidate.penetration > best.penetration) best = candidate;
+    }
+
+    const penLeft = (-halfW + r) - q.x;
+    if (penLeft > 0) {
+      consider({
+        penetration: penLeft,
+        normalLocal: { x: 1, y: 0 },
+        contactLocal: { x: -halfW, y: clamp(q.y, -halfH, halfH) }
+      });
+    }
+
+    const penTop = q.y - (halfH - r);
+    if (penTop > 0) {
+      consider({
+        penetration: penTop,
+        normalLocal: { x: 0, y: -1 },
+        contactLocal: { x: clamp(q.x, -halfW, halfW), y: halfH }
+      });
+    }
+
+    const penBottom = (-halfH + r) - q.y;
+    if (penBottom > 0) {
+      consider({
+        penetration: penBottom,
+        normalLocal: { x: 0, y: 1 },
+        contactLocal: { x: clamp(q.x, -halfW, halfW), y: -halfH }
+      });
+    }
+
+    const penRight = q.x - (halfW - r);
+    if (penRight > 0) {
+      if (!sim.nozzleOpen) {
+        consider({
+          penetration: penRight,
+          normalLocal: { x: -1, y: 0 },
+          contactLocal: { x: halfW, y: clamp(q.y, -halfH, halfH) }
+        });
+      } else {
+        const inAperture = Math.abs(q.y) < apertureHalf - r * 0.15;
+
+        if (!inAperture) {
+          const yContact = q.y >= 0
+            ? clamp(q.y, apertureHalf, halfH)
+            : clamp(q.y, -halfH, -apertureHalf);
+
+          consider({
+            penetration: penRight,
+            normalLocal: { x: -1, y: 0 },
+            contactLocal: { x: halfW, y: yContact }
+          });
+        }
+
+        const corners = [
+          { x: halfW, y:  apertureHalf },
+          { x: halfW, y: -apertureHalf }
+        ];
+
+        for (let i = 0; i < corners.length; i++) {
+          const dx = q.x - corners[i].x;
+          const dy = q.y - corners[i].y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < r && dist > 1e-8) {
+            consider({
+              penetration: r - dist,
+              normalLocal: { x: dx / dist, y: dy / dist },
+              contactLocal: { x: corners[i].x, y: corners[i].y }
+            });
+          }
+        }
+      }
+    }
+
+    return best;
+  }
+
+  function resolveParticleContainerCollision(p, body, candidate) {
+    if (!candidate) return;
+
+    const nWorld = rotateLocalToWorld(candidate.normalLocal.x, candidate.normalLocal.y, body.angle);
+    const contactWorld = localToWorld(candidate.contactLocal.x, candidate.contactLocal.y, body);
+
+    // Push particle out of penetration
+    const slop = 0.02;
+    p.x += nWorld.x * (candidate.penetration + slop);
+    p.y += nWorld.y * (candidate.penetration + slop);
+
+    // Velocity of body surface point at contact
+    const rx = contactWorld.x - body.x;
+    const ry = contactWorld.y - body.y;
+    const vcx = body.vx - body.angVel * ry;
+    const vcy = body.vy + body.angVel * rx;
+
+    const rvx = p.vx - vcx;
+    const rvy = p.vy - vcy;
+    const relN = dot(rvx, rvy, nWorld.x, nWorld.y);
+
+    if (relN >= 0) return;
+
+    const e = 1.0;
+    const rCrossN = cross2(rx, ry, nWorld.x, nWorld.y);
+    const invMassTerm = (1 / p.mass) + (1 / body.mass) + (rCrossN * rCrossN) / body.inertia;
+
+    let j = -(1 + e) * relN / invMassTerm;
+    j = clamp(j, 0, 5000);
+
+    const jx = j * nWorld.x;
+    const jy = j * nWorld.y;
+
+    // Particle
+    p.vx += jx / p.mass;
+    p.vy += jy / p.mass;
+
+    // Equal and opposite impulse on container
+    body.vx -= jx / body.mass;
+    body.vy -= jy / body.mass;
+    body.angVel -= cross2(rx, ry, jx, jy) / body.inertia;
+  }
+
+  // Elastic particle-particle collision with positional correction.
+  function resolveParticleParticleCollision(a, b) {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    let dist2 = dx * dx + dy * dy;
+    const minDist = a.radius + b.radius;
+
+    if (dist2 >= minDist * minDist) return;
+
+    let dist = Math.sqrt(dist2);
+    let nx, ny;
+
+    if (dist < 1e-8) {
+      // Rare exact overlap fallback
+      const angle = Math.random() * Math.PI * 2;
+      nx = Math.cos(angle);
+      ny = Math.sin(angle);
+      dist = 0;
+    } else {
+      nx = dx / dist;
+      ny = dy / dist;
+    }
+
+    const penetration = minDist - dist;
+
+    // Symmetric positional correction
+    const totalInvMass = (1 / a.mass) + (1 / b.mass);
+    const moveA = penetration * (1 / a.mass) / totalInvMass;
+    const moveB = penetration * (1 / b.mass) / totalInvMass;
+
+    a.x -= nx * moveA;
+    a.y -= ny * moveA;
+    b.x += nx * moveB;
+    b.y += ny * moveB;
+
+    // Relative velocity
+    const rvx = b.vx - a.vx;
+    const rvy = b.vy - a.vy;
+    const velAlongNormal = rvx * nx + rvy * ny;
+
+    // If separating, only positional correction is needed
+    if (velAlongNormal > 0) return;
+
+    const e = 1.0;
+    let j = -(1 + e) * velAlongNormal / totalInvMass;
+    j = clamp(j, 0, 5000);
+
+    const jx = j * nx;
+    const jy = j * ny;
+
+    a.vx -= jx / a.mass;
+    a.vy -= jy / a.mass;
+    b.vx += jx / b.mass;
+    b.vy += jy / b.mass;
+  }
+
+  function step(dt) {
+    const body = sim.container;
+
+    // Integrate container
+    body.x += body.vx * dt;
+    body.y += body.vy * dt;
+    body.angle += body.angVel * dt;
+
+    if (body.angle > Math.PI) body.angle -= Math.PI * 2;
+    if (body.angle < -Math.PI) body.angle += Math.PI * 2;
+
+    // Integrate particles
+    for (let i = 0; i < sim.particles.length; i++) {
+      const p = sim.particles[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+    }
+
+    // Resolve particle-particle collisions (optional).
+    // NOTE: This is the expensive O(n^2) part. Uncheck "Particle collisions" for gas-like behavior + speed.
+    if (ppCollisionsCheck.checked) {
+      // Multiple passes improve stability when several particles bunch together.
+      for (let pass = 0; pass < 2; pass++) {
+        for (let i = 0; i < sim.particles.length; i++) {
+          const a = sim.particles[i];
+          for (let j = i + 1; j < sim.particles.length; j++) {
+            const b = sim.particles[j];
+            resolveParticleParticleCollision(a, b);
+          }
+        }
+      }
+    }
+
+    // Resolve particle-container collisions.
+    for (let pass = 0; pass < 3; pass++) {
+      for (let i = 0; i < sim.particles.length; i++) {
+        const p = sim.particles[i];
+        if (p.escaped) continue;
+        const candidate = getContainerCollisionCandidate(p, body);
+        if (candidate) resolveParticleContainerCollision(p, body, candidate);
+      }
+    }
+
+    // Safety clamps
+    const bodySpeed = hypot(body.vx, body.vy);
+    if (bodySpeed > 500) {
+      const s = 500 / bodySpeed;
+      body.vx *= s;
+      body.vy *= s;
+    }
+    body.angVel = clamp(body.angVel, -8, 8);
+
+    for (let i = 0; i < sim.particles.length; i++) {
+      const p = sim.particles[i];
+      const sp = hypot(p.vx, p.vy);
+      if (sp > 550) {
+        const s = 550 / sp;
+        p.vx *= s;
+        p.vy *= s;
+      }
+    }
+
+    sim.time += dt;
+  }
+
+  function drawArrow(x1, y1, x2, y2, color, width = 2, head = 8) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.hypot(dx, dy);
+    if (len < 1e-6) return;
+
+    const ux = dx / len;
+    const uy = dy / len;
+    const px = -uy;
+    const py = ux;
+
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = width;
+
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - ux * head + px * (head * 0.55), y2 - uy * head + py * (head * 0.55));
+    ctx.lineTo(x2 - ux * head - px * (head * 0.55), y2 - uy * head - py * (head * 0.55));
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawContainer(body) {
+    const halfW = body.w * 0.5;
+    const halfH = body.h * 0.5;
+    const ap = body.apertureHalf;
+
+    ctx.save();
+    ctx.translate(body.x, body.y);
+    ctx.rotate(body.angle);
+
+    ctx.fillStyle = "rgba(120, 170, 255, 0.08)";
+    ctx.fillRect(-halfW, -halfH, body.w, body.h);
+
+    ctx.strokeStyle = "#dce6ff";
+    ctx.lineWidth = 2;
+
+    if (!sim.nozzleOpen) {
+      ctx.strokeRect(-halfW, -halfH, body.w, body.h);
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(-halfW, -halfH);
+      ctx.lineTo(halfW, -halfH);
+      ctx.lineTo(halfW, -ap);
+      ctx.moveTo(halfW, ap);
+      ctx.lineTo(halfW, halfH);
+      ctx.lineTo(-halfW, halfH);
+      ctx.lineTo(-halfW, -halfH);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#ffd166";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(halfW, -ap);
+      ctx.lineTo(halfW, ap);
+      ctx.stroke();
+
+      ctx.fillStyle = "#ffd166";
+      ctx.beginPath();
+      ctx.arc(halfW, -ap, 2.6, 0, Math.PI * 2);
+      ctx.arc(halfW, ap, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-16, 0); ctx.lineTo(16, 0);
+    ctx.moveTo(0, -16); ctx.lineTo(0, 16);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawParticles() {
+    const rect = canvas.getBoundingClientRect();
+    for (let i = 0; i < sim.particles.length; i++) {
+      const p = sim.particles[i];
+
+      if (p.x < -120 || p.x > rect.width + 120 || p.y < -120 || p.y > rect.height + 120) {
+        continue;
+      }
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = p.escaped ? "#ff9b73" : "#7ee787";
+      ctx.fill();
+
+      if (vectorsCheck.checked) {
+        const scale = 0.10;
+        drawArrow(
+          p.x, p.y,
+          p.x + p.vx * scale,
+          p.y + p.vy * scale,
+          p.escaped ? "rgba(255,155,115,0.9)" : "rgba(126,231,135,0.9)",
+          1.0, 4
+        );
+      }
+    }
+  }
+
+  function drawContainerVelocity(body) {
+    if (!vectorsCheck.checked) return;
+    const scale = 0.55;
+    drawArrow(body.x, body.y, body.x + body.vx * scale, body.y + body.vy * scale, "#79b8ff", 2.2, 9);
+  }
+
+  function drawThrustArrow(body) {
+    if (!sim.nozzleOpen) return;
+    const dir = rotateLocalToWorld(-1, 0, body.angle);
+    const endX = body.x + dir.x * 90;
+    const endY = body.y + dir.y * 90;
+    drawArrow(body.x, body.y, endX, endY, "#ffd166", 3, 11);
+    ctx.fillStyle = "#ffd166";
+    ctx.font = "12px system-ui, sans-serif";
+    ctx.fillText("thrust", endX + 8, endY - 8);
+  }
+
+  function drawInfoOverlay(body) {
+    ctx.strokeStyle = "rgba(255,255,255,0.15)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(40, 24);
+    ctx.lineTo(70, 24);
+    ctx.moveTo(55, 9);
+    ctx.lineTo(55, 39);
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(255,255,255,0.55)";
+    ctx.font = "12px system-ui, sans-serif";
+    ctx.fillText("world reference", 80, 28);
+
+    ctx.strokeStyle = "rgba(121,184,255,0.12)";
+    ctx.beginPath();
+    ctx.moveTo(55, 24);
+    ctx.lineTo(body.x, body.y);
+    ctx.stroke();
+  }
+
+  function draw() {
+    const rect = canvas.getBoundingClientRect();
+    ctx.clearRect(0, 0, rect.width, rect.height);
+    drawInfoOverlay(sim.container);
+    drawContainer(sim.container);
+    drawParticles();
+    drawContainerVelocity(sim.container);
+    drawThrustArrow(sim.container);
+  }
+
+  function updateStats() {
+    const body = sim.container;
+    const inside = sim.particles.length - sim.escapedCount;
+    const speed = hypot(body.vx, body.vy);
+
+    speedStat.textContent = `|v| = ${speed.toFixed(2)}`;
+    posStat.textContent = `pos = (${body.x.toFixed(1)}, ${body.y.toFixed(1)})`;
+    angStat.textContent = `ω = ${body.angVel.toFixed(3)}`;
+    countStat.textContent = `inside = ${inside}, escaped = ${sim.escapedCount}`;
+  }
+
+  countSlider.addEventListener("input", updateDisplayedValues);
+  speedSlider.addEventListener("input", updateDisplayedValues);
+  massSlider.addEventListener("input", updateDisplayedValues);
+
+  openBtn.addEventListener("click", () => {
+    sim.nozzleOpen = true;
+    openBtn.disabled = true;
+  });
+
+  resetBtn.addEventListener("click", () => {
+    resetSimulation();
+  });
+
+  function frame(now) {
+    const dt = Math.min(0.05, (now - lastTime) / 1000);
+    lastTime = now;
+    accumulator += dt;
+
+    while (accumulator >= FIXED_DT) {
+      step(FIXED_DT);
+      accumulator -= FIXED_DT;
+    }
+
+    draw();
+    updateStats();
+    requestAnimationFrame(frame);
+  }
+
+  updateDisplayedValues();
+  resetSimulation();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

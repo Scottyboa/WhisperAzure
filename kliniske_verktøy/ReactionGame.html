@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reaction Game</title>
+  <style>
+    :root{
+      --bg: #0b0f14;
+      --panel: rgba(255,255,255,0.06);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.7);
+      --off: #1b2431;
+      --green: #25e36a;
+      --red: #ff3b3b;
+    }
+    *{ box-sizing: border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      background: radial-gradient(900px 500px at 50% 35%, rgba(255,255,255,0.06), transparent 60%),
+                  var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+    .wrap{
+      width:min(900px, 92vw);
+      padding: 28px 22px;
+      border-radius: 18px;
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    }
+    h1{
+      margin:0 0 12px;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .howto{
+      margin:0 0 18px;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .arena{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+      align-items:center;
+      justify-items:center;
+      padding: 18px 10px 6px;
+    }
+
+    /* Spotlight circle */
+    .spot{
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.22), rgba(255,255,255,0) 45%),
+                  var(--off);
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: inset 0 0 25px rgba(0,0,0,0.55);
+      position: relative;
+      transition: background 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+    }
+    .spot::after{
+      content:"";
+      position:absolute;
+      inset:-20px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.10), transparent 55%);
+      opacity: 0.25;
+      filter: blur(1px);
+      pointer-events:none;
+    }
+    .spot.on-green{
+      background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.35), rgba(255,255,255,0) 45%),
+                  var(--green);
+      box-shadow:
+        0 0 35px rgba(37,227,106,0.45),
+        0 0 90px rgba(37,227,106,0.25),
+        inset 0 0 18px rgba(0,0,0,0.35);
+      transform: translateY(-1px);
+    }
+    .spot.on-red{
+      background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.35), rgba(255,255,255,0) 45%),
+                  var(--red);
+      box-shadow:
+        0 0 35px rgba(255,59,59,0.45),
+        0 0 90px rgba(255,59,59,0.25),
+        inset 0 0 18px rgba(0,0,0,0.35);
+      transform: translateY(-1px);
+    }
+
+    /* Digital time display */
+    .display{
+      width:min(520px, 92%);
+      padding: 16px 18px;
+      border-radius: 14px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.10);
+      text-align:center;
+    }
+    .label{
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      color: rgba(255,255,255,0.7);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .time{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: clamp(40px, 6vw, 64px);
+      letter-spacing: 0.06em;
+      font-weight: 700;
+      line-height: 1;
+      padding: 6px 0 2px;
+      color: rgba(180,255,220,0.96);
+      text-shadow:
+        0 0 10px rgba(37,227,106,0.25),
+        0 0 22px rgba(37,227,106,0.18);
+      user-select: none;
+    }
+    .time.red{
+      color: rgba(255,200,200,0.96);
+      text-shadow:
+        0 0 10px rgba(255,59,59,0.25),
+        0 0 22px rgba(255,59,59,0.18);
+    }
+    .status{
+      margin-top: 10px;
+      color: rgba(255,255,255,0.78);
+      font-size: 14px;
+      min-height: 20px;
+    }
+
+    .controls{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content:center;
+      margin-top: 10px;
+    }
+    button{
+      appearance:none;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 650;
+      letter-spacing: 0.2px;
+      cursor:pointer;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+      user-select:none;
+    }
+    button:hover{ background: rgba(255,255,255,0.12); }
+    button:active{ transform: translateY(1px); }
+    button.primary{
+      background: rgba(37,227,106,0.18);
+      border-color: rgba(37,227,106,0.35);
+    }
+    button.danger{
+      background: rgba(255,59,59,0.14);
+      border-color: rgba(255,59,59,0.35);
+    }
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.9);
+      font-size: 12px;
+      display:inline-block;
+      transform: translateY(-1px);
+    }
+    .hint{
+      margin-top: 12px;
+      text-align:center;
+      color: rgba(255,255,255,0.66);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Reaction Game</h1>
+    <p class="howto">
+      How to play: Click <b>Start</b>. The spotlight is “off” at first. After a random delay it turns <b>green</b> and the timer starts at the exact same moment.
+      As fast as you can, press <span class="kbd">Enter</span> (or click the <b>Enter</b> button) to stop the timer — the light turns <b>red</b> and your reaction time is shown.
+      If you press too early, you’ll be warned.
+    </p>
+
+    <div class="arena">
+      <div id="spot" class="spot" aria-label="spotlight"></div>
+
+      <div class="display" role="status" aria-live="polite">
+        <div class="label">Reaction time (seconds)</div>
+        <div id="time" class="time">0.000000</div>
+        <div id="status" class="status">Press Start to begin.</div>
+      </div>
+
+      <div class="controls">
+        <button id="startBtn" class="primary" type="button">Start</button>
+        <button id="enterBtn" class="danger" type="button" disabled>Enter</button>
+        <button id="resetBtn" type="button" disabled>Try again</button>
+      </div>
+
+      <div class="hint">
+        Tip: Keep one finger on <span class="kbd">Enter</span>. The delay is randomized each round.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const spot = document.getElementById("spot");
+      const timeEl = document.getElementById("time");
+      const statusEl = document.getElementById("status");
+      const startBtn = document.getElementById("startBtn");
+      const enterBtn = document.getElementById("enterBtn");
+      const resetBtn = document.getElementById("resetBtn");
+
+      /**
+       * States:
+       * - idle: waiting to start
+       * - waiting: started, light still off, waiting random delay
+       * - go: light green, timer running
+       * - done: stopped, show result
+       * - early: clicked before green
+       */
+      let state = "idle";
+      let startAt = 0;          // performance.now() when green turns on
+      let rafId = 0;            // requestAnimationFrame id
+      let goTimeoutId = 0;      // timeout for random delay
+
+      function setSpot(mode) {
+        spot.classList.remove("on-green", "on-red");
+        if (mode === "green") spot.classList.add("on-green");
+        if (mode === "red") spot.classList.add("on-red");
+      }
+
+      function setTime(seconds, isFinal = false) {
+        // many decimals (6) and big "digital-ish" display
+        const txt = seconds.toFixed(6);
+        timeEl.textContent = txt;
+        timeEl.classList.toggle("red", isFinal);
+      }
+
+      function stopRaf() {
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
+
+      function tick() {
+        if (state !== "go") return;
+        const now = performance.now();
+        const elapsedSec = (now - startAt) / 1000;
+        setTime(elapsedSec, false);
+        rafId = requestAnimationFrame(tick);
+      }
+
+      function beginRound() {
+        // Reset visuals/UI
+        stopRaf();
+        clearTimeout(goTimeoutId);
+
+        state = "waiting";
+        setSpot("off");
+        setTime(0, false);
+        timeEl.classList.remove("red");
+
+        statusEl.textContent = "Wait for green… then press Enter!";
+        startBtn.disabled = true;
+        enterBtn.disabled = false;
+        resetBtn.disabled = true;
+
+        // Random delay (e.g. 1.2s–4.8s). Feel free to tweak.
+        const delayMs = 1200 + Math.random() * 3600;
+
+        goTimeoutId = window.setTimeout(() => {
+          // IMPORTANT: start timer at the exact same moment the light turns green.
+          setSpot("green");
+          startAt = performance.now();
+          state = "go";
+          statusEl.textContent = "GO!";
+          rafId = requestAnimationFrame(tick);
+        }, delayMs);
+      }
+
+      function finishRound(trigger = "input") {
+        if (state === "waiting") {
+          // Too early
+          state = "early";
+          clearTimeout(goTimeoutId);
+          setSpot("red");
+          stopRaf();
+          setTime(0, true);
+          statusEl.textContent = "Too soon! You pressed before green. Click Try again.";
+          startBtn.disabled = true;
+          enterBtn.disabled = true;
+          resetBtn.disabled = false;
+          return;
+        }
+
+        if (state !== "go") return;
+
+        // Stop timer
+        const endAt = performance.now();
+        const elapsedSec = (endAt - startAt) / 1000;
+
+        state = "done";
+        stopRaf();
+        setSpot("red");
+        setTime(elapsedSec, true);
+
+        statusEl.textContent = `Nice! Your reaction time: ${elapsedSec.toFixed(6)} s`;
+        startBtn.disabled = true;
+        enterBtn.disabled = true;
+        resetBtn.disabled = false;
+      }
+
+      function resetToIdle() {
+        stopRaf();
+        clearTimeout(goTimeoutId);
+        state = "idle";
+        setSpot("off");
+        setTime(0, false);
+        timeEl.classList.remove("red");
+        statusEl.textContent = "Press Start to begin.";
+        startBtn.disabled = false;
+        enterBtn.disabled = true;
+        resetBtn.disabled = true;
+      }
+
+      // Button handlers
+      startBtn.addEventListener("click", beginRound);
+      enterBtn.addEventListener("click", () => finishRound("click"));
+      resetBtn.addEventListener("click", beginRound);
+
+      // Keyboard: Enter key triggers the same as the Enter button
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          // prevent accidental button focus/submit behavior in some contexts
+          e.preventDefault();
+          finishRound("enter-key");
+        }
+        // Optional: Esc to fully reset
+        if (e.key === "Escape") {
+          resetToIdle();
+        }
+      });
+
+      // Initialize
+      resetToIdle();
+    })();
+  </script>
+</body>
+</html>
