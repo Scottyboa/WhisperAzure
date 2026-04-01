@@ -14,12 +14,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const STATE_KEY = '__ui_state_v1';
   const AUTO_GENERATE_KEY = 'auto_generate_enabled';
+  const PROMPT_PROFILE_STORAGE_KEY = 'prompt_profile_id';
+  const DEFAULT_PROMPT_PROFILE_ID = 'default';
 
   function getApp() {
     const existing = window.__app || {};
     const app = (window.__app = existing);
     app.cachedModules = app.cachedModules || {};
     return app;
+  }
+
+  function emitAppStateChanged(reason = 'unknown', extra = {}) {
+    try {
+      window.dispatchEvent(
+        new CustomEvent('app:state-changed', {
+          detail: {
+            reason,
+            at: Date.now(),
+            ...extra,
+          },
+        })
+      );
+    } catch (_) {}
   }
 
   function readSession(key, fallback = '') {
@@ -35,6 +51,15 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       sessionStorage.setItem(key, String(value ?? ''));
     } catch (_) {}
+  }
+
+  function readLocal(key, fallback = '') {
+    try {
+      const value = localStorage.getItem(key);
+      return value == null ? fallback : value;
+    } catch (_) {
+      return fallback;
+    }
   }
 
   function reloadWithSavedState(reason = '') {
@@ -107,6 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionStorage.removeItem(STATE_KEY);
       } catch {}
     }
+
+    emitAppStateChanged('state-restored');
   }
 
   function syncNoteActionButtons() {
@@ -151,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
     app.noteGenerationAbortController = controller;
     app.noteGenerationMeta = meta || {};
     syncNoteActionButtons();
+    emitAppStateChanged('note-generation-begin', { meta: meta || {} });
     return controller;
   }
 
@@ -160,6 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
     app.noteGenerationAbortController = null;
     app.noteGenerationMeta = null;
     syncNoteActionButtons();
+    emitAppStateChanged('note-generation-finish');
   }
 
   function abortNoteGeneration() {
@@ -169,6 +198,11 @@ document.addEventListener('DOMContentLoaded', () => {
         controller.abort();
       } catch (_) {}
     }
+    emitAppStateChanged('note-generation-abort-requested');
+  }
+
+  function isAutoCopyFinishedNoteEnabled() {
+    return localStorage.getItem('autoCopyFinishedNote') === 'true';
   }
 
   function buildFinishedNoteDetail(meta = {}) {
@@ -178,10 +212,95 @@ document.addEventListener('DOMContentLoaded', () => {
       status: meta?.aborted ? 'aborted' : 'success',
       text,
       textLength: text.length,
-      autoCopyEnabled: localStorage.getItem('autoCopyFinishedNote') === 'true',
+      autoCopyEnabled: isAutoCopyFinishedNoteEnabled(),
       emittedAt: Date.now(),
       ...meta,
     };
+  }
+
+  function emitCopiedEvent(text) {
+    try {
+      window.dispatchEvent(new CustomEvent('note-copied', {
+        detail: {
+          textLength: String(text || '').length,
+          copiedAt: Date.now(),
+          source: 'auto-copy',
+        }
+      }));
+    } catch (_) {}
+    emitAppStateChanged('note-copied', {
+      textLength: String(text || '').length,
+      source: 'auto-copy',
+    });
+  }
+
+  function tryExecCommandCopyFromField(field, text) {
+    try {
+      if (!field) return false;
+      const previousSelectionStart = field.selectionStart;
+      const previousSelectionEnd = field.selectionEnd;
+      const previousActive = document.activeElement;
+
+      field.focus();
+      field.select();
+      const ok = document.execCommand('copy');
+
+      try {
+        if (
+          typeof previousSelectionStart === 'number' &&
+          typeof previousSelectionEnd === 'number'
+        ) {
+          field.setSelectionRange(previousSelectionStart, previousSelectionEnd);
+        }
+      } catch (_) {}
+
+      try {
+        if (previousActive && typeof previousActive.focus === 'function' && previousActive !== field) {
+          previousActive.focus();
+        }
+      } catch (_) {}
+
+      if (ok) {
+        emitCopiedEvent(text);
+      }
+      return !!ok;
+    } catch (_) {
+      return false;
+    } finally {
+      try { window.getSelection()?.removeAllRanges?.(); } catch (_) {}
+    }
+  }
+
+  function tryAutoCopyFinishedNote(detail) {
+    const text = String(detail?.text || '').trim();
+    if (!text) return;
+    if (detail?.status === 'aborted') return;
+    if (!isAutoCopyFinishedNoteEnabled()) return;
+
+    const noteEl = document.getElementById('generatedNote');
+
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      navigator.clipboard.writeText(text)
+        .then(() => {
+          emitCopiedEvent(text);
+        })
+        .catch(() => {
+          const ok = tryExecCommandCopyFromField(noteEl, text);
+          if (!ok) {
+            emitAppStateChanged('note-auto-copy-failed', {
+              textLength: text.length,
+            });
+          }
+        });
+      return;
+    }
+
+    const ok = tryExecCommandCopyFromField(noteEl, text);
+    if (!ok) {
+      emitAppStateChanged('note-auto-copy-failed', {
+        textLength: text.length,
+      });
+    }
   }
 
   function emitNoteFinished(meta = {}) {
@@ -189,6 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const detail = buildFinishedNoteDetail(meta);
       window.dispatchEvent(new CustomEvent('note-generation-finished', { detail }));
       window.dispatchEvent(new CustomEvent('note:finished', { detail }));
+      tryAutoCopyFinishedNote(detail);
       finishNoteGeneration();
       return detail;
     } catch (_) {
@@ -199,6 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function resetNoteGenerationState() {
     finishNoteGeneration();
+    emitAppStateChanged('note-generation-reset');
   }
 
   function getSelectedTranscribeProvider() {
@@ -315,6 +436,105 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
+  function getEffectivePromptProfileId() {
+    return String(readLocal(PROMPT_PROFILE_STORAGE_KEY, '') || '').trim() || DEFAULT_PROMPT_PROFILE_ID;
+  }
+
+  function getPromptSlotNamesMap() {
+    const profileId = getEffectivePromptProfileId();
+    const raw = readLocal(`prompt_slot_names::${profileId}`, '');
+    if (!raw) return {};
+    try {
+      const parsed = JSON.parse(raw);
+      return (parsed && typeof parsed === 'object') ? parsed : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function getPromptSlotSelect() {
+    return document.getElementById('promptSlot');
+  }
+
+  function getPromptSlotDisplayLabel(slotValue, namesMap) {
+    const slot = String(slotValue || '').trim();
+    if (!slot) return '';
+    const explicitName = String((namesMap && namesMap[slot]) || '').trim();
+    if (explicitName) {
+      return `${slot}. ${explicitName}`;
+    }
+    return `${slot}.`;
+  }
+
+  function getMiniPanelPromptOptions() {
+    const select = getPromptSlotSelect();
+    const namesMap = getPromptSlotNamesMap();
+
+    if (!select) {
+      const selected = String(readLocal(`prompt_selected_slot::${getEffectivePromptProfileId()}`, '1') || '1').trim() || '1';
+      return [
+        { id: selected, label: getPromptSlotDisplayLabel(selected, namesMap) }
+      ];
+    }
+
+    return Array.from(select.options)
+      .map((opt) => String(opt.value || '').trim())
+      .filter(Boolean)
+      .map((slot) => ({
+        id: slot,
+        label: getPromptSlotDisplayLabel(slot, namesMap),
+      }));
+  }
+
+  function getSelectedPromptSlot() {
+    const select = getPromptSlotSelect();
+    if (select && select.value) {
+      return String(select.value).trim();
+    }
+    return String(readLocal(`prompt_selected_slot::${getEffectivePromptProfileId()}`, '1') || '1').trim() || '1';
+  }
+
+  function selectPromptSlot(slot) {
+    const next = String(slot || '').trim();
+    if (!next) return false;
+
+    const select = getPromptSlotSelect();
+    const allowed = new Set(getMiniPanelPromptOptions().map((item) => String(item.id)));
+
+    if (!allowed.has(next)) {
+      return false;
+    }
+
+    if (select) {
+      if (select.value !== next) {
+        select.value = next;
+      }
+
+      try {
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      } catch (_) {}
+
+      try {
+        window.dispatchEvent(new CustomEvent('prompt-slot-selection-changed', {
+          detail: {
+            profileId: getEffectivePromptProfileId(),
+            slot: next,
+          },
+        }));
+      } catch (_) {}
+
+      emitAppStateChanged('prompt-slot-selected', { slot: next });
+      return true;
+    }
+
+    try {
+      localStorage.setItem(`prompt_selected_slot::${getEffectivePromptProfileId()}`, next);
+    } catch (_) {}
+
+    emitAppStateChanged('prompt-slot-selected-fallback', { slot: next });
+    return true;
+  }
+
   function resolveTranscribeModulePath(provider) {
     return resolveTranscribeModulePathFromRegistry(provider, {
       sonioxSpeakerLabels: getSelectedSonioxSpeakerLabels(),
@@ -353,6 +573,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const mod = await loadCachedModule(path);
       if (mod && typeof mod.initRecording === 'function') {
         mod.initRecording();
+        emitAppStateChanged('recording-provider-initialized', { provider: normalized });
       } else {
         console.error('Selected recording module lacks initRecording()');
       }
@@ -368,15 +589,29 @@ document.addEventListener('DOMContentLoaded', () => {
       const mod = await loadCachedModule(path);
       if (mod && typeof mod.initNoteGeneration === 'function') {
         mod.initNoteGeneration();
+        emitAppStateChanged('note-provider-initialized', { provider: choice || getSelectedEffectiveNoteProvider() });
       } else {
         console.warn(`Module ${path} missing initNoteGeneration(); falling back to GPT-4-latest`);
         const fallback = await loadCachedModule('./noteGeneration.js');
         fallback.initNoteGeneration?.();
+        emitAppStateChanged('note-provider-fallback-initialized');
       }
     } catch (e) {
       console.warn(`Failed to load ${path}; falling back to GPT-4-latest`, e);
       const fallback = await loadCachedModule('./noteGeneration.js');
       fallback.initNoteGeneration?.();
+      emitAppStateChanged('note-provider-fallback-initialized');
+    }
+  }
+
+  async function initMiniControllerFeature() {
+    try {
+      const mod = await import('./features/mini-controller.js');
+      if (mod && typeof mod.init === 'function') {
+        mod.init(getApp());
+      }
+    } catch (err) {
+      console.warn('[mini-panel] Failed to initialize mini controller feature', err);
     }
   }
 
@@ -402,6 +637,7 @@ document.addEventListener('DOMContentLoaded', () => {
     writeSession(AUTO_GENERATE_KEY, enabled ? '1' : '0');
     const el = document.getElementById('autoGenerateToggle');
     if (el && el.type === 'checkbox') el.checked = !!enabled;
+    emitAppStateChanged('auto-generate-toggle', { enabled: !!enabled });
   }
 
   function initAutoGenerateToggle() {
@@ -418,6 +654,7 @@ document.addEventListener('DOMContentLoaded', () => {
     el.checked = getAutoGenerateEnabled();
     el.addEventListener('change', () => {
       writeSession(AUTO_GENERATE_KEY, el.checked ? '1' : '0');
+      emitAppStateChanged('auto-generate-toggle-change', { enabled: el.checked });
     });
   }
 
@@ -431,6 +668,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.dispatchEvent(ev);
       } catch {}
     }
+    emitAppStateChanged('transcription-finished', { detail: opts || {} });
   }
 
   function tryAutoGenerateNote(eventDetail) {
@@ -454,6 +692,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (getApp().isNoteGenerationBusy?.()) return;
     genBtn.click();
+    emitAppStateChanged('auto-generate-clicked');
   }
 
   function initAutoGenerateOnFinishListener() {
@@ -470,10 +709,76 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function copyGeneratedNoteToClipboard() {
+    const noteEl = document.getElementById('generatedNote');
+    const text = String(noteEl?.value || '').trim();
+    if (!text) return false;
+
+    const emitCopied = () => {
+      try {
+        window.dispatchEvent(new CustomEvent('note-copied', {
+          detail: { textLength: text.length, copiedAt: Date.now() }
+        }));
+      } catch (_) {}
+      emitAppStateChanged('note-copied', { textLength: text.length });
+    };
+
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      navigator.clipboard.writeText(text)
+        .then(() => {
+          emitCopied();
+        })
+        .catch(() => {
+          try {
+            noteEl?.focus();
+            noteEl?.select();
+            document.execCommand('copy');
+            emitCopied();
+          } catch (_) {}
+          finally {
+            try { window.getSelection()?.removeAllRanges?.(); } catch (_) {}
+          }
+        });
+      return true;
+    }
+
+    try {
+      noteEl?.focus();
+      noteEl?.select();
+      document.execCommand('copy');
+      emitCopied();
+      return true;
+    } catch (_) {
+      return false;
+    } finally {
+      try { window.getSelection()?.removeAllRanges?.(); } catch (_) {}
+    }
+  }
+
+  function getMiniPanelState() {
+    const startBtn = document.getElementById('startButton');
+    const stopBtn = document.getElementById('stopButton');
+    const pauseBtn = document.getElementById('pauseResumeButton');
+    const noteEl = document.getElementById('generatedNote');
+    const statusEl = document.getElementById('statusMessage');
+
+    return {
+      transcribeBusy: !!getApp().isTranscribeBusy?.(),
+      noteBusy: !!getApp().isNoteGenerationBusy?.(),
+      canStart: !(startBtn?.disabled ?? true),
+      canStop: !(stopBtn?.disabled ?? true),
+      canPauseResume: !(pauseBtn?.disabled ?? true),
+      hasNote: !!String(noteEl?.value || '').trim(),
+      statusText: String(statusEl?.innerText || '').trim(),
+      pauseResumeLabel: String(pauseBtn?.textContent || '').trim(),
+    };
+  }
+
   const app = getApp();
   app.saveState = saveState;
   app.restoreState = restoreState;
   app.reloadWithSavedState = reloadWithSavedState;
+  app.emitAppStateChanged = emitAppStateChanged;
   app.noteGenerationInFlight = false;
   app.noteGenerationAbortController = null;
   app.noteGenerationMeta = null;
@@ -502,6 +807,9 @@ document.addEventListener('DOMContentLoaded', () => {
   app.getSelectedNoteProviderMode = getSelectedNoteProviderMode;
   app.getTranscribeProviderSnapshot = getTranscribeProviderSnapshot;
   app.getNoteProviderSnapshot = getNoteProviderSnapshot;
+  app.getMiniPanelPromptOptions = getMiniPanelPromptOptions;
+  app.getSelectedPromptSlot = getSelectedPromptSlot;
+  app.selectPromptSlot = selectPromptSlot;
   app.resolveTranscribeModulePath = resolveTranscribeModulePath;
   app.resolveNoteModulePath = resolveNoteModulePath;
   app.providerRegistry = {
@@ -515,11 +823,33 @@ document.addEventListener('DOMContentLoaded', () => {
   app.loadCachedModule = loadCachedModule;
   app.initRecordingProvider = initRecordingProvider;
   app.initNoteProvider = initNoteProvider;
+  app.startRecording = () => {
+    document.getElementById('startButton')?.click();
+    emitAppStateChanged('start-recording-click');
+  };
+  app.stopRecording = () => {
+    document.getElementById('stopButton')?.click();
+    emitAppStateChanged('stop-recording-click');
+  };
+  app.togglePauseResume = () => {
+    document.getElementById('pauseResumeButton')?.click();
+    emitAppStateChanged('pause-resume-click');
+  };
+  app.copyGeneratedNote = () => copyGeneratedNoteToClipboard();
+  app.getMiniPanelState = () => getMiniPanelState();
+  app.openMiniPanel = () => {
+    try {
+      window.dispatchEvent(new CustomEvent('mini-panel:open-requested', {
+        detail: { requestedAt: Date.now() }
+      }));
+    } catch (_) {}
+  };
 
   app.switchNoteProvider = async function switchNoteProvider(next) {
     if (getApp().noteGenerationInFlight) {
       console.warn('[note:switch] Ignored provider switch while note generation is active.');
       syncNoteActionButtons();
+      emitAppStateChanged('note-provider-switch-ignored');
       return;
     }
 
@@ -544,6 +874,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mod.initNoteGeneration();
         getApp().bindNoteStartPulse?.();
         syncNoteActionButtons();
+        emitAppStateChanged('note-provider-switched', { provider: choice });
       } else {
         throw new Error('initNoteGeneration() missing');
       }
@@ -567,6 +898,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const mod = await loadCachedModule(path);
       if (mod && typeof mod.initRecording === 'function') {
         mod.initRecording();
+        emitAppStateChanged('transcribe-provider-switched', { provider });
       } else {
         throw new Error('initRecording() missing');
       }
@@ -583,9 +915,65 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const openMiniPanelButton = document.getElementById('openMiniPanelButton');
+  if (openMiniPanelButton && openMiniPanelButton.dataset.bound !== '1') {
+    openMiniPanelButton.dataset.bound = '1';
+    openMiniPanelButton.addEventListener('click', () => {
+      getApp().openMiniPanel?.();
+      emitAppStateChanged('mini-panel-open-button-click');
+    });
+  }
+
   window.addEventListener('note-generation-finished', () => {
     finishNoteGeneration();
   });
+
+  const generatedNoteEl = document.getElementById('generatedNote');
+  if (generatedNoteEl && generatedNoteEl.dataset.miniStateBound !== '1') {
+    generatedNoteEl.dataset.miniStateBound = '1';
+    generatedNoteEl.addEventListener('input', () => {
+      emitAppStateChanged('generated-note-input');
+    });
+  }
+
+  const promptSlotEl = document.getElementById('promptSlot');
+  if (promptSlotEl && promptSlotEl.dataset.miniPromptBound !== '1') {
+    promptSlotEl.dataset.miniPromptBound = '1';
+    promptSlotEl.addEventListener('change', () => {
+      emitAppStateChanged('prompt-slot-dom-change', {
+        slot: String(promptSlotEl.value || '').trim(),
+      });
+    });
+  }
+
+  window.addEventListener('prompt-slot-selection-changed', (event) => {
+    emitAppStateChanged('prompt-slot-selection-event', {
+      slot: String(event?.detail?.slot || '').trim(),
+    });
+  });
+
+  window.addEventListener('prompt-slot-names-changed', () => {
+    emitAppStateChanged('prompt-slot-names-changed');
+  });
+
+  window.addEventListener('prompt-profile-changed', () => {
+    emitAppStateChanged('prompt-profile-changed');
+  });
+
+  const statusMessageEl = document.getElementById('statusMessage');
+  if (statusMessageEl && !window.__miniStatusObserverBound) {
+    window.__miniStatusObserverBound = true;
+    try {
+      const observer = new MutationObserver(() => {
+        emitAppStateChanged('status-message-mutated');
+      });
+      observer.observe(statusMessageEl, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    } catch (_) {}
+  }
 
   syncNoteActionButtons();
   restoreState();
@@ -594,6 +982,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initRecordingProvider(getSelectedTranscribeProvider());
   initNoteProvider(getSelectedEffectiveNoteProvider());
+  initMiniControllerFeature();
+
+  emitAppStateChanged('app-boot-complete');
 
   if (!document.body.dataset.recordHotkeyBound) {
     document.body.dataset.recordHotkeyBound = '1';
@@ -612,6 +1003,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const startButton = document.getElementById('startButton');
         if (startButton) {
           startButton.click();
+          emitAppStateChanged('record-hotkey');
         }
       }
     });
