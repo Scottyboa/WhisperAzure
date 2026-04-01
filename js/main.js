@@ -12,171 +12,107 @@ import {
 document.addEventListener('DOMContentLoaded', () => {
   initTranscribeLanguage();
 
-  const STATE_KEY = '__ui_state';
-  const MODULE_CACHE = new Map();
+  const STATE_KEY = '__ui_state_v1';
+  const AUTO_GENERATE_KEY = 'auto_generate_enabled';
 
-  const app = {
-    recordingInFlight: false,
-    recordingPaused: false,
-    noteGenerationInFlight: false,
-    noteAbortController: null,
-    noteGenerationTimerId: null,
-  };
-
-  window.__app = app;
 
   function getApp() {
-    return window.__app || app;
+    const existing = window.__app || {};
+    const app = (window.__app = existing);
+    app.cachedModules = app.cachedModules || {};
+    return app;
   }
 
-  function getEffectiveNoteUi() {
-    const currentApp = getApp();
-    return deriveNoteUiStateFromEffectiveProvider({
-      noteProvider: currentApp.currentNoteProvider,
-      noteProviderMode:
-        currentApp.currentNoteProviderMode ||
-        sessionStorage.getItem('selectedNoteProviderMode') ||
-        DEFAULTS.noteProviderMode,
-      openaiModel:
-        currentApp.currentOpenAiModel ||
-        sessionStorage.getItem('selectedOpenAIModel') ||
-        DEFAULTS.openaiModel,
-      vertexModel:
-        currentApp.currentVertexModel ||
-        sessionStorage.getItem('selectedVertexModel') ||
-        DEFAULTS.vertexModel,
-      bedrockModel:
-        currentApp.currentBedrockModel ||
-        sessionStorage.getItem('selectedBedrockModel') ||
-        DEFAULTS.bedrockModel,
-    });
-  }
-
-  function loadCachedModule(path) {
-    if (!path) return Promise.reject(new Error('Missing module path'));
-    if (!MODULE_CACHE.has(path)) {
-      MODULE_CACHE.set(path, import(path));
+  function readSession(key, fallback = '') {
+    try {
+      const value = sessionStorage.getItem(key);
+      return value == null ? fallback : value;
+    } catch (_) {
+      return fallback;
     }
-    return MODULE_CACHE.get(path);
   }
 
-  function resolveNoteModulePath({
-    noteProvider,
-    noteProviderMode,
-    openaiModel,
-    vertexModel,
-    bedrockModel,
-  }) {
-    return resolveNoteModulePathFromRegistry({
-      noteProvider,
-      noteProviderMode,
-      openaiModel,
-      vertexModel,
-      bedrockModel,
-    });
+  function writeSession(key, value) {
+    try {
+      sessionStorage.setItem(key, String(value ?? ''));
+    } catch (_) {}
   }
 
-  function resolveTranscribeModulePath(provider, { useDiarization } = {}) {
-    return resolveTranscribeModulePathFromRegistry(provider, { useDiarization });
+  function reloadWithSavedState(reason = '') {
+    if (reason) {
+      console.warn(reason);
+    }
+
+    try {
+      saveState();
+    } catch (_) {}
+
+    window.location.reload();
   }
 
-  function resolveCurrentNoteModulePath() {
-    const currentApp = getApp();
-    const uiState = inferNoteProviderUi({
-      noteProvider:
-        currentApp.currentNoteProvider ||
-        sessionStorage.getItem('selectedNoteProvider') ||
-        DEFAULTS.noteProvider,
-      noteProviderMode:
-        currentApp.currentNoteProviderMode ||
-        sessionStorage.getItem('selectedNoteProviderMode') ||
-        DEFAULTS.noteProviderMode,
-      openaiModel:
-        currentApp.currentOpenAiModel ||
-        sessionStorage.getItem('selectedOpenAIModel') ||
-        DEFAULTS.openaiModel,
-      vertexModel:
-        currentApp.currentVertexModel ||
-        sessionStorage.getItem('selectedVertexModel') ||
-        DEFAULTS.vertexModel,
-      bedrockModel:
-        currentApp.currentBedrockModel ||
-        sessionStorage.getItem('selectedBedrockModel') ||
-        DEFAULTS.bedrockModel,
-    });
-    return resolveNoteModulePath(uiState);
-  }
-
-  function reloadWithSavedState(message) {
-    console.warn(message);
-    saveUIState();
-    location.reload();
-  }
-
-  function getCurrentProvider() {
-    return normalizeTranscribeProvider(
-      sessionStorage.getItem('selectedProvider') || DEFAULTS.transcribeProvider
-    );
-  }
-
-  function saveUIState() {
-    const state = {
-      transcription: document.getElementById('transcriptionText')?.value || '',
-      note: document.getElementById('noteText')?.value || '',
-      extraPrompt: document.getElementById('noteExtraPrompt')?.value || '',
-      outputLanguage: document.getElementById('outputLanguageSelect')?.value || '',
-      provider: sessionStorage.getItem('selectedProvider') || '',
-      noteProvider: sessionStorage.getItem('selectedNoteProvider') || '',
-      noteProviderMode: sessionStorage.getItem('selectedNoteProviderMode') || '',
-      openaiModel: sessionStorage.getItem('selectedOpenAIModel') || '',
-      vertexModel: sessionStorage.getItem('selectedVertexModel') || '',
-      bedrockModel: sessionStorage.getItem('selectedBedrockModel') || '',
+  function saveState() {
+    const grab = (id) => {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      return {
+        value: el.value ?? '',
+        selStart: el.selectionStart ?? null,
+        selEnd: el.selectionEnd ?? null,
+        scrollTop: el.scrollTop ?? 0,
+      };
     };
+
+    const payload = {
+      transcription: grab('transcription'),
+      generatedNote: grab('generatedNote'),
+      customPrompt: grab('customPrompt'),
+      ts: Date.now(),
+    };
+
     try {
-      sessionStorage.setItem(STATE_KEY, JSON.stringify(state));
+      sessionStorage.setItem(STATE_KEY, JSON.stringify(payload));
     } catch {}
   }
 
-  function restoreUIState() {
+  function restoreState() {
+    let raw = null;
     try {
-      const raw = sessionStorage.getItem(STATE_KEY);
-      if (!raw) return;
-      const state = JSON.parse(raw);
-      if (state.transcription && document.getElementById('transcriptionText')) {
-        document.getElementById('transcriptionText').value = state.transcription;
-      }
-      if (state.note && document.getElementById('noteText')) {
-        document.getElementById('noteText').value = state.note;
-      }
-      if (state.extraPrompt && document.getElementById('noteExtraPrompt')) {
-        document.getElementById('noteExtraPrompt').value = state.extraPrompt;
-      }
-      if (state.outputLanguage && document.getElementById('outputLanguageSelect')) {
-        document.getElementById('outputLanguageSelect').value = state.outputLanguage;
-      }
-      sessionStorage.removeItem(STATE_KEY);
+      raw = sessionStorage.getItem(STATE_KEY);
     } catch {}
-  }
+    if (!raw) return;
 
-  function replaceButtonWithClone(id, configureClone) {
-    const button = document.getElementById(id);
-    if (!button || !button.parentNode) return null;
-    const clone = button.cloneNode(true);
-    button.parentNode.replaceChild(clone, button);
-    if (typeof configureClone === 'function') {
-      configureClone(clone);
+    try {
+      const s = JSON.parse(raw);
+      const put = (id, sObj) => {
+        if (!sObj) return;
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        el.value = sObj.value || '';
+        if (typeof sObj.scrollTop === 'number') el.scrollTop = sObj.scrollTop;
+
+        setTimeout(() => {
+          if (typeof sObj.selStart === 'number' && typeof sObj.selEnd === 'number') {
+            try {
+              el.setSelectionRange(sObj.selStart, sObj.selEnd);
+            } catch {}
+          }
+        }, 0);
+      };
+
+      put('transcription', s.transcription);
+      put('generatedNote', s.generatedNote);
+      put('customPrompt', s.customPrompt);
+    } finally {
+      try {
+        sessionStorage.removeItem(STATE_KEY);
+      } catch {}
     }
-    return clone;
   }
 
   function syncNoteActionButtons() {
     const generateNoteButton = document.getElementById('generateNoteButton');
     const abortNoteButton = document.getElementById('abortNoteButton');
-    const noteProviderSelect = document.getElementById('noteProvider');
-    const openaiModelSelect = document.getElementById('openaiModel');
-    const noteModeSelect = document.getElementById('noteProviderMode');
-    const vertexModelSelect = document.getElementById('vertexModel');
-    const bedrockModelSelect = document.getElementById('bedrockModel');
     const busy = !!getApp().noteGenerationInFlight;
 
     if (generateNoteButton) {
@@ -188,114 +124,397 @@ document.addEventListener('DOMContentLoaded', () => {
       abortNoteButton.disabled = !busy;
       abortNoteButton.title = busy ? '' : 'No active note generation to abort.';
     }
-
-    [
-      noteProviderSelect,
-      openaiModelSelect,
-      noteModeSelect,
-      vertexModelSelect,
-      bedrockModelSelect,
-    ].forEach((el) => {
-      if (!el) return;
-      el.disabled = busy;
-      el.title = busy ? 'Provider settings are locked while a note is generating.' : '';
-      el.setAttribute('aria-disabled', busy ? 'true' : 'false');
-    });
   }
 
-  function beginNoteGeneration(abortController) {
-    const currentApp = getApp();
-    currentApp.noteGenerationInFlight = true;
-    currentApp.noteAbortController = abortController || null;
+  function beginNoteGeneration(meta = {}) {
+    const app = getApp();
+    if (app.noteGenerationInFlight) return null;
+
+    const controller = new AbortController();
+    app.noteGenerationInFlight = true;
+    app.noteGenerationAbortController = controller;
+    app.noteGenerationMeta = meta || {};
     syncNoteActionButtons();
+    return controller;
   }
 
   function finishNoteGeneration() {
-    const currentApp = getApp();
-    currentApp.noteGenerationInFlight = false;
-    currentApp.noteAbortController = null;
-    if (currentApp.noteGenerationTimerId) {
-      clearInterval(currentApp.noteGenerationTimerId);
-      currentApp.noteGenerationTimerId = null;
-    }
+    const app = getApp();
+    app.noteGenerationInFlight = false;
+    app.noteGenerationAbortController = null;
+    app.noteGenerationMeta = null;
     syncNoteActionButtons();
   }
 
-  function resetNoteGenerationState() {
-    const currentApp = getApp();
-    if (currentApp.noteAbortController) {
+  function abortNoteGeneration() {
+    const controller = getApp().noteGenerationAbortController;
+    if (controller) {
       try {
-        currentApp.noteAbortController.abort();
-      } catch {}
+        controller.abort();
+      } catch (_) {}
     }
+  }
+
+  function buildFinishedNoteDetail(meta = {}) {
+    const noteEl = document.getElementById('generatedNote');
+    const text = String(noteEl?.value || '');
+    return {
+      status: meta?.aborted ? 'aborted' : 'success',
+      text,
+      textLength: text.length,
+      autoCopyEnabled: localStorage.getItem('autoCopyFinishedNote') === 'true',
+      emittedAt: Date.now(),
+      ...meta,
+    };
+  }
+
+  function emitNoteFinished(meta = {}) {
+    try {
+      const detail = buildFinishedNoteDetail(meta);
+      window.dispatchEvent(new CustomEvent('note-generation-finished', { detail }));
+      window.dispatchEvent(new CustomEvent('note:finished', { detail }));
+      finishNoteGeneration();
+      return detail;
+    } catch (_) {
+      finishNoteGeneration();
+      return buildFinishedNoteDetail(meta);
+    }
+  }
+
+  function resetNoteGenerationState() {
     finishNoteGeneration();
   }
 
-  app.beginNoteGeneration = beginNoteGeneration;
-  app.finishNoteGeneration = finishNoteGeneration;
-  app.resetNoteGenerationState = resetNoteGenerationState;
-  app.syncNoteActionButtons = syncNoteActionButtons;
-  app.resolveCurrentNoteModulePath = resolveCurrentNoteModulePath;
-  app.getEffectiveNoteUi = getEffectiveNoteUi;
-  app.loadCachedModule = loadCachedModule;
-
-  app.updateRecordingUiState = function updateRecordingUiState({
-    inFlight = app.recordingInFlight,
-    paused = app.recordingPaused,
-  } = {}) {
-    app.recordingInFlight = !!inFlight;
-    app.recordingPaused = !!paused;
-    document.dispatchEvent(
-      new CustomEvent('app:recording-state-changed', {
-        detail: {
-          inFlight: app.recordingInFlight,
-          paused: app.recordingPaused,
-        },
-      })
+  function getSelectedTranscribeProvider() {
+    const fromUi = document.getElementById('transcribeProvider')?.value;
+    const normalized = normalizeTranscribeProvider(
+      fromUi || readSession('transcribe_provider', DEFAULTS.transcribeProvider)
     );
-  };
 
-  app.isBusy = function isBusy() {
-    return !!(getApp().recordingInFlight || getApp().noteGenerationInFlight);
-  };
-
-  app.switchNoteProvider = async function switchNoteProvider(next) {
-    if (getApp().noteGenerationInFlight) {
-      console.warn('[note:switch] Ignored provider switch while note generation is active.');
-      syncNoteActionButtons();
-      return false;
+    if (normalized !== readSession('transcribe_provider', DEFAULTS.transcribeProvider)) {
+      writeSession('transcribe_provider', normalized);
+    }
+    if (normalized === 'soniox' && readSession('soniox_speaker_labels', '') !== 'on') {
+      // no-op; legacy migration is handled inside normalizeTranscribeProvider + provider persistence
     }
 
+    return normalized;
+  }
+
+  function getSelectedSonioxRegion() {
+    return String(
+      document.getElementById('sonioxRegion')?.value ||
+      readSession('soniox_region', DEFAULTS.sonioxRegion)
+    ).toLowerCase();
+  }
+
+  function getSelectedSonioxSpeakerLabels() {
+    return String(
+      document.getElementById('sonioxSpeakerLabels')?.value ||
+      readSession('soniox_speaker_labels', DEFAULTS.sonioxSpeakerLabels)
+    ).toLowerCase();
+  }
+
+  function getSelectedEffectiveNoteProvider() {
+    return String(readSession('note_provider', DEFAULTS.noteProvider)).toLowerCase();
+  }
+
+  function getDerivedNoteUiState() {
+    return deriveNoteUiStateFromEffectiveProvider(
+      getSelectedEffectiveNoteProvider(),
+      readSession('note_provider_mode', DEFAULTS.noteMode)
+    );
+  }
+
+  function getSelectedNoteProviderUi() {
+    return String(
+      document.getElementById('noteProvider')?.value ||
+      inferNoteProviderUi(getSelectedEffectiveNoteProvider())
+    ).toLowerCase();
+  }
+
+  function getSelectedOpenAiModel() {
+    const domValue = String(document.getElementById('openaiModel')?.value || '').toLowerCase();
+    if (domValue) return domValue;
+
+    const stored = String(readSession('openai_model', '')).toLowerCase();
+    if (stored) return stored;
+
+    return getDerivedNoteUiState().openaiModel;
+  }
+
+  function getSelectedVertexModel() {
+    return String(
+      document.getElementById('vertexModel')?.value ||
+      readSession('vertex_model', '')
+    ).toLowerCase();
+  }
+
+  function getSelectedBedrockModel() {
+    return String(
+      document.getElementById('bedrockModel')?.value ||
+      readSession('bedrock_model', '')
+    ).toLowerCase();
+  }
+
+  function getSelectedNoteProviderMode() {
+    const domValue = String(document.getElementById('noteProviderMode')?.value || '').toLowerCase();
+    if (domValue) return domValue;
+
+    const stored = String(readSession('note_provider_mode', '')).toLowerCase();
+    if (stored) return stored;
+
+    return getDerivedNoteUiState().mode;
+  }
+
+  function getTranscribeProviderSnapshot() {
+    return {
+      transcribeProvider: getSelectedTranscribeProvider(),
+      sonioxRegion: getSelectedSonioxRegion(),
+      sonioxSpeakerLabels: getSelectedSonioxSpeakerLabels(),
+    };
+  }
+
+  function getNoteProviderSnapshot() {
+    const effective = getSelectedEffectiveNoteProvider();
+    const uiProvider = getSelectedNoteProviderUi();
+    const vertexModel = getSelectedVertexModel();
+    const bedrockModel = getSelectedBedrockModel();
+    const openaiModel = getSelectedOpenAiModel();
+    const noteProviderMode = getSelectedNoteProviderMode();
+
+    return {
+      noteProviderUi: uiProvider,
+      noteProviderEffective: effective,
+      noteProviderMode,
+      openaiModel,
+      vertexModel,
+      bedrockModel,
+      noteProviderLogLabel: getNoteProviderLogLabel({
+        effectiveProvider: effective,
+        openaiModel,
+        vertexModel,
+        bedrockModel,
+      }),
+    };
+  }
+
+  function resolveTranscribeModulePath(provider) {
+    return resolveTranscribeModulePathFromRegistry(provider, {
+      sonioxSpeakerLabels: getSelectedSonioxSpeakerLabels(),
+    });
+  }
+
+  function resolveNoteModulePath(choice) {
+    return resolveNoteModulePathFromRegistry(choice || getSelectedEffectiveNoteProvider());
+  }
+
+  async function loadCachedModule(path) {
+    const app = getApp();
+    if (!app.cachedModules[path]) {
+      app.cachedModules[path] = await import(path);
+    }
+    return app.cachedModules[path];
+  }
+
+  function replaceButtonWithClone(id, beforeReplace) {
+    const btn = document.getElementById(id);
+    if (!btn || !btn.parentNode) return null;
+
+    const clone = btn.cloneNode(true);
+    if (typeof beforeReplace === 'function') beforeReplace(clone, btn);
+    btn.parentNode.replaceChild(clone, btn);
+    return clone;
+  }
+
+  async function initRecordingProvider(provider) {
+    const normalized = normalizeTranscribeProvider(provider || getSelectedTranscribeProvider());
+    const path = resolveTranscribeModulePath(normalized);
+
+    console.info('[recording:init] provider:', normalized, 'module:', path);
+
+    try {
+      const mod = await loadCachedModule(path);
+      if (mod && typeof mod.initRecording === 'function') {
+        mod.initRecording();
+      } else {
+        console.error('Selected recording module lacks initRecording()');
+      }
+    } catch (e) {
+      console.error('Failed to load recording module for provider:', normalized, e);
+    }
+  }
+
+  async function initNoteProvider(choice) {
+    const path = resolveNoteModulePath(choice || getSelectedEffectiveNoteProvider());
+
+    try {
+      const mod = await loadCachedModule(path);
+      if (mod && typeof mod.initNoteGeneration === 'function') {
+        mod.initNoteGeneration();
+      } else {
+        console.warn(`Module ${path} missing initNoteGeneration(); falling back to GPT-4-latest`);
+        const fallback = await loadCachedModule('./noteGeneration.js');
+        fallback.initNoteGeneration?.();
+      }
+    } catch (e) {
+      console.warn(`Failed to load ${path}; falling back to GPT-4-latest`, e);
+      const fallback = await loadCachedModule('./noteGeneration.js');
+      fallback.initNoteGeneration?.();
+    }
+  }
+
+  function isTranscribeBusy() {
+    const stopBtn = document.getElementById('stopButton');
+    if (stopBtn && stopBtn.disabled === false) return true;
+
+    const status = (document.getElementById('statusMessage')?.innerText || '').trim();
+    if (!status) return false;
+    if (/finishing transcription/i.test(status)) return true;
+    if (/(transcribing|processing|uploading)/i.test(status) && !/transcription finished/i.test(status)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function getAutoGenerateEnabled() {
+    return readSession(AUTO_GENERATE_KEY, '') === '1';
+  }
+
+  function setAutoGenerateEnabled(enabled) {
+    writeSession(AUTO_GENERATE_KEY, enabled ? '1' : '0');
+    const el = document.getElementById('autoGenerateToggle');
+    if (el && el.type === 'checkbox') el.checked = !!enabled;
+  }
+
+  function initAutoGenerateToggle() {
+    const el = document.getElementById('autoGenerateToggle');
+    if (!el || el.type !== 'checkbox') return;
+
+    if (el.dataset.bound === '1') return;
+    el.dataset.bound = '1';
+
+    if (readSession(AUTO_GENERATE_KEY, null) == null) {
+      writeSession(AUTO_GENERATE_KEY, '0');
+    }
+
+    el.checked = getAutoGenerateEnabled();
+    el.addEventListener('change', () => {
+      writeSession(AUTO_GENERATE_KEY, el.checked ? '1' : '0');
+    });
+  }
+
+  function emitTranscriptionFinished(opts) {
+    try {
+      window.dispatchEvent(new CustomEvent('transcription:finished', { detail: opts || {} }));
+    } catch (err) {
+      try {
+        const ev = document.createEvent('CustomEvent');
+        ev.initCustomEvent('transcription:finished', false, false, opts || {});
+        window.dispatchEvent(ev);
+      } catch {}
+    }
+  }
+
+  function tryAutoGenerateNote(eventDetail) {
+    if (!getAutoGenerateEnabled()) return;
+
+    const genBtn = document.getElementById('generateNoteButton');
+    if (!genBtn || genBtn.disabled) return;
+
+    const transcript = (document.getElementById('transcription')?.value || '').trim();
+    if (!transcript) return;
+
+    if (typeof getApp().isTranscribeBusy === 'function' && getApp().isTranscribeBusy()) {
+      return;
+    }
+
+    const now = Date.now();
+    const fp = `${eventDetail?.provider || 'unknown'}:${eventDetail?.transcriptLength || transcript.length}`;
+    const last = getApp().__lastAutoGenerate || null;
+    if (last && last.fp === fp && (now - last.at) < 2000) return;
+    getApp().__lastAutoGenerate = { fp, at: now };
+
+    if (getApp().isNoteGenerationBusy?.()) return;
+    genBtn.click();
+  }
+
+  function initAutoGenerateOnFinishListener() {
+    const app = getApp();
+    if (app.__autoGenerateListenerBound) return;
+    app.__autoGenerateListenerBound = true;
+
+    window.addEventListener('transcription:finished', (e) => {
+      try {
+        tryAutoGenerateNote(e && e.detail ? e.detail : null);
+      } catch (err) {
+        console.warn('Auto-generate failed', err);
+      }
+    });
+  }
+
+  const app = getApp();
+  app.saveState = saveState;
+  app.restoreState = restoreState;
+  app.reloadWithSavedState = reloadWithSavedState;
+  app.noteGenerationInFlight = false;
+  app.noteGenerationAbortController = null;
+  app.noteGenerationMeta = null;
+  app.syncNoteActionButtons = syncNoteActionButtons;
+  app.beginNoteGeneration = beginNoteGeneration;
+  app.finishNoteGeneration = finishNoteGeneration;
+  app.abortNoteGeneration = abortNoteGeneration;
+  app.emitNoteFinished = emitNoteFinished;
+  app.resetNoteGenerationState = resetNoteGenerationState;
+  app.isNoteGenerationBusy = () => !!getApp().noteGenerationInFlight;
+  app.isTranscribeBusy = isTranscribeBusy;
+  app.getAutoGenerateEnabled = getAutoGenerateEnabled;
+  app.setAutoGenerateEnabled = setAutoGenerateEnabled;
+  app.initAutoGenerateToggle = initAutoGenerateToggle;
+  app.emitTranscriptionFinished = emitTranscriptionFinished;
+  app.tryAutoGenerateNote = tryAutoGenerateNote;
+  app.initAutoGenerateOnFinishListener = initAutoGenerateOnFinishListener;
+  app.getSelectedTranscribeProvider = getSelectedTranscribeProvider;
+  app.getSelectedSonioxRegion = getSelectedSonioxRegion;
+  app.getSelectedSonioxSpeakerLabels = getSelectedSonioxSpeakerLabels;
+  app.getSelectedEffectiveNoteProvider = getSelectedEffectiveNoteProvider;
+  app.getSelectedNoteProviderUi = getSelectedNoteProviderUi;
+  app.getSelectedOpenAiModel = getSelectedOpenAiModel;
+  app.getSelectedVertexModel = getSelectedVertexModel;
+  app.getSelectedBedrockModel = getSelectedBedrockModel;
+  app.getSelectedNoteProviderMode = getSelectedNoteProviderMode;
+  app.getTranscribeProviderSnapshot = getTranscribeProviderSnapshot;
+  app.getNoteProviderSnapshot = getNoteProviderSnapshot;
+  app.resolveTranscribeModulePath = resolveTranscribeModulePath;
+  app.resolveNoteModulePath = resolveNoteModulePath;
+  app.providerRegistry = {
+    defaults: DEFAULTS,
+    deriveNoteUiStateFromEffectiveProvider,
+    inferNoteProviderUi,
+    normalizeTranscribeProvider,
+    resolveTranscribeModulePath,
+    resolveNoteModulePath,
+  };
+  app.loadCachedModule = loadCachedModule;
+  app.initRecordingProvider = initRecordingProvider;
+  app.initNoteProvider = initNoteProvider;
+
+  app.switchNoteProvider = async function switchNoteProvider(next) {
     resetNoteGenerationState();
     delete getApp().__noteStartPulseBound;
 
     replaceButtonWithClone('generateNoteButton', (clone) => {
       delete clone.dataset.noteStartPulseBound;
-      clone.id = 'generateNoteButton';
+      clone.removeAttribute('data-note-start-pulse-bound');
     });
 
-    replaceButtonWithClone('abortNoteButton', (clone) => {
-      clone.id = 'abortNoteButton';
-    });
+    const abortBtn = document.getElementById('abortNoteButton');
+    if (abortBtn) abortBtn.disabled = true;
 
-    const uiState = inferNoteProviderUi({
-      noteProvider: next,
-      noteProviderMode:
-        sessionStorage.getItem('selectedNoteProviderMode') || DEFAULTS.noteProviderMode,
-      openaiModel: sessionStorage.getItem('selectedOpenAIModel') || DEFAULTS.openaiModel,
-      vertexModel: sessionStorage.getItem('selectedVertexModel') || DEFAULTS.vertexModel,
-      bedrockModel: sessionStorage.getItem('selectedBedrockModel') || DEFAULTS.bedrockModel,
-    });
-
-    const path = resolveNoteModulePath(uiState);
-    console.log(`[note:switch] ${getNoteProviderLogLabel(uiState)}`);
-
-    getApp().currentNoteProvider = uiState.noteProvider;
-    getApp().currentNoteProviderMode = uiState.noteProviderMode;
-    getApp().currentOpenAiModel = uiState.openaiModel;
-    getApp().currentVertexModel = uiState.vertexModel;
-    getApp().currentBedrockModel = uiState.bedrockModel;
-    getApp().currentNoteModulePath = path;
+    writeSession('note_provider', String(next || DEFAULTS.noteProvider).toLowerCase());
+    const choice = getSelectedEffectiveNoteProvider();
+    const path = resolveNoteModulePath(choice);
 
     try {
       const mod = await loadCachedModule(path);
@@ -303,294 +522,76 @@ document.addEventListener('DOMContentLoaded', () => {
         mod.initNoteGeneration();
         getApp().bindNoteStartPulse?.();
         syncNoteActionButtons();
-        return true;
       } else {
         throw new Error('initNoteGeneration() missing');
       }
     } catch (e) {
       reloadWithSavedState('Switch note provider failed, falling back to reload');
-      return false;
     }
   };
 
-  app.switchTranscribeProvider = async function switchTranscribeProvider(next, opts = {}) {
-    const provider = normalizeTranscribeProvider(next);
-    const useDiarization = !!opts.useDiarization;
-    const path = resolveTranscribeModulePath(provider, { useDiarization });
+  app.switchTranscribeProvider = async function switchTranscribeProvider(next) {
+    ['startButton', 'stopButton', 'pauseResumeButton', 'abortButton'].forEach((id) => {
+      replaceButtonWithClone(id);
+    });
 
-    getApp().currentProvider = provider;
-    getApp().currentTranscribeModulePath = path;
+    writeSession('transcribe_provider', String(next || DEFAULTS.transcribeProvider).toLowerCase());
+    const provider = getSelectedTranscribeProvider();
+    const path = resolveTranscribeModulePath(provider);
+
+    console.info('[recording:switch] provider:', provider, 'module:', path);
 
     try {
       const mod = await loadCachedModule(path);
-      if (mod && typeof mod.init === 'function') {
-        mod.init();
+      if (mod && typeof mod.initRecording === 'function') {
+        mod.initRecording();
       } else {
-        throw new Error('init() missing');
+        throw new Error('initRecording() missing');
       }
     } catch (e) {
       reloadWithSavedState('Switch transcribe provider failed, falling back to reload');
     }
   };
 
-  app.reloadWithSavedState = reloadWithSavedState;
-
-  app.bindNoteStartPulse = function bindNoteStartPulse() {
-    const currentApp = getApp();
-    const button = document.getElementById('generateNoteButton');
-    if (!button || button.dataset.noteStartPulseBound === '1') return;
-    button.dataset.noteStartPulseBound = '1';
-    button.addEventListener('click', () => {
-      document.dispatchEvent(new CustomEvent('app:note-generation-start-click'));
-    });
-    currentApp.__noteStartPulseBound = true;
-  };
-
-  function initNoteProviderState() {
-    const uiState = inferNoteProviderUi({
-      noteProvider: sessionStorage.getItem('selectedNoteProvider') || DEFAULTS.noteProvider,
-      noteProviderMode:
-        sessionStorage.getItem('selectedNoteProviderMode') || DEFAULTS.noteProviderMode,
-      openaiModel: sessionStorage.getItem('selectedOpenAIModel') || DEFAULTS.openaiModel,
-      vertexModel: sessionStorage.getItem('selectedVertexModel') || DEFAULTS.vertexModel,
-      bedrockModel: sessionStorage.getItem('selectedBedrockModel') || DEFAULTS.bedrockModel,
-    });
-
-    getApp().currentNoteProvider = uiState.noteProvider;
-    getApp().currentNoteProviderMode = uiState.noteProviderMode;
-    getApp().currentOpenAiModel = uiState.openaiModel;
-    getApp().currentVertexModel = uiState.vertexModel;
-    getApp().currentBedrockModel = uiState.bedrockModel;
-    getApp().currentNoteModulePath = resolveNoteModulePath(uiState);
-  }
-
-  function initTranscribeProviderState() {
-    const provider = getCurrentProvider();
-    const useDiarization = provider === 'soniox' && !!sessionStorage.getItem('selectedProviderDiarization');
-    getApp().currentProvider = provider;
-    getApp().currentTranscribeModulePath = resolveTranscribeModulePath(provider, {
-      useDiarization,
+  const abortNoteButton = document.getElementById('abortNoteButton');
+  if (abortNoteButton && abortNoteButton.dataset.mainAbortBound !== '1') {
+    abortNoteButton.dataset.mainAbortBound = '1';
+    abortNoteButton.addEventListener('click', () => {
+      abortNoteGeneration();
     });
   }
 
-  function setupBackButton() {
-    const button = document.getElementById('backButton');
-    if (!button) return;
-    button.addEventListener('click', () => {
-      saveUIState();
-      window.location.href = 'index.html';
-    });
-  }
+  window.addEventListener('note-generation-finished', () => {
+    finishNoteGeneration();
+  });
 
-  function setupCopyButtons() {
-    const copyTranscriptionButton = document.getElementById('copyTranscriptionButton');
-    const copyNoteButton = document.getElementById('copyNoteButton');
-    const transcriptionText = document.getElementById('transcriptionText');
-    const noteText = document.getElementById('noteText');
+  syncNoteActionButtons();
+  restoreState();
+  initAutoGenerateToggle();
+  initAutoGenerateOnFinishListener();
 
-    if (copyTranscriptionButton && transcriptionText) {
-      copyTranscriptionButton.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(transcriptionText.value || '');
-        } catch {}
-      });
-    }
+  initRecordingProvider(getSelectedTranscribeProvider());
+  initNoteProvider(getSelectedEffectiveNoteProvider());
 
-    if (copyNoteButton && noteText) {
-      copyNoteButton.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(noteText.value || '');
-        } catch {}
-      });
-    }
-  }
-
-  function setupClearButtons() {
-    const clearTranscriptionButton = document.getElementById('clearTranscriptionButton');
-    const clearNoteButton = document.getElementById('clearNoteButton');
-    const transcriptionText = document.getElementById('transcriptionText');
-    const noteText = document.getElementById('noteText');
-
-    if (clearTranscriptionButton && transcriptionText) {
-      clearTranscriptionButton.addEventListener('click', () => {
-        transcriptionText.value = '';
-        transcriptionText.dispatchEvent(new Event('input', { bubbles: true }));
-      });
-    }
-
-    if (clearNoteButton && noteText) {
-      clearNoteButton.addEventListener('click', () => {
-        noteText.value = '';
-        noteText.dispatchEvent(new Event('input', { bubbles: true }));
-      });
-    }
-  }
-
-  function setupAutoCopyAndClear() {
-    const autoCopyCheckbox = document.getElementById('autoCopyToggle');
-    const autoClearCheckbox = document.getElementById('autoClearToggle');
-
-    if (autoCopyCheckbox) {
-      autoCopyCheckbox.checked = localStorage.getItem('autoCopyEnabled') === '1';
-      autoCopyCheckbox.addEventListener('change', () => {
-        localStorage.setItem('autoCopyEnabled', autoCopyCheckbox.checked ? '1' : '0');
-      });
-    }
-
-    if (autoClearCheckbox) {
-      autoClearCheckbox.checked = localStorage.getItem('autoClearEnabled') === '1';
-      autoClearCheckbox.addEventListener('change', () => {
-        localStorage.setItem('autoClearEnabled', autoClearCheckbox.checked ? '1' : '0');
-      });
-    }
-  }
-
-  function setupSupplementaryFieldToggles() {
-    const toggle = document.getElementById('showSupplementaryFieldsToggle');
-    const wrap = document.getElementById('supplementaryFieldsWrap');
-    if (!toggle || !wrap) return;
-
-    const apply = () => {
-      wrap.style.display = toggle.checked ? '' : 'none';
-    };
-
-    toggle.addEventListener('change', apply);
-    apply();
-  }
-
-  function initOutputLanguage() {
-    const select = document.getElementById('outputLanguageSelect');
-    if (!select) return;
-
-    const saved = localStorage.getItem('selectedOutputLanguage');
-    if (saved) {
-      select.value = saved;
-    }
-
-    select.addEventListener('change', () => {
-      localStorage.setItem('selectedOutputLanguage', select.value || '');
-    });
-  }
-
-  function emitReadyEvents() {
-    document.dispatchEvent(new CustomEvent('app:controller-ready', { detail: { app: getApp() } }));
-    document.dispatchEvent(new CustomEvent('app:note-ui-ready'));
-    document.dispatchEvent(new CustomEvent('app:recording-ui-ready'));
-  }
-
-  async function initFeatureModules() {
-    const featurePaths = [
-      './js/features/provider-persistence.js',
-      './js/features/page-ui.js',
-      './js/features/recording-ui.js',
-      './js/features/field-feedback.js',
-      './js/features/note-usage-cost.js',
-      './js/features/analytics.js',
-      './js/features/overlays.js',
-      './js/features/editor-tools.js',
-      './js/features/prompt-slots-ui.js',
-      './js/features/ad-refresh.js',
-    ];
-
-    for (const path of featurePaths) {
-      try {
-        const mod = await import(path.replace('./js/', './'));
-        if (mod && typeof mod.init === 'function') {
-          mod.init(getApp());
-        }
-      } catch (e) {
-        console.warn(`[feature] Failed to initialize ${path}`, e);
+  if (!document.body.dataset.recordHotkeyBound) {
+    document.body.dataset.recordHotkeyBound = '1';
+    document.addEventListener('keydown', (event) => {
+      const activeElement = document.activeElement;
+      if (
+        activeElement &&
+        (activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA' ||
+          activeElement.isContentEditable)
+      ) {
+        return;
       }
-    }
-  }
 
-  async function initProviders() {
-    try {
-      const transcribePath = getApp().currentTranscribeModulePath;
-      if (transcribePath) {
-        const transcribeMod = await loadCachedModule(transcribePath);
-        if (transcribeMod && typeof transcribeMod.init === 'function') {
-          transcribeMod.init();
+      if (event.key.toLowerCase() === 'r') {
+        const startButton = document.getElementById('startButton');
+        if (startButton) {
+          startButton.click();
         }
       }
-    } catch (e) {
-      console.warn('[transcribe:init] failed', e);
-    }
-
-    try {
-      const notePath = getApp().currentNoteModulePath;
-      if (notePath) {
-        const noteMod = await loadCachedModule(notePath);
-        if (noteMod && typeof noteMod.initNoteGeneration === 'function') {
-          noteMod.initNoteGeneration();
-        }
-      }
-    } catch (e) {
-      console.warn('[note:init] failed', e);
-    }
-  }
-
-  function setupBeforeUnload() {
-    window.addEventListener('beforeunload', () => {
-      saveUIState();
-      const currentApp = getApp();
-      if (currentApp.noteAbortController) {
-        try {
-          currentApp.noteAbortController.abort();
-        } catch {}
-      }
     });
   }
-
-  function wireGlobalBusyEvents() {
-    document.addEventListener('app:note-generation-begin', (event) => {
-      beginNoteGeneration(event?.detail?.abortController || null);
-    });
-
-    document.addEventListener('app:note-generation-finish', () => {
-      finishNoteGeneration();
-    });
-
-    document.addEventListener('app:note-generation-reset', () => {
-      resetNoteGenerationState();
-    });
-  }
-
-  function setupPromptProfileRestore() {
-    const profileId = localStorage.getItem('promptProfileId');
-    if (!profileId) return;
-    try {
-      window.PromptManager?.setPromptProfileId(profileId);
-    } catch {}
-  }
-
-  function setupDebugHelpers() {
-    window.__reloadTranscribePageWithState = reloadWithSavedState;
-    window.__resolveCurrentNoteModulePath = resolveCurrentNoteModulePath;
-    window.__getEffectiveNoteUi = getEffectiveNoteUi;
-  }
-
-  (async function boot() {
-    initNoteProviderState();
-    initTranscribeProviderState();
-
-    restoreUIState();
-    setupBackButton();
-    setupCopyButtons();
-    setupClearButtons();
-    setupAutoCopyAndClear();
-    setupSupplementaryFieldToggles();
-    initOutputLanguage();
-    wireGlobalBusyEvents();
-    setupBeforeUnload();
-    setupDebugHelpers();
-
-    await initFeatureModules();
-    await initProviders();
-
-    getApp().bindNoteStartPulse?.();
-    syncNoteActionButtons();
-    setupPromptProfileRestore();
-    emitReadyEvents();
-  })();
 });
