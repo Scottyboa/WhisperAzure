@@ -5,16 +5,17 @@
 // - Falls back to a small popup window when PiP is unavailable
 // - Reuses the existing main-page controller on window.__app
 // - Listens for app events and mirrors state in the mini panel
+// - Includes prompt slot selector (number + title only)
 
 const MINI_PANEL_WINDOW_NAME = 'whisperazure-mini-panel';
 const MINI_PANEL_WIDTH = 260;
-const MINI_PANEL_HEIGHT = 170;
+const MINI_PANEL_HEIGHT = 220;
 const STATE_REFRESH_MS = 350;
 
 let miniWindow = null;
 let refreshTimer = null;
 let appRef = null;
-let copiedFlashTimer = null;
+let copiedVisible = false;
 
 function getApp() {
   return window.__app || appRef || null;
@@ -35,6 +36,134 @@ function emitMiniPanelStatus(detail) {
   try {
     window.dispatchEvent(new CustomEvent('mini-panel:status', { detail }));
   } catch (_) {}
+}
+
+function getPageLanguage() {
+  const lang =
+    document.documentElement?.lang ||
+    localStorage.getItem('selectedLanguage') ||
+    'en';
+  return String(lang || 'en').toLowerCase();
+}
+
+function tMini(key) {
+  const lang = getPageLanguage();
+
+  const dict = {
+    copied: {
+      en: 'Copied!',
+      no: 'Kopiert!',
+      nb: 'Kopiert!',
+      nn: 'Kopiert!',
+      sv: 'Kopierad!',
+      da: 'Kopieret!',
+      de: 'Kopiert!',
+      fr: 'Copié !',
+      it: 'Copiato!',
+    },
+    idle: {
+      en: 'Idle',
+      no: 'Klar',
+      nb: 'Klar',
+      nn: 'Klar',
+      sv: 'Klar',
+      da: 'Klar',
+      de: 'Bereit',
+      fr: 'Prêt',
+      it: 'Pronto',
+    },
+    recording: {
+      en: 'Recording',
+      no: 'Opptak',
+      nb: 'Opptak',
+      nn: 'Opptak',
+      sv: 'Inspelning',
+      da: 'Optager',
+      de: 'Aufnahme',
+      fr: 'Enregistrement',
+      it: 'Registrazione',
+    },
+    paused: {
+      en: 'Paused',
+      no: 'Pauset',
+      nb: 'Pauset',
+      nn: 'Pausa',
+      sv: 'Pausad',
+      da: 'Sat på pause',
+      de: 'Pausiert',
+      fr: 'En pause',
+      it: 'In pausa',
+    },
+    generatingNote: {
+      en: 'Generating note',
+      no: 'Genererer notat',
+      nb: 'Genererer notat',
+      nn: 'Genererer notat',
+      sv: 'Genererar anteckning',
+      da: 'Genererer note',
+      de: 'Notiz wird erstellt',
+      fr: 'Génération de la note',
+      it: 'Generazione nota',
+    },
+    noteCompleted: {
+      en: 'Note completed',
+      no: 'Notat fullført',
+      nb: 'Notat fullført',
+      nn: 'Notat fullført',
+      sv: 'Anteckning klar',
+      da: 'Note fuldført',
+      de: 'Notiz abgeschlossen',
+      fr: 'Note terminée',
+      it: 'Nota completata',
+    },
+    ready: {
+      en: 'Ready',
+      no: 'Klar',
+      nb: 'Klar',
+      nn: 'Klar',
+      sv: 'Klar',
+      da: 'Klar',
+      de: 'Bereit',
+      fr: 'Prêt',
+      it: 'Pronto',
+    },
+    miniPanel: {
+      en: 'Mini panel',
+      no: 'Mini-panel',
+      nb: 'Mini-panel',
+      nn: 'Mini-panel',
+      sv: 'Mini-panel',
+      da: 'Mini-panel',
+      de: 'Mini-Panel',
+      fr: 'Mini-panneau',
+      it: 'Mini pannello',
+    },
+    prompt: {
+      en: 'Prompt',
+      no: 'Prompt',
+      nb: 'Prompt',
+      nn: 'Prompt',
+      sv: 'Prompt',
+      da: 'Prompt',
+      de: 'Prompt',
+      fr: 'Prompt',
+      it: 'Prompt',
+    },
+    untitled: {
+      en: 'Untitled',
+      no: 'Uten tittel',
+      nb: 'Uten tittel',
+      nn: 'Utan tittel',
+      sv: 'Utan titel',
+      da: 'Uden titel',
+      de: 'Ohne Titel',
+      fr: 'Sans titre',
+      it: 'Senza titolo',
+    },
+  };
+
+  const row = dict[key] || {};
+  return row[lang] || row[lang.split('-')[0]] || row.en || key;
 }
 
 function getSafeState() {
@@ -65,6 +194,34 @@ function getSafeState() {
       statusText: '',
       pauseResumeLabel: 'Pause',
     };
+  }
+}
+
+function getSafePromptOptions() {
+  const app = getApp();
+  if (!app || typeof app.getMiniPanelPromptOptions !== 'function') {
+    return [];
+  }
+
+  try {
+    return Array.isArray(app.getMiniPanelPromptOptions())
+      ? app.getMiniPanelPromptOptions()
+      : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function getSafeSelectedPromptSlot() {
+  const app = getApp();
+  if (!app || typeof app.getSelectedPromptSlot !== 'function') {
+    return '';
+  }
+
+  try {
+    return String(app.getSelectedPromptSlot() || '').trim();
+  } catch (_) {
+    return '';
   }
 }
 
@@ -99,24 +256,75 @@ function setBadge(text, tone = 'idle') {
   badge.dataset.tone = tone;
 }
 
-function flashCopiedIndicator() {
+function showCopiedIndicator() {
   const indicator = $('miniCopiedIndicator');
   if (!indicator) return;
 
+  copiedVisible = true;
   indicator.hidden = false;
-  indicator.textContent = 'Copied';
+  indicator.textContent = tMini('copied');
   indicator.dataset.show = '1';
+}
 
-  if (copiedFlashTimer) {
-    clearTimeout(copiedFlashTimer);
+function hideCopiedIndicator() {
+  const indicator = $('miniCopiedIndicator');
+  copiedVisible = false;
+  if (!indicator) return;
+
+  indicator.hidden = true;
+  indicator.dataset.show = '0';
+}
+
+function normalizePromptOptionLabel(item) {
+  const id = String(item?.id || '').trim();
+  let label = String(item?.label || '').trim();
+
+  if (!id) return null;
+
+  if (!label) {
+    label = `${id}. ${tMini('untitled')}`;
+  } else if (label === `${id}.`) {
+    label = `${id}. ${tMini('untitled')}`;
   }
 
-  copiedFlashTimer = setTimeout(() => {
-    const nextIndicator = $('miniCopiedIndicator');
-    if (!nextIndicator) return;
-    nextIndicator.hidden = true;
-    nextIndicator.dataset.show = '0';
-  }, 1800);
+  return { id, label };
+}
+
+function syncPromptDropdown() {
+  const select = $('miniPromptSelect');
+  if (!select) return;
+
+  const options = getSafePromptOptions()
+    .map(normalizePromptOptionLabel)
+    .filter(Boolean);
+  const selected = getSafeSelectedPromptSlot();
+
+  const existingSignature = Array.from(select.options)
+    .map((opt) => `${opt.value}|${opt.textContent}`)
+    .join('||');
+  const nextSignature = options
+    .map((opt) => `${opt.id}|${opt.label}`)
+    .join('||');
+
+  if (existingSignature !== nextSignature) {
+    select.innerHTML = '';
+    options.forEach((opt) => {
+      const optionEl = select.ownerDocument.createElement('option');
+      optionEl.value = opt.id;
+      optionEl.textContent = opt.label;
+      select.appendChild(optionEl);
+    });
+  }
+
+  if (selected) {
+    select.value = selected;
+  }
+
+  if (!select.value && options.length) {
+    select.value = options[0].id;
+  }
+
+  select.disabled = options.length === 0;
 }
 
 function updateMiniPanelUi() {
@@ -133,21 +341,32 @@ function updateMiniPanelUi() {
   setDisabled('miniCopyButton', !state.hasNote);
 
   setText('miniPauseButton', pauseResumeLabel);
-  setText('miniStatusText', statusText || 'Ready');
+  setText('miniStatusText', statusText || tMini('ready'));
+  setText('miniTitle', tMini('miniPanel'));
+  setText('miniPromptLabel', tMini('prompt'));
 
   if (state.noteBusy) {
-    setBadge('Generating note', 'note');
+    setBadge(tMini('generatingNote'), 'note');
   } else if (state.transcribeBusy) {
     if (/resume/i.test(pauseResumeLabel)) {
-      setBadge('Paused', 'paused');
+      setBadge(tMini('paused'), 'paused');
     } else {
-      setBadge('Recording', 'recording');
+      setBadge(tMini('recording'), 'recording');
     }
   } else if (state.hasNote) {
-    setBadge('Note ready', 'ready');
+    setBadge(tMini('noteCompleted'), 'ready');
   } else {
-    setBadge('Idle', 'idle');
+    setBadge(tMini('idle'), 'idle');
   }
+
+  const indicator = $('miniCopiedIndicator');
+  if (indicator) {
+    indicator.textContent = tMini('copied');
+    indicator.hidden = !copiedVisible;
+    indicator.dataset.show = copiedVisible ? '1' : '0';
+  }
+
+  syncPromptDropdown();
 }
 
 function requestUiRefresh() {
@@ -174,12 +393,12 @@ function stopRefreshLoop() {
   }
 }
 
-function callAppAction(actionName) {
+function callAppAction(actionName, ...args) {
   const app = getApp();
   if (!app || typeof app[actionName] !== 'function') return false;
 
   try {
-    app[actionName]();
+    app[actionName](...args);
     requestUiRefresh();
     return true;
   } catch (err) {
@@ -194,6 +413,7 @@ function bindMiniPanelEvents() {
   const pauseButton = $('miniPauseButton');
   const copyButton = $('miniCopyButton');
   const closeButton = $('miniCloseButton');
+  const promptSelect = $('miniPromptSelect');
 
   if (startButton) {
     startButton.addEventListener('click', () => {
@@ -216,6 +436,14 @@ function bindMiniPanelEvents() {
   if (copyButton) {
     copyButton.addEventListener('click', () => {
       callAppAction('copyGeneratedNote');
+    });
+  }
+
+  if (promptSelect) {
+    promptSelect.addEventListener('change', () => {
+      const slot = String(promptSelect.value || '').trim();
+      if (!slot) return;
+      callAppAction('selectPromptSlot', slot);
     });
   }
 
@@ -251,6 +479,7 @@ function renderMiniPanelDocument(targetWindow) {
       --warn: #f0c36a;
       --danger: #f38a8a;
       --info: #94b7ff;
+      --select-bg: #13203a;
     }
 
     * { box-sizing: border-box; }
@@ -312,7 +541,7 @@ function renderMiniPanelDocument(targetWindow) {
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      min-height: 28px;
+      min-height: 30px;
     }
 
     .badge {
@@ -336,10 +565,12 @@ function renderMiniPanelDocument(targetWindow) {
     .badge[data-tone="ready"] { color: var(--accent); }
 
     .copied {
-      font-size: 11px;
-      font-weight: 700;
+      font-size: 14px;
+      font-weight: 800;
       color: var(--accent);
-      opacity: 0.98;
+      opacity: 1;
+      line-height: 1;
+      white-space: nowrap;
     }
 
     .status-text {
@@ -382,18 +613,50 @@ function renderMiniPanelDocument(targetWindow) {
     button.ctrl.copy {
       background: #17382f;
     }
+
+    .prompt-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 2px;
+    }
+
+    .prompt-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      line-height: 1.2;
+    }
+
+    .prompt-select {
+      width: 100%;
+      border: 1px solid var(--button-border);
+      background: var(--select-bg);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      min-height: 38px;
+      outline: none;
+    }
+
+    .prompt-select:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
   <div class="panel">
     <div class="top">
-      <div class="title">Mini panel</div>
+      <div id="miniTitle" class="title">Mini panel</div>
       <button id="miniCloseButton" class="close-btn" type="button" aria-label="Close mini panel">×</button>
     </div>
 
     <div class="status-row">
       <div id="miniStatusBadge" class="badge" data-tone="idle">Idle</div>
-      <div id="miniCopiedIndicator" class="copied" data-show="0" hidden>Copied</div>
+      <div id="miniCopiedIndicator" class="copied" data-show="0" hidden>Copied!</div>
     </div>
 
     <div id="miniStatusText" class="status-text">Ready</div>
@@ -403,6 +666,11 @@ function renderMiniPanelDocument(targetWindow) {
       <button id="miniPauseButton" class="ctrl" type="button">Pause</button>
       <button id="miniStopButton" class="ctrl" type="button">Stop</button>
       <button id="miniCopyButton" class="ctrl copy" type="button">Copy</button>
+    </div>
+
+    <div class="prompt-wrap">
+      <label id="miniPromptLabel" class="prompt-label" for="miniPromptSelect">Prompt</label>
+      <select id="miniPromptSelect" class="prompt-select" aria-label="Prompt slot"></select>
     </div>
   </div>
 </body>
@@ -478,14 +746,29 @@ function bindMainWindowEvents() {
   });
 
   window.addEventListener('note-copied', () => {
-    flashCopiedIndicator();
+    showCopiedIndicator();
     handleStateRelevantEvent();
   });
 
   window.addEventListener('note-generation-finished', handleStateRelevantEvent);
   window.addEventListener('note:finished', handleStateRelevantEvent);
   window.addEventListener('transcription:finished', handleStateRelevantEvent);
-  window.addEventListener('app:state-changed', handleStateRelevantEvent);
+  window.addEventListener('prompt-slot-selection-changed', handleStateRelevantEvent);
+  window.addEventListener('prompt-slot-names-changed', handleStateRelevantEvent);
+  window.addEventListener('prompt-profile-changed', handleStateRelevantEvent);
+
+  window.addEventListener('app:state-changed', (event) => {
+    const reason = event?.detail?.reason || '';
+    if (
+      reason === 'start-recording-click' ||
+      reason === 'record-hotkey' ||
+      reason === 'transcribe-provider-switched' ||
+      reason === 'recording-provider-initialized'
+    ) {
+      hideCopiedIndicator();
+    }
+    handleStateRelevantEvent();
+  });
 
   document.addEventListener('click', (event) => {
     const target = event.target;
@@ -502,11 +785,14 @@ function bindMainWindowEvents() {
     ]);
 
     if (target.id && watchedIds.has(target.id)) {
+      if (target.id === 'startButton') {
+        hideCopiedIndicator();
+      }
       handleStateRelevantEvent();
 
       if (target.id === 'copyNoteButton') {
         window.setTimeout(() => {
-          flashCopiedIndicator();
+          showCopiedIndicator();
         }, 40);
       }
     }
