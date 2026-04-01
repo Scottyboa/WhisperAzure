@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const existing = window.__app || {};
     const app = (window.__app = existing);
     app.cachedModules = app.cachedModules || {};
+    if (typeof app.miniPanelOpen !== 'boolean') {
+      app.miniPanelOpen = false;
+    }
     return app;
   }
 
@@ -218,23 +221,23 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  function emitCopiedEvent(text) {
+  function emitCopiedEvent(text, source = 'manual-copy') {
     try {
       window.dispatchEvent(new CustomEvent('note-copied', {
         detail: {
           textLength: String(text || '').length,
           copiedAt: Date.now(),
-          source: 'auto-copy',
+          source,
         }
       }));
     } catch (_) {}
     emitAppStateChanged('note-copied', {
       textLength: String(text || '').length,
-      source: 'auto-copy',
+      source,
     });
   }
 
-  function tryExecCommandCopyFromField(field, text) {
+  function tryExecCommandCopyFromField(field, text, source = 'manual-copy') {
     try {
       if (!field) return false;
       const previousSelectionStart = field.selectionStart;
@@ -261,13 +264,139 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (_) {}
 
       if (ok) {
-        emitCopiedEvent(text);
+        emitCopiedEvent(text, source);
       }
       return !!ok;
     } catch (_) {
       return false;
     } finally {
       try { window.getSelection()?.removeAllRanges?.(); } catch (_) {}
+    }
+  }
+
+  function getPageLanguage() {
+    const lang =
+      document.documentElement?.lang ||
+      localStorage.getItem('selectedLanguage') ||
+      'en';
+    return String(lang || 'en').toLowerCase();
+  }
+
+  function tNotify(key) {
+    const lang = getPageLanguage();
+    const dict = {
+      copiedTitle: {
+        en: 'Finished note copied',
+        no: 'Ferdig notat kopiert',
+        nb: 'Ferdig notat kopiert',
+        nn: 'Ferdig notat kopiert',
+        sv: 'Färdig anteckning kopierad',
+        da: 'Færdig note kopieret',
+        de: 'Fertige Notiz kopiert',
+        fr: 'Note finale copiée',
+        it: 'Nota finale copiata',
+      },
+      copiedBody: {
+        en: 'The finished note is now on your clipboard.',
+        no: 'Det ferdige notatet er nå kopiert til utklippstavlen.',
+        nb: 'Det ferdige notatet er nå kopiert til utklippstavlen.',
+        nn: 'Det ferdige notatet er no kopiert til utklippstavla.',
+        sv: 'Den färdiga anteckningen är nu kopierad till urklipp.',
+        da: 'Den færdige note er nu kopieret til udklipsholderen.',
+        de: 'Die fertige Notiz befindet sich jetzt in der Zwischenablage.',
+        fr: 'La note finale a été copiée dans le presse-papiers.',
+        it: 'La nota finale è stata copiata negli appunti.',
+      },
+      permissionTitle: {
+        en: 'Enable notifications?',
+        no: 'Aktivere varsler?',
+        nb: 'Aktivere varsler?',
+        nn: 'Aktivere varsel?',
+        sv: 'Aktivera notiser?',
+        da: 'Aktivér notifikationer?',
+        de: 'Benachrichtigungen aktivieren?',
+        fr: 'Activer les notifications ?',
+        it: 'Attivare le notifiche?',
+      },
+    };
+    const row = dict[key] || {};
+    return row[lang] || row[lang.split('-')[0]] || row.en || key;
+  }
+
+  function canUseWebNotifications() {
+    return typeof window !== 'undefined' && 'Notification' in window;
+  }
+
+  function isMiniPanelOpen() {
+    return !!getApp().miniPanelOpen;
+  }
+
+  function shouldShowCopiedSystemNotification(detail) {
+    return !!(
+      detail &&
+      detail.status !== 'aborted' &&
+      detail.autoCopyEnabled &&
+      !isMiniPanelOpen()
+    );
+  }
+
+  async function requestNotificationPermissionIfNeeded() {
+    if (!canUseWebNotifications()) return 'unsupported';
+    if (Notification.permission === 'granted') return 'granted';
+    if (Notification.permission === 'denied') return 'denied';
+
+    try {
+      const result = await Notification.requestPermission();
+      emitAppStateChanged('notification-permission-result', { permission: result });
+      return result;
+    } catch (_) {
+      return 'default';
+    }
+  }
+
+  function showCopiedSystemNotification(detail) {
+    if (!canUseWebNotifications()) {
+      emitAppStateChanged('notification-unsupported');
+      return false;
+    }
+
+    if (Notification.permission !== 'granted') {
+      emitAppStateChanged('notification-not-granted', { permission: Notification.permission });
+      return false;
+    }
+
+    try {
+      const title = tNotify('copiedTitle');
+      const body = tNotify('copiedBody');
+      const notification = new Notification(title, {
+        body,
+        tag: 'finished-note-copied',
+        renotify: true,
+        silent: false,
+      });
+
+      notification.onclick = () => {
+        try {
+          window.focus();
+        } catch (_) {}
+        try {
+          notification.close();
+        } catch (_) {}
+      };
+
+      setTimeout(() => {
+        try {
+          notification.close();
+        } catch (_) {}
+      }, 5000);
+
+      emitAppStateChanged('system-notification-shown', {
+        textLength: detail?.textLength || 0,
+      });
+      return true;
+    } catch (_) {
+      emitAppStateChanged('system-notification-failed');
+      return false;
     }
   }
 
@@ -282,11 +411,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
       navigator.clipboard.writeText(text)
         .then(() => {
-          emitCopiedEvent(text);
+          emitCopiedEvent(text, 'auto-copy');
+          if (shouldShowCopiedSystemNotification(detail)) {
+            showCopiedSystemNotification(detail);
+          }
         })
         .catch(() => {
-          const ok = tryExecCommandCopyFromField(noteEl, text);
-          if (!ok) {
+          const ok = tryExecCommandCopyFromField(noteEl, text, 'auto-copy');
+          if (ok) {
+            if (shouldShowCopiedSystemNotification(detail)) {
+              showCopiedSystemNotification(detail);
+            }
+          } else {
             emitAppStateChanged('note-auto-copy-failed', {
               textLength: text.length,
             });
@@ -295,8 +431,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const ok = tryExecCommandCopyFromField(noteEl, text);
-    if (!ok) {
+    const ok = tryExecCommandCopyFromField(noteEl, text, 'auto-copy');
+    if (ok) {
+      if (shouldShowCopiedSystemNotification(detail)) {
+        showCopiedSystemNotification(detail);
+      }
+    } else {
       emitAppStateChanged('note-auto-copy-failed', {
         textLength: text.length,
       });
@@ -652,10 +792,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     el.checked = getAutoGenerateEnabled();
-    el.addEventListener('change', () => {
+    el.addEventListener('change', async () => {
       writeSession(AUTO_GENERATE_KEY, el.checked ? '1' : '0');
       emitAppStateChanged('auto-generate-toggle-change', { enabled: el.checked });
+
+      if (el.checked && isAutoCopyFinishedNoteEnabled()) {
+        await requestNotificationPermissionIfNeeded();
+      }
     });
+  }
+
+  function initNotificationPermissionHooks() {
+    const autoCopyToggle = document.getElementById('autoCopyFinishedNoteToggle');
+    if (autoCopyToggle && autoCopyToggle.dataset.notificationBound !== '1') {
+      autoCopyToggle.dataset.notificationBound = '1';
+      autoCopyToggle.addEventListener('change', async () => {
+        if (autoCopyToggle.checked) {
+          await requestNotificationPermissionIfNeeded();
+        }
+      });
+    }
+
+    const openMiniPanelButton = document.getElementById('openMiniPanelButton');
+    if (openMiniPanelButton && openMiniPanelButton.dataset.notificationHintBound !== '1') {
+      openMiniPanelButton.dataset.notificationHintBound = '1';
+      openMiniPanelButton.addEventListener('click', async () => {
+        if (isAutoCopyFinishedNoteEnabled()) {
+          await requestNotificationPermissionIfNeeded();
+        }
+      });
+    }
   }
 
   function emitTranscriptionFinished(opts) {
@@ -715,12 +881,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!text) return false;
 
     const emitCopied = () => {
-      try {
-        window.dispatchEvent(new CustomEvent('note-copied', {
-          detail: { textLength: text.length, copiedAt: Date.now() }
-        }));
-      } catch (_) {}
-      emitAppStateChanged('note-copied', { textLength: text.length });
+      emitCopiedEvent(text, 'manual-copy');
     };
 
     if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
@@ -812,6 +973,9 @@ document.addEventListener('DOMContentLoaded', () => {
   app.selectPromptSlot = selectPromptSlot;
   app.resolveTranscribeModulePath = resolveTranscribeModulePath;
   app.resolveNoteModulePath = resolveNoteModulePath;
+  app.requestNotificationPermissionIfNeeded = requestNotificationPermissionIfNeeded;
+  app.showCopiedSystemNotification = showCopiedSystemNotification;
+  app.isMiniPanelOpen = isMiniPanelOpen;
   app.providerRegistry = {
     defaults: DEFAULTS,
     deriveNoteUiStateFromEffectiveProvider,
@@ -924,6 +1088,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  window.addEventListener('mini-panel:status', (event) => {
+    const open = !!event?.detail?.open;
+    getApp().miniPanelOpen = open;
+    emitAppStateChanged('mini-panel-status-changed', { open });
+  });
+
   window.addEventListener('note-generation-finished', () => {
     finishNoteGeneration();
   });
@@ -979,6 +1149,7 @@ document.addEventListener('DOMContentLoaded', () => {
   restoreState();
   initAutoGenerateToggle();
   initAutoGenerateOnFinishListener();
+  initNotificationPermissionHooks();
 
   initRecordingProvider(getSelectedTranscribeProvider());
   initNoteProvider(getSelectedEffectiveNoteProvider());
