@@ -134,6 +134,71 @@ function logVertexUsageAndCost({ modelId, usage, rawResponse }) {
   }
 }
 
+function extractVertexNoteText(data) {
+  if (!data || typeof data !== "object") {
+    return "";
+  }
+
+  const directText = [
+    data.text,
+    data.noteText,
+    data.output,
+    data.note,
+    data.generatedNote,
+  ].find((value) => typeof value === "string" && value.trim());
+
+  if (directText) {
+    return directText;
+  }
+
+  if (Array.isArray(data.candidates)) {
+    try {
+      const candidateText = data.candidates
+        .flatMap((candidate) =>
+          Array.isArray(candidate?.content?.parts) ? candidate.content.parts : []
+        )
+        .map((part) => (typeof part?.text === "string" ? part.text : ""))
+        .join("")
+        .trim();
+
+      if (candidateText) {
+        return candidateText;
+      }
+    } catch (_) {}
+  }
+
+  if (Array.isArray(data.output)) {
+    try {
+      const outputText = data.output
+        .flatMap((item) => (Array.isArray(item?.content) ? item.content : []))
+        .filter((block) => block && (block.type === "output_text" || block.type === "text"))
+        .map((block) => block.text || "")
+        .join("")
+        .trim();
+
+      if (outputText) {
+        return outputText;
+      }
+    } catch (_) {}
+  }
+
+  if (Array.isArray(data.content)) {
+    try {
+      const contentText = data.content
+        .filter((block) => block && (block.type === "output_text" || block.type === "text"))
+        .map((block) => block.text || "")
+        .join("")
+        .trim();
+
+      if (contentText) {
+        return contentText;
+      }
+    } catch (_) {}
+  }
+
+  return "";
+}
+
 async function generateNote() {
   const { app, controller } = beginNoteRun(RUN_META);
   if (!controller) {
@@ -188,15 +253,15 @@ async function generateNote() {
     }
 
     const data = await resp.json().catch(() => ({}));
-    const noteText = typeof data?.text === "string" ? data.text : "";
+    const noteText = extractVertexNoteText(data);
     const usage = data?.usage || null;
     modelId = data?.model || DEFAULT_MODEL_ID;
 
     pushVertexUsageToUi(modelId, usage);
     logVertexUsageAndCost({ modelId, usage, rawResponse: data });
 
+    generatedNoteField.value = noteText || "[No text returned from Vertex backend]";
     noteTimer.stop("Text generation completed!");
-    generatedNoteField.value = noteText;
     app.emitNoteFinished?.({
       provider: "gemini3-vertex",
       model: modelId || DEFAULT_MODEL_ID
