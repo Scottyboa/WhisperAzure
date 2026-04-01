@@ -134,7 +134,7 @@ export const PromptManager = (() => {
     if (!pid) return false;
 
     const newNs = getProfileNamespaceHash(pid);
-    const migratedFlagKey = `prompt_migrated_${newNs}`;
+    const migratedFlagKey = `prompt_migrated_v2_${newNs}`;
 
     if (readLocalStorage(migratedFlagKey, "") === "1") {
       return false;
@@ -143,7 +143,7 @@ export const PromptManager = (() => {
     const oldNs = getLegacyNamespaceHash();
     let copiedAny = false;
 
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= PROMPT_SLOT_COUNT; i++) {
       const slot = String(i);
       const oldKey = `customPrompt_${oldNs}_${slot}`;
       const newKey = `customPrompt_${newNs}_${slot}`;
