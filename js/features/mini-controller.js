@@ -8,8 +8,8 @@
 // - Includes prompt slot selector (number + title only)
 
 const MINI_PANEL_WINDOW_NAME = 'whisperazure-mini-panel';
-const MINI_PANEL_WIDTH = 260;
-const MINI_PANEL_HEIGHT = 220;
+const MINI_PANEL_WIDTH = 320;
+const MINI_PANEL_HEIGHT = 290;
 const STATE_REFRESH_MS = 350;
 
 let miniWindow = null;
@@ -712,6 +712,7 @@ async function openMiniPanel() {
       miniWindow = await window.documentPictureInPicture.requestWindow({
         width: MINI_PANEL_WIDTH,
         height: MINI_PANEL_HEIGHT,
+        preferInitialWindowPlacement: true,
       });
     } else {
       miniWindow = window.open(
