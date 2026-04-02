@@ -213,7 +213,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function normalizeAutoCopyMode(value) {
     const mode = String(value || '').toLowerCase();
-    return ['off', 'transcript', 'note', 'both'].includes(mode) ? mode : 'off';
+    if (mode === 'both') return 'note';
+    return ['off', 'transcript', 'note'].includes(mode) ? mode : 'off';
   }
 
   function getAutoCopyMode() {
@@ -238,12 +239,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function autoCopyIncludesTranscript() {
     const mode = getAutoCopyMode();
-    return mode === 'transcript' || mode === 'both';
+    return mode === 'transcript';
   }
 
   function autoCopyIncludesNote() {
     const mode = getAutoCopyMode();
-    return mode === 'note' || mode === 'both';
+    return mode === 'note';
   }
 
   function buildFinishedNoteDetail(meta = {}) {
