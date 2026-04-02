@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const STATE_KEY = '__ui_state_v1';
   const AUTO_GENERATE_KEY = 'auto_generate_enabled';
+  const AUTO_COPY_MODE_KEY = 'auto_copy_mode';
   const PROMPT_PROFILE_STORAGE_KEY = 'prompt_profile_id';
   const DEFAULT_PROMPT_PROFILE_ID = 'default';
 
@@ -63,6 +64,12 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (_) {
       return fallback;
     }
+  }
+
+  function writeLocal(key, value) {
+    try {
+      localStorage.setItem(key, String(value ?? ''));
+    } catch (_) {}
   }
 
   function reloadWithSavedState(reason = '') {
@@ -204,8 +211,39 @@ document.addEventListener('DOMContentLoaded', () => {
     emitAppStateChanged('note-generation-abort-requested');
   }
 
-  function isAutoCopyFinishedNoteEnabled() {
-    return localStorage.getItem('autoCopyFinishedNote') === 'true';
+  function normalizeAutoCopyMode(value) {
+    const mode = String(value || '').toLowerCase();
+    return ['off', 'transcript', 'note', 'both'].includes(mode) ? mode : 'off';
+  }
+
+  function getAutoCopyMode() {
+    const next = normalizeAutoCopyMode(readLocal(AUTO_COPY_MODE_KEY, ''));
+    if (next !== readLocal(AUTO_COPY_MODE_KEY, '')) {
+      writeLocal(AUTO_COPY_MODE_KEY, next);
+    }
+    return next;
+  }
+
+  function setAutoCopyMode(mode) {
+    const next = normalizeAutoCopyMode(mode);
+    writeLocal(AUTO_COPY_MODE_KEY, next);
+
+    const el = document.getElementById('autoCopyModeSelect');
+    if (el && el.value !== next) {
+      el.value = next;
+    }
+
+    emitAppStateChanged('auto-copy-mode-change', { mode: next });
+  }
+
+  function autoCopyIncludesTranscript() {
+    const mode = getAutoCopyMode();
+    return mode === 'transcript' || mode === 'both';
+  }
+
+  function autoCopyIncludesNote() {
+    const mode = getAutoCopyMode();
+    return mode === 'note' || mode === 'both';
   }
 
   function buildFinishedNoteDetail(meta = {}) {
@@ -215,7 +253,8 @@ document.addEventListener('DOMContentLoaded', () => {
       status: meta?.aborted ? 'aborted' : 'success',
       text,
       textLength: text.length,
-      autoCopyEnabled: isAutoCopyFinishedNoteEnabled(),
+      autoCopyEnabled: autoCopyIncludesNote(),
+      autoCopyMode: getAutoCopyMode(),
       emittedAt: Date.now(),
       ...meta,
     };
@@ -234,6 +273,40 @@ document.addEventListener('DOMContentLoaded', () => {
     emitAppStateChanged('note-copied', {
       textLength: String(text || '').length,
       source,
+    });
+  }
+
+  function emitTranscriptCopiedEvent(text, source = 'manual-copy-transcript') {
+    try {
+      window.dispatchEvent(new CustomEvent('transcript-copied', {
+        detail: {
+          textLength: String(text || '').length,
+          copiedAt: Date.now(),
+          source,
+        }
+      }));
+    } catch (_) {}
+    emitAppStateChanged('transcript-copied', {
+      textLength: String(text || '').length,
+      source,
+    });
+  }
+
+  function emitTranscriptCopyFailedEvent(text, source = 'manual-copy-transcript', reason = 'unknown') {
+    try {
+      window.dispatchEvent(new CustomEvent('transcript-copy-failed', {
+        detail: {
+          textLength: String(text || '').length,
+          failedAt: Date.now(),
+          source,
+          reason,
+        }
+      }));
+    } catch (_) {}
+    emitAppStateChanged('transcript-copy-failed', {
+      textLength: String(text || '').length,
+      source,
+      reason,
     });
   }
 
@@ -289,6 +362,46 @@ document.addEventListener('DOMContentLoaded', () => {
       return !!ok;
     } catch (_) {
       emitCopyFailedEvent(text, source, 'execCommand-threw');
+      return false;
+    } finally {
+      try { window.getSelection()?.removeAllRanges?.(); } catch (_) {}
+    }
+  }
+
+  function tryExecCommandCopyTranscriptFromField(field, text, source = 'manual-copy-transcript') {
+    try {
+      if (!field) return false;
+      const previousSelectionStart = field.selectionStart;
+      const previousSelectionEnd = field.selectionEnd;
+      const previousActive = document.activeElement;
+
+      field.focus();
+      field.select();
+      const ok = document.execCommand('copy');
+
+      try {
+        if (
+          typeof previousSelectionStart === 'number' &&
+          typeof previousSelectionEnd === 'number'
+        ) {
+          field.setSelectionRange(previousSelectionStart, previousSelectionEnd);
+        }
+      } catch (_) {}
+
+      try {
+        if (previousActive && typeof previousActive.focus === 'function' && previousActive !== field) {
+          previousActive.focus();
+        }
+      } catch (_) {}
+
+      if (ok) {
+        emitTranscriptCopiedEvent(text, source);
+      } else {
+        emitTranscriptCopyFailedEvent(text, source, 'execCommand-returned-false');
+      }
+      return !!ok;
+    } catch (_) {
+      emitTranscriptCopyFailedEvent(text, source, 'execCommand-threw');
       return false;
     } finally {
       try { window.getSelection()?.removeAllRanges?.(); } catch (_) {}
@@ -431,7 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const text = String(detail?.text || '').trim();
     if (!text) return;
     if (detail?.status === 'aborted') return;
-    if (!isAutoCopyFinishedNoteEnabled()) return;
+    if (!autoCopyIncludesNote()) return;
 
     const noteEl = document.getElementById('generatedNote');
     const shouldNotify = shouldShowCopiedSystemNotification(detail);
@@ -471,6 +584,52 @@ document.addEventListener('DOMContentLoaded', () => {
     const ok = tryExecCommandCopyFromField(noteEl, text, 'auto-copy');
     if (!ok) {
       emitCopyFailedEvent(text, 'auto-copy', 'clipboard-api-unavailable');
+    }
+  }
+
+  function buildFinishedTranscriptDetail(meta = {}) {
+    const trEl = document.getElementById('transcription');
+    const text = String(trEl?.value || '');
+    return {
+      status: meta?.aborted ? 'aborted' : 'success',
+      text,
+      textLength: text.length,
+      autoCopyEnabled: autoCopyIncludesTranscript(),
+      autoCopyMode: getAutoCopyMode(),
+      emittedAt: Date.now(),
+      ...meta,
+    };
+  }
+
+  function tryAutoCopyFinishedTranscript(detail) {
+    const text = String(detail?.text || '').trim();
+    if (!text) return;
+    if (detail?.status === 'aborted') return;
+    if (!autoCopyIncludesTranscript()) return;
+
+    const trEl = document.getElementById('transcription');
+
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      navigator.clipboard.writeText(text)
+        .then(() => {
+          emitTranscriptCopiedEvent(text, 'auto-copy-transcript');
+        })
+        .catch((error) => {
+          const ok = tryExecCommandCopyTranscriptFromField(trEl, text, 'auto-copy-transcript');
+          if (!ok) {
+            emitTranscriptCopyFailedEvent(
+              text,
+              'auto-copy-transcript',
+              error?.name || 'clipboard-write-failed'
+            );
+          }
+        });
+      return;
+    }
+
+    const ok = tryExecCommandCopyTranscriptFromField(trEl, text, 'auto-copy-transcript');
+    if (!ok) {
+      emitTranscriptCopyFailedEvent(text, 'auto-copy-transcript', 'clipboard-api-unavailable');
     }
   }
 
@@ -827,18 +986,33 @@ document.addEventListener('DOMContentLoaded', () => {
       writeSession(AUTO_GENERATE_KEY, el.checked ? '1' : '0');
       emitAppStateChanged('auto-generate-toggle-change', { enabled: el.checked });
 
-      if (el.checked && isAutoCopyFinishedNoteEnabled()) {
+      if (el.checked && autoCopyIncludesNote()) {
+        await requestNotificationPermissionIfNeeded();
+      }
+    });
+  }
+
+  function initAutoCopyModeSelect() {
+    const el = document.getElementById('autoCopyModeSelect');
+    if (!el) return;
+    if (el.dataset.bound === '1') return;
+    el.dataset.bound = '1';
+
+    el.value = getAutoCopyMode();
+    el.addEventListener('change', async () => {
+      setAutoCopyMode(el.value);
+      if (autoCopyIncludesNote()) {
         await requestNotificationPermissionIfNeeded();
       }
     });
   }
 
   function initNotificationPermissionHooks() {
-    const autoCopyToggle = document.getElementById('autoCopyFinishedNoteToggle');
-    if (autoCopyToggle && autoCopyToggle.dataset.notificationBound !== '1') {
-      autoCopyToggle.dataset.notificationBound = '1';
-      autoCopyToggle.addEventListener('change', async () => {
-        if (autoCopyToggle.checked) {
+    const autoCopyModeSelect = document.getElementById('autoCopyModeSelect');
+    if (autoCopyModeSelect && autoCopyModeSelect.dataset.notificationBound !== '1') {
+      autoCopyModeSelect.dataset.notificationBound = '1';
+      autoCopyModeSelect.addEventListener('change', async () => {
+        if (autoCopyIncludesNote()) {
           await requestNotificationPermissionIfNeeded();
         }
       });
@@ -848,7 +1022,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (openMiniPanelButton && openMiniPanelButton.dataset.notificationHintBound !== '1') {
       openMiniPanelButton.dataset.notificationHintBound = '1';
       openMiniPanelButton.addEventListener('click', async () => {
-        if (isAutoCopyFinishedNoteEnabled()) {
+        if (autoCopyIncludesNote()) {
           await requestNotificationPermissionIfNeeded();
         }
       });
@@ -856,16 +1030,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function emitTranscriptionFinished(opts) {
+    const detail = {
+      ...buildFinishedTranscriptDetail(opts || {}),
+      ...(opts || {}),
+    };
+
     try {
-      window.dispatchEvent(new CustomEvent('transcription:finished', { detail: opts || {} }));
+      window.dispatchEvent(new CustomEvent('transcription:finished', { detail }));
     } catch (err) {
       try {
         const ev = document.createEvent('CustomEvent');
-        ev.initCustomEvent('transcription:finished', false, false, opts || {});
+        ev.initCustomEvent('transcription:finished', false, false, detail);
         window.dispatchEvent(ev);
       } catch {}
     }
-    emitAppStateChanged('transcription-finished', { detail: opts || {} });
+    emitAppStateChanged('transcription-finished', { detail });
   }
 
   function tryAutoGenerateNote(eventDetail) {
@@ -898,6 +1077,12 @@ document.addEventListener('DOMContentLoaded', () => {
     app.__autoGenerateListenerBound = true;
 
     window.addEventListener('transcription:finished', (e) => {
+      try {
+        tryAutoCopyFinishedTranscript(e && e.detail ? e.detail : null);
+      } catch (err) {
+        console.warn('Auto-copy transcript failed', err);
+      }
+
       try {
         tryAutoGenerateNote(e && e.detail ? e.detail : null);
       } catch (err) {
@@ -958,6 +1143,57 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function copyTranscriptionToClipboard() {
+    const trEl = document.getElementById('transcription');
+    const text = String(trEl?.value || '').trim();
+    if (!text) return false;
+
+    const emitCopied = () => {
+      emitTranscriptCopiedEvent(text, 'manual-copy-transcript');
+    };
+
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      navigator.clipboard.writeText(text)
+        .then(() => {
+          emitCopied();
+        })
+        .catch((error) => {
+          try {
+            trEl?.focus();
+            trEl?.select();
+            const ok = document.execCommand('copy');
+            if (ok) {
+              emitCopied();
+            } else {
+              emitTranscriptCopyFailedEvent(text, 'manual-copy-transcript', 'execCommand-returned-false');
+            }
+          } catch (_) {
+            emitTranscriptCopyFailedEvent(text, 'manual-copy-transcript', error?.name || 'clipboard-write-failed');
+          } finally {
+            try { window.getSelection()?.removeAllRanges?.(); } catch (_) {}
+          }
+        });
+      return true;
+    }
+
+    try {
+      trEl?.focus();
+      trEl?.select();
+      const ok = document.execCommand('copy');
+      if (ok) {
+        emitCopied();
+        return true;
+      }
+      emitTranscriptCopyFailedEvent(text, 'manual-copy-transcript', 'execCommand-returned-false');
+      return false;
+    } catch (_) {
+      emitTranscriptCopyFailedEvent(text, 'manual-copy-transcript', 'execCommand-threw');
+      return false;
+    } finally {
+      try { window.getSelection()?.removeAllRanges?.(); } catch (_) {}
+    }
+  }
+
   function getMiniPanelState() {
     const startBtn = document.getElementById('startButton');
     const stopBtn = document.getElementById('stopButton');
@@ -995,7 +1231,10 @@ document.addEventListener('DOMContentLoaded', () => {
   app.isTranscribeBusy = isTranscribeBusy;
   app.getAutoGenerateEnabled = getAutoGenerateEnabled;
   app.setAutoGenerateEnabled = setAutoGenerateEnabled;
+  app.getAutoCopyMode = getAutoCopyMode;
+  app.setAutoCopyMode = setAutoCopyMode;
   app.initAutoGenerateToggle = initAutoGenerateToggle;
+  app.initAutoCopyModeSelect = initAutoCopyModeSelect;
   app.emitTranscriptionFinished = emitTranscriptionFinished;
   app.tryAutoGenerateNote = tryAutoGenerateNote;
   app.initAutoGenerateOnFinishListener = initAutoGenerateOnFinishListener;
@@ -1042,6 +1281,7 @@ document.addEventListener('DOMContentLoaded', () => {
     emitAppStateChanged('pause-resume-click');
   };
   app.copyGeneratedNote = () => copyGeneratedNoteToClipboard();
+  app.copyTranscription = () => copyTranscriptionToClipboard();
   app.getMiniPanelState = () => getMiniPanelState();
   app.openMiniPanel = () => {
     try {
@@ -1130,6 +1370,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const copyTranscriptionButton = document.getElementById('copyTranscriptionButton');
+  if (copyTranscriptionButton) {
+    const originalLabel = copyTranscriptionButton.textContent;
+    copyTranscriptionButton.addEventListener('click', async () => {
+      const ok = copyTranscriptionToClipboard();
+      if (!ok) return;
+      copyTranscriptionButton.textContent = 'Copied';
+      setTimeout(() => { copyTranscriptionButton.textContent = originalLabel; }, 1200);
+    });
+  }
+
   window.addEventListener('mini-panel:status', (event) => {
     const open = !!event?.detail?.open;
     getApp().miniPanelOpen = open;
@@ -1190,6 +1441,7 @@ document.addEventListener('DOMContentLoaded', () => {
   syncNoteActionButtons();
   restoreState();
   initAutoGenerateToggle();
+  initAutoCopyModeSelect();
   initAutoGenerateOnFinishListener();
   initNotificationPermissionHooks();
 
