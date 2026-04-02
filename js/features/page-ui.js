@@ -1,5 +1,5 @@
 const ADS_ENABLED_DEFAULT = false;
-const AUTO_COPY_STORAGE_KEY = "autoCopyFinishedNote";
+const AUTO_COPY_STORAGE_KEY = "auto_copy_mode";
 
 function getCurrentTranscribeLanguage() {
   const select = document.getElementById("lang-select-transcribe");
@@ -56,36 +56,60 @@ function setupAutoGenerateTooltip() {
   syncAutoGenerateCopy();
 }
 
-function setupAutoCopyToggle() {
-  const toggle = document.getElementById("autoCopyFinishedNoteToggle");
-  const labelEl = document.getElementById("autoCopyFinishedNoteToggleLabel");
-  const tooltipEl = document.getElementById("autoCopyFinishedNoteTooltipText");
+function normalizeAutoCopyMode(value) {
+  const mode = String(value || "").toLowerCase();
+  return ["off", "transcript", "note", "both"].includes(mode) ? mode : "off";
+}
+
+function setupAutoCopyModeUi() {
+  const selectEl = document.getElementById("autoCopyModeSelect");
+  const labelEl = document.getElementById("autoCopyModeLabel");
+  const tooltipEl = document.getElementById("autoCopyModeTooltipText");
   const langSelectTranscribe = document.getElementById("lang-select-transcribe");
-  if (!toggle) return;
+  if (!selectEl) return;
 
   const syncCopyLabel = () => {
     const isNorwegian = getCurrentTranscribeLanguage() === "no";
-    if (labelEl) labelEl.textContent = "Auto-copy";
+    if (labelEl) {
+      labelEl.textContent = isNorwegian ? "Auto-copy" : "Auto-copy";
+    }
     if (tooltipEl) {
       tooltipEl.innerHTML = isNorwegian
-        ? 'Kopierer ferdige notater automatisk til utklippstavlen slik at du kan lime dem inn med Ctrl + V, og viser et skrivebordsvarsel når kopieringen er fullført.<br/><br/>For å bruke denne funksjonen, last ned <a href="./div/autocopy.zip" target="_blank" rel="noopener noreferrer" style="color:#2563eb; text-decoration:underline;">Chrome-utvidelsen her</a>.<br/><br/>Pakk ut filen og les README-tekstfilen inni for installasjonsinstruksjoner.<br/><br/>Hvis du ikke ser varselet i Windows, kontroller at varsler er aktivert både i Windows og i Chrome. I Windows går du til Innstillinger → System → Varsler og sjekker at Chrome er slått på. Kontroller også at Ikke forstyrr / Fokusassistent er slått av eller tillater Chrome.'
-        : 'Automatically copies finished notes to your clipboard so you can paste with Ctrl + V, and shows a desktop notification when copying is complete.<br/><br/>To use this feature, download the <a href="./div/autocopy.zip" target="_blank" rel="noopener noreferrer" style="color:#2563eb; text-decoration:underline;">Chrome extension here</a>.<br/><br/>Unzip the file and read the README text file inside for installation instructions.<br/><br/>If you do not see the notification pop-up in Windows, check that notifications are enabled both in Windows and in Chrome. In Windows, go to Settings → System → Notifications and make sure Chrome is turned on. Also check that Do Not Disturb / Focus Assist is turned off or allows Chrome.';
+        ? "<strong>Av:</strong><br/>Ingenting kopieres automatisk.<br/><br/><strong>Transkripsjon:</strong><br/>Den ferdige transkripsjonen kopieres automatisk.<br/><br/><strong>Notat:</strong><br/>Det ferdige genererte notatet kopieres automatisk.<br/><br/><strong>Begge:</strong><br/>Både transkripsjon og notat kopieres automatisk når de blir ferdige."
+        : "<strong>Off:</strong><br/>Nothing is copied automatically.<br/><br/><strong>Transcript:</strong><br/>The finished transcript is copied automatically.<br/><br/><strong>Note:</strong><br/>The finished generated note is copied automatically.<br/><br/><strong>Both:</strong><br/>Both transcript and note are copied automatically when each one finishes.";
     }
+
+    const options = Array.from(selectEl.options || []);
+    options.forEach((option) => {
+      const value = String(option.value || "").toLowerCase();
+      if (isNorwegian) {
+        if (value === "off") option.textContent = "Av";
+        else if (value === "transcript") option.textContent = "Transkripsjon";
+        else if (value === "note") option.textContent = "Notat";
+        else if (value === "both") option.textContent = "Begge";
+      } else {
+        if (value === "off") option.textContent = "Off";
+        else if (value === "transcript") option.textContent = "Transcript";
+        else if (value === "note") option.textContent = "Note";
+        else if (value === "both") option.textContent = "Both";
+      }
+    });
   };
 
-  const stored = localStorage.getItem(AUTO_COPY_STORAGE_KEY);
-  toggle.checked = stored === "true";
+  const stored = normalizeAutoCopyMode(localStorage.getItem(AUTO_COPY_STORAGE_KEY));
+  if ((localStorage.getItem(AUTO_COPY_STORAGE_KEY) || "") !== stored) {
+    localStorage.setItem(AUTO_COPY_STORAGE_KEY, stored);
+  }
+  selectEl.value = stored;
+  selectEl.addEventListener("change", () => {
+    const next = normalizeAutoCopyMode(selectEl.value);
+    selectEl.value = next;
+    localStorage.setItem(AUTO_COPY_STORAGE_KEY, next);
+  });
 
-  const persist = () => {
-    localStorage.setItem(AUTO_COPY_STORAGE_KEY, toggle.checked ? "true" : "false");
-  };
-
-  toggle.addEventListener("change", persist);
   langSelectTranscribe?.addEventListener("change", syncCopyLabel);
   window.addEventListener("transcribe-language-updated", syncCopyLabel);
-
   syncCopyLabel();
-  persist();
 }
 
 
@@ -165,7 +189,7 @@ function setupNoteAutoClearCopy() {
 function initPageUi() {
   setupAdsAndGridHeight();
   setupAutoGenerateTooltip();
-  setupAutoCopyToggle();
+  setupAutoCopyModeUi();
   setupPromptInclusionToggle();
   setupNoteAutoClearCopy();
 }
