@@ -1900,26 +1900,6 @@
           <button id="pauseResumeButton" disabled>Pause Recording</button>
           <button id="abortButton" type="button" disabled title="Discard the current recording without finishing transcription">Abort</button>
 
-          <!-- Auto-generate toggle (default OFF). When ON, note generation can be triggered on transcription finish. -->
-          <div class="auto-clear-toggle" id="autoGenerateToggleContainer" aria-label="Auto-generate note on transcription finish">
-            <label class="switch" title="Auto-generate">
-              <input id="autoGenerateToggle" type="checkbox" />
-              <span class="slider"></span>
-            </label>
-            <span class="auto-clear-label" id="autoGenerateToggleLabel">Auto-generate</span>
-          </div>
-
-          <!-- Tooltip "?" (same pattern as the autoclear tooltip) -->
-          <span id="autoGenerateTooltipContainer" class="help-tip" tabindex="0" aria-label="Auto-generate help">
-            ?
-            <span id="autoGenerateTooltipText" class="help-tip-content" role="tooltip">
-              <strong>When ON:</strong><br/>
-              Automatically generates a note when transcription finishes.<br/><br/>
-              <strong>When OFF:</strong><br/>
-              You generate notes manually using the Generate Note button.
-            </span>
-          </span>
-
           <!-- Shared auto-copy mode -->
           <div id="autoCopyModeContainer" style="display:inline-flex; align-items:center; gap:6px;">
             <label for="autoCopyModeSelect" id="autoCopyModeLabel" style="font-size:14px;">Auto-copy</label>
@@ -1927,7 +1907,6 @@
               <option value="off" selected>Off</option>
               <option value="transcript">Transcript</option>
               <option value="note">Note</option>
-              <option value="both">Both</option>
             </select>
           </div>
 
@@ -1939,9 +1918,7 @@
               <strong>Transcript:</strong><br/>
               Automatically copies the finished transcript.<br/><br/>
               <strong>Note:</strong><br/>
-              Automatically copies the finished generated note.<br/><br/>
-              <strong>Both:</strong><br/>
-              Automatically copies both transcript and generated note when each one finishes.
+              Automatically copies the finished generated note.
             </span>
           </span>
         </div>
@@ -2095,6 +2072,22 @@
               >
                 Mini-panel
               </button>
+              <div id="autoGenerateToggleContainer" class="auto-clear-toggle" aria-label="Auto-generate note on transcription finish" style="margin:0;">
+                <label class="switch" title="Auto-generate">
+                  <input id="autoGenerateToggle" type="checkbox" />
+                  <span class="slider"></span>
+                </label>
+                <span class="auto-clear-label" id="autoGenerateToggleLabel">Auto-generate</span>
+              </div>
+              <span id="autoGenerateTooltipContainer" class="help-tip help-tip-left" tabindex="0" aria-label="Auto-generate help" style="margin-left:0;">
+                ?
+                <span id="autoGenerateTooltipText" class="help-tip-content" role="tooltip">
+                  <strong>When ON:</strong><br/>
+                  Automatically generates a note when transcription finishes.<br/><br/>
+                  <strong>When OFF:</strong><br/>
+                  You generate notes manually using the Generate Note button.
+                </span>
+              </span>
             </div>
           </div>
         <div id="noteTimerStatusBelow" class="timer-status-below"></div>
