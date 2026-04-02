@@ -257,22 +257,29 @@ function setBadge(text, tone = 'idle') {
 }
 
 function showCopiedIndicator() {
+  copiedVisible = true;
   const indicator = $('miniCopiedIndicator');
   if (!indicator) return;
-
-  copiedVisible = true;
   indicator.hidden = false;
   indicator.textContent = tMini('copied');
   indicator.dataset.show = '1';
 }
 
 function hideCopiedIndicator() {
-  const indicator = $('miniCopiedIndicator');
   copiedVisible = false;
+  const indicator = $('miniCopiedIndicator');
   if (!indicator) return;
-
   indicator.hidden = true;
   indicator.dataset.show = '0';
+}
+
+function showCopyFailedIndicator() {
+  copiedVisible = true;
+  const indicator = $('miniCopiedIndicator');
+  if (!indicator) return;
+  indicator.hidden = false;
+  indicator.textContent = 'Copy failed';
+  indicator.dataset.show = '1';
 }
 
 function normalizePromptOptionLabel(item) {
@@ -749,6 +756,11 @@ function bindMainWindowEvents() {
 
   window.addEventListener('note-copied', () => {
     showCopiedIndicator();
+    handleStateRelevantEvent();
+  });
+
+  window.addEventListener('note-copy-failed', () => {
+    showCopyFailedIndicator();
     handleStateRelevantEvent();
   });
 
