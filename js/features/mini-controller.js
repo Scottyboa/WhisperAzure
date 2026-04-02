@@ -463,6 +463,36 @@ function bindMiniPanelEvents() {
   }
 }
 
+function installMiniPanelAutoScale(targetWindow) {
+  if (!targetWindow || targetWindow.__miniPanelScaleBound === true) return;
+  targetWindow.__miniPanelScaleBound = true;
+
+  const doc = targetWindow.document;
+  const root = doc.documentElement;
+
+  function applyScale() {
+    try {
+      const width = Math.max(1, targetWindow.innerWidth || MINI_PANEL_WIDTH);
+      const height = Math.max(1, targetWindow.innerHeight || MINI_PANEL_HEIGHT);
+
+      const scaleX = width / MINI_PANEL_WIDTH;
+      const scaleY = height / MINI_PANEL_HEIGHT;
+
+      // Current size is the max (1). Smaller windows scale content down.
+      // No lower clamp here, so content can become very tiny if you want.
+      const scale = Math.min(1, scaleX, scaleY);
+
+      root.style.setProperty('--mini-scale', String(scale));
+    } catch (_) {}
+  }
+
+  try {
+    targetWindow.addEventListener('resize', applyScale);
+  } catch (_) {}
+
+  applyScale();
+}
+
 function renderMiniPanelDocument(targetWindow) {
   const doc = targetWindow.document;
   doc.open();
@@ -487,6 +517,7 @@ function renderMiniPanelDocument(targetWindow) {
       --danger: #f38a8a;
       --info: #94b7ff;
       --select-bg: #13203a;
+      --mini-scale: 1;
     }
 
     * { box-sizing: border-box; }
@@ -502,7 +533,15 @@ function renderMiniPanelDocument(targetWindow) {
     }
 
     body {
-      padding: 10px;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .panel-shell {
+      width: calc(100% / var(--mini-scale));
+      height: calc(100% / var(--mini-scale));
+      transform: scale(var(--mini-scale));
+      transform-origin: top left;
     }
 
     .panel {
@@ -655,35 +694,38 @@ function renderMiniPanelDocument(targetWindow) {
   </style>
 </head>
 <body>
-  <div class="panel">
-    <div class="top">
-      <div id="miniTitle" class="title">Mini panel</div>
-      <button id="miniCloseButton" class="close-btn" type="button" aria-label="Close mini panel">×</button>
-    </div>
+  <div class="panel-shell">
+    <div class="panel">
+      <div class="top">
+        <div id="miniTitle" class="title">Mini panel</div>
+        <button id="miniCloseButton" class="close-btn" type="button" aria-label="Close mini panel">×</button>
+      </div>
 
-    <div class="status-row">
-      <div id="miniStatusBadge" class="badge" data-tone="idle">Idle</div>
-      <div id="miniCopiedIndicator" class="copied" data-show="0" hidden>Copied!</div>
-    </div>
+      <div class="status-row">
+        <div id="miniStatusBadge" class="badge" data-tone="idle">Idle</div>
+        <div id="miniCopiedIndicator" class="copied" data-show="0" hidden>Copied!</div>
+      </div>
 
-    <div id="miniStatusText" class="status-text">Ready</div>
+      <div id="miniStatusText" class="status-text">Ready</div>
 
-    <div class="grid">
-      <button id="miniStartButton" class="ctrl primary" type="button">Start</button>
-      <button id="miniPauseButton" class="ctrl" type="button">Pause</button>
-      <button id="miniStopButton" class="ctrl" type="button">Stop</button>
-      <button id="miniCopyButton" class="ctrl copy" type="button">Copy</button>
-    </div>
+      <div class="grid">
+        <button id="miniStartButton" class="ctrl primary" type="button">Start</button>
+        <button id="miniPauseButton" class="ctrl" type="button">Pause</button>
+        <button id="miniStopButton" class="ctrl" type="button">Stop</button>
+        <button id="miniCopyButton" class="ctrl copy" type="button">Copy</button>
+      </div>
 
-    <div class="prompt-wrap">
-      <label id="miniPromptLabel" class="prompt-label" for="miniPromptSelect">Prompt</label>
-      <select id="miniPromptSelect" class="prompt-select" aria-label="Prompt slot"></select>
+      <div class="prompt-wrap">
+        <label id="miniPromptLabel" class="prompt-label" for="miniPromptSelect">Prompt</label>
+        <select id="miniPromptSelect" class="prompt-select" aria-label="Prompt slot"></select>
+      </div>
     </div>
   </div>
 </body>
 </html>`);
   doc.close();
 
+  installMiniPanelAutoScale(targetWindow);
   bindMiniPanelEvents();
   updateMiniPanelUi();
   startRefreshLoop();
