@@ -538,8 +538,11 @@ function renderMiniPanelDocument(targetWindow) {
     }
 
     .panel-shell {
-      width: calc(100% / var(--mini-scale));
-      height: calc(100% / var(--mini-scale));
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 320px;
+      height: 290px;
       transform: scale(var(--mini-scale));
       transform-origin: top left;
     }
@@ -588,6 +591,7 @@ function renderMiniPanelDocument(targetWindow) {
       justify-content: space-between;
       gap: 8px;
       min-height: 30px;
+      min-width: 0;
     }
 
     .badge {
@@ -617,6 +621,8 @@ function renderMiniPanelDocument(targetWindow) {
       opacity: 1;
       line-height: 1;
       white-space: nowrap;
+      min-width: 0;
+      flex: 0 1 auto;
     }
 
     .status-text {
@@ -633,6 +639,12 @@ function renderMiniPanelDocument(targetWindow) {
       grid-template-columns: 1fr 1fr;
       gap: 8px;
       margin-top: 2px;
+    }
+
+    @media (max-width: 220px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     button.ctrl {
