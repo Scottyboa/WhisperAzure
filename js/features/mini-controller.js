@@ -735,6 +735,7 @@ async function openMiniPanel() {
 }
 
 function handleStateRelevantEvent() {
+  updateMiniPanelUi();
   requestUiRefresh();
 }
 
@@ -764,7 +765,8 @@ function bindMainWindowEvents() {
       reason === 'start-recording-click' ||
       reason === 'record-hotkey' ||
       reason === 'transcribe-provider-switched' ||
-      reason === 'recording-provider-initialized'
+      reason === 'recording-provider-initialized' ||
+      reason === 'note-generation-begin'
     ) {
       hideCopiedIndicator();
     }
