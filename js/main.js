@@ -356,11 +356,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showCopiedSystemNotification(detail) {
     if (!canUseWebNotifications()) {
+      console.warn('[notify] Web Notifications API not supported in this browser/context.');
       emitAppStateChanged('notification-unsupported');
       return false;
     }
 
     if (Notification.permission !== 'granted') {
+      console.warn(
+        '[notify] Notification skipped because permission is not granted:',
+        Notification.permission
+      );
       emitAppStateChanged('notification-not-granted', { permission: Notification.permission });
       return false;
     }
@@ -394,7 +399,8 @@ document.addEventListener('DOMContentLoaded', () => {
         textLength: detail?.textLength || 0,
       });
       return true;
-    } catch (_) {
+    } catch (err) {
+      console.warn('[notify] Notification creation failed:', err);
       emitAppStateChanged('system-notification-failed');
       return false;
     }
@@ -407,22 +413,30 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!isAutoCopyFinishedNoteEnabled()) return;
 
     const noteEl = document.getElementById('generatedNote');
+    const shouldNotify = shouldShowCopiedSystemNotification(detail);
+
+    if (shouldNotify) {
+      if (Notification.permission === 'granted') {
+        showCopiedSystemNotification(detail);
+      } else if (Notification.permission === 'default') {
+        requestNotificationPermissionIfNeeded()
+          .then((permission) => {
+            if (permission === 'granted') {
+              showCopiedSystemNotification(detail);
+            }
+          })
+          .catch(() => {});
+      }
+    }
 
     if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
       navigator.clipboard.writeText(text)
         .then(() => {
           emitCopiedEvent(text, 'auto-copy');
-          if (shouldShowCopiedSystemNotification(detail)) {
-            showCopiedSystemNotification(detail);
-          }
         })
         .catch(() => {
           const ok = tryExecCommandCopyFromField(noteEl, text, 'auto-copy');
-          if (ok) {
-            if (shouldShowCopiedSystemNotification(detail)) {
-              showCopiedSystemNotification(detail);
-            }
-          } else {
+          if (!ok) {
             emitAppStateChanged('note-auto-copy-failed', {
               textLength: text.length,
             });
@@ -432,11 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const ok = tryExecCommandCopyFromField(noteEl, text, 'auto-copy');
-    if (ok) {
-      if (shouldShowCopiedSystemNotification(detail)) {
-        showCopiedSystemNotification(detail);
-      }
-    } else {
+    if (!ok) {
       emitAppStateChanged('note-auto-copy-failed', {
         textLength: text.length,
       });
