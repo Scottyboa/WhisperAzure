@@ -237,6 +237,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function emitCopyFailedEvent(text, source = 'manual-copy', reason = 'unknown') {
+    try {
+      window.dispatchEvent(new CustomEvent('note-copy-failed', {
+        detail: {
+          textLength: String(text || '').length,
+          failedAt: Date.now(),
+          source,
+          reason,
+        }
+      }));
+    } catch (_) {}
+    emitAppStateChanged('note-copy-failed', {
+      textLength: String(text || '').length,
+      source,
+      reason,
+    });
+  }
+
   function tryExecCommandCopyFromField(field, text, source = 'manual-copy') {
     try {
       if (!field) return false;
@@ -265,9 +283,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (ok) {
         emitCopiedEvent(text, source);
+      } else {
+        emitCopyFailedEvent(text, source, 'execCommand-returned-false');
       }
       return !!ok;
     } catch (_) {
+      emitCopyFailedEvent(text, source, 'execCommand-threw');
       return false;
     } finally {
       try { window.getSelection()?.removeAllRanges?.(); } catch (_) {}
@@ -434,12 +455,14 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(() => {
           emitCopiedEvent(text, 'auto-copy');
         })
-        .catch(() => {
+        .catch((error) => {
           const ok = tryExecCommandCopyFromField(noteEl, text, 'auto-copy');
           if (!ok) {
-            emitAppStateChanged('note-auto-copy-failed', {
-              textLength: text.length,
-            });
+            emitCopyFailedEvent(
+              text,
+              'auto-copy',
+              error?.name || 'clipboard-write-failed'
+            );
           }
         });
       return;
@@ -447,9 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const ok = tryExecCommandCopyFromField(noteEl, text, 'auto-copy');
     if (!ok) {
-      emitAppStateChanged('note-auto-copy-failed', {
-        textLength: text.length,
-      });
+      emitCopyFailedEvent(text, 'auto-copy', 'clipboard-api-unavailable');
     }
   }
 
@@ -899,13 +920,19 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(() => {
           emitCopied();
         })
-        .catch(() => {
+        .catch((error) => {
           try {
             noteEl?.focus();
             noteEl?.select();
-            document.execCommand('copy');
-            emitCopied();
-          } catch (_) {}
+            const ok = document.execCommand('copy');
+            if (ok) {
+              emitCopied();
+            } else {
+              emitCopyFailedEvent(text, 'manual-copy', 'execCommand-returned-false');
+            }
+          } catch (_) {
+            emitCopyFailedEvent(text, 'manual-copy', error?.name || 'clipboard-write-failed');
+          }
           finally {
             try { window.getSelection()?.removeAllRanges?.(); } catch (_) {}
           }
@@ -916,10 +943,15 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       noteEl?.focus();
       noteEl?.select();
-      document.execCommand('copy');
-      emitCopied();
-      return true;
+      const ok = document.execCommand('copy');
+      if (ok) {
+        emitCopied();
+        return true;
+      }
+      emitCopyFailedEvent(text, 'manual-copy', 'execCommand-returned-false');
+      return false;
     } catch (_) {
+      emitCopyFailedEvent(text, 'manual-copy', 'execCommand-threw');
       return false;
     } finally {
       try { window.getSelection()?.removeAllRanges?.(); } catch (_) {}
