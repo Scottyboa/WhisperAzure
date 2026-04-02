@@ -58,7 +58,8 @@ function setupAutoGenerateTooltip() {
 
 function normalizeAutoCopyMode(value) {
   const mode = String(value || "").toLowerCase();
-  return ["off", "transcript", "note", "both"].includes(mode) ? mode : "off";
+  if (mode === "both") return "note";
+  return ["off", "transcript", "note"].includes(mode) ? mode : "off";
 }
 
 function setupAutoCopyModeUi() {
@@ -75,8 +76,8 @@ function setupAutoCopyModeUi() {
     }
     if (tooltipEl) {
       tooltipEl.innerHTML = isNorwegian
-        ? "<strong>Av:</strong><br/>Ingenting kopieres automatisk.<br/><br/><strong>Transkripsjon:</strong><br/>Den ferdige transkripsjonen kopieres automatisk.<br/><br/><strong>Notat:</strong><br/>Det ferdige genererte notatet kopieres automatisk.<br/><br/><strong>Begge:</strong><br/>Både transkripsjon og notat kopieres automatisk når de blir ferdige."
-        : "<strong>Off:</strong><br/>Nothing is copied automatically.<br/><br/><strong>Transcript:</strong><br/>The finished transcript is copied automatically.<br/><br/><strong>Note:</strong><br/>The finished generated note is copied automatically.<br/><br/><strong>Both:</strong><br/>Both transcript and note are copied automatically when each one finishes.";
+        ? "<strong>Av:</strong><br/>Ingenting kopieres automatisk.<br/><br/><strong>Transkripsjon:</strong><br/>Den ferdige transkripsjonen kopieres automatisk.<br/><br/><strong>Notat:</strong><br/>Det ferdige genererte notatet kopieres automatisk."
+        : "<strong>Off:</strong><br/>Nothing is copied automatically.<br/><br/><strong>Transcript:</strong><br/>The finished transcript is copied automatically.<br/><br/><strong>Note:</strong><br/>The finished generated note is copied automatically.";
     }
 
     const options = Array.from(selectEl.options || []);
@@ -86,12 +87,10 @@ function setupAutoCopyModeUi() {
         if (value === "off") option.textContent = "Av";
         else if (value === "transcript") option.textContent = "Transkripsjon";
         else if (value === "note") option.textContent = "Notat";
-        else if (value === "both") option.textContent = "Begge";
       } else {
         if (value === "off") option.textContent = "Off";
         else if (value === "transcript") option.textContent = "Transcript";
         else if (value === "note") option.textContent = "Note";
-        else if (value === "both") option.textContent = "Both";
       }
     });
   };
