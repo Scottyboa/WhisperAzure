@@ -8,8 +8,8 @@
 // - Includes prompt slot selector (number + title only)
 
 const MINI_PANEL_WINDOW_NAME = 'whisperazure-mini-panel';
-const MINI_PANEL_WIDTH = 320;
-const MINI_PANEL_HEIGHT = 290;
+const MINI_PANEL_WIDTH = 370;
+const MINI_PANEL_HEIGHT = 340;
 const STATE_REFRESH_MS = 350;
 
 let miniWindow = null;
@@ -60,6 +60,17 @@ function tMini(key) {
       de: 'Kopiert!',
       fr: 'Copié !',
       it: 'Copiato!',
+    },
+    copyFailed: {
+      en: 'Copy failed',
+      no: 'Kopiering feilet',
+      nb: 'Kopiering feilet',
+      nn: 'Kopiering feila',
+      sv: 'Kopiering misslyckades',
+      da: 'Kopiering mislykkedes',
+      de: 'Kopieren fehlgeschlagen',
+      fr: 'Échec de la copie',
+      it: 'Copia non riuscita',
     },
     idle: {
       en: 'Idle',
@@ -138,6 +149,17 @@ function tMini(key) {
       fr: 'Génération auto',
       it: 'Generazione auto',
     },
+    autoCopy: {
+      en: 'Auto-copy',
+      no: 'Auto-copy',
+      nb: 'Auto-copy',
+      nn: 'Auto-copy',
+      sv: 'Autokopiera',
+      da: 'Auto-copy',
+      de: 'Auto-Kopie',
+      fr: 'Auto-copie',
+      it: 'Copia auto',
+    },
     miniPanel: {
       en: 'Mini panel',
       no: 'Mini-panel',
@@ -160,6 +182,17 @@ function tMini(key) {
       fr: 'Prompt',
       it: 'Prompt',
     },
+    usePrompt: {
+      en: 'Use',
+      no: 'Bruk',
+      nb: 'Bruk',
+      nn: 'Bruk',
+      sv: 'Använd',
+      da: 'Brug',
+      de: 'Nutzen',
+      fr: 'Utiliser',
+      it: 'Usa',
+    },
     untitled: {
       en: 'Untitled',
       no: 'Uten tittel',
@@ -170,6 +203,83 @@ function tMini(key) {
       de: 'Ohne Titel',
       fr: 'Sans titre',
       it: 'Senza titolo',
+    },
+    start: {
+      en: 'Start',
+      no: 'Start',
+      nb: 'Start',
+      nn: 'Start',
+      sv: 'Start',
+      da: 'Start',
+      de: 'Start',
+      fr: 'Démarrer',
+      it: 'Avvia',
+    },
+    stop: {
+      en: 'Stop',
+      no: 'Stopp',
+      nb: 'Stopp',
+      nn: 'Stopp',
+      sv: 'Stoppa',
+      da: 'Stop',
+      de: 'Stopp',
+      fr: 'Arrêter',
+      it: 'Stop',
+    },
+    pause: {
+      en: 'Pause',
+      no: 'Pause',
+      nb: 'Pause',
+      nn: 'Pause',
+      sv: 'Pausa',
+      da: 'Pause',
+      de: 'Pause',
+      fr: 'Pause',
+      it: 'Pausa',
+    },
+    abort: {
+      en: 'Abort',
+      no: 'Avbryt',
+      nb: 'Avbryt',
+      nn: 'Avbryt',
+      sv: 'Avbryt',
+      da: 'Afbryd',
+      de: 'Abbrechen',
+      fr: 'Annuler',
+      it: 'Interrompi',
+    },
+    off: {
+      en: 'Off',
+      no: 'Av',
+      nb: 'Av',
+      nn: 'Av',
+      sv: 'Av',
+      da: 'Fra',
+      de: 'Aus',
+      fr: 'Off',
+      it: 'Off',
+    },
+    transcript: {
+      en: 'Transcript',
+      no: 'Transkripsjon',
+      nb: 'Transkripsjon',
+      nn: 'Transkripsjon',
+      sv: 'Transkript',
+      da: 'Transskription',
+      de: 'Transkript',
+      fr: 'Transcription',
+      it: 'Trascrizione',
+    },
+    note: {
+      en: 'Note',
+      no: 'Notat',
+      nb: 'Notat',
+      nn: 'Notat',
+      sv: 'Anteckning',
+      da: 'Note',
+      de: 'Notiz',
+      fr: 'Note',
+      it: 'Nota',
     },
   };
 
@@ -186,9 +296,13 @@ function getSafeState() {
       canStart: false,
       canStop: false,
       canPauseResume: false,
+      canAbort: false,
       hasNote: false,
       statusText: '',
       pauseResumeLabel: 'Pause',
+      autoGenerateEnabled: false,
+      autoCopyMode: 'off',
+      usePromptEnabled: false,
     };
   }
 
@@ -201,9 +315,13 @@ function getSafeState() {
       canStart: false,
       canStop: false,
       canPauseResume: false,
+      canAbort: false,
       hasNote: false,
       statusText: '',
       pauseResumeLabel: 'Pause',
+      autoGenerateEnabled: false,
+      autoCopyMode: 'off',
+      usePromptEnabled: false,
     };
   }
 }
@@ -267,6 +385,13 @@ function setChecked(id, checked) {
   }
 }
 
+function setValue(id, value) {
+  const el = $(id);
+  if (el && 'value' in el) {
+    el.value = value == null ? '' : String(value);
+  }
+}
+
 function setBadge(text, tone = 'idle') {
   const badge = $('miniStatusBadge');
   if (!badge) return;
@@ -296,7 +421,7 @@ function showCopyFailedIndicator() {
   const indicator = $('miniCopiedIndicator');
   if (!indicator) return;
   indicator.hidden = false;
-  indicator.textContent = 'Copy failed';
+  indicator.textContent = tMini('copyFailed');
   indicator.dataset.show = '1';
 }
 
@@ -352,25 +477,65 @@ function syncPromptDropdown() {
   select.disabled = options.length === 0;
 }
 
+function syncAutoCopyOptions() {
+  const select = $('miniAutoCopyModeSelect');
+  if (!select) return;
+
+  const desired = [
+    { value: 'off', label: tMini('off') },
+    { value: 'transcript', label: tMini('transcript') },
+    { value: 'note', label: tMini('note') },
+  ];
+
+  const existingSignature = Array.from(select.options)
+    .map((opt) => `${opt.value}|${opt.textContent}`)
+    .join('||');
+  const nextSignature = desired
+    .map((opt) => `${opt.value}|${opt.label}`)
+    .join('||');
+
+  if (existingSignature !== nextSignature) {
+    select.innerHTML = '';
+    desired.forEach((item) => {
+      const option = select.ownerDocument.createElement('option');
+      option.value = item.value;
+      option.textContent = item.label;
+      select.appendChild(option);
+    });
+  }
+}
+
 function updateMiniPanelUi() {
   const doc = getMiniDoc();
   if (!doc) return;
 
   const state = getSafeState();
   const statusText = String(state.statusText || '').trim();
-  const pauseResumeLabel = String(state.pauseResumeLabel || '').trim() || 'Pause/Resume';
+  const pauseResumeLabel = String(state.pauseResumeLabel || '').trim() || tMini('pause');
 
   setDisabled('miniStartButton', !state.canStart);
   setDisabled('miniStopButton', !state.canStop);
   setDisabled('miniPauseButton', !state.canPauseResume);
   setDisabled('miniCopyButton', !state.hasNote);
+  setDisabled('miniAbortButton', !state.canAbort);
 
+  setText('miniStartButton', tMini('start'));
+  setText('miniStopButton', tMini('stop'));
   setText('miniPauseButton', pauseResumeLabel);
+  setText('miniCopyButton', tMini('note'));
+  setText('miniAbortButton', tMini('abort'));
   setText('miniStatusText', statusText || tMini('ready'));
   setText('miniTitle', tMini('miniPanel'));
   setText('miniAutoGenerateLabel', tMini('autoGenerate'));
+  setText('miniAutoCopyLabel', tMini('autoCopy'));
   setText('miniPromptLabel', tMini('prompt'));
+  setText('miniUsePromptLabel', tMini('usePrompt'));
+
   setChecked('miniAutoGenerateToggle', !!state.autoGenerateEnabled);
+  setChecked('miniUsePromptToggle', !!state.usePromptEnabled);
+
+  syncAutoCopyOptions();
+  setValue('miniAutoCopyModeSelect', state.autoCopyMode || 'off');
 
   if (state.noteBusy) {
     setBadge(tMini('generatingNote'), 'note');
@@ -388,9 +553,13 @@ function updateMiniPanelUi() {
 
   const indicator = $('miniCopiedIndicator');
   if (indicator) {
-    indicator.textContent = tMini('copied');
-    indicator.hidden = !copiedVisible;
-    indicator.dataset.show = copiedVisible ? '1' : '0';
+    if (copiedVisible) {
+      indicator.hidden = false;
+      indicator.dataset.show = '1';
+    } else {
+      indicator.hidden = true;
+      indicator.dataset.show = '0';
+    }
   }
 
   syncPromptDropdown();
@@ -439,9 +608,12 @@ function bindMiniPanelEvents() {
   const stopButton = $('miniStopButton');
   const pauseButton = $('miniPauseButton');
   const copyButton = $('miniCopyButton');
+  const abortButton = $('miniAbortButton');
   const closeButton = $('miniCloseButton');
   const promptSelect = $('miniPromptSelect');
   const autoGenerateToggle = $('miniAutoGenerateToggle');
+  const autoCopyModeSelect = $('miniAutoCopyModeSelect');
+  const usePromptToggle = $('miniUsePromptToggle');
 
   if (startButton) {
     startButton.addEventListener('click', () => {
@@ -457,7 +629,7 @@ function bindMiniPanelEvents() {
 
   if (pauseButton) {
     pauseButton.addEventListener('click', () => {
-      callAppAction('togglePauseResume');
+      callAppAction('pauseResumeRecording');
     });
   }
 
@@ -467,9 +639,27 @@ function bindMiniPanelEvents() {
     });
   }
 
+  if (abortButton) {
+    abortButton.addEventListener('click', () => {
+      callAppAction('abortRecording');
+    });
+  }
+
   if (autoGenerateToggle) {
     autoGenerateToggle.addEventListener('change', () => {
       callAppAction('setAutoGenerateEnabled', !!autoGenerateToggle.checked);
+    });
+  }
+
+  if (autoCopyModeSelect) {
+    autoCopyModeSelect.addEventListener('change', () => {
+      callAppAction('setAutoCopyMode', autoCopyModeSelect.value);
+    });
+  }
+
+  if (usePromptToggle) {
+    usePromptToggle.addEventListener('change', () => {
+      callAppAction('setUsePromptEnabled', !!usePromptToggle.checked);
     });
   }
 
@@ -477,7 +667,7 @@ function bindMiniPanelEvents() {
     promptSelect.addEventListener('change', () => {
       const slot = String(promptSelect.value || '').trim();
       if (!slot) return;
-      callAppAction('selectPromptSlot', slot);
+      callAppAction('setSelectedPromptSlot', slot);
     });
   }
 
@@ -504,9 +694,6 @@ function installMiniPanelAutoScale(targetWindow) {
 
       const scaleX = width / MINI_PANEL_WIDTH;
       const scaleY = height / MINI_PANEL_HEIGHT;
-
-      // Current size is the max (1). Smaller windows scale content down.
-      // No lower clamp here, so content can become very tiny if you want.
       const scale = Math.min(1, scaleX, scaleY);
 
       root.style.setProperty('--mini-scale', String(scale));
@@ -568,8 +755,8 @@ function renderMiniPanelDocument(targetWindow) {
       position: absolute;
       top: 0;
       left: 0;
-      width: 320px;
-      height: 290px;
+      width: ${MINI_PANEL_WIDTH}px;
+      height: ${MINI_PANEL_HEIGHT}px;
       transform: scale(var(--mini-scale));
       transform-origin: top left;
     }
@@ -578,11 +765,11 @@ function renderMiniPanelDocument(targetWindow) {
       height: 100%;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
       background: linear-gradient(180deg, rgba(18,29,52,0.98), rgba(14,22,40,0.98));
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 10px;
+      padding: 8px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.35);
     }
 
@@ -590,7 +777,7 @@ function renderMiniPanelDocument(targetWindow) {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
+      gap: 6px;
     }
 
     .title {
@@ -616,21 +803,21 @@ function renderMiniPanelDocument(targetWindow) {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      min-height: 30px;
+      gap: 6px;
+      min-height: 24px;
       min-width: 0;
     }
 
     .badge {
       display: inline-flex;
       align-items: center;
-      min-height: 24px;
+      min-height: 22px;
       padding: 4px 8px;
       border-radius: 999px;
       border: 1px solid var(--border);
       background: rgba(255,255,255,0.04);
       color: var(--muted);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       white-space: nowrap;
     }
@@ -642,7 +829,7 @@ function renderMiniPanelDocument(targetWindow) {
     .badge[data-tone="ready"] { color: var(--accent); }
 
     .copied {
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 800;
       color: var(--accent);
       opacity: 1;
@@ -653,39 +840,54 @@ function renderMiniPanelDocument(targetWindow) {
     }
 
     .status-text {
-      min-height: 18px;
-      font-size: 11px;
+      min-height: 16px;
+      font-size: 10px;
       color: var(--muted);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    .toggle-row {
+    .settings-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      min-height: 34px;
+      min-height: 38px;
       padding: 6px 8px;
       border: 1px solid var(--border);
       border-radius: 10px;
       background: rgba(255,255,255,0.02);
     }
 
-    .toggle-label {
-      font-size: 11px;
+    .setting-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      flex: 1 1 0;
+    }
+
+    .setting-group--copy {
+      justify-content: flex-end;
+      flex: 1.15 1 0;
+    }
+
+    .toggle-label,
+    .setting-label {
+      font-size: 10px;
       font-weight: 700;
       color: var(--muted);
       line-height: 1.2;
       user-select: none;
+      white-space: nowrap;
     }
 
     .mini-switch {
       position: relative;
       display: inline-block;
-      width: 38px;
-      height: 22px;
+      width: 34px;
+      height: 20px;
       flex: 0 0 auto;
     }
 
@@ -709,8 +911,8 @@ function renderMiniPanelDocument(targetWindow) {
     .mini-slider::before {
       content: "";
       position: absolute;
-      width: 16px;
-      height: 16px;
+      width: 14px;
+      height: 14px;
       left: 2px;
       top: 2px;
       border-radius: 50%;
@@ -723,19 +925,33 @@ function renderMiniPanelDocument(targetWindow) {
     }
 
     .mini-switch input:checked + .mini-slider::before {
-      transform: translateX(16px);
+      transform: translateX(14px);
+    }
+
+    .mini-select {
+      width: 100%;
+      min-width: 0;
+      max-width: 120px;
+      border: 1px solid var(--button-border);
+      background: var(--select-bg);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 5px 24px 5px 8px;
+      font-size: 11px;
+      line-height: 1.2;
+      outline: none;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 2px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 1px;
     }
 
-    @media (max-width: 220px) {
+    @media (max-width: 240px) {
       .grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
       }
     }
 
@@ -744,11 +960,11 @@ function renderMiniPanelDocument(targetWindow) {
       background: var(--button);
       color: var(--text);
       border-radius: 10px;
-      padding: 10px 8px;
-      font-size: 12px;
+      padding: 8px 7px;
+      font-size: 11px;
       font-weight: 700;
       cursor: pointer;
-      min-height: 40px;
+      min-height: 35px;
     }
 
     button.ctrl:disabled {
@@ -764,36 +980,84 @@ function renderMiniPanelDocument(targetWindow) {
       background: #17382f;
     }
 
+    button.ctrl.abort {
+      color: var(--danger);
+      border-color: rgba(243,138,138,0.35);
+    }
+
     .prompt-wrap {
       display: flex;
-      flex-direction: column;
-      gap: 4px;
-      margin-top: 2px;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .prompt-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      flex: 1 1 74%;
+    }
+
+    .prompt-right {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      flex: 0 0 auto;
+      min-width: 0;
     }
 
     .prompt-label {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       color: var(--muted);
       line-height: 1.2;
+      white-space: nowrap;
     }
 
     .prompt-select {
       width: 100%;
+      min-width: 0;
       border: 1px solid var(--button-border);
       background: var(--select-bg);
       color: var(--text);
       border-radius: 10px;
-      padding: 8px 10px;
-      font-size: 12px;
+      padding: 6px 8px;
+      font-size: 11px;
       font-weight: 600;
-      min-height: 38px;
+      min-height: 28px;
       outline: none;
     }
 
     .prompt-select:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+
+    .mini-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .mini-check input {
+      margin: 0;
+      width: 13px;
+      height: 13px;
+      accent-color: var(--accent);
+      flex: 0 0 auto;
     }
   </style>
 </head>
@@ -812,24 +1076,43 @@ function renderMiniPanelDocument(targetWindow) {
 
       <div id="miniStatusText" class="status-text">Ready</div>
 
-      <div class="toggle-row">
-        <div id="miniAutoGenerateLabel" class="toggle-label">Auto-generate</div>
-        <label class="mini-switch" aria-label="Auto-generate">
-          <input id="miniAutoGenerateToggle" type="checkbox" />
-          <span class="mini-slider"></span>
-        </label>
+      <div class="settings-row">
+        <div class="setting-group">
+          <div id="miniAutoGenerateLabel" class="toggle-label">Auto-generate</div>
+          <label class="mini-switch" aria-label="Auto-generate">
+            <input id="miniAutoGenerateToggle" type="checkbox" />
+            <span class="mini-slider"></span>
+          </label>
+        </div>
+        <div class="setting-group setting-group--copy">
+          <label id="miniAutoCopyLabel" class="setting-label" for="miniAutoCopyModeSelect">Auto-copy</label>
+          <select id="miniAutoCopyModeSelect" class="mini-select" aria-label="Auto-copy mode">
+            <option value="off">Off</option>
+            <option value="transcript">Transcript</option>
+            <option value="note">Note</option>
+          </select>
+        </div>
       </div>
 
       <div class="grid">
         <button id="miniStartButton" class="ctrl primary" type="button">Start</button>
         <button id="miniPauseButton" class="ctrl" type="button">Pause</button>
         <button id="miniStopButton" class="ctrl" type="button">Stop</button>
-        <button id="miniCopyButton" class="ctrl copy" type="button">Copy</button>
+        <button id="miniCopyButton" class="ctrl copy" type="button">Note</button>
+        <button id="miniAbortButton" class="ctrl abort" type="button">Abort</button>
       </div>
 
       <div class="prompt-wrap">
-        <label id="miniPromptLabel" class="prompt-label" for="miniPromptSelect">Prompt</label>
-        <select id="miniPromptSelect" class="prompt-select" aria-label="Prompt slot"></select>
+        <div class="prompt-left">
+          <label id="miniPromptLabel" class="prompt-label" for="miniPromptSelect">Prompt</label>
+          <select id="miniPromptSelect" class="prompt-select" aria-label="Prompt slot"></select>
+        </div>
+        <div class="prompt-right">
+          <label class="mini-check" for="miniUsePromptToggle">
+            <input id="miniUsePromptToggle" type="checkbox" />
+            <span id="miniUsePromptLabel">Use</span>
+          </label>
+        </div>
       </div>
     </div>
   </div>
@@ -913,7 +1196,17 @@ function bindMainWindowEvents() {
     handleStateRelevantEvent();
   });
 
+  window.addEventListener('transcript-copied', () => {
+    showCopiedIndicator();
+    handleStateRelevantEvent();
+  });
+
   window.addEventListener('note-copy-failed', () => {
+    showCopyFailedIndicator();
+    handleStateRelevantEvent();
+  });
+
+  window.addEventListener('transcript-copy-failed', () => {
     showCopyFailedIndicator();
     handleStateRelevantEvent();
   });
@@ -951,6 +1244,7 @@ function bindMainWindowEvents() {
       'generateNoteButton',
       'abortNoteButton',
       'copyNoteButton',
+      'copyTranscriptionButton',
     ]);
 
     if (target.id && watchedIds.has(target.id)) {
@@ -959,7 +1253,7 @@ function bindMainWindowEvents() {
       }
       handleStateRelevantEvent();
 
-      if (target.id === 'copyNoteButton') {
+      if (target.id === 'copyNoteButton' || target.id === 'copyTranscriptionButton') {
         window.setTimeout(() => {
           showCopiedIndicator();
         }, 40);
