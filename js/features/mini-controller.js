@@ -687,18 +687,26 @@ function installMiniPanelAutoScale(targetWindow) {
   const doc = targetWindow.document;
   const root = doc.documentElement;
 
-  function applyScale() {
-    try {
-      const width = Math.max(1, targetWindow.innerWidth || MINI_PANEL_WIDTH);
-      const height = Math.max(1, targetWindow.innerHeight || MINI_PANEL_HEIGHT);
+  let basePanelHeight = null;
 
-      const scaleX = width / MINI_PANEL_WIDTH;
-      const scaleY = height / MINI_PANEL_HEIGHT;
-      const scale = Math.min(1, scaleX, scaleY);
+function applyScale() {
+  try {
+    const width = Math.max(1, targetWindow.innerWidth || MINI_PANEL_WIDTH);
+    const height = Math.max(1, targetWindow.innerHeight || MINI_PANEL_HEIGHT);
 
-      root.style.setProperty('--mini-scale', String(scale));
-    } catch (_) {}
-  }
+    const panel = doc.querySelector('.panel-shell');
+    if (!basePanelHeight && panel) {
+      basePanelHeight = panel.scrollHeight;
+    }
+
+    const effectiveHeight = basePanelHeight || MINI_PANEL_HEIGHT;
+    const scaleX = width / MINI_PANEL_WIDTH;
+    const scaleY = height / effectiveHeight;
+    const scale = Math.min(1, scaleX, scaleY);
+
+    root.style.setProperty('--mini-scale', String(scale));
+  } catch (_) {}
+}
 
   try {
     targetWindow.addEventListener('resize', applyScale);
@@ -756,13 +764,13 @@ function renderMiniPanelDocument(targetWindow) {
       top: 0;
       left: 0;
       width: ${MINI_PANEL_WIDTH}px;
-      height: ${MINI_PANEL_HEIGHT}px;
+      height: auto;
       transform: scale(var(--mini-scale));
       transform-origin: top left;
     }
 
     .panel {
-      height: 100%;
+      height: auto;
       display: flex;
       flex-direction: column;
       gap: 6px;
