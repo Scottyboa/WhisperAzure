@@ -1195,10 +1195,45 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function getUsePromptToggleElement() {
+    return (
+      document.getElementById('includePromptToggle') ||
+      document.getElementById('usePromptCheckbox') ||
+      null
+    );
+  }
+
+  function getUsePromptEnabled() {
+    return !!getUsePromptToggleElement()?.checked;
+  }
+
+  function setUsePromptEnabled(enabled) {
+    const el = getUsePromptToggleElement();
+    if (!el || el.type !== 'checkbox') return false;
+
+    const next = !!enabled;
+    if (el.checked === next) return true;
+
+    el.checked = next;
+    try {
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    } catch (_) {
+      try {
+        const ev = document.createEvent('Event');
+        ev.initEvent('change', true, true);
+        el.dispatchEvent(ev);
+      } catch {}
+    }
+
+    emitAppStateChanged('use-prompt-toggle-change', { enabled: next });
+    return true;
+  }
+
   function getMiniPanelState() {
     const startBtn = document.getElementById('startButton');
     const stopBtn = document.getElementById('stopButton');
     const pauseBtn = document.getElementById('pauseResumeButton');
+    const abortBtn = document.getElementById('abortButton');
     const noteEl = document.getElementById('generatedNote');
     const statusEl = document.getElementById('statusMessage');
 
@@ -1208,10 +1243,13 @@ document.addEventListener('DOMContentLoaded', () => {
       canStart: !(startBtn?.disabled ?? true),
       canStop: !(stopBtn?.disabled ?? true),
       canPauseResume: !(pauseBtn?.disabled ?? true),
+      canAbort: !(abortBtn?.disabled ?? true),
       hasNote: !!String(noteEl?.value || '').trim(),
       statusText: String(statusEl?.innerText || '').trim(),
       pauseResumeLabel: String(pauseBtn?.textContent || '').trim(),
       autoGenerateEnabled: !!getAutoGenerateEnabled(),
+      autoCopyMode: getAutoCopyMode(),
+      usePromptEnabled: getUsePromptEnabled(),
     };
   }
 
@@ -1235,6 +1273,8 @@ document.addEventListener('DOMContentLoaded', () => {
   app.setAutoGenerateEnabled = setAutoGenerateEnabled;
   app.getAutoCopyMode = getAutoCopyMode;
   app.setAutoCopyMode = setAutoCopyMode;
+  app.getUsePromptEnabled = getUsePromptEnabled;
+  app.setUsePromptEnabled = setUsePromptEnabled;
   app.initAutoGenerateToggle = initAutoGenerateToggle;
   app.initAutoCopyModeSelect = initAutoCopyModeSelect;
   app.emitTranscriptionFinished = emitTranscriptionFinished;
@@ -1282,8 +1322,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('pauseResumeButton')?.click();
     emitAppStateChanged('pause-resume-click');
   };
+  app.pauseResumeRecording = () => {
+    document.getElementById('pauseResumeButton')?.click();
+    emitAppStateChanged('pause-resume-click');
+  };
+  app.abortRecording = () => {
+    document.getElementById('abortButton')?.click();
+    emitAppStateChanged('abort-recording-click');
+  };
   app.copyGeneratedNote = () => copyGeneratedNoteToClipboard();
   app.copyTranscription = () => copyTranscriptionToClipboard();
+  app.setSelectedPromptSlot = (slot) => selectPromptSlot(slot);
   app.getMiniPanelState = () => getMiniPanelState();
   app.openMiniPanel = () => {
     try {
@@ -1401,29 +1450,54 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const promptSlotEl = document.getElementById('promptSlot');
-  if (promptSlotEl && promptSlotEl.dataset.miniPromptBound !== '1') {
-    promptSlotEl.dataset.miniPromptBound = '1';
-    promptSlotEl.addEventListener('change', () => {
-      emitAppStateChanged('prompt-slot-dom-change', {
-        slot: String(promptSlotEl.value || '').trim(),
-      });
+  const promptSlotSelect = document.getElementById('promptSlot');
+  if (promptSlotSelect && promptSlotSelect.dataset.miniBound !== '1') {
+    promptSlotSelect.dataset.miniBound = '1';
+    promptSlotSelect.addEventListener('change', () => {
+      const slot = String(promptSlotSelect.value || '').trim();
+      emitAppStateChanged('prompt-slot-changed', { slot });
+
+      try {
+        window.dispatchEvent(new CustomEvent('prompt-slot-selection-changed', {
+          detail: {
+            profileId: getEffectivePromptProfileId(),
+            slot,
+          },
+        }));
+      } catch (_) {}
     });
   }
 
-  window.addEventListener('prompt-slot-selection-changed', (event) => {
-    emitAppStateChanged('prompt-slot-selection-event', {
-      slot: String(event?.detail?.slot || '').trim(),
+  const promptSlotNameInput = document.getElementById('promptSlotName');
+  if (promptSlotNameInput && promptSlotNameInput.dataset.miniBound !== '1') {
+    promptSlotNameInput.dataset.miniBound = '1';
+
+    const emitPromptNamesChanged = () => {
+      emitAppStateChanged('prompt-slot-names-changed');
+      try {
+        window.dispatchEvent(new CustomEvent('prompt-slot-names-changed', {
+          detail: { profileId: getEffectivePromptProfileId() }
+        }));
+      } catch (_) {}
+    };
+
+    promptSlotNameInput.addEventListener('input', emitPromptNamesChanged);
+    promptSlotNameInput.addEventListener('change', emitPromptNamesChanged);
+    promptSlotNameInput.addEventListener('blur', emitPromptNamesChanged);
+  }
+
+  const promptProfileInput = document.getElementById('promptProfileInput');
+  if (promptProfileInput && promptProfileInput.dataset.miniBound !== '1') {
+    promptProfileInput.dataset.miniBound = '1';
+    promptProfileInput.addEventListener('change', () => {
+      emitAppStateChanged('prompt-profile-changed');
+      try {
+        window.dispatchEvent(new CustomEvent('prompt-profile-changed', {
+          detail: { profileId: getEffectivePromptProfileId() }
+        }));
+      } catch (_) {}
     });
-  });
-
-  window.addEventListener('prompt-slot-names-changed', () => {
-    emitAppStateChanged('prompt-slot-names-changed');
-  });
-
-  window.addEventListener('prompt-profile-changed', () => {
-    emitAppStateChanged('prompt-profile-changed');
-  });
+  }
 
   const statusMessageEl = document.getElementById('statusMessage');
   if (statusMessageEl && !window.__miniStatusObserverBound) {
