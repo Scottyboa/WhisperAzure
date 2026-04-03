@@ -1211,6 +1211,7 @@ document.addEventListener('DOMContentLoaded', () => {
       hasNote: !!String(noteEl?.value || '').trim(),
       statusText: String(statusEl?.innerText || '').trim(),
       pauseResumeLabel: String(pauseBtn?.textContent || '').trim(),
+      autoGenerateEnabled: !!getAutoGenerateEnabled(),
     };
   }
 
@@ -1467,9 +1468,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (event.key.toLowerCase() === 'r') {
         const startButton = document.getElementById('startButton');
-        if (startButton) {
+        const stopButton = document.getElementById('stopButton');
+
+        if (startButton && !startButton.disabled) {
           startButton.click();
           emitAppStateChanged('record-hotkey');
+          event.preventDefault();
+          return;
+        }
+
+        if (stopButton && !stopButton.disabled) {
+          stopButton.click();
+          emitAppStateChanged('record-hotkey-stop');
+          event.preventDefault();
         }
       }
     });
