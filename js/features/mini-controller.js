@@ -127,6 +127,17 @@ function tMini(key) {
       fr: 'Prêt',
       it: 'Pronto',
     },
+    autoGenerate: {
+      en: 'Auto-generate',
+      no: 'Auto-generer',
+      nb: 'Auto-generer',
+      nn: 'Auto-generer',
+      sv: 'Autogenerera',
+      da: 'Auto-generer',
+      de: 'Automatisch erzeugen',
+      fr: 'Génération auto',
+      it: 'Generazione auto',
+    },
     miniPanel: {
       en: 'Mini panel',
       no: 'Mini-panel',
@@ -249,6 +260,13 @@ function setDisabled(id, disabled) {
   if (el) el.disabled = !!disabled;
 }
 
+function setChecked(id, checked) {
+  const el = $(id);
+  if (el && el.type === 'checkbox') {
+    el.checked = !!checked;
+  }
+}
+
 function setBadge(text, tone = 'idle') {
   const badge = $('miniStatusBadge');
   if (!badge) return;
@@ -350,7 +368,9 @@ function updateMiniPanelUi() {
   setText('miniPauseButton', pauseResumeLabel);
   setText('miniStatusText', statusText || tMini('ready'));
   setText('miniTitle', tMini('miniPanel'));
+  setText('miniAutoGenerateLabel', tMini('autoGenerate'));
   setText('miniPromptLabel', tMini('prompt'));
+  setChecked('miniAutoGenerateToggle', !!state.autoGenerateEnabled);
 
   if (state.noteBusy) {
     setBadge(tMini('generatingNote'), 'note');
@@ -421,6 +441,7 @@ function bindMiniPanelEvents() {
   const copyButton = $('miniCopyButton');
   const closeButton = $('miniCloseButton');
   const promptSelect = $('miniPromptSelect');
+  const autoGenerateToggle = $('miniAutoGenerateToggle');
 
   if (startButton) {
     startButton.addEventListener('click', () => {
@@ -443,6 +464,12 @@ function bindMiniPanelEvents() {
   if (copyButton) {
     copyButton.addEventListener('click', () => {
       callAppAction('copyGeneratedNote');
+    });
+  }
+
+  if (autoGenerateToggle) {
+    autoGenerateToggle.addEventListener('change', () => {
+      callAppAction('setAutoGenerateEnabled', !!autoGenerateToggle.checked);
     });
   }
 
@@ -634,6 +661,71 @@ function renderMiniPanelDocument(targetWindow) {
       text-overflow: ellipsis;
     }
 
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 34px;
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .toggle-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      line-height: 1.2;
+      user-select: none;
+    }
+
+    .mini-switch {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 22px;
+      flex: 0 0 auto;
+    }
+
+    .mini-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+
+    .mini-slider {
+      position: absolute;
+      inset: 0;
+      cursor: pointer;
+      background: #2a3858;
+      border: 1px solid var(--button-border);
+      border-radius: 999px;
+      transition: background-color 0.18s ease;
+    }
+
+    .mini-slider::before {
+      content: "";
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      left: 2px;
+      top: 2px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 0.18s ease;
+    }
+
+    .mini-switch input:checked + .mini-slider {
+      background: #1f7a57;
+    }
+
+    .mini-switch input:checked + .mini-slider::before {
+      transform: translateX(16px);
+    }
+
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -719,6 +811,14 @@ function renderMiniPanelDocument(targetWindow) {
       </div>
 
       <div id="miniStatusText" class="status-text">Ready</div>
+
+      <div class="toggle-row">
+        <div id="miniAutoGenerateLabel" class="toggle-label">Auto-generate</div>
+        <label class="mini-switch" aria-label="Auto-generate">
+          <input id="miniAutoGenerateToggle" type="checkbox" />
+          <span class="mini-slider"></span>
+        </label>
+      </div>
 
       <div class="grid">
         <button id="miniStartButton" class="ctrl primary" type="button">Start</button>
