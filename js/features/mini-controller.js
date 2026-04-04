@@ -270,7 +270,7 @@ function tMini(key) {
       fr: 'Transcription',
       it: 'Trascrizione',
     },
-    note: {
+        note: {
       en: 'Note',
       no: 'Notat',
       nb: 'Notat',
@@ -280,6 +280,17 @@ function tMini(key) {
       de: 'Notiz',
       fr: 'Note',
       it: 'Nota',
+    },
+    copyButton: {
+      en: 'Copy',
+      no: 'Kopier',
+      nb: 'Kopier',
+      nn: 'Kopier',
+      sv: 'Kopiera',
+      da: 'Kopiér',
+      de: 'Kopieren',
+      fr: 'Copier',
+      it: 'Copia',
     },
   };
 
@@ -522,7 +533,7 @@ function updateMiniPanelUi() {
   setText('miniStartButton', tMini('start'));
   setText('miniStopButton', tMini('stop'));
   setText('miniPauseButton', pauseResumeLabel);
-  setText('miniCopyButton', tMini('note'));
+  setText('miniCopyButton', tMini('copyButton'));
   setText('miniAbortButton', tMini('abort'));
   setText('miniStatusText', statusText || tMini('ready'));
   setText('miniTitle', tMini('miniPanel'));
