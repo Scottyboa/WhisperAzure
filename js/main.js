@@ -329,6 +329,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function delay(ms) {
+    return new Promise((resolve) => window.setTimeout(resolve, ms));
+  }
+
+  async function tryClipboardWriteWithRetries(text, retryCount = 5, retryDelayMs = 300) {
+    if (!(navigator.clipboard && typeof navigator.clipboard.writeText === 'function')) {
+      return { ok: false, reason: 'clipboard-api-unavailable' };
+    }
+
+    let lastError = null;
+
+    for (let attempt = 0; attempt < retryCount; attempt += 1) {
+      if (attempt > 0) {
+        await delay(retryDelayMs);
+      }
+
+      try {
+        await navigator.clipboard.writeText(text);
+        return { ok: true };
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    return {
+      ok: false,
+      reason: lastError?.name || 'clipboard-write-failed',
+    };
+  }
+
   function tryExecCommandCopyFromField(field, text, source = 'manual-copy') {
     try {
       if (!field) return false;
@@ -564,28 +594,31 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-      navigator.clipboard.writeText(text)
-        .then(() => {
-          emitCopiedEvent(text, 'auto-copy');
-        })
-        .catch((error) => {
-          const ok = tryExecCommandCopyFromField(noteEl, text, 'auto-copy');
-          if (!ok) {
-            emitCopyFailedEvent(
-              text,
-              'auto-copy',
-              error?.name || 'clipboard-write-failed'
-            );
-          }
-        });
-      return;
-    }
+    (async () => {
+      const result = await tryClipboardWriteWithRetries(text, 5, 300);
+      if (result.ok) {
+        emitCopiedEvent(text, 'auto-copy');
+        return;
+      }
 
-    const ok = tryExecCommandCopyFromField(noteEl, text, 'auto-copy');
-    if (!ok) {
-      emitCopyFailedEvent(text, 'auto-copy', 'clipboard-api-unavailable');
-    }
+      const ok = tryExecCommandCopyFromField(noteEl, text, 'auto-copy');
+      if (!ok) {
+        emitCopyFailedEvent(
+          text,
+          'auto-copy',
+          result.reason || 'clipboard-write-failed'
+        );
+      }
+    })().catch((error) => {
+      const ok = tryExecCommandCopyFromField(noteEl, text, 'auto-copy');
+      if (!ok) {
+        emitCopyFailedEvent(
+          text,
+          'auto-copy',
+          error?.name || 'clipboard-write-failed'
+        );
+      }
+    });
   }
 
   function buildFinishedTranscriptDetail(meta = {}) {
@@ -610,28 +643,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const trEl = document.getElementById('transcription');
 
-    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-      navigator.clipboard.writeText(text)
-        .then(() => {
-          emitTranscriptCopiedEvent(text, 'auto-copy-transcript');
-        })
-        .catch((error) => {
-          const ok = tryExecCommandCopyTranscriptFromField(trEl, text, 'auto-copy-transcript');
-          if (!ok) {
-            emitTranscriptCopyFailedEvent(
-              text,
-              'auto-copy-transcript',
-              error?.name || 'clipboard-write-failed'
-            );
-          }
-        });
-      return;
-    }
+    (async () => {
+      const result = await tryClipboardWriteWithRetries(text, 5, 300);
+      if (result.ok) {
+        emitTranscriptCopiedEvent(text, 'auto-copy-transcript');
+        return;
+      }
 
-    const ok = tryExecCommandCopyTranscriptFromField(trEl, text, 'auto-copy-transcript');
-    if (!ok) {
-      emitTranscriptCopyFailedEvent(text, 'auto-copy-transcript', 'clipboard-api-unavailable');
-    }
+      const ok = tryExecCommandCopyTranscriptFromField(trEl, text, 'auto-copy-transcript');
+      if (!ok) {
+        emitTranscriptCopyFailedEvent(
+          text,
+          'auto-copy-transcript',
+          result.reason || 'clipboard-write-failed'
+        );
+      }
+    })().catch((error) => {
+      const ok = tryExecCommandCopyTranscriptFromField(trEl, text, 'auto-copy-transcript');
+      if (!ok) {
+        emitTranscriptCopyFailedEvent(
+          text,
+          'auto-copy-transcript',
+          error?.name || 'clipboard-write-failed'
+        );
+      }
+    });
   }
 
   function emitNoteFinished(meta = {}) {
