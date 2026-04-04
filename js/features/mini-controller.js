@@ -1106,7 +1106,7 @@ function renderMiniPanelDocument(targetWindow) {
         <button id="miniStartButton" class="ctrl primary" type="button">Start</button>
         <button id="miniPauseButton" class="ctrl" type="button">Pause</button>
         <button id="miniStopButton" class="ctrl" type="button">Stop</button>
-        <button id="miniCopyButton" class="ctrl copy" type="button">Note</button>
+        <button id="miniCopyButton" class="ctrl copy" type="button">Copy</button>
         <button id="miniAbortButton" class="ctrl abort" type="button">Abort</button>
       </div>
 
