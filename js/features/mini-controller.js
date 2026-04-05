@@ -270,7 +270,7 @@ function tMini(key) {
       fr: 'Transcription',
       it: 'Trascrizione',
     },
-        note: {
+    note: {
       en: 'Note',
       no: 'Notat',
       nb: 'Notat',
@@ -291,6 +291,28 @@ function tMini(key) {
       de: 'Kopieren',
       fr: 'Copier',
       it: 'Copia',
+    },
+    copyTranscript: {
+      en: 'Copy transcript',
+      no: 'Kopier transkripsjon',
+      nb: 'Kopier transkripsjon',
+      nn: 'Kopier transkripsjon',
+      sv: 'Kopiera transkript',
+      da: 'Kopiér transskription',
+      de: 'Transkript kopieren',
+      fr: 'Copier la transcription',
+      it: 'Copia trascrizione',
+    },
+    copyNote: {
+      en: 'Copy note',
+      no: 'Kopier notat',
+      nb: 'Kopier notat',
+      nn: 'Kopier notat',
+      sv: 'Kopiera anteckning',
+      da: 'Kopiér note',
+      de: 'Notiz kopieren',
+      fr: 'Copier la note',
+      it: 'Copia nota',
     },
   };
 
@@ -527,13 +549,15 @@ function updateMiniPanelUi() {
   setDisabled('miniStartButton', !state.canStart);
   setDisabled('miniStopButton', !state.canStop);
   setDisabled('miniPauseButton', !state.canPauseResume);
-  setDisabled('miniCopyButton', !state.hasNote);
+  setDisabled('miniCopyTranscriptButton', false);
+  setDisabled('miniCopyNoteButton', !state.hasNote);
   setDisabled('miniAbortButton', !state.canAbort);
 
   setText('miniStartButton', tMini('start'));
   setText('miniStopButton', tMini('stop'));
   setText('miniPauseButton', pauseResumeLabel);
-  setText('miniCopyButton', tMini('copyButton'));
+  setText('miniCopyTranscriptButton', tMini('copyTranscript'));
+  setText('miniCopyNoteButton', tMini('copyNote'));
   setText('miniAbortButton', tMini('abort'));
   setText('miniStatusText', statusText || tMini('ready'));
   setText('miniTitle', tMini('miniPanel'));
@@ -618,7 +642,8 @@ function bindMiniPanelEvents() {
   const startButton = $('miniStartButton');
   const stopButton = $('miniStopButton');
   const pauseButton = $('miniPauseButton');
-  const copyButton = $('miniCopyButton');
+  const copyTranscriptButton = $('miniCopyTranscriptButton');
+  const copyNoteButton = $('miniCopyNoteButton');
   const abortButton = $('miniAbortButton');
   const closeButton = $('miniCloseButton');
   const promptSelect = $('miniPromptSelect');
@@ -644,8 +669,14 @@ function bindMiniPanelEvents() {
     });
   }
 
-  if (copyButton) {
-    copyButton.addEventListener('click', () => {
+  if (copyTranscriptButton) {
+    copyTranscriptButton.addEventListener('click', () => {
+      callAppAction('copyTranscription');
+    });
+  }
+
+  if (copyNoteButton) {
+    copyNoteButton.addEventListener('click', () => {
       callAppAction('copyGeneratedNote');
     });
   }
@@ -700,24 +731,24 @@ function installMiniPanelAutoScale(targetWindow) {
 
   let basePanelHeight = null;
 
-function applyScale() {
-  try {
-    const width = Math.max(1, targetWindow.innerWidth || MINI_PANEL_WIDTH);
-    const height = Math.max(1, targetWindow.innerHeight || MINI_PANEL_HEIGHT);
+  function applyScale() {
+    try {
+      const width = Math.max(1, targetWindow.innerWidth || MINI_PANEL_WIDTH);
+      const height = Math.max(1, targetWindow.innerHeight || MINI_PANEL_HEIGHT);
 
-    const panel = doc.querySelector('.panel-shell');
-    if (!basePanelHeight && panel) {
-      basePanelHeight = panel.scrollHeight;
-    }
+      const panel = doc.querySelector('.panel-shell');
+      if (!basePanelHeight && panel) {
+        basePanelHeight = panel.scrollHeight;
+      }
 
-    const effectiveHeight = basePanelHeight || MINI_PANEL_HEIGHT;
-    const scaleX = width / MINI_PANEL_WIDTH;
-    const scaleY = height / effectiveHeight;
-    const scale = Math.min(1, scaleX, scaleY);
+      const effectiveHeight = basePanelHeight || MINI_PANEL_HEIGHT;
+      const scaleX = width / MINI_PANEL_WIDTH;
+      const scaleY = height / effectiveHeight;
+      const scale = Math.min(1, scaleX, scaleY);
 
-    root.style.setProperty('--mini-scale', String(scale));
-  } catch (_) {}
-}
+      root.style.setProperty('--mini-scale', String(scale));
+    } catch (_) {}
+  }
 
   try {
     targetWindow.addEventListener('resize', applyScale);
@@ -830,32 +861,60 @@ function renderMiniPanelDocument(targetWindow) {
     .badge {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       min-height: 22px;
-      padding: 4px 8px;
+      padding: 0 9px;
       border-radius: 999px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.04);
-      color: var(--muted);
-      font-size: 10px;
-      font-weight: 700;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      border: 1px solid transparent;
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
       white-space: nowrap;
     }
 
-    .badge[data-tone="idle"] { color: var(--muted); }
-    .badge[data-tone="recording"] { color: var(--accent); }
-    .badge[data-tone="paused"] { color: var(--warn); }
-    .badge[data-tone="note"] { color: var(--info); }
-    .badge[data-tone="ready"] { color: var(--accent); }
+    .badge[data-tone="idle"] {
+      background: rgba(148,183,255,0.12);
+      border-color: rgba(148,183,255,0.28);
+      color: var(--info);
+    }
+
+    .badge[data-tone="recording"] {
+      background: rgba(111,211,166,0.12);
+      border-color: rgba(111,211,166,0.28);
+      color: var(--accent);
+    }
+
+    .badge[data-tone="paused"] {
+      background: rgba(240,195,106,0.12);
+      border-color: rgba(240,195,106,0.28);
+      color: var(--warn);
+    }
+
+    .badge[data-tone="note"] {
+      background: rgba(148,183,255,0.12);
+      border-color: rgba(148,183,255,0.28);
+      color: var(--info);
+    }
+
+    .badge[data-tone="ready"] {
+      background: rgba(111,211,166,0.12);
+      border-color: rgba(111,211,166,0.28);
+      color: var(--accent);
+    }
 
     .copied {
-      font-size: 12px;
-      font-weight: 800;
+      font-size: 11px;
+      font-weight: 700;
       color: var(--accent);
-      opacity: 1;
-      line-height: 1;
+      opacity: 0;
+      transition: opacity 0.18s ease;
       white-space: nowrap;
-      min-width: 0;
-      flex: 0 1 auto;
+    }
+
+    .copied[data-show="1"] {
+      opacity: 1;
     }
 
     .status-text {
@@ -867,29 +926,28 @@ function renderMiniPanelDocument(targetWindow) {
       text-overflow: ellipsis;
     }
 
+    .controls-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
     .settings-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      min-height: 38px;
-      padding: 6px 8px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: rgba(255,255,255,0.02);
     }
 
     .setting-group {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 6px;
       min-width: 0;
-      flex: 1 1 0;
     }
 
     .setting-group--copy {
-      justify-content: flex-end;
-      flex: 1.15 1 0;
+      flex: 0 0 auto;
     }
 
     .toggle-label,
@@ -897,14 +955,12 @@ function renderMiniPanelDocument(targetWindow) {
       font-size: 10px;
       font-weight: 700;
       color: var(--muted);
-      line-height: 1.2;
-      user-select: none;
       white-space: nowrap;
     }
 
     .mini-switch {
       position: relative;
-      display: inline-block;
+      display: inline-flex;
       width: 34px;
       height: 20px;
       flex: 0 0 auto;
@@ -920,11 +976,10 @@ function renderMiniPanelDocument(targetWindow) {
     .mini-slider {
       position: absolute;
       inset: 0;
-      cursor: pointer;
-      background: #2a3858;
+      background: rgba(255,255,255,0.08);
       border: 1px solid var(--button-border);
       border-radius: 999px;
-      transition: background-color 0.18s ease;
+      transition: background-color 0.18s ease, border-color 0.18s ease;
     }
 
     .mini-slider::before {
@@ -935,12 +990,13 @@ function renderMiniPanelDocument(targetWindow) {
       left: 2px;
       top: 2px;
       border-radius: 50%;
-      background: #fff;
+      background: var(--text);
       transition: transform 0.18s ease;
     }
 
     .mini-switch input:checked + .mini-slider {
-      background: #1f7a57;
+      background: rgba(111,211,166,0.18);
+      border-color: rgba(111,211,166,0.38);
     }
 
     .mini-switch input:checked + .mini-slider::before {
@@ -948,71 +1004,87 @@ function renderMiniPanelDocument(targetWindow) {
     }
 
     .mini-select {
-      width: 100%;
-      min-width: 0;
-      max-width: 120px;
+      min-width: 88px;
       border: 1px solid var(--button-border);
       background: var(--select-bg);
       color: var(--text);
-      border-radius: 8px;
-      padding: 5px 24px 5px 8px;
+      border-radius: 10px;
+      padding: 6px 8px;
       font-size: 11px;
-      line-height: 1.2;
+      font-weight: 600;
+      min-height: 28px;
       outline: none;
+    }
+
+    .primary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .copy-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
     }
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
       gap: 6px;
-      margin-top: 1px;
     }
 
-    @media (max-width: 240px) {
-      .grid {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    button.ctrl {
+    .ctrl {
+      min-height: 34px;
+      border-radius: 10px;
       border: 1px solid var(--button-border);
       background: var(--button);
-      color: var(--text);
-      border-radius: 10px;
-      padding: 8px 7px;
-      font-size: 11px;
+      padding: 6px 8px;
+      font-size: 12px;
       font-weight: 700;
+      color: var(--text);
       cursor: pointer;
-      min-height: 35px;
+      transition: transform 0.08s ease, border-color 0.18s ease, background-color 0.18s ease;
     }
 
-    button.ctrl:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+    .ctrl:hover:not(:disabled) {
+      border-color: rgba(255,255,255,0.3);
     }
 
-    button.ctrl.primary {
-      background: #183151;
+    .ctrl:active:not(:disabled) {
+      transform: translateY(1px);
     }
 
-    button.ctrl.copy {
-      background: #17382f;
+    .ctrl.primary {
+      background: rgba(111,211,166,0.14);
+      color: var(--accent);
     }
 
-    button.ctrl.abort {
+    .ctrl.abort {
       color: var(--danger);
-      border-color: rgba(243,138,138,0.35);
+    }
+
+    .ctrl.secondary {
+      min-height: 28px;
+      padding: 5px 8px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .ctrl.copy {
+      color: var(--accent);
+    }
+
+    .ctrl:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
     }
 
     .prompt-wrap {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 8px;
-      min-height: 34px;
-      padding: 6px 8px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: rgba(255,255,255,0.02);
+      min-width: 0;
     }
 
     .prompt-left {
@@ -1095,6 +1167,20 @@ function renderMiniPanelDocument(targetWindow) {
 
       <div id="miniStatusText" class="status-text">Ready</div>
 
+      <div class="controls-wrap">
+        <div class="primary-grid">
+          <button id="miniStartButton" class="ctrl primary" type="button">Start</button>
+          <button id="miniPauseButton" class="ctrl" type="button">Pause</button>
+          <button id="miniStopButton" class="ctrl" type="button">Stop</button>
+          <button id="miniAbortButton" class="ctrl abort" type="button">Abort</button>
+        </div>
+
+        <div class="copy-row">
+          <button id="miniCopyTranscriptButton" class="ctrl secondary copy" type="button">Copy transcript</button>
+          <button id="miniCopyNoteButton" class="ctrl secondary copy" type="button">Copy note</button>
+        </div>
+      </div>
+
       <div class="settings-row">
         <div class="setting-group">
           <div id="miniAutoGenerateLabel" class="toggle-label">Auto-generate</div>
@@ -1111,14 +1197,6 @@ function renderMiniPanelDocument(targetWindow) {
             <option value="note">Note</option>
           </select>
         </div>
-      </div>
-
-      <div class="grid">
-        <button id="miniStartButton" class="ctrl primary" type="button">Start</button>
-        <button id="miniPauseButton" class="ctrl" type="button">Pause</button>
-        <button id="miniStopButton" class="ctrl" type="button">Stop</button>
-        <button id="miniCopyButton" class="ctrl copy" type="button">Copy</button>
-        <button id="miniAbortButton" class="ctrl abort" type="button">Abort</button>
       </div>
 
       <div class="prompt-wrap">
