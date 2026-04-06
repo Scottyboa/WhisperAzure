@@ -9,8 +9,9 @@
 
 const MINI_PANEL_WINDOW_NAME = 'whisperazure-mini-panel';
 const MINI_PANEL_WIDTH = 370;
-const MINI_PANEL_HEIGHT = 340;
+const MINI_PANEL_HEIGHT = 255;
 const STATE_REFRESH_MS = 350;
+const AUTO_COPY_DOWNLOAD_HREF = 'div/autocopy.zip';
 
 let miniWindow = null;
 let refreshTimer = null;
@@ -159,6 +160,17 @@ function tMini(key) {
       de: 'Auto-Kopie',
       fr: 'Auto-copie',
       it: 'Copia auto',
+    },
+    autoCopyHelpShort: {
+      en: 'Chrome extension required',
+      no: 'Krever Chrome-utvidelse',
+      nb: 'Krever Chrome-utvidelse',
+      nn: 'Krev Chrome-utviding',
+      sv: 'Chrome-tillägg krävs',
+      da: 'Kræver Chrome-udvidelse',
+      de: 'Chrome-Erweiterung erforderlich',
+      fr: 'Extension Chrome requise',
+      it: 'Estensione Chrome richiesta',
     },
     miniPanel: {
       en: 'Mini panel',
@@ -571,6 +583,16 @@ function updateMiniPanelUi() {
 
   syncAutoCopyOptions();
   setValue('miniAutoCopyModeSelect', state.autoCopyMode || 'off');
+  setDisabled('miniAutoCopyModeSelect', !state.autoCopyExtensionAvailable);
+
+  const miniAutoCopyHelp = $('miniAutoCopyHelp');
+  if (miniAutoCopyHelp) {
+    miniAutoCopyHelp.title =
+      state.autoCopyExtensionAvailable
+        ? ''
+        : `Chrome extension required.\n\nDownload: ${AUTO_COPY_DOWNLOAD_HREF}\nUnzip it, read the README, then load the unpacked folder in chrome://extensions and refresh the page.`;
+    miniAutoCopyHelp.setAttribute('aria-label', tMini('autoCopyHelpShort'));
+  }
 
   if (state.noteBusy) {
     setBadge(tMini('generatingNote'), 'note');
@@ -946,6 +968,67 @@ function renderMiniPanelDocument(targetWindow) {
       min-width: 0;
     }
 
+    .setting-label-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+    }
+    .mini-help-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.mini-help-wrap::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 220px;
+  height: 14px;
+  background: transparent;
+}
+
+.mini-tooltip {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 9999;
+  width: 220px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 10px;
+  line-height: 1.35;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(2px);
+  transition: opacity 0.14s ease, transform 0.14s ease;
+}
+
+.mini-tooltip a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.mini-tooltip code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+}
+
+.mini-help-wrap:hover .mini-tooltip,
+.mini-help-wrap:focus-within .mini-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
     .setting-group--copy {
       flex: 0 0 auto;
     }
@@ -956,6 +1039,29 @@ function renderMiniPanelDocument(targetWindow) {
       font-weight: 700;
       color: var(--muted);
       white-space: nowrap;
+    }
+
+    .mini-help {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: transparent;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: help;
+      user-select: none;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .mini-help:hover {
+      border-color: var(--accent);
+      color: var(--accent);
     }
 
     .mini-switch {
@@ -1190,7 +1296,25 @@ function renderMiniPanelDocument(targetWindow) {
           </label>
         </div>
         <div class="setting-group setting-group--copy">
-          <label id="miniAutoCopyLabel" class="setting-label" for="miniAutoCopyModeSelect">Auto-copy</label>
+          <div class="setting-label-wrap">
+            <label id="miniAutoCopyLabel" class="setting-label" for="miniAutoCopyModeSelect">Auto-copy</label>
+            <span class="mini-help-wrap">
+  <span
+    id="miniAutoCopyHelp"
+    class="mini-help"
+    tabindex="0"
+    aria-describedby="miniAutoCopyTooltip"
+    aria-label="Chrome extension required"
+  >?</span>
+  <span id="miniAutoCopyTooltip" class="mini-tooltip" role="tooltip">
+    <strong>Chrome extension required</strong><br>
+    Download and install:
+    <a href="div/autocopy.zip" download>autocopy.zip</a><br><br>
+    Unzip it, read the README, then load the unpacked folder in
+    <code>chrome://extensions</code> and refresh the page.
+  </span>
+</span>
+          </div>
           <select id="miniAutoCopyModeSelect" class="mini-select" aria-label="Auto-copy mode">
             <option value="off">Off</option>
             <option value="transcript">Transcript</option>
