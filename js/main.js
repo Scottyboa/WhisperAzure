@@ -1209,6 +1209,51 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+  function setSharedStatusMessage(message, color = '') {
+  const text = String(message || '').trim();
+  if (!text) return;
+
+  try {
+    if (typeof window.updateStatusMessage === 'function') {
+      window.updateStatusMessage(text, color || undefined);
+    } else {
+      const statusEl = document.getElementById('statusMessage');
+      if (statusEl) {
+        statusEl.innerText = text;
+        if (color) statusEl.style.color = color;
+      }
+    }
+  } catch (_) {
+    const statusEl = document.getElementById('statusMessage');
+    if (statusEl) {
+      statusEl.innerText = text;
+      if (color) statusEl.style.color = color;
+    }
+  }
+}
+
+function initStatusFlowListeners() {
+  const app = getApp();
+  if (app.__statusFlowListenersBound) return;
+  app.__statusFlowListenersBound = true;
+
+  window.addEventListener('app:state-changed', (event) => {
+    const reason = String(event?.detail?.reason || '').trim();
+
+    if (reason === 'note-generation-begin') {
+      setSharedStatusMessage('Generating note...', 'blue');
+    }
+  });
+
+  const handleNoteFinished = (event) => {
+    const detail = event?.detail || {};
+    if (detail?.status === 'aborted') return;
+    setSharedStatusMessage('Note finished.', 'green');
+  };
+
+  window.addEventListener('note-generation-finished', handleNoteFinished);
+  window.addEventListener('note:finished', handleNoteFinished);
+}
 
   function copyGeneratedNoteToClipboard() {
     const noteEl = document.getElementById('generatedNote');
