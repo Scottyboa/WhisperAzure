@@ -1110,11 +1110,30 @@ document.addEventListener('DOMContentLoaded', () => {
     return readSession(AUTO_GENERATE_KEY, '') === '1';
   }
 
-  function setAutoGenerateEnabled(enabled) {
-    writeSession(AUTO_GENERATE_KEY, enabled ? '1' : '0');
+  function getAutoCopyModeLinkedToAutoGenerate(enabled) {
+    return enabled ? 'note' : 'transcript';
+  }
+
+  function setAutoGenerateEnabled(enabled, options = {}) {
+    const nextEnabled = !!enabled;
+    const source = String(options?.source || 'auto-generate-toggle').trim() || 'auto-generate-toggle';
+
+    writeSession(AUTO_GENERATE_KEY, nextEnabled ? '1' : '0');
     const el = document.getElementById('autoGenerateToggle');
-    if (el && el.type === 'checkbox') el.checked = !!enabled;
-    emitAppStateChanged('auto-generate-toggle', { enabled: !!enabled });
+    if (el && el.type === 'checkbox') el.checked = nextEnabled;
+
+    const linkedAutoCopyMode = getAutoCopyModeLinkedToAutoGenerate(nextEnabled);
+    const appliedAutoCopyMode = setAutoCopyMode(linkedAutoCopyMode);
+
+    emitAppStateChanged(source, {
+      enabled: nextEnabled,
+      linkedAutoCopyMode,
+      appliedAutoCopyMode,
+    });
+
+    if (nextEnabled && appliedAutoCopyMode === 'note') {
+      Promise.resolve(requestNotificationPermissionIfNeeded()).catch(() => {});
+    }
   }
 
   function initAutoGenerateToggle() {
@@ -1129,13 +1148,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     el.checked = getAutoGenerateEnabled();
-    el.addEventListener('change', async () => {
-      writeSession(AUTO_GENERATE_KEY, el.checked ? '1' : '0');
-      emitAppStateChanged('auto-generate-toggle-change', { enabled: el.checked });
-
-      if (el.checked && autoCopyIncludesNote()) {
-        await requestNotificationPermissionIfNeeded();
-      }
+    el.addEventListener('change', () => {
+      setAutoGenerateEnabled(el.checked, {
+        source: 'auto-generate-toggle-change',
+      });
     });
   }
 
@@ -1209,67 +1225,68 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-  function setSharedStatusMessage(message, color = '') {
-  const text = String(message || '').trim();
-  if (!text) return;
 
-  try {
-    if (typeof window.updateStatusMessage === 'function') {
-      window.updateStatusMessage(text, color || undefined);
-    } else {
+  function setSharedStatusMessage(message, color = '') {
+    const text = String(message || '').trim();
+    if (!text) return;
+
+    try {
+      if (typeof window.updateStatusMessage === 'function') {
+        window.updateStatusMessage(text, color || undefined);
+      } else {
+        const statusEl = document.getElementById('statusMessage');
+        if (statusEl) {
+          statusEl.innerText = text;
+          if (color) statusEl.style.color = color;
+        }
+      }
+    } catch (_) {
       const statusEl = document.getElementById('statusMessage');
       if (statusEl) {
         statusEl.innerText = text;
         if (color) statusEl.style.color = color;
       }
     }
-  } catch (_) {
-    const statusEl = document.getElementById('statusMessage');
-    if (statusEl) {
-      statusEl.innerText = text;
-      if (color) statusEl.style.color = color;
-    }
   }
-}
 
-function initStatusFlowListeners() {
-  const app = getApp();
-  if (app.__statusFlowListenersBound) return;
-  app.__statusFlowListenersBound = true;
+  function initStatusFlowListeners() {
+    const app = getApp();
+    if (app.__statusFlowListenersBound) return;
+    app.__statusFlowListenersBound = true;
 
-  window.addEventListener('app:state-changed', (event) => {
-    const reason = String(event?.detail?.reason || '').trim();
+    window.addEventListener('app:state-changed', (event) => {
+      const reason = String(event?.detail?.reason || '').trim();
 
-    if (reason === 'note-generation-begin') {
-      setSharedStatusMessage('Generating note...', 'blue');
-    } else if (reason === 'start-recording-click' || reason === 'record-hotkey') {
-      setSharedStatusMessage('Recording...', 'red');
-    }
-  });
+      if (reason === 'note-generation-begin') {
+        setSharedStatusMessage('Generating note...', 'blue');
+      } else if (reason === 'start-recording-click' || reason === 'record-hotkey') {
+        setSharedStatusMessage('Recording...', 'red');
+      }
+    });
 
-  window.addEventListener('transcription:finished', (event) => {
-    const detail = event?.detail || {};
-    if (detail?.status === 'aborted') {
-      setSharedStatusMessage('Recording aborted.', 'red');
-      return;
-    }
+    window.addEventListener('transcription:finished', (event) => {
+      const detail = event?.detail || {};
+      if (detail?.status === 'aborted') {
+        setSharedStatusMessage('Recording aborted.', 'red');
+        return;
+      }
 
-    if (getAutoGenerateEnabled()) {
-      setSharedStatusMessage('Generating note...', 'blue');
-    } else {
-      setSharedStatusMessage('Transcript finished.', 'green');
-    }
-  });
+      if (getAutoGenerateEnabled()) {
+        setSharedStatusMessage('Generating note...', 'blue');
+      } else {
+        setSharedStatusMessage('Transcript finished.', 'green');
+      }
+    });
 
-  const handleNoteFinished = (event) => {
-    const detail = event?.detail || {};
-    if (detail?.status === 'aborted') return;
-    setSharedStatusMessage('Note finished.', 'green');
-  };
+    const handleNoteFinished = (event) => {
+      const detail = event?.detail || {};
+      if (detail?.status === 'aborted') return;
+      setSharedStatusMessage('Note finished.', 'green');
+    };
 
-  window.addEventListener('note-generation-finished', handleNoteFinished);
-  window.addEventListener('note:finished', handleNoteFinished);
-}
+    window.addEventListener('note-generation-finished', handleNoteFinished);
+    window.addEventListener('note:finished', handleNoteFinished);
+  }
 
   function copyGeneratedNoteToClipboard() {
     const noteEl = document.getElementById('generatedNote');
