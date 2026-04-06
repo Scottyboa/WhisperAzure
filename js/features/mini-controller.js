@@ -1055,19 +1055,22 @@ function renderMiniPanelDocument(targetWindow) {
 .mini-help-wrap::after {
   content: "";
   position: absolute;
-  top: 100%;
-  right: 0;
-  width: 220px;
-  height: 14px;
+  right: -4px;
+  bottom: 100%;
+  width: 40px;
+  height: 10px;
   background: transparent;
 }
 
 .mini-tooltip {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 8px);
+  position: fixed;
+  top: 8px;
+  right: 8px;
   z-index: 9999;
-  width: 220px;
+  width: min(320px, calc(100vw - 16px));
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
   padding: 8px 10px;
   border-radius: 10px;
   border: 1px solid var(--border);
@@ -1075,12 +1078,13 @@ function renderMiniPanelDocument(targetWindow) {
   color: var(--text);
   font-size: 10px;
   line-height: 1.35;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
-  white-space: normal;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.35);
   opacity: 0;
   pointer-events: none;
-  transform: translateY(2px);
-  transition: opacity 0.14s ease, transform 0.14s ease;
+  transform: translateY(-4px);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 .mini-tooltip a {
