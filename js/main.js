@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const AUTO_GENERATE_KEY = 'auto_generate_enabled';
   const AUTO_COPY_MODE_KEY = 'auto_copy_mode';
   const AUTO_COPY_EXTENSION_SIGNAL = 'AUTO_COPY_EXTENSION_PRESENT';
+  const AUTO_COPY_EXTENSION_COPY_RESULT = 'AUTO_COPY_EXTENSION_COPY_RESULT';
   const AUTO_COPY_EXTENSION_PING = 'AUTO_COPY_EXTENSION_PING';
   const AUTO_COPY_EXTENSION_PING_TIMEOUT_MS = 1200;
   const PROMPT_PROFILE_STORAGE_KEY = 'prompt_profile_id';
@@ -43,6 +44,14 @@ document.addEventListener('DOMContentLoaded', () => {
         })
       );
     } catch (_) {}
+  }
+
+  function setMiniPanelStatusPhase(phase) {
+    const app = getApp();
+    const next = String(phase || '').trim() || 'idle';
+    if (app.miniPanelStatusPhase === next) return;
+    app.miniPanelStatusPhase = next;
+    emitAppStateChanged('mini-panel-status-phase', { phase: next });
   }
 
   function setAutoCopyExtensionAvailable(available) {
@@ -370,6 +379,46 @@ document.addEventListener('DOMContentLoaded', () => {
       textLength: String(text || '').length,
       source,
       reason,
+    });
+  }
+
+  function initAutoCopyExtensionCopyBridge() {
+    const app = getApp();
+    if (app.__autoCopyExtensionCopyBridgeBound) return;
+    app.__autoCopyExtensionCopyBridgeBound = true;
+
+    window.addEventListener('message', (event) => {
+      if (event.source !== window) return;
+
+      const data = event?.data || {};
+      if (data.type !== AUTO_COPY_EXTENSION_COPY_RESULT) return;
+
+      const copyKind = String(data.copyKind || '').trim().toLowerCase();
+      const ok = !!data.ok;
+      const reason = String(data.reason || '').trim() || 'extension-copy-failed';
+      const sourceEvent = String(data.sourceEvent || '').trim();
+      const source =
+        copyKind === 'transcript'
+          ? `extension-auto-copy-transcript:${sourceEvent || 'unknown'}`
+          : `extension-auto-copy-note:${sourceEvent || 'unknown'}`;
+
+      const textLength = Number(data.textLength || 0);
+      const placeholderText = textLength > 0 ? 'x'.repeat(textLength) : '';
+
+      if (copyKind === 'transcript') {
+        if (ok) {
+          emitTranscriptCopiedEvent(placeholderText, source);
+        } else {
+          emitTranscriptCopyFailedEvent(placeholderText, source, reason);
+        }
+        return;
+      }
+
+      if (ok) {
+        emitCopiedEvent(placeholderText, source);
+      } else {
+        emitCopyFailedEvent(placeholderText, source, reason);
+      }
     });
   }
 
@@ -1319,8 +1368,93 @@ document.addEventListener('DOMContentLoaded', () => {
       autoGenerateEnabled: !!getAutoGenerateEnabled(),
       autoCopyMode: getAutoCopyMode(),
       autoCopyExtensionAvailable: isAutoCopyExtensionAvailable(),
+      miniPanelStatusPhase: String(getApp().miniPanelStatusPhase || 'idle'),
       usePromptEnabled: getUsePromptEnabled(),
     };
+  }
+
+  function initMiniPanelStatusPhaseFlow() {
+    const app = getApp();
+    if (app.__miniPanelStatusPhaseBound) return;
+    app.__miniPanelStatusPhaseBound = true;
+
+    const startBtn = document.getElementById('startButton');
+    const stopBtn = document.getElementById('stopButton');
+    const pauseBtn = document.getElementById('pauseResumeButton');
+    const abortBtn = document.getElementById('abortButton');
+
+    if (startBtn && startBtn.dataset.miniPanelStatusBound !== '1') {
+      startBtn.dataset.miniPanelStatusBound = '1';
+      startBtn.addEventListener('click', () => {
+        setMiniPanelStatusPhase('recording');
+      });
+    }
+
+    if (stopBtn && stopBtn.dataset.miniPanelStatusBound !== '1') {
+      stopBtn.dataset.miniPanelStatusBound = '1';
+      stopBtn.addEventListener('click', () => {
+        setMiniPanelStatusPhase('transcribing');
+      });
+    }
+
+    if (pauseBtn && pauseBtn.dataset.miniPanelStatusBound !== '1') {
+      pauseBtn.dataset.miniPanelStatusBound = '1';
+      pauseBtn.addEventListener('click', () => {
+        window.setTimeout(() => {
+          const label = String(pauseBtn.textContent || '').trim().toLowerCase();
+          if (/resume/.test(label)) {
+            setMiniPanelStatusPhase('paused');
+          } else {
+            setMiniPanelStatusPhase('recording');
+          }
+        }, 30);
+      });
+    }
+
+    if (abortBtn && abortBtn.dataset.miniPanelStatusBound !== '1') {
+      abortBtn.dataset.miniPanelStatusBound = '1';
+      abortBtn.addEventListener('click', () => {
+        setMiniPanelStatusPhase('aborted');
+      });
+    }
+
+    window.addEventListener('transcription:finished', (event) => {
+      const detail = event?.detail || {};
+      if (detail?.status === 'aborted') {
+        setMiniPanelStatusPhase('aborted');
+        return;
+      }
+
+      if (getAutoGenerateEnabled()) {
+        setMiniPanelStatusPhase('note-generating');
+      } else {
+        setMiniPanelStatusPhase('transcript-completed');
+      }
+    });
+
+    window.addEventListener('note-generation-finished', (event) => {
+      const detail = event?.detail || {};
+      if (detail?.status === 'aborted') return;
+      setMiniPanelStatusPhase('note-completed');
+    });
+
+    window.addEventListener('note:finished', (event) => {
+      const detail = event?.detail || {};
+      if (detail?.status === 'aborted') return;
+      setMiniPanelStatusPhase('note-completed');
+    });
+
+    window.addEventListener('app:state-changed', (event) => {
+      const reason = String(event?.detail?.reason || '').trim();
+
+      if (reason === 'note-generation-begin') {
+        setMiniPanelStatusPhase('note-generating');
+      } else if (reason === 'start-recording-click' || reason === 'record-hotkey') {
+        setMiniPanelStatusPhase('recording');
+      }
+    });
+
+    setMiniPanelStatusPhase('idle');
   }
 
   const app = getApp();
@@ -1598,7 +1732,10 @@ document.addEventListener('DOMContentLoaded', () => {
   restoreState();
   initAutoGenerateToggle();
   initAutoCopyModeSelect();
+  initAutoCopyExtensionCopyBridge();
+  initMiniPanelStatusPhaseFlow();
   initAutoGenerateOnFinishListener();
+  initStatusFlowListeners();
   initNotificationPermissionHooks();
 
   initRecordingProvider(getSelectedTranscribeProvider());
