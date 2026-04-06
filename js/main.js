@@ -1242,6 +1242,22 @@ function initStatusFlowListeners() {
 
     if (reason === 'note-generation-begin') {
       setSharedStatusMessage('Generating note...', 'blue');
+    } else if (reason === 'start-recording-click' || reason === 'record-hotkey') {
+      setSharedStatusMessage('Recording...', 'red');
+    }
+  });
+
+  window.addEventListener('transcription:finished', (event) => {
+    const detail = event?.detail || {};
+    if (detail?.status === 'aborted') {
+      setSharedStatusMessage('Recording aborted.', 'red');
+      return;
+    }
+
+    if (getAutoGenerateEnabled()) {
+      setSharedStatusMessage('Generating note...', 'blue');
+    } else {
+      setSharedStatusMessage('Transcript finished.', 'green');
     }
   });
 
