@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const STATE_KEY = '__ui_state_v1';
   const AUTO_GENERATE_KEY = 'auto_generate_enabled';
   const AUTO_COPY_MODE_KEY = 'auto_copy_mode';
+  const AUTO_COPY_EXTENSION_SIGNAL = 'AUTO_COPY_EXTENSION_PRESENT';
+  const AUTO_COPY_EXTENSION_PING = 'AUTO_COPY_EXTENSION_PING';
+  const AUTO_COPY_EXTENSION_PING_TIMEOUT_MS = 1200;
   const PROMPT_PROFILE_STORAGE_KEY = 'prompt_profile_id';
   const DEFAULT_PROMPT_PROFILE_ID = 'default';
 
@@ -40,6 +43,49 @@ document.addEventListener('DOMContentLoaded', () => {
         })
       );
     } catch (_) {}
+  }
+
+  function setAutoCopyExtensionAvailable(available) {
+    const app = getApp();
+    const next = !!available;
+    if (app.autoCopyExtensionAvailable === next) return;
+    app.autoCopyExtensionAvailable = next;
+    emitAppStateChanged('auto-copy-extension-availability', { available: next });
+  }
+
+  function isAutoCopyExtensionAvailable() {
+    return !!getApp().autoCopyExtensionAvailable;
+  }
+
+  function pingAutoCopyExtension() {
+    return new Promise((resolve) => {
+      let settled = false;
+
+      const finish = (available) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeoutId);
+        window.removeEventListener('message', onMessage);
+        setAutoCopyExtensionAvailable(available);
+        resolve(available);
+      };
+
+      const onMessage = (event) => {
+        if (event.source !== window) return;
+        const data = event?.data || {};
+        if (data.type !== AUTO_COPY_EXTENSION_SIGNAL) return;
+        finish(true);
+      };
+
+      const timeoutId = window.setTimeout(() => finish(false), AUTO_COPY_EXTENSION_PING_TIMEOUT_MS);
+      window.addEventListener('message', onMessage);
+
+      try {
+        window.postMessage({ type: AUTO_COPY_EXTENSION_PING }, window.location.origin);
+      } catch (_) {
+        finish(false);
+      }
+    });
   }
 
   function readSession(key, fallback = '') {
@@ -227,6 +273,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setAutoCopyMode(mode) {
     const next = normalizeAutoCopyMode(mode);
+    if (next !== 'off' && !isAutoCopyExtensionAvailable()) {
+      writeLocal(AUTO_COPY_MODE_KEY, 'off');
+
+      const el = document.getElementById('autoCopyModeSelect');
+      if (el && el.value !== 'off') {
+        el.value = 'off';
+      }
+
+      emitAppStateChanged('auto-copy-mode-blocked-no-extension', {
+        requestedMode: next,
+        appliedMode: 'off',
+      });
+      return 'off';
+    }
+
     writeLocal(AUTO_COPY_MODE_KEY, next);
 
     const el = document.getElementById('autoCopyModeSelect');
@@ -234,7 +295,8 @@ document.addEventListener('DOMContentLoaded', () => {
       el.value = next;
     }
 
-    emitAppStateChanged('auto-copy-mode-change', { mode: next });
+    emitAppStateChanged('auto-copy-mode-changed', { mode: next });
+    return next;
   }
 
   function autoCopyIncludesTranscript() {
@@ -506,17 +568,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function requestNotificationPermissionIfNeeded() {
-    if (!canUseWebNotifications()) return 'unsupported';
-    if (Notification.permission === 'granted') return 'granted';
-    if (Notification.permission === 'denied') return 'denied';
-
-    try {
-      const result = await Notification.requestPermission();
-      emitAppStateChanged('notification-permission-result', { permission: result });
-      return result;
-    } catch (_) {
-      return 'default';
-    }
+    // Legacy page-notification path retained for future use,
+    // but extension-driven auto-copy should handle notifications now.
+    return 'extension-handled';
   }
 
   function showCopiedSystemNotification(detail) {
@@ -572,6 +626,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function tryAutoCopyFinishedNote(detail) {
+    // Legacy browser-page auto-copy path kept intentionally but no longer active.
+    // Auto-copy is now extension-only.
+    return;
+
     const text = String(detail?.text || '').trim();
     if (!text) return;
     if (detail?.status === 'aborted') return;
@@ -636,6 +694,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function tryAutoCopyFinishedTranscript(detail) {
+    // Legacy browser-page auto-copy path kept intentionally but no longer active.
+    // Auto-copy is now extension-only.
+    return;
+
     const text = String(detail?.text || '').trim();
     if (!text) return;
     if (detail?.status === 'aborted') return;
@@ -675,7 +737,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const detail = buildFinishedNoteDetail(meta);
       window.dispatchEvent(new CustomEvent('note-generation-finished', { detail }));
       window.dispatchEvent(new CustomEvent('note:finished', { detail }));
-      tryAutoCopyFinishedNote(detail);
       finishNoteGeneration();
       return detail;
     } catch (_) {
@@ -1031,39 +1092,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function initAutoCopyModeSelect() {
     const el = document.getElementById('autoCopyModeSelect');
-    if (!el) return;
-    if (el.dataset.bound === '1') return;
+    if (!el || el.dataset.bound === '1') return;
     el.dataset.bound = '1';
-
     el.value = getAutoCopyMode();
-    el.addEventListener('change', async () => {
-      setAutoCopyMode(el.value);
-      if (autoCopyIncludesNote()) {
-        await requestNotificationPermissionIfNeeded();
-      }
+    el.addEventListener('change', () => {
+      const applied = setAutoCopyMode(el.value);
+      el.value = applied;
     });
   }
 
   function initNotificationPermissionHooks() {
-    const autoCopyModeSelect = document.getElementById('autoCopyModeSelect');
-    if (autoCopyModeSelect && autoCopyModeSelect.dataset.notificationBound !== '1') {
-      autoCopyModeSelect.dataset.notificationBound = '1';
-      autoCopyModeSelect.addEventListener('change', async () => {
-        if (autoCopyIncludesNote()) {
-          await requestNotificationPermissionIfNeeded();
-        }
-      });
-    }
-
-    const openMiniPanelButton = document.getElementById('openMiniPanelButton');
-    if (openMiniPanelButton && openMiniPanelButton.dataset.notificationHintBound !== '1') {
-      openMiniPanelButton.dataset.notificationHintBound = '1';
-      openMiniPanelButton.addEventListener('click', async () => {
-        if (autoCopyIncludesNote()) {
-          await requestNotificationPermissionIfNeeded();
-        }
-      });
-    }
+    // Legacy page-notification hooks intentionally disabled.
   }
 
   function emitTranscriptionFinished(opts) {
@@ -1114,12 +1153,6 @@ document.addEventListener('DOMContentLoaded', () => {
     app.__autoGenerateListenerBound = true;
 
     window.addEventListener('transcription:finished', (e) => {
-      try {
-        tryAutoCopyFinishedTranscript(e && e.detail ? e.detail : null);
-      } catch (err) {
-        console.warn('Auto-copy transcript failed', err);
-      }
-
       try {
         tryAutoGenerateNote(e && e.detail ? e.detail : null);
       } catch (err) {
@@ -1285,6 +1318,7 @@ document.addEventListener('DOMContentLoaded', () => {
       pauseResumeLabel: String(pauseBtn?.textContent || '').trim(),
       autoGenerateEnabled: !!getAutoGenerateEnabled(),
       autoCopyMode: getAutoCopyMode(),
+      autoCopyExtensionAvailable: isAutoCopyExtensionAvailable(),
       usePromptEnabled: getUsePromptEnabled(),
     };
   }
@@ -1309,6 +1343,8 @@ document.addEventListener('DOMContentLoaded', () => {
   app.setAutoGenerateEnabled = setAutoGenerateEnabled;
   app.getAutoCopyMode = getAutoCopyMode;
   app.setAutoCopyMode = setAutoCopyMode;
+  app.isAutoCopyExtensionAvailable = () => isAutoCopyExtensionAvailable();
+  app.pingAutoCopyExtension = () => pingAutoCopyExtension();
   app.getUsePromptEnabled = getUsePromptEnabled;
   app.setUsePromptEnabled = setUsePromptEnabled;
   app.initAutoGenerateToggle = initAutoGenerateToggle;
@@ -1377,6 +1413,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }));
     } catch (_) {}
   };
+
+  pingAutoCopyExtension().catch(() => {
+    setAutoCopyExtensionAvailable(false);
+  });
+
+  window.addEventListener('focus', () => {
+    pingAutoCopyExtension().catch(() => {});
+  });
 
   app.switchNoteProvider = async function switchNoteProvider(next) {
     if (getApp().noteGenerationInFlight) {
