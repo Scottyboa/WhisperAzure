@@ -95,6 +95,28 @@ function tMini(key) {
       fr: 'Enregistrement',
       it: 'Registrazione',
     },
+    generatingTranscript: {
+      en: 'Generating transcript',
+      no: 'Genererer transkripsjon',
+      nb: 'Genererer transkripsjon',
+      nn: 'Genererer transkripsjon',
+      sv: 'Genererar transkription',
+      da: 'Genererer transskription',
+      de: 'Transkript wird erstellt',
+      fr: 'Génération de la transcription',
+      it: 'Generazione trascrizione',
+    },
+    transcriptCompleted: {
+      en: 'Transcript completed',
+      no: 'Transkripsjon fullført',
+      nb: 'Transkripsjon fullført',
+      nn: 'Transkripsjon fullført',
+      sv: 'Transkription klar',
+      da: 'Transskription fuldført',
+      de: 'Transkript fertig',
+      fr: 'Transcription terminée',
+      it: 'Trascrizione completata',
+    },
     paused: {
       en: 'Paused',
       no: 'Pauset',
@@ -127,6 +149,17 @@ function tMini(key) {
       de: 'Notiz abgeschlossen',
       fr: 'Note terminée',
       it: 'Nota completata',
+    },
+    recordingAborted: {
+      en: 'Recording aborted',
+      no: 'Opptak avbrutt',
+      nb: 'Opptak avbrutt',
+      nn: 'Opptak avbrote',
+      sv: 'Inspelning avbruten',
+      da: 'Optagelse afbrudt',
+      de: 'Aufnahme abgebrochen',
+      fr: 'Enregistrement annulé',
+      it: 'Registrazione annullata',
     },
     ready: {
       en: 'Ready',
@@ -342,11 +375,13 @@ function getSafeState() {
       canStop: false,
       canPauseResume: false,
       canAbort: false,
+      hasTranscript: false,
       hasNote: false,
       statusText: '',
       pauseResumeLabel: 'Pause',
       autoGenerateEnabled: false,
       autoCopyMode: 'off',
+      miniPanelStatusPhase: 'idle',
       usePromptEnabled: false,
     };
   }
@@ -361,11 +396,13 @@ function getSafeState() {
       canStop: false,
       canPauseResume: false,
       canAbort: false,
+      hasTranscript: false,
       hasNote: false,
       statusText: '',
       pauseResumeLabel: 'Pause',
       autoGenerateEnabled: false,
       autoCopyMode: 'off',
+      miniPanelStatusPhase: 'idle',
       usePromptEnabled: false,
     };
   }
@@ -550,6 +587,29 @@ function syncAutoCopyOptions() {
   }
 }
 
+function getMiniPhasePresentation(state) {
+  const phase = String(state?.miniPanelStatusPhase || 'idle').trim();
+
+  switch (phase) {
+    case 'recording':
+      return { text: tMini('recording'), badge: tMini('recording'), tone: 'recording' };
+    case 'paused':
+      return { text: tMini('paused'), badge: tMini('paused'), tone: 'paused' };
+    case 'transcribing':
+      return { text: tMini('generatingTranscript'), badge: tMini('generatingTranscript'), tone: 'transcribe' };
+    case 'transcript-completed':
+      return { text: tMini('transcriptCompleted'), badge: tMini('transcriptCompleted'), tone: 'ready' };
+    case 'note-generating':
+      return { text: tMini('generatingNote'), badge: tMini('generatingNote'), tone: 'note' };
+    case 'note-completed':
+      return { text: tMini('noteCompleted'), badge: tMini('noteCompleted'), tone: 'ready' };
+    case 'aborted':
+      return { text: tMini('recordingAborted'), badge: tMini('recordingAborted'), tone: 'idle' };
+    default:
+      return null;
+  }
+}
+
 function updateMiniPanelUi() {
   const doc = getMiniDoc();
   if (!doc) return;
@@ -557,11 +617,12 @@ function updateMiniPanelUi() {
   const state = getSafeState();
   const statusText = String(state.statusText || '').trim();
   const pauseResumeLabel = String(state.pauseResumeLabel || '').trim() || tMini('pause');
+  const phaseUi = getMiniPhasePresentation(state);
 
   setDisabled('miniStartButton', !state.canStart);
   setDisabled('miniStopButton', !state.canStop);
   setDisabled('miniPauseButton', !state.canPauseResume);
-  setDisabled('miniCopyTranscriptButton', false);
+  setDisabled('miniCopyTranscriptButton', !state.hasTranscript);
   setDisabled('miniCopyNoteButton', !state.hasNote);
   setDisabled('miniAbortButton', !state.canAbort);
 
@@ -571,7 +632,7 @@ function updateMiniPanelUi() {
   setText('miniCopyTranscriptButton', tMini('copyTranscript'));
   setText('miniCopyNoteButton', tMini('copyNote'));
   setText('miniAbortButton', tMini('abort'));
-  setText('miniStatusText', statusText || tMini('ready'));
+  setText('miniStatusText', phaseUi?.text || statusText || tMini('ready'));
   setText('miniTitle', tMini('miniPanel'));
   setText('miniAutoGenerateLabel', tMini('autoGenerate'));
   setText('miniAutoCopyLabel', tMini('autoCopy'));
@@ -594,16 +655,8 @@ function updateMiniPanelUi() {
     miniAutoCopyHelp.setAttribute('aria-label', tMini('autoCopyHelpShort'));
   }
 
-  if (state.noteBusy) {
-    setBadge(tMini('generatingNote'), 'note');
-  } else if (state.transcribeBusy) {
-    if (/resume/i.test(pauseResumeLabel)) {
-      setBadge(tMini('paused'), 'paused');
-    } else {
-      setBadge(tMini('recording'), 'recording');
-    }
-  } else if (state.hasNote) {
-    setBadge(tMini('noteCompleted'), 'ready');
+  if (phaseUi) {
+    setBadge(phaseUi.badge, phaseUi.tone);
   } else {
     setBadge(tMini('idle'), 'idle');
   }
@@ -920,10 +973,28 @@ function renderMiniPanelDocument(targetWindow) {
       color: var(--info);
     }
 
+    .badge[data-tone="transcript"] {
+      background: rgba(148,183,255,0.12);
+      border-color: rgba(148,183,255,0.28);
+      color: var(--info);
+    }
+
+    .badge[data-tone="transcribe"] {
+      background: rgba(148,183,255,0.12);
+      border-color: rgba(148,183,255,0.28);
+      color: var(--info);
+    }
+
     .badge[data-tone="ready"] {
       background: rgba(111,211,166,0.12);
       border-color: rgba(111,211,166,0.28);
       color: var(--accent);
+    }
+
+    .badge[data-tone="aborted"] {
+      background: rgba(243,138,138,0.12);
+      border-color: rgba(243,138,138,0.28);
+      color: var(--danger);
     }
 
     .copied {
