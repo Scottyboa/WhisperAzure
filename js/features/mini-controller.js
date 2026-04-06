@@ -651,7 +651,7 @@ function updateMiniPanelUi() {
     miniAutoCopyHelp.title =
       state.autoCopyExtensionAvailable
         ? ''
-        : `Chrome extension required.\n\nDownload: ${AUTO_COPY_DOWNLOAD_HREF}\nUnzip it, read the README, then load the unpacked folder in chrome://extensions and refresh the page.`;
+        : `Chrome extension required.\n\nDownload: ${AUTO_COPY_DOWNLOAD_HREF}\nUnzip it, read the README, then load the unpacked folder in chrome://extensions and refresh the page.\n\nWhen Auto-generate is turned on, Auto-copy switches to Note.\nWhen Auto-generate is turned off, Auto-copy switches to Transcript.\n\nYou can still change Auto-copy manually afterward. That manual choice stays active until Auto-generate is toggled again.`;
     miniAutoCopyHelp.setAttribute('aria-label', tMini('autoCopyHelpShort'));
   }
 
@@ -1382,7 +1382,11 @@ function renderMiniPanelDocument(targetWindow) {
     Download and install:
     <a href="div/autocopy.zip" download>autocopy.zip</a><br><br>
     Unzip it, read the README, then load the unpacked folder in
-    <code>chrome://extensions</code> and refresh the page.
+    <code>chrome://extensions</code> and refresh the page.<br><br>
+    When you toggle Auto-generate ON, Auto-copy switches to Note.
+    When you toggle Auto-generate OFF, Auto-copy switches to Transcript.<br><br>
+    You can still change Auto-copy manually afterward.
+    That manual choice stays active until Auto-generate is toggled again.
   </span>
 </span>
           </div>
