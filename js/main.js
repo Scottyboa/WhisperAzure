@@ -1430,6 +1430,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const stopBtn = document.getElementById('stopButton');
     const pauseBtn = document.getElementById('pauseResumeButton');
     const abortBtn = document.getElementById('abortButton');
+    const transcriptEl = document.getElementById('transcription');
     const noteEl = document.getElementById('generatedNote');
     const statusEl = document.getElementById('statusMessage');
 
@@ -1440,6 +1441,7 @@ document.addEventListener('DOMContentLoaded', () => {
       canStop: !(stopBtn?.disabled ?? true),
       canPauseResume: !(pauseBtn?.disabled ?? true),
       canAbort: !(abortBtn?.disabled ?? true),
+      hasTranscript: !!String(transcriptEl?.value || '').trim(),
       hasNote: !!String(noteEl?.value || '').trim(),
       statusText: String(statusEl?.innerText || '').trim(),
       pauseResumeLabel: String(pauseBtn?.textContent || '').trim(),
