@@ -128,6 +128,39 @@ function tMini(key) {
       fr: 'Transcription terminée',
       it: 'Trascrizione completata',
     },
+    generatingNote: {
+      en: 'Generating note',
+      no: 'Genererer notat',
+      nb: 'Genererer notat',
+      nn: 'Genererer notat',
+      sv: 'Genererar anteckning',
+      da: 'Genererer note',
+      de: 'Notiz wird erstellt',
+      fr: 'Génération de la note',
+      it: 'Generazione nota',
+    },
+    noteCompleted: {
+      en: 'Note completed',
+      no: 'Notat fullført',
+      nb: 'Notat fullført',
+      nn: 'Notat fullført',
+      sv: 'Anteckning klar',
+      da: 'Note klar',
+      de: 'Notiz fertig',
+      fr: 'Note terminée',
+      it: 'Nota completata',
+    },
+    recordingAborted: {
+      en: 'Aborted',
+      no: 'Avbrutt',
+      nb: 'Avbrutt',
+      nn: 'Avbroten',
+      sv: 'Avbruten',
+      da: 'Afbrydt',
+      de: 'Abgebrochen',
+      fr: 'Interrompu',
+      it: 'Interrotto',
+    },
     paused: {
       en: 'Paused',
       no: 'Pauset',
@@ -974,20 +1007,34 @@ function getMiniPhasePresentation(state) {
       return { badge: tMini('recording'), text: state.statusText || tMini('recording'), tone: 'recording' };
     case 'paused':
       return { badge: tMini('paused'), text: state.statusText || tMini('paused'), tone: 'paused' };
+    case 'transcribing':
     case 'generating-transcript':
       return {
         badge: tMini('generatingTranscript'),
         text: state.statusText || tMini('generatingTranscript'),
         tone: 'transcribe',
       };
+    case 'transcript-completed':
     case 'transcript-complete':
       return {
         badge: tMini('transcriptCompleted'),
         text: state.statusText || tMini('transcriptCompleted'),
         tone: 'ready',
       };
+    case 'note-generating':
+      return {
+        badge: tMini('generatingNote'),
+        text: state.statusText || tMini('generatingNote'),
+        tone: 'transcribe',
+      };
+    case 'note-completed':
+      return {
+        badge: tMini('noteCompleted'),
+        text: state.statusText || tMini('noteCompleted'),
+        tone: 'ready',
+      };
     case 'aborted':
-      return { badge: tMini('abort'), text: state.statusText || tMini('abort'), tone: 'aborted' };
+      return { badge: tMini('recordingAborted'), text: state.statusText || tMini('recordingAborted'), tone: 'aborted' };
     default:
       return { badge: tMini('idle'), text: state.statusText || tMini('ready'), tone: 'idle' };
   }
