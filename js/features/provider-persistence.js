@@ -333,13 +333,17 @@ import {
         });
 
         if (!isSoniox(providerSelect.value)) return;
+        const busyNow = !!getApp().isTranscribeBusy?.();
+        if (busyNow) {
+          console.warn('Soft recording switch (speaker labels) ignored while transcription is busy.');
+          return;
+        }
 
-        await performRuntimeSwitch({
-          isBusy: () => getApp().isTranscribeBusy?.(),
-          switcher: (value) => getApp().switchTranscribeProvider?.(value),
-          fallbackLabel: 'Soft recording switch (speaker labels)',
-          nextValue: 'soniox',
-        });
+        try {
+          await getApp().switchTranscribeProvider?.('soniox');
+        } catch (err) {
+          console.warn('Soft recording switch (speaker labels) failed without reload', err);
+        }
       });
     }
 
@@ -366,12 +370,17 @@ import {
         providerValue: provider,
       });
 
-      await performRuntimeSwitch({
-        isBusy: () => getApp().isTranscribeBusy?.(),
-        switcher: (value) => getApp().switchTranscribeProvider?.(value),
-        fallbackLabel: 'Soft recording switch',
-        nextValue: provider,
-      });
+      const busyNow = !!getApp().isTranscribeBusy?.();
+      if (busyNow) {
+        console.warn('Soft recording switch ignored while transcription is busy.');
+        return;
+      }
+
+      try {
+        await getApp().switchTranscribeProvider?.(provider);
+      } catch (err) {
+        console.warn('Soft recording switch failed without reload', err);
+      }
     });
   }
 
@@ -433,12 +442,17 @@ import {
         providerValue: providerSelect.value,
       });
 
-      await performRuntimeSwitch({
-        isBusy: () => getApp().isNoteGenerationBusy?.(),
-        switcher: (value) => getApp().switchNoteProvider?.(value),
-        fallbackLabel: 'Soft note switch',
-        nextValue: effectiveProvider,
-      });
+      const busyNow = !!getApp().isNoteGenerationBusy?.();
+      if (busyNow) {
+        console.warn('Soft note switch ignored while note generation is busy.');
+        return;
+      }
+
+      try {
+        await getApp().switchNoteProvider?.(effectiveProvider);
+      } catch (err) {
+        console.warn('Soft note switch failed without reload', err);
+      }
     };
 
     providerSelect.addEventListener('change', persistAndSwitchNoteProvider);
