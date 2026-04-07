@@ -16,6 +16,39 @@ const promptProfileValue = document.getElementById("promptProfileValue");
 const promptExportBtn = document.getElementById("promptExportBtn");
 const promptImportBtn = document.getElementById("promptImportBtn");
 const promptImportFile = document.getElementById("promptImportFile");
+const MINI_HUB_UI_REFRESH_EVENT = "mini-hub:prompt-ui-refresh";
+
+function getPromptOptionsForMiniPanel() {
+  const slots = getAvailableSlots();
+  const names = getSlotNames();
+
+  return slots.map((slot) => {
+    const explicit = getSlotDisplayName(slot, names);
+    return {
+      id: String(slot),
+      label: explicit ? `${slot}. ${explicit}` : `${slot}.`,
+      title: explicit || "",
+    };
+  });
+}
+
+function getCurrentPromptTitleForMiniPanel() {
+  const slot = getCurrentSlot();
+  const direct = String(promptSlotTriggerName?.textContent || "").trim();
+  if (direct) return direct;
+
+  const fallback = getSlotDisplayName(slot);
+  if (fallback) return fallback;
+
+  return "";
+}
+
+function syncMiniPanelPromptApi() {
+  const app = (window.__app = window.__app || {});
+  app.getMiniPanelPromptOptionsRich = () => getPromptOptionsForMiniPanel();
+  app.getSelectedPromptSlotRich = () => getCurrentSlot();
+  app.getCurrentPromptSlotTitleRich = () => getCurrentPromptTitleForMiniPanel();
+}
 
 function getAvailableSlots() {
   if (!promptSlotSelect) return [];
@@ -55,6 +88,19 @@ function getSlotDisplayName(slot, names = getSlotNames()) {
     return String(PromptManager.getSlotDisplayName(key, getCurrentProfileId()) || "").trim();
   }
   return "";
+}
+
+function emitMiniHubPromptUiRefresh(reason, extra = {}) {
+  try {
+    window.dispatchEvent(new CustomEvent(MINI_HUB_UI_REFRESH_EVENT, {
+      detail: {
+        reason: String(reason || "prompt-ui").trim() || "prompt-ui",
+        profileId: getEffectiveProfileId(),
+        slot: getCurrentSlot(),
+        ...extra,
+      },
+    }));
+  } catch {}
 }
 
 function persistCurrentSelectedSlot() {
@@ -104,6 +150,8 @@ function setCurrentSlotValue(slot, { reload = true, emitChange = true } = {}) {
     syncNameInputForCurrentSlot();
     renderPromptSlotTrigger();
     renderPromptSlotPopover();
+    syncMiniPanelPromptApi();
+    emitMiniHubPromptUiRefresh("slot-value-set", { slot: next, reload: true });
   }
 
   if (emitChange) {
@@ -120,11 +168,13 @@ function renderPromptSlotTrigger() {
   if (name) {
     promptSlotTriggerName.textContent = name;
     promptSlotTrigger.title = `Slot ${slot}: ${name}`;
+    syncMiniPanelPromptApi();
     return;
   }
 
   promptSlotTriggerName.textContent = "";
   promptSlotTrigger.title = `Slot ${slot}`;
+  syncMiniPanelPromptApi();
 }
 
 function clearDragOverState() {
@@ -256,6 +306,7 @@ function buildPromptSlotItem(slot, names, activeSlot) {
       syncNameInputForCurrentSlot();
       renderPromptSlotTrigger();
       renderPromptSlotPopover();
+      syncMiniPanelPromptApi();
     } catch (err) {
       console.warn("Prompt slot reorder failed:", err);
     }
@@ -279,6 +330,7 @@ function renderPromptSlotPopover() {
   getAvailableSlots().forEach((slot) => {
     promptSlotList.appendChild(buildPromptSlotItem(slot, names, activeSlot));
   });
+  syncMiniPanelPromptApi();
 }
 
 function updatePromptSlotPopoverPlacement() {
@@ -372,6 +424,7 @@ function ensurePromptProfileId({ allowChange = false } = {}) {
   renderPromptSlotTrigger();
   renderPromptSlotPopover();
   syncNameInputForCurrentSlot();
+  syncMiniPanelPromptApi();
 
   return active;
 }
@@ -425,6 +478,7 @@ if (promptSlotSelect && customPromptTextarea) {
     syncNameInputForCurrentSlot();
     renderPromptSlotTrigger();
     renderPromptSlotPopover();
+    syncMiniPanelPromptApi();
   }
 
   loadCurrentSlot();
@@ -451,6 +505,7 @@ if (promptSlotNameInput && promptSlotSelect) {
     }
     renderPromptSlotTrigger();
     renderPromptSlotPopover();
+    syncMiniPanelPromptApi();
   };
 
   promptSlotNameInput.addEventListener("blur", commitName);
@@ -535,6 +590,10 @@ if (promptImportBtn && promptImportFile) {
       renderPromptSlotTrigger();
       renderPromptSlotPopover();
       syncNameInputForCurrentSlot();
+      syncMiniPanelPromptApi();
+      emitMiniHubPromptUiRefresh("prompt-slots-imported", {
+        imported: true,
+      });
     } else {
       console.warn("Import not implemented yet (PromptManager.importPromptsFromFile missing).");
     }
@@ -553,6 +612,10 @@ window.addEventListener("prompt-profile-changed", (event) => {
   syncNameInputForCurrentSlot();
   renderPromptSlotTrigger();
   renderPromptSlotPopover();
+  syncMiniPanelPromptApi();
+  emitMiniHubPromptUiRefresh("prompt-profile-changed", {
+    profileId: currentProfileId,
+  });
 });
 
 window.addEventListener("prompt-slot-selection-changed", (event) => {
@@ -570,6 +633,8 @@ window.addEventListener("prompt-slot-selection-changed", (event) => {
   syncNameInputForCurrentSlot();
   renderPromptSlotTrigger();
   renderPromptSlotPopover();
+  syncMiniPanelPromptApi();
+  emitMiniHubPromptUiRefresh("prompt-slot-selection-changed", { slot });
 });
 
 window.addEventListener("prompt-slot-names-changed", (event) => {
@@ -580,6 +645,8 @@ window.addEventListener("prompt-slot-names-changed", (event) => {
   syncNameInputForCurrentSlot();
   renderPromptSlotTrigger();
   renderPromptSlotPopover();
+  syncMiniPanelPromptApi();
+  emitMiniHubPromptUiRefresh("prompt-slot-names-changed");
 });
 
 window.addEventListener("prompt-slots-imported", (event) => {
@@ -591,6 +658,8 @@ window.addEventListener("prompt-slots-imported", (event) => {
   syncNameInputForCurrentSlot();
   renderPromptSlotTrigger();
   renderPromptSlotPopover();
+  syncMiniPanelPromptApi();
+  emitMiniHubPromptUiRefresh("prompt-slots-imported");
 });
 
 window.addEventListener("prompt-slots-reordered", (event) => {
@@ -601,4 +670,8 @@ window.addEventListener("prompt-slots-reordered", (event) => {
   syncNameInputForCurrentSlot();
   renderPromptSlotTrigger();
   renderPromptSlotPopover();
+  syncMiniPanelPromptApi();
+  emitMiniHubPromptUiRefresh("prompt-slots-reordered");
 });
+
+syncMiniPanelPromptApi();
