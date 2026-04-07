@@ -21,6 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const AUTO_COPY_EXTENSION_PING_TIMEOUT_MS = 1200;
   const PROMPT_PROFILE_STORAGE_KEY = 'prompt_profile_id';
   const DEFAULT_PROMPT_PROFILE_ID = 'default';
+  const MINI_HUB_CHANNEL_NAME = 'whisperazure-mini-panel-hub';
+  const MINI_HUB_TAB_ID_KEY = 'mini_panel_tab_id';
+  let miniHubChannel = null;
+  let miniHubTabId = '';
 
   function getApp() {
     const existing = window.__app || {};
@@ -30,6 +34,52 @@ document.addEventListener('DOMContentLoaded', () => {
       app.miniPanelOpen = false;
     }
     return app;
+  }
+
+  function getOrCreateMiniHubTabId() {
+    if (miniHubTabId) return miniHubTabId;
+
+    try {
+      const existing = String(sessionStorage.getItem(MINI_HUB_TAB_ID_KEY) || '').trim();
+      if (existing) {
+        miniHubTabId = existing;
+        return miniHubTabId;
+      }
+    } catch (_) {}
+
+    const generated =
+      (window.crypto?.randomUUID && window.crypto.randomUUID()) ||
+      `mini-tab-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    try {
+      sessionStorage.setItem(MINI_HUB_TAB_ID_KEY, generated);
+    } catch (_) {}
+
+    miniHubTabId = generated;
+    return miniHubTabId;
+  }
+
+  function getMiniHubChannel() {
+    if (miniHubChannel || typeof BroadcastChannel !== 'function') {
+      return miniHubChannel;
+    }
+
+    try {
+      miniHubChannel = new BroadcastChannel(MINI_HUB_CHANNEL_NAME);
+    } catch (_) {
+      miniHubChannel = null;
+    }
+
+    return miniHubChannel;
+  }
+
+  function postMiniHubMessage(message) {
+    const channel = getMiniHubChannel();
+    if (!channel) return;
+
+    try {
+      channel.postMessage(message);
+    } catch (_) {}
   }
 
   function emitAppStateChanged(reason = 'unknown', extra = {}) {
@@ -44,6 +94,206 @@ document.addEventListener('DOMContentLoaded', () => {
         })
       );
     } catch (_) {}
+  }
+
+  function normalizePromptOptionLabel(item) {
+    const id = String(item?.id || '').trim();
+    if (!id) return null;
+
+    const rawLabel = String(item?.label || '').trim();
+    return {
+      id,
+      label: rawLabel || id,
+    };
+  }
+
+  function stripPromptNumericPrefix(label) {
+    return String(label || '')
+      .replace(/^\s*\d+\s*[\.\-:)]\s*/u, '')
+      .trim();
+  }
+
+  function getMiniPanelPromptOptionsSnapshot() {
+    const app = getApp();
+    if (typeof app.getMiniPanelPromptOptions !== 'function' || app.getMiniPanelPromptOptions === getMiniPanelPromptOptionsSnapshot) {
+      return [];
+    }
+
+    try {
+      return (app.getMiniPanelPromptOptions() || [])
+        .map(normalizePromptOptionLabel)
+        .filter(Boolean);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function getSelectedPromptSlotSnapshot() {
+    const app = getApp();
+    if (typeof app.getSelectedPromptSlot !== 'function' || app.getSelectedPromptSlot === getSelectedPromptSlotSnapshot) {
+      return '1';
+    }
+
+    try {
+      return String(app.getSelectedPromptSlot() || '1').trim() || '1';
+    } catch (_) {
+      return '1';
+    }
+  }
+
+  function getCurrentPromptLabelSnapshot() {
+    const options = getMiniPanelPromptOptionsSnapshot();
+    const selectedSlot = getSelectedPromptSlotSnapshot();
+
+    const selected = options.find((item) => item.id === selectedSlot);
+    if (!selected) return 'Untitled';
+
+    const cleaned = stripPromptNumericPrefix(selected.label);
+    return cleaned || 'Untitled';
+  }
+
+  function getMiniPanelStateSnapshot() {
+    const app = getApp();
+    if (typeof app.getMiniPanelState !== 'function') {
+      return {
+        canStart: false,
+        canStop: false,
+        canPauseResume: false,
+        canAbort: false,
+        hasTranscript: false,
+        hasNote: false,
+        statusText: '',
+        pauseResumeLabel: 'Pause',
+        autoGenerateEnabled: false,
+        autoCopyMode: 'off',
+        autoCopyExtensionAvailable: false,
+        miniPanelStatusPhase: 'idle',
+        usePromptEnabled: false,
+      };
+    }
+
+    try {
+      return app.getMiniPanelState() || {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function publishMiniHubSnapshot(reason = 'state') {
+    postMiniHubMessage({
+      type: 'mini-hub-tab-state',
+      reason,
+      snapshot: buildMiniHubSnapshot(),
+    });
+  }
+
+  function activateMiniHubTab(reason = 'activate') {
+    const snapshot = buildMiniHubSnapshot();
+    const activatedAt = Date.now();
+
+    postMiniHubMessage({
+      type: 'mini-hub-activate-tab',
+      reason,
+      tabId: snapshot.tabId,
+      activatedAt,
+      snapshot: {
+        ...snapshot,
+        activatedAt,
+      },
+    });
+  }
+
+  function closeMiniHubTab() {
+    postMiniHubMessage({
+      type: 'mini-hub-tab-closed',
+      tabId: getOrCreateMiniHubTabId(),
+      at: Date.now(),
+    });
+  }
+
+  function invokeMiniHubCommand(actionName, args = []) {
+    const app = getApp();
+    const fn = app && typeof app[actionName] === 'function' ? app[actionName] : null;
+    if (!fn) return false;
+
+    try {
+      fn(...args);
+      return true;
+    } catch (error) {
+      console.warn('[mini-hub] command failed:', actionName, error);
+      return false;
+    }
+  }
+
+  function bindMiniHubBridge() {
+    if (window.__miniHubBridgeBound === true) return;
+    window.__miniHubBridgeBound = true;
+
+    const channel = getMiniHubChannel();
+    getOrCreateMiniHubTabId();
+
+    if (channel) {
+      channel.addEventListener('message', (event) => {
+        const data = event?.data || {};
+        if (String(data?.type || '') !== 'mini-hub-command') return;
+
+        const targetTabId = String(data?.targetTabId || '').trim();
+        if (!targetTabId || targetTabId !== getOrCreateMiniHubTabId()) return;
+
+        const actionName = String(data?.actionName || '').trim();
+        const args = Array.isArray(data?.args) ? data.args : [];
+        if (!actionName) return;
+
+        const ok = invokeMiniHubCommand(actionName, args);
+        if (ok) {
+          emitAppStateChanged('mini-hub-command', {
+            actionName,
+            targetTabId,
+          });
+          window.setTimeout(() => publishMiniHubSnapshot(`command:${actionName}`), 0);
+          window.setTimeout(() => publishMiniHubSnapshot(`command:${actionName}:settled`), 150);
+        }
+      });
+    }
+
+    window.addEventListener('app:state-changed', (event) => {
+      const reason = String(event?.detail?.reason || 'unknown').trim() || 'unknown';
+      publishMiniHubSnapshot(`app-state:${reason}`);
+    });
+
+    window.addEventListener('prompt-slot-selection-changed', () => {
+      publishMiniHubSnapshot('prompt-slot-selection-changed');
+    });
+
+    window.addEventListener('prompt-slot-names-changed', () => {
+      publishMiniHubSnapshot('prompt-slot-names-changed');
+    });
+
+    window.addEventListener('prompt-profile-changed', () => {
+      publishMiniHubSnapshot('prompt-profile-changed');
+    });
+
+    window.addEventListener('transcription:finished', () => {
+      publishMiniHubSnapshot('transcription-finished');
+    });
+
+    window.addEventListener('note-generation-finished', () => {
+      publishMiniHubSnapshot('note-generation-finished');
+    });
+
+    window.addEventListener('note:finished', () => {
+      publishMiniHubSnapshot('note-finished');
+    });
+
+    window.addEventListener('mini-panel:status', () => {
+      publishMiniHubSnapshot('mini-panel-status');
+    });
+
+    window.addEventListener('beforeunload', () => {
+      closeMiniHubTab();
+    });
+
+    window.setTimeout(() => publishMiniHubSnapshot('bridge-ready'), 0);
   }
 
   function setMiniPanelStatusPhase(phase) {
@@ -617,8 +867,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function requestNotificationPermissionIfNeeded() {
-    // Legacy page-notification path retained for future use,
-    // but extension-driven auto-copy should handle notifications now.
     return 'extension-handled';
   }
 
@@ -675,57 +923,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function tryAutoCopyFinishedNote(detail) {
-    // Legacy browser-page auto-copy path kept intentionally but no longer active.
-    // Auto-copy is now extension-only.
     return;
-
-    const text = String(detail?.text || '').trim();
-    if (!text) return;
-    if (detail?.status === 'aborted') return;
-    if (!autoCopyIncludesNote()) return;
-
-    const noteEl = document.getElementById('generatedNote');
-    const shouldNotify = shouldShowCopiedSystemNotification(detail);
-
-    if (shouldNotify) {
-      if (Notification.permission === 'granted') {
-        showCopiedSystemNotification(detail);
-      } else if (Notification.permission === 'default') {
-        requestNotificationPermissionIfNeeded()
-          .then((permission) => {
-            if (permission === 'granted') {
-              showCopiedSystemNotification(detail);
-            }
-          })
-          .catch(() => {});
-      }
-    }
-
-    (async () => {
-      const result = await tryClipboardWriteWithRetries(text, 5, 300);
-      if (result.ok) {
-        emitCopiedEvent(text, 'auto-copy');
-        return;
-      }
-
-      const ok = tryExecCommandCopyFromField(noteEl, text, 'auto-copy');
-      if (!ok) {
-        emitCopyFailedEvent(
-          text,
-          'auto-copy',
-          result.reason || 'clipboard-write-failed'
-        );
-      }
-    })().catch((error) => {
-      const ok = tryExecCommandCopyFromField(noteEl, text, 'auto-copy');
-      if (!ok) {
-        emitCopyFailedEvent(
-          text,
-          'auto-copy',
-          error?.name || 'clipboard-write-failed'
-        );
-      }
-    });
   }
 
   function buildFinishedTranscriptDetail(meta = {}) {
@@ -743,42 +941,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function tryAutoCopyFinishedTranscript(detail) {
-    // Legacy browser-page auto-copy path kept intentionally but no longer active.
-    // Auto-copy is now extension-only.
     return;
-
-    const text = String(detail?.text || '').trim();
-    if (!text) return;
-    if (detail?.status === 'aborted') return;
-    if (!autoCopyIncludesTranscript()) return;
-
-    const trEl = document.getElementById('transcription');
-
-    (async () => {
-      const result = await tryClipboardWriteWithRetries(text, 5, 300);
-      if (result.ok) {
-        emitTranscriptCopiedEvent(text, 'auto-copy-transcript');
-        return;
-      }
-
-      const ok = tryExecCommandCopyTranscriptFromField(trEl, text, 'auto-copy-transcript');
-      if (!ok) {
-        emitTranscriptCopyFailedEvent(
-          text,
-          'auto-copy-transcript',
-          result.reason || 'clipboard-write-failed'
-        );
-      }
-    })().catch((error) => {
-      const ok = tryExecCommandCopyTranscriptFromField(trEl, text, 'auto-copy-transcript');
-      if (!ok) {
-        emitTranscriptCopyFailedEvent(
-          text,
-          'auto-copy-transcript',
-          error?.name || 'clipboard-write-failed'
-        );
-      }
-    });
   }
 
   function emitNoteFinished(meta = {}) {
@@ -807,9 +970,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (normalized !== readSession('transcribe_provider', DEFAULTS.transcribeProvider)) {
       writeSession('transcribe_provider', normalized);
-    }
-    if (normalized === 'soniox' && readSession('soniox_speaker_labels', '') !== 'on') {
-      // no-op; legacy migration is handled inside normalizeTranscribeProvider + provider persistence
     }
 
     return normalized;
@@ -944,6 +1104,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getMiniPanelPromptOptions() {
+    const app = getApp();
+    if (typeof app.getMiniPanelPromptOptionsRich === 'function') {
+      try {
+        const rich = app.getMiniPanelPromptOptionsRich();
+        if (Array.isArray(rich) && rich.length) {
+          return rich
+            .map((item) => ({
+              id: String(item?.id || '').trim(),
+              label: String(item?.label || '').trim(),
+            }))
+            .filter((item) => item.id);
+        }
+      } catch (_) {}
+    }
+
     const select = getPromptSlotSelect();
     const namesMap = getPromptSlotNamesMap();
 
@@ -964,11 +1139,37 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getSelectedPromptSlot() {
+    const app = getApp();
+    if (typeof app.getSelectedPromptSlotRich === 'function') {
+      try {
+        const slot = String(app.getSelectedPromptSlotRich() || '').trim();
+        if (slot) return slot;
+      } catch (_) {}
+    }
+
     const select = getPromptSlotSelect();
     if (select && select.value) {
       return String(select.value).trim();
     }
     return String(readLocal(`prompt_selected_slot::${getEffectivePromptProfileId()}`, '1') || '1').trim() || '1';
+  }
+
+  function getCurrentPromptSlotTitle() {
+    const app = getApp();
+    if (typeof app.getCurrentPromptSlotTitleRich === 'function') {
+      try {
+        const title = String(app.getCurrentPromptSlotTitleRich() || '').trim();
+        if (title) return title;
+      } catch (_) {}
+    }
+
+    const selectedSlot = getSelectedPromptSlot();
+    const selected = getMiniPanelPromptOptions().find((item) => String(item.id) === String(selectedSlot));
+    if (!selected) return '';
+
+    return String(selected.label || '')
+      .replace(/^\s*\d+\s*[\.\-:)]\s*/u, '')
+      .trim();
   }
 
   function selectPromptSlot(slot) {
@@ -1166,9 +1367,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function initNotificationPermissionHooks() {
-    // Legacy page-notification hooks intentionally disabled.
-  }
+  function initNotificationPermissionHooks() {}
 
   function emitTranscriptionFinished(opts) {
     const detail = {
@@ -1453,6 +1652,24 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
+  function buildMiniHubSnapshot() {
+    let promptOptions = getMiniPanelPromptOptions();
+    const selectedPromptSlot = getSelectedPromptSlot();
+
+    if (!Array.isArray(promptOptions) || !promptOptions.length) {
+      promptOptions = [{ id: selectedPromptSlot, label: `${selectedPromptSlot}. Untitled` }];
+    }
+
+    return {
+      tabId: getOrCreateMiniHubTabId(),
+      promptLabel: getCurrentPromptSlotTitle() || 'Untitled',
+      selectedPromptSlot,
+      promptOptions,
+      state: getMiniPanelStateSnapshot(),
+      updatedAt: Date.now(),
+    };
+  }
+
   function initMiniPanelStatusPhaseFlow() {
     const app = getApp();
     if (app.__miniPanelStatusPhaseBound) return;
@@ -1579,6 +1796,7 @@ document.addEventListener('DOMContentLoaded', () => {
   app.getNoteProviderSnapshot = getNoteProviderSnapshot;
   app.getMiniPanelPromptOptions = getMiniPanelPromptOptions;
   app.getSelectedPromptSlot = getSelectedPromptSlot;
+  app.getCurrentPromptSlotTitle = getCurrentPromptSlotTitle;
   app.selectPromptSlot = selectPromptSlot;
   app.resolveTranscribeModulePath = resolveTranscribeModulePath;
   app.resolveNoteModulePath = resolveNoteModulePath;
@@ -1644,6 +1862,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const choice = String(next || '').trim().toLowerCase();
+    if (!choice) return;
+
     resetNoteGenerationState();
     delete getApp().__noteStartPulseBound;
 
@@ -1655,8 +1876,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const abortBtn = document.getElementById('abortNoteButton');
     if (abortBtn) abortBtn.disabled = true;
 
-    writeSession('note_provider', String(next || DEFAULTS.noteProvider).toLowerCase());
-    const choice = getSelectedEffectiveNoteProvider();
+    const noteProvider = document.getElementById('noteProvider');
+    const noteProviderMode = document.getElementById('noteProviderMode');
+
+    if (noteProvider) {
+      noteProvider.value = inferNoteProviderUi(choice);
+    }
+
+    const derivedUi = deriveNoteUiStateFromEffectiveProvider(choice, getSelectedNoteProviderMode());
+    if (noteProviderMode) {
+      noteProviderMode.value = derivedUi.mode;
+    }
+
+    writeSession('note_provider', choice);
+    writeSession('note_provider_mode', derivedUi.mode);
+
     const path = resolveNoteModulePath(choice);
 
     try {
@@ -1670,20 +1904,35 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error('initNoteGeneration() missing');
       }
     } catch (e) {
-      reloadWithSavedState('Switch note provider failed, falling back to reload');
+      console.warn('Switch note provider failed without reload', e);
+      syncNoteActionButtons();
+      emitAppStateChanged('note-provider-switch-failed', {
+        provider: choice,
+        message: String(e?.message || e || 'Unknown error'),
+      });
     }
   };
 
   app.switchTranscribeProvider = async function switchTranscribeProvider(next) {
+    if (getApp().isTranscribeBusy?.()) {
+      console.warn('[recording:switch] Ignored provider switch while transcription is active.');
+      emitAppStateChanged('transcribe-provider-switch-ignored');
+      return;
+    }
+
     ['startButton', 'stopButton', 'pauseResumeButton', 'abortButton'].forEach((id) => {
       replaceButtonWithClone(id);
     });
 
-    writeSession('transcribe_provider', String(next || DEFAULTS.transcribeProvider).toLowerCase());
-    const provider = getSelectedTranscribeProvider();
-    const path = resolveTranscribeModulePath(provider);
+    const provider = normalizeTranscribeProvider(next);
+    writeSession('transcribe_provider', provider);
 
-    console.info('[recording:switch] provider:', provider, 'module:', path);
+    const transcribeProviderSelect = document.getElementById('transcribeProvider');
+    if (transcribeProviderSelect) {
+      transcribeProviderSelect.value = provider;
+    }
+
+    const path = resolveTranscribeModulePath(provider);
 
     try {
       const mod = await loadCachedModule(path);
@@ -1694,69 +1943,43 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error('initRecording() missing');
       }
     } catch (e) {
-      reloadWithSavedState('Switch transcribe provider failed, falling back to reload');
+      console.warn('Switch transcribe provider failed without reload', e);
+      emitAppStateChanged('transcribe-provider-switch-failed', {
+        provider,
+        message: String(e?.message || e || 'Unknown error'),
+      });
     }
   };
-
-  const abortNoteButton = document.getElementById('abortNoteButton');
-  if (abortNoteButton && abortNoteButton.dataset.mainAbortBound !== '1') {
-    abortNoteButton.dataset.mainAbortBound = '1';
-    abortNoteButton.addEventListener('click', () => {
-      abortNoteGeneration();
-    });
-  }
 
   const openMiniPanelButton = document.getElementById('openMiniPanelButton');
   if (openMiniPanelButton && openMiniPanelButton.dataset.bound !== '1') {
     openMiniPanelButton.dataset.bound = '1';
     openMiniPanelButton.addEventListener('click', () => {
       getApp().openMiniPanel?.();
+      activateMiniHubTab('mini-panel-open-button-click');
+      publishMiniHubSnapshot('mini-panel-open-button-click');
       emitAppStateChanged('mini-panel-open-button-click');
-    });
-  }
-
-  const copyTranscriptionButton = document.getElementById('copyTranscriptionButton');
-  if (copyTranscriptionButton) {
-    const originalLabel = copyTranscriptionButton.textContent;
-    copyTranscriptionButton.addEventListener('click', async () => {
-      const ok = copyTranscriptionToClipboard();
-      if (!ok) return;
-      copyTranscriptionButton.textContent = 'Copied';
-      setTimeout(() => { copyTranscriptionButton.textContent = originalLabel; }, 1200);
     });
   }
 
   window.addEventListener('mini-panel:status', (event) => {
     const open = !!event?.detail?.open;
     getApp().miniPanelOpen = open;
+    publishMiniHubSnapshot(open ? 'mini-panel-opened' : 'mini-panel-closed');
     emitAppStateChanged('mini-panel-status-changed', { open });
   });
-
-  window.addEventListener('note-generation-finished', () => {
-    finishNoteGeneration();
-  });
-
-  const generatedNoteEl = document.getElementById('generatedNote');
-  if (generatedNoteEl && generatedNoteEl.dataset.miniStateBound !== '1') {
-    generatedNoteEl.dataset.miniStateBound = '1';
-    generatedNoteEl.addEventListener('input', () => {
-      emitAppStateChanged('generated-note-input');
-    });
-  }
 
   const promptSlotSelect = document.getElementById('promptSlot');
   if (promptSlotSelect && promptSlotSelect.dataset.miniBound !== '1') {
     promptSlotSelect.dataset.miniBound = '1';
     promptSlotSelect.addEventListener('change', () => {
       const slot = String(promptSlotSelect.value || '').trim();
+      publishMiniHubSnapshot('prompt-slot-changed');
       emitAppStateChanged('prompt-slot-changed', { slot });
 
       try {
         window.dispatchEvent(new CustomEvent('prompt-slot-selection-changed', {
-          detail: {
-            profileId: getEffectivePromptProfileId(),
-            slot,
-          },
+          detail: { profileId: getEffectivePromptProfileId(), slot }
         }));
       } catch (_) {}
     });
@@ -1767,6 +1990,7 @@ document.addEventListener('DOMContentLoaded', () => {
     promptSlotNameInput.dataset.miniBound = '1';
 
     const emitPromptNamesChanged = () => {
+      publishMiniHubSnapshot('prompt-slot-names-changed');
       emitAppStateChanged('prompt-slot-names-changed');
       try {
         window.dispatchEvent(new CustomEvent('prompt-slot-names-changed', {
@@ -1775,15 +1999,21 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (_) {}
     };
 
-    promptSlotNameInput.addEventListener('input', emitPromptNamesChanged);
-    promptSlotNameInput.addEventListener('change', emitPromptNamesChanged);
     promptSlotNameInput.addEventListener('blur', emitPromptNamesChanged);
+    promptSlotNameInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        window.setTimeout(() => {
+          emitPromptNamesChanged();
+        }, 0);
+      }
+    });
   }
 
-  const promptProfileInput = document.getElementById('promptProfileInput');
+  const promptProfileInput = document.getElementById('promptProfileValue');
   if (promptProfileInput && promptProfileInput.dataset.miniBound !== '1') {
     promptProfileInput.dataset.miniBound = '1';
     promptProfileInput.addEventListener('change', () => {
+      publishMiniHubSnapshot('prompt-profile-changed');
       emitAppStateChanged('prompt-profile-changed');
       try {
         window.dispatchEvent(new CustomEvent('prompt-profile-changed', {
@@ -1793,20 +2023,37 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const statusMessageEl = document.getElementById('statusMessage');
-  if (statusMessageEl && !window.__miniStatusObserverBound) {
-    window.__miniStatusObserverBound = true;
-    try {
-      const observer = new MutationObserver(() => {
-        emitAppStateChanged('status-message-mutated');
+  // Provider selector persistence + soft switching is now handled by
+  // js/features/provider-persistence.js.
+  // Do NOT bind legacy reload-on-change listeners here.
+
+  const generateNoteButton = document.getElementById('generateNoteButton');
+  if (generateNoteButton && generateNoteButton.dataset.noteStartPulseBound !== '1') {
+    generateNoteButton.dataset.noteStartPulseBound = '1';
+    generateNoteButton.addEventListener('click', () => {
+      if (getApp().noteGenerationInFlight) return;
+      beginNoteGeneration({
+        source: 'generate-button-click',
+        provider: getSelectedEffectiveNoteProvider(),
       });
-      observer.observe(statusMessageEl, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-      });
-    } catch (_) {}
+    });
   }
+
+  const abortNoteButton = document.getElementById('abortNoteButton');
+  if (abortNoteButton && abortNoteButton.dataset.bound !== '1') {
+    abortNoteButton.dataset.bound = '1';
+    abortNoteButton.addEventListener('click', () => {
+      abortNoteGeneration();
+    });
+  }
+
+  window.addEventListener('note-generation-finished', (event) => {
+    tryAutoCopyFinishedNote(event?.detail || {});
+  });
+
+  window.addEventListener('transcription:finished', (event) => {
+    tryAutoCopyFinishedTranscript(event?.detail || {});
+  });
 
   syncNoteActionButtons();
   restoreState();
@@ -1820,6 +2067,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initRecordingProvider(getSelectedTranscribeProvider());
   initNoteProvider(getSelectedEffectiveNoteProvider());
+  bindMiniHubBridge();
+  publishMiniHubSnapshot('main-ready');
   initMiniControllerFeature();
 
   emitAppStateChanged('app-boot-complete');
