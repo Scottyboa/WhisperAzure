@@ -14,7 +14,9 @@ const STATE_REFRESH_MS = 350;
 const AUTO_COPY_DOWNLOAD_HREF = 'div/autocopy.zip';
 const MINI_HUB_CHANNEL_NAME = 'whisperazure-mini-panel-hub';
 const MINI_HUB_TAB_ID_KEY = 'mini_panel_tab_id';
-const MINI_HUB_STALE_MS = 15000;
+// Safety fallback only. Normal tab removal should happen via `mini-hub-tab-closed`.
+const MINI_HUB_STALE_MS = 10 * 60 * 1000;
+const MINI_HUB_HEARTBEAT_MS = 10000;
 
 let miniWindow = null;
 let refreshTimer = null;
@@ -531,6 +533,7 @@ function upsertHubTab(snapshot) {
 }
 
 function pruneStaleHubTabs() {
+  // Safety fallback only. Do not aggressively prune normal background tabs.
   const now = Date.now();
   for (const [tabId, entry] of hubTabs.entries()) {
     const updatedAt = Number(entry?.updatedAt || 0);
@@ -544,6 +547,7 @@ function pruneStaleHubTabs() {
       const aActivated = Number(a?.activatedAt || 0);
       const bActivated = Number(b?.activatedAt || 0);
       if (bActivated !== aActivated) return bActivated - aActivated;
+
       const aOrder = Number(a?.tabOrder || 0);
       const bOrder = Number(b?.tabOrder || 0);
       return aOrder - bOrder;
@@ -559,6 +563,7 @@ function getOrderedHubTabs() {
     const aActivated = Number(a?.activatedAt || 0);
     const bActivated = Number(b?.activatedAt || 0);
     if (bActivated !== aActivated) return bActivated - aActivated;
+
     const aOrder = Number(a?.tabOrder || 0);
     const bOrder = Number(b?.tabOrder || 0);
     return aOrder - bOrder;
@@ -604,7 +609,6 @@ function postHubMessage(message) {
 
 function publishLocalHubSnapshot(reason = 'state') {
   const snapshot = buildLocalHubSnapshot();
-
   const previous = hubTabs.get(snapshot.tabId);
   const hasIncomingPrompts = Array.isArray(snapshot.promptOptions) && snapshot.promptOptions.length > 0;
   const hasPreviousPrompts = Array.isArray(previous?.promptOptions) && previous.promptOptions.length > 0;
@@ -613,9 +617,10 @@ function publishLocalHubSnapshot(reason = 'state') {
   if (!hasIncomingPrompts && hasPreviousPrompts) {
     snapshot.promptOptions = previous.promptOptions;
     snapshot.selectedPromptSlot = snapshot.selectedPromptSlot || previous.selectedPromptSlot || '';
-    snapshot.promptLabel = snapshot.promptLabel && snapshot.promptLabel !== tMini('untitled')
-      ? snapshot.promptLabel
-      : (previous.promptLabel || tMini('untitled'));
+    snapshot.promptLabel =
+      snapshot.promptLabel && snapshot.promptLabel !== tMini('untitled')
+        ? snapshot.promptLabel
+        : (previous.promptLabel || tMini('untitled'));
   }
 
   upsertHubTab(snapshot);
@@ -641,9 +646,10 @@ function activateLocalHubTab(reason = 'activate') {
   if (!hasIncomingPrompts && hasExistingPrompts) {
     snapshot.promptOptions = existing.promptOptions;
     snapshot.selectedPromptSlot = snapshot.selectedPromptSlot || existing.selectedPromptSlot || '';
-    snapshot.promptLabel = snapshot.promptLabel && snapshot.promptLabel !== tMini('untitled')
-      ? snapshot.promptLabel
-      : (existing.promptLabel || tMini('untitled'));
+    snapshot.promptLabel =
+      snapshot.promptLabel && snapshot.promptLabel !== tMini('untitled')
+        ? snapshot.promptLabel
+        : (existing.promptLabel || tMini('untitled'));
   }
 
   upsertHubTab(snapshot);
@@ -739,7 +745,7 @@ function startHubHeartbeat() {
   if (hubHeartbeatTimer) return;
   hubHeartbeatTimer = window.setInterval(() => {
     publishLocalHubSnapshot('heartbeat');
-  }, Math.max(2000, Math.floor(MINI_HUB_STALE_MS / 3)));
+  }, MINI_HUB_HEARTBEAT_MS);
 }
 
 function stopHubHeartbeat() {
