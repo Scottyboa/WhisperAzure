@@ -12,11 +12,20 @@ const MINI_PANEL_WIDTH = 370;
 const MINI_PANEL_HEIGHT = 255;
 const STATE_REFRESH_MS = 350;
 const AUTO_COPY_DOWNLOAD_HREF = 'div/autocopy.zip';
+const MINI_HUB_CHANNEL_NAME = 'whisperazure-mini-panel-hub';
+const MINI_HUB_TAB_ID_KEY = 'mini_panel_tab_id';
+const MINI_HUB_STALE_MS = 15000;
 
 let miniWindow = null;
 let refreshTimer = null;
 let appRef = null;
 let copiedVisible = false;
+let hubChannel = null;
+let hubHeartbeatTimer = null;
+let localTabId = '';
+let selectedHubTabId = '';
+const hubTabs = new Map();
+let nextHubTabOrder = 1;
 
 function getApp() {
   return window.__app || appRef || null;
@@ -112,7 +121,7 @@ function tMini(key) {
       nb: 'Transkripsjon fullført',
       nn: 'Transkripsjon fullført',
       sv: 'Transkription klar',
-      da: 'Transskription fuldført',
+      da: 'Transskription klar',
       de: 'Transkript fertig',
       fr: 'Transcription terminée',
       it: 'Trascrizione completata',
@@ -123,50 +132,17 @@ function tMini(key) {
       nb: 'Pauset',
       nn: 'Pausa',
       sv: 'Pausad',
-      da: 'Sat på pause',
+      da: 'Pauset',
       de: 'Pausiert',
       fr: 'En pause',
       it: 'In pausa',
-    },
-    generatingNote: {
-      en: 'Generating note',
-      no: 'Genererer notat',
-      nb: 'Genererer notat',
-      nn: 'Genererer notat',
-      sv: 'Genererar anteckning',
-      da: 'Genererer note',
-      de: 'Notiz wird erstellt',
-      fr: 'Génération de la note',
-      it: 'Generazione nota',
-    },
-    noteCompleted: {
-      en: 'Note completed',
-      no: 'Notat fullført',
-      nb: 'Notat fullført',
-      nn: 'Notat fullført',
-      sv: 'Anteckning klar',
-      da: 'Note fuldført',
-      de: 'Notiz abgeschlossen',
-      fr: 'Note terminée',
-      it: 'Nota completata',
-    },
-    recordingAborted: {
-      en: 'Recording aborted',
-      no: 'Opptak avbrutt',
-      nb: 'Opptak avbrutt',
-      nn: 'Opptak avbrote',
-      sv: 'Inspelning avbruten',
-      da: 'Optagelse afbrudt',
-      de: 'Aufnahme abgebrochen',
-      fr: 'Enregistrement annulé',
-      it: 'Registrazione annullata',
     },
     ready: {
       en: 'Ready',
       no: 'Klar',
       nb: 'Klar',
       nn: 'Klar',
-      sv: 'Klar',
+      sv: 'Redo',
       da: 'Klar',
       de: 'Bereit',
       fr: 'Prêt',
@@ -177,30 +153,30 @@ function tMini(key) {
       no: 'Auto-generer',
       nb: 'Auto-generer',
       nn: 'Auto-generer',
-      sv: 'Autogenerera',
+      sv: 'Auto-generera',
       da: 'Auto-generer',
-      de: 'Automatisch erzeugen',
+      de: 'Automatisch generieren',
       fr: 'Génération auto',
       it: 'Generazione auto',
     },
     autoCopy: {
       en: 'Auto-copy',
-      no: 'Auto-copy',
-      nb: 'Auto-copy',
-      nn: 'Auto-copy',
+      no: 'Auto-kopi',
+      nb: 'Auto-kopi',
+      nn: 'Auto-kopi',
       sv: 'Autokopiera',
-      da: 'Auto-copy',
-      de: 'Auto-Kopie',
-      fr: 'Auto-copie',
-      it: 'Copia auto',
+      da: 'Auto-kopi',
+      de: 'Automatisch kopieren',
+      fr: 'Copie auto',
+      it: 'Copia automatica',
     },
     autoCopyHelpShort: {
       en: 'Chrome extension required',
-      no: 'Krever Chrome-utvidelse',
-      nb: 'Krever Chrome-utvidelse',
-      nn: 'Krev Chrome-utviding',
+      no: 'Chrome-utvidelse kreves',
+      nb: 'Chrome-utvidelse kreves',
+      nn: 'Chrome-utviding krevst',
       sv: 'Chrome-tillägg krävs',
-      da: 'Kræver Chrome-udvidelse',
+      da: 'Chrome-udvidelse kræves',
       de: 'Chrome-Erweiterung erforderlich',
       fr: 'Extension Chrome requise',
       it: 'Estensione Chrome richiesta',
@@ -309,7 +285,7 @@ function tMini(key) {
       no: 'Transkripsjon',
       nb: 'Transkripsjon',
       nn: 'Transkripsjon',
-      sv: 'Transkript',
+      sv: 'Transkription',
       da: 'Transskription',
       de: 'Transkript',
       fr: 'Transcription',
@@ -326,23 +302,12 @@ function tMini(key) {
       fr: 'Note',
       it: 'Nota',
     },
-    copyButton: {
-      en: 'Copy',
-      no: 'Kopier',
-      nb: 'Kopier',
-      nn: 'Kopier',
-      sv: 'Kopiera',
-      da: 'Kopiér',
-      de: 'Kopieren',
-      fr: 'Copier',
-      it: 'Copia',
-    },
     copyTranscript: {
       en: 'Copy transcript',
       no: 'Kopier transkripsjon',
       nb: 'Kopier transkripsjon',
       nn: 'Kopier transkripsjon',
-      sv: 'Kopiera transkript',
+      sv: 'Kopiera transkription',
       da: 'Kopiér transskription',
       de: 'Transkript kopieren',
       fr: 'Copier la transcription',
@@ -358,6 +323,50 @@ function tMini(key) {
       de: 'Notiz kopieren',
       fr: 'Copier la note',
       it: 'Copia nota',
+    },
+    currentTab: {
+      en: 'Tab',
+      no: 'Fane',
+      nb: 'Fane',
+      nn: 'Fane',
+      sv: 'Flik',
+      da: 'Fane',
+      de: 'Tab',
+      fr: 'Onglet',
+      it: 'Scheda',
+    },
+    noTabsOpen: {
+      en: 'No active tabs',
+      no: 'Ingen aktive faner',
+      nb: 'Ingen aktive faner',
+      nn: 'Ingen aktive faner',
+      sv: 'Inga aktiva flikar',
+      da: 'Ingen aktive faner',
+      de: 'Keine aktiven Tabs',
+      fr: 'Aucun onglet actif',
+      it: 'Nessuna scheda attiva',
+    },
+    noTabSelected: {
+      en: 'Choose a tab',
+      no: 'Velg en fane',
+      nb: 'Velg en fane',
+      nn: 'Vel ei fane',
+      sv: 'Välj en flik',
+      da: 'Vælg en fane',
+      de: 'Tab auswählen',
+      fr: 'Choisir un onglet',
+      it: 'Scegli una scheda',
+    },
+    sharedMiniPanel: {
+      en: 'Mini panel',
+      no: 'Minipanel',
+      nb: 'Minipanel',
+      nn: 'Minipanel',
+      sv: 'Minipanel',
+      da: 'Minipanel',
+      de: 'Minifenster',
+      fr: 'Mini panneau',
+      it: 'Mini pannello',
     },
   };
 
@@ -410,14 +419,16 @@ function getSafeState() {
 
 function getSafePromptOptions() {
   const app = getApp();
-  if (!app || typeof app.getMiniPanelPromptOptions !== 'function') {
+  if (!app) {
     return [];
   }
 
   try {
-    return Array.isArray(app.getMiniPanelPromptOptions())
-      ? app.getMiniPanelPromptOptions()
-      : [];
+    const result =
+      (typeof app.getMiniPanelPromptOptions === 'function' && app.getMiniPanelPromptOptions()) ||
+      (typeof app.getMiniPanelPromptOptionsRich === 'function' && app.getMiniPanelPromptOptionsRich()) ||
+      [];
+    return Array.isArray(result) ? result : [];
   } catch (_) {
     return [];
   }
@@ -436,6 +447,307 @@ function getSafeSelectedPromptSlot() {
   }
 }
 
+function getOrCreateLocalTabId() {
+  if (localTabId) return localTabId;
+
+  try {
+    const existing = String(sessionStorage.getItem(MINI_HUB_TAB_ID_KEY) || '').trim();
+    if (existing) {
+      localTabId = existing;
+      return localTabId;
+    }
+  } catch (_) {}
+
+  const generated =
+    (window.crypto?.randomUUID && window.crypto.randomUUID()) ||
+    `mini-tab-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  try {
+    sessionStorage.setItem(MINI_HUB_TAB_ID_KEY, generated);
+  } catch (_) {}
+
+  localTabId = generated;
+  return localTabId;
+}
+
+function stripPromptNumericPrefix(label) {
+  return String(label || '')
+    .replace(/^\s*\d+\s*[\.\-:)]\s*/u, '')
+    .trim();
+}
+
+function getPromptLabelFromOptions(options, selectedSlot) {
+  const slot = String(selectedSlot || '').trim();
+  const items = Array.isArray(options) ? options : [];
+  const match = items
+    .map(normalizePromptOptionLabel)
+    .filter(Boolean)
+    .find((item) => item.id === slot);
+
+  if (!match) return tMini('untitled');
+
+  const cleaned = stripPromptNumericPrefix(match.label);
+  return cleaned || tMini('untitled');
+}
+
+function buildLocalHubSnapshot() {
+  const state = getSafeState();
+  let promptOptions = getSafePromptOptions()
+    .map(normalizePromptOptionLabel)
+    .filter(Boolean);
+  const selectedPromptSlot = getSafeSelectedPromptSlot();
+
+  if (!promptOptions.length && selectedPromptSlot) {
+    promptOptions = [{ id: selectedPromptSlot, label: `${selectedPromptSlot}. ${tMini('untitled')}` }];
+  }
+
+  const promptLabel = getPromptLabelFromOptions(promptOptions, selectedPromptSlot);
+
+  return {
+    tabId: getOrCreateLocalTabId(),
+    promptLabel,
+    selectedPromptSlot,
+    promptOptions,
+    state,
+    updatedAt: Date.now(),
+  };
+}
+
+function upsertHubTab(snapshot) {
+  const tabId = String(snapshot?.tabId || '').trim();
+  if (!tabId) return null;
+
+  const prev = hubTabs.get(tabId) || {};
+  const next = {
+    ...prev,
+    ...snapshot,
+    tabId,
+    tabOrder: Number(prev?.tabOrder || snapshot?.tabOrder || 0) || nextHubTabOrder++,
+    updatedAt: Number(snapshot?.updatedAt || Date.now()),
+  };
+
+  hubTabs.set(tabId, next);
+  return next;
+}
+
+function pruneStaleHubTabs() {
+  const now = Date.now();
+  for (const [tabId, entry] of hubTabs.entries()) {
+    const updatedAt = Number(entry?.updatedAt || 0);
+    if (!updatedAt || now - updatedAt > MINI_HUB_STALE_MS) {
+      hubTabs.delete(tabId);
+    }
+  }
+
+  if (selectedHubTabId && !hubTabs.has(selectedHubTabId)) {
+    const remaining = Array.from(hubTabs.values()).sort((a, b) => {
+      const aActivated = Number(a?.activatedAt || 0);
+      const bActivated = Number(b?.activatedAt || 0);
+      if (bActivated !== aActivated) return bActivated - aActivated;
+      const aOrder = Number(a?.tabOrder || 0);
+      const bOrder = Number(b?.tabOrder || 0);
+      return aOrder - bOrder;
+    });
+    selectedHubTabId = remaining[0]?.tabId || '';
+  }
+}
+
+function getOrderedHubTabs() {
+  pruneStaleHubTabs();
+
+  return Array.from(hubTabs.values()).sort((a, b) => {
+    const aActivated = Number(a?.activatedAt || 0);
+    const bActivated = Number(b?.activatedAt || 0);
+    if (bActivated !== aActivated) return bActivated - aActivated;
+    const aOrder = Number(a?.tabOrder || 0);
+    const bOrder = Number(b?.tabOrder || 0);
+    return aOrder - bOrder;
+  });
+}
+
+function ensureSelectedHubTab() {
+  pruneStaleHubTabs();
+
+  if (selectedHubTabId && hubTabs.has(selectedHubTabId)) {
+    return selectedHubTabId;
+  }
+
+  const fallback = getOrderedHubTabs()[0];
+  selectedHubTabId = fallback?.tabId || '';
+  return selectedHubTabId;
+}
+
+function getSelectedHubSnapshot() {
+  const tabId = ensureSelectedHubTab();
+  if (!tabId) return null;
+  return hubTabs.get(tabId) || null;
+}
+
+function getDisplayLabelForHubTab(snapshot, index) {
+  const ordinal = Number(index) + 1;
+  const promptLabel = String(
+    snapshot?.promptLabel ||
+    snapshot?.selectedPromptLabel ||
+    ''
+  ).trim() || tMini('untitled');
+  return `${tMini('currentTab')} ${ordinal} - ${promptLabel}`;
+}
+
+function postHubMessage(message) {
+  ensureHubChannel();
+  if (!hubChannel) return;
+
+  try {
+    hubChannel.postMessage(message);
+  } catch (_) {}
+}
+
+function publishLocalHubSnapshot(reason = 'state') {
+  const snapshot = buildLocalHubSnapshot();
+
+  const previous = hubTabs.get(snapshot.tabId);
+  const hasIncomingPrompts = Array.isArray(snapshot.promptOptions) && snapshot.promptOptions.length > 0;
+  const hasPreviousPrompts = Array.isArray(previous?.promptOptions) && previous.promptOptions.length > 0;
+
+  // Do not let an incomplete heartbeat wipe out a previously good prompt snapshot.
+  if (!hasIncomingPrompts && hasPreviousPrompts) {
+    snapshot.promptOptions = previous.promptOptions;
+    snapshot.selectedPromptSlot = snapshot.selectedPromptSlot || previous.selectedPromptSlot || '';
+    snapshot.promptLabel = snapshot.promptLabel && snapshot.promptLabel !== tMini('untitled')
+      ? snapshot.promptLabel
+      : (previous.promptLabel || tMini('untitled'));
+  }
+
+  upsertHubTab(snapshot);
+
+  postHubMessage({
+    type: 'mini-hub-tab-state',
+    reason,
+    snapshot,
+  });
+}
+
+function activateLocalHubTab(reason = 'activate') {
+  const tabId = getOrCreateLocalTabId();
+  const existing = hubTabs.get(tabId) || {};
+  const snapshot = {
+    ...existing,
+    ...buildLocalHubSnapshot(),
+    activatedAt: Date.now(),
+  };
+
+  const hasIncomingPrompts = Array.isArray(snapshot.promptOptions) && snapshot.promptOptions.length > 0;
+  const hasExistingPrompts = Array.isArray(existing?.promptOptions) && existing.promptOptions.length > 0;
+  if (!hasIncomingPrompts && hasExistingPrompts) {
+    snapshot.promptOptions = existing.promptOptions;
+    snapshot.selectedPromptSlot = snapshot.selectedPromptSlot || existing.selectedPromptSlot || '';
+    snapshot.promptLabel = snapshot.promptLabel && snapshot.promptLabel !== tMini('untitled')
+      ? snapshot.promptLabel
+      : (existing.promptLabel || tMini('untitled'));
+  }
+
+  upsertHubTab(snapshot);
+  selectedHubTabId = tabId;
+
+  postHubMessage({
+    type: 'mini-hub-activate-tab',
+    reason,
+    tabId,
+    activatedAt: snapshot.activatedAt,
+    snapshot,
+  });
+}
+
+function removeLocalHubTab() {
+  const tabId = getOrCreateLocalTabId();
+  hubTabs.delete(tabId);
+
+  postHubMessage({
+    type: 'mini-hub-tab-closed',
+    tabId,
+    at: Date.now(),
+  });
+}
+
+function ensureHubChannel() {
+  if (hubChannel || typeof BroadcastChannel !== 'function') return hubChannel;
+
+  try {
+    hubChannel = new BroadcastChannel(MINI_HUB_CHANNEL_NAME);
+  } catch (_) {
+    hubChannel = null;
+    return null;
+  }
+
+  hubChannel.addEventListener('message', (event) => {
+    const data = event?.data || {};
+    const type = String(data?.type || '').trim();
+
+    if (!type) return;
+
+    if (type === 'mini-hub-tab-state') {
+      upsertHubTab(data.snapshot || null);
+      ensureSelectedHubTab();
+      requestUiRefresh();
+      return;
+    }
+
+    if (type === 'mini-hub-activate-tab') {
+      const tabId = String(data?.tabId || '').trim();
+      const snapshot = data?.snapshot || null;
+      if (snapshot) {
+        upsertHubTab({
+          ...snapshot,
+          activatedAt: Number(data?.activatedAt || Date.now()),
+        });
+      }
+      if (tabId) {
+        selectedHubTabId = tabId;
+      }
+      requestUiRefresh();
+      return;
+    }
+
+    if (type === 'mini-hub-tab-closed') {
+      const tabId = String(data?.tabId || '').trim();
+      if (tabId) {
+        hubTabs.delete(tabId);
+        if (selectedHubTabId === tabId) {
+          selectedHubTabId = '';
+          ensureSelectedHubTab();
+        }
+      }
+      requestUiRefresh();
+      return;
+    }
+
+    if (type === 'mini-hub-command') {
+      const targetTabId = String(data?.targetTabId || '').trim();
+      if (!targetTabId || targetTabId !== getOrCreateLocalTabId()) return;
+
+      const actionName = String(data?.actionName || '').trim();
+      const args = Array.isArray(data?.args) ? data.args : [];
+      callLocalAppAction(actionName, ...args);
+      publishLocalHubSnapshot(`command:${actionName}`);
+    }
+  });
+
+  return hubChannel;
+}
+
+function startHubHeartbeat() {
+  if (hubHeartbeatTimer) return;
+  hubHeartbeatTimer = window.setInterval(() => {
+    publishLocalHubSnapshot('heartbeat');
+  }, Math.max(2000, Math.floor(MINI_HUB_STALE_MS / 3)));
+}
+
+function stopHubHeartbeat() {
+  if (!hubHeartbeatTimer) return;
+  window.clearInterval(hubHeartbeatTimer);
+  hubHeartbeatTimer = null;
+}
+
 function getMiniDoc() {
   if (!isMiniWindowOpen()) return null;
   try {
@@ -447,22 +759,27 @@ function getMiniDoc() {
 
 function $(id) {
   const doc = getMiniDoc();
-  return doc ? doc.getElementById(id) : null;
+  if (!doc) return null;
+  return doc.getElementById(id);
 }
 
-function setText(id, value) {
+function setText(id, text) {
   const el = $(id);
-  if (el) el.textContent = value;
+  if (el) {
+    el.textContent = text;
+  }
 }
 
 function setDisabled(id, disabled) {
   const el = $(id);
-  if (el) el.disabled = !!disabled;
+  if (el) {
+    el.disabled = !!disabled;
+  }
 }
 
 function setChecked(id, checked) {
   const el = $(id);
-  if (el && el.type === 'checkbox') {
+  if (el && 'checked' in el) {
     el.checked = !!checked;
   }
 }
@@ -470,15 +787,23 @@ function setChecked(id, checked) {
 function setValue(id, value) {
   const el = $(id);
   if (el && 'value' in el) {
-    el.value = value == null ? '' : String(value);
+    el.value = value;
   }
 }
 
-function setBadge(text, tone = 'idle') {
+function setBadge(text, tone) {
   const badge = $('miniStatusBadge');
   if (!badge) return;
   badge.textContent = text;
   badge.dataset.tone = tone;
+}
+
+function hideCopiedIndicator() {
+  copiedVisible = false;
+  const indicator = $('miniCopiedIndicator');
+  if (!indicator) return;
+  indicator.hidden = true;
+  indicator.dataset.show = '0';
 }
 
 function showCopiedIndicator() {
@@ -488,14 +813,6 @@ function showCopiedIndicator() {
   indicator.hidden = false;
   indicator.textContent = tMini('copied');
   indicator.dataset.show = '1';
-}
-
-function hideCopiedIndicator() {
-  copiedVisible = false;
-  const indicator = $('miniCopiedIndicator');
-  if (!indicator) return;
-  indicator.hidden = true;
-  indicator.dataset.show = '0';
 }
 
 function showCopyFailedIndicator() {
@@ -517,19 +834,21 @@ function normalizePromptOptionLabel(item) {
     label = `${id}. ${tMini('untitled')}`;
   } else if (label === `${id}.`) {
     label = `${id}. ${tMini('untitled')}`;
+  } else if (!label.startsWith(`${id}.`)) {
+    label = `${id}. ${label}`;
   }
 
   return { id, label };
 }
 
-function syncPromptDropdown() {
+function syncPromptDropdown(snapshot) {
   const select = $('miniPromptSelect');
   if (!select) return;
 
-  const options = getSafePromptOptions()
-    .map(normalizePromptOptionLabel)
-    .filter(Boolean);
-  const selected = getSafeSelectedPromptSlot();
+  const options = Array.isArray(snapshot?.promptOptions)
+    ? snapshot.promptOptions.map(normalizePromptOptionLabel).filter(Boolean)
+    : [];
+  const selected = String(snapshot?.selectedPromptSlot || '').trim();
 
   const existingSignature = Array.from(select.options)
     .map((opt) => `${opt.value}|${opt.textContent}`)
@@ -559,6 +878,62 @@ function syncPromptDropdown() {
   select.disabled = options.length === 0;
 }
 
+function updateSelectedHubSnapshot(mutator) {
+  const tabId = ensureSelectedHubTab();
+  if (!tabId) return;
+
+  const prev = hubTabs.get(tabId);
+  if (!prev) return;
+
+  const next = typeof mutator === 'function' ? mutator(prev) : prev;
+  if (!next || next === prev) return;
+
+  hubTabs.set(tabId, {
+    ...next,
+    updatedAt: Date.now(),
+  });
+}
+
+function syncHubTabDropdown() {
+  const select = $('miniTabSelect');
+  if (!select) return;
+
+  const tabs = getOrderedHubTabs();
+  const desired = tabs.map((item, index) => ({
+    value: item.tabId,
+    label: getDisplayLabelForHubTab(item, index),
+  }));
+
+  const existingSignature = Array.from(select.options)
+    .map((opt) => `${opt.value}|${opt.textContent}`)
+    .join('||');
+  const nextSignature = desired
+    .map((opt) => `${opt.value}|${opt.label}`)
+    .join('||');
+
+  if (existingSignature !== nextSignature) {
+    select.innerHTML = '';
+
+    if (!desired.length) {
+      const option = select.ownerDocument.createElement('option');
+      option.value = '';
+      option.textContent = tMini('noTabsOpen');
+      select.appendChild(option);
+    } else {
+      desired.forEach((item) => {
+        const option = select.ownerDocument.createElement('option');
+        option.value = item.value;
+        option.textContent = item.label;
+        select.appendChild(option);
+      });
+    }
+  }
+
+  const selected = ensureSelectedHubTab();
+  select.value = selected || '';
+  select.disabled = desired.length <= 1;
+}
+
 function syncAutoCopyOptions() {
   const select = $('miniAutoCopyModeSelect');
   if (!select) return;
@@ -572,19 +947,17 @@ function syncAutoCopyOptions() {
   const existingSignature = Array.from(select.options)
     .map((opt) => `${opt.value}|${opt.textContent}`)
     .join('||');
-  const nextSignature = desired
-    .map((opt) => `${opt.value}|${opt.label}`)
-    .join('||');
+  const nextSignature = desired.map((opt) => `${opt.value}|${opt.label}`).join('||');
 
-  if (existingSignature !== nextSignature) {
-    select.innerHTML = '';
-    desired.forEach((item) => {
-      const option = select.ownerDocument.createElement('option');
-      option.value = item.value;
-      option.textContent = item.label;
-      select.appendChild(option);
-    });
-  }
+  if (existingSignature === nextSignature) return;
+
+  select.innerHTML = '';
+  desired.forEach((opt) => {
+    const optionEl = select.ownerDocument.createElement('option');
+    optionEl.value = opt.value;
+    optionEl.textContent = opt.label;
+    select.appendChild(optionEl);
+  });
 }
 
 function getMiniPhasePresentation(state) {
@@ -592,21 +965,25 @@ function getMiniPhasePresentation(state) {
 
   switch (phase) {
     case 'recording':
-      return { text: tMini('recording'), badge: tMini('recording'), tone: 'recording' };
+      return { badge: tMini('recording'), text: state.statusText || tMini('recording'), tone: 'recording' };
     case 'paused':
-      return { text: tMini('paused'), badge: tMini('paused'), tone: 'paused' };
-    case 'transcribing':
-      return { text: tMini('generatingTranscript'), badge: tMini('generatingTranscript'), tone: 'transcribe' };
-    case 'transcript-completed':
-      return { text: tMini('transcriptCompleted'), badge: tMini('transcriptCompleted'), tone: 'ready' };
-    case 'note-generating':
-      return { text: tMini('generatingNote'), badge: tMini('generatingNote'), tone: 'note' };
-    case 'note-completed':
-      return { text: tMini('noteCompleted'), badge: tMini('noteCompleted'), tone: 'ready' };
+      return { badge: tMini('paused'), text: state.statusText || tMini('paused'), tone: 'paused' };
+    case 'generating-transcript':
+      return {
+        badge: tMini('generatingTranscript'),
+        text: state.statusText || tMini('generatingTranscript'),
+        tone: 'transcribe',
+      };
+    case 'transcript-complete':
+      return {
+        badge: tMini('transcriptCompleted'),
+        text: state.statusText || tMini('transcriptCompleted'),
+        tone: 'ready',
+      };
     case 'aborted':
-      return { text: tMini('recordingAborted'), badge: tMini('recordingAborted'), tone: 'idle' };
+      return { badge: tMini('abort'), text: state.statusText || tMini('abort'), tone: 'aborted' };
     default:
-      return null;
+      return { badge: tMini('idle'), text: state.statusText || tMini('ready'), tone: 'idle' };
   }
 }
 
@@ -614,7 +991,25 @@ function updateMiniPanelUi() {
   const doc = getMiniDoc();
   if (!doc) return;
 
-  const state = getSafeState();
+  pruneStaleHubTabs();
+  syncHubTabDropdown();
+
+  const snapshot = getSelectedHubSnapshot();
+  const state = snapshot?.state || {
+    canStart: false,
+    canStop: false,
+    canPauseResume: false,
+    canAbort: false,
+    hasTranscript: false,
+    hasNote: false,
+    statusText: '',
+    pauseResumeLabel: tMini('pause'),
+    autoGenerateEnabled: false,
+    autoCopyMode: 'off',
+    autoCopyExtensionAvailable: false,
+    miniPanelStatusPhase: 'idle',
+    usePromptEnabled: false,
+  };
   const statusText = String(state.statusText || '').trim();
   const pauseResumeLabel = String(state.pauseResumeLabel || '').trim() || tMini('pause');
   const phaseUi = getMiniPhasePresentation(state);
@@ -632,8 +1027,8 @@ function updateMiniPanelUi() {
   setText('miniCopyTranscriptButton', tMini('copyTranscript'));
   setText('miniCopyNoteButton', tMini('copyNote'));
   setText('miniAbortButton', tMini('abort'));
-  setText('miniStatusText', phaseUi?.text || statusText || tMini('ready'));
-  setText('miniTitle', tMini('miniPanel'));
+  setText('miniStatusText', phaseUi?.text || statusText || (snapshot ? tMini('ready') : tMini('noTabSelected')));
+  setText('miniTitle', tMini('sharedMiniPanel'));
   setText('miniAutoGenerateLabel', tMini('autoGenerate'));
   setText('miniAutoCopyLabel', tMini('autoCopy'));
   setText('miniPromptLabel', tMini('prompt'));
@@ -672,24 +1067,17 @@ function updateMiniPanelUi() {
     }
   }
 
-  syncPromptDropdown();
+  syncPromptDropdown(snapshot);
 }
 
 function requestUiRefresh() {
   window.setTimeout(updateMiniPanelUi, 20);
   window.setTimeout(updateMiniPanelUi, 120);
-  window.setTimeout(updateMiniPanelUi, 300);
 }
 
 function startRefreshLoop() {
   stopRefreshLoop();
-  refreshTimer = window.setInterval(() => {
-    if (!isMiniWindowOpen()) {
-      stopRefreshLoop();
-      return;
-    }
-    updateMiniPanelUi();
-  }, STATE_REFRESH_MS);
+  refreshTimer = window.setInterval(updateMiniPanelUi, STATE_REFRESH_MS);
 }
 
 function stopRefreshLoop() {
@@ -699,7 +1087,7 @@ function stopRefreshLoop() {
   }
 }
 
-function callAppAction(actionName, ...args) {
+function callLocalAppAction(actionName, ...args) {
   const app = getApp();
   if (!app || typeof app[actionName] !== 'function') return false;
 
@@ -713,6 +1101,26 @@ function callAppAction(actionName, ...args) {
   }
 }
 
+function dispatchHubAction(actionName, ...args) {
+  const targetTabId = ensureSelectedHubTab();
+  if (!targetTabId) return false;
+
+  if (targetTabId === getOrCreateLocalTabId()) {
+    return callLocalAppAction(actionName, ...args);
+  }
+
+  postHubMessage({
+    type: 'mini-hub-command',
+    targetTabId,
+    actionName,
+    args,
+    at: Date.now(),
+  });
+
+  requestUiRefresh();
+  return true;
+}
+
 function bindMiniPanelEvents() {
   const startButton = $('miniStartButton');
   const stopButton = $('miniStopButton');
@@ -722,61 +1130,94 @@ function bindMiniPanelEvents() {
   const abortButton = $('miniAbortButton');
   const closeButton = $('miniCloseButton');
   const promptSelect = $('miniPromptSelect');
+  const tabSelect = $('miniTabSelect');
   const autoGenerateToggle = $('miniAutoGenerateToggle');
   const autoCopyModeSelect = $('miniAutoCopyModeSelect');
   const usePromptToggle = $('miniUsePromptToggle');
 
   if (startButton) {
     startButton.addEventListener('click', () => {
-      callAppAction('startRecording');
+      dispatchHubAction('startRecording');
     });
   }
 
   if (stopButton) {
     stopButton.addEventListener('click', () => {
-      callAppAction('stopRecording');
+      dispatchHubAction('stopRecording');
     });
   }
 
   if (pauseButton) {
     pauseButton.addEventListener('click', () => {
-      callAppAction('pauseResumeRecording');
+      dispatchHubAction('pauseResumeRecording');
     });
   }
 
   if (copyTranscriptButton) {
     copyTranscriptButton.addEventListener('click', () => {
-      callAppAction('copyTranscription');
+      dispatchHubAction('copyTranscription');
     });
   }
 
   if (copyNoteButton) {
     copyNoteButton.addEventListener('click', () => {
-      callAppAction('copyGeneratedNote');
+      dispatchHubAction('copyGeneratedNote');
     });
   }
 
   if (abortButton) {
     abortButton.addEventListener('click', () => {
-      callAppAction('abortRecording');
+      dispatchHubAction('abortRecording');
+    });
+  }
+
+  if (tabSelect) {
+    tabSelect.addEventListener('change', () => {
+      const nextTabId = String(tabSelect.value || '').trim();
+      if (!nextTabId) return;
+      selectedHubTabId = nextTabId;
+      requestUiRefresh();
     });
   }
 
   if (autoGenerateToggle) {
     autoGenerateToggle.addEventListener('change', () => {
-      callAppAction('setAutoGenerateEnabled', !!autoGenerateToggle.checked);
+      const nextEnabled = !!autoGenerateToggle.checked;
+      dispatchHubAction('setAutoGenerateEnabled', nextEnabled);
+
+      updateSelectedHubSnapshot((prev) => ({
+        ...prev,
+        state: {
+          ...(prev.state || {}),
+          autoGenerateEnabled: nextEnabled,
+          autoCopyMode: nextEnabled ? 'note' : 'transcript',
+        },
+      }));
+
+      requestUiRefresh();
     });
   }
 
   if (autoCopyModeSelect) {
     autoCopyModeSelect.addEventListener('change', () => {
-      callAppAction('setAutoCopyMode', autoCopyModeSelect.value);
+      const nextMode = String(autoCopyModeSelect.value || 'off').trim() || 'off';
+      dispatchHubAction('setAutoCopyMode', nextMode);
+
+      updateSelectedHubSnapshot((prev) => ({
+        ...prev,
+        state: {
+          ...(prev.state || {}),
+          autoCopyMode: nextMode,
+        },
+      }));
+
+      requestUiRefresh();
     });
   }
 
   if (usePromptToggle) {
     usePromptToggle.addEventListener('change', () => {
-      callAppAction('setUsePromptEnabled', !!usePromptToggle.checked);
+      dispatchHubAction('setUsePromptEnabled', !!usePromptToggle.checked);
     });
   }
 
@@ -784,7 +1225,26 @@ function bindMiniPanelEvents() {
     promptSelect.addEventListener('change', () => {
       const slot = String(promptSelect.value || '').trim();
       if (!slot) return;
-      callAppAction('setSelectedPromptSlot', slot);
+      dispatchHubAction('setSelectedPromptSlot', slot);
+
+      updateSelectedHubSnapshot((prev) => {
+        const options = Array.isArray(prev.promptOptions) ? prev.promptOptions : [];
+        const selected = options
+          .map(normalizePromptOptionLabel)
+          .filter(Boolean)
+          .find((item) => item.id === slot);
+
+        return {
+          ...prev,
+          selectedPromptSlot: slot,
+          selectedPromptLabel: selected?.label || `${slot}. ${tMini('untitled')}`,
+          promptLabel: selected
+            ? String(selected.label).replace(/^\s*\d+\s*[\.\-:)]\s*/u, '').trim() || tMini('untitled')
+            : tMini('untitled'),
+        };
+      });
+
+      requestUiRefresh();
     });
   }
 
@@ -905,11 +1365,38 @@ function renderMiniPanelDocument(targetWindow) {
       gap: 6px;
     }
 
+    .top-left {
+      min-width: 0;
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
     .title {
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 0.02em;
       color: var(--text);
+    }
+
+    .mini-tab-select {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid var(--button-border);
+      background: var(--select-bg);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 6px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      min-height: 28px;
+      outline: none;
+    }
+
+    .mini-tab-select:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
     }
 
     .close-btn {
@@ -967,18 +1454,6 @@ function renderMiniPanelDocument(targetWindow) {
       color: var(--warn);
     }
 
-    .badge[data-tone="note"] {
-      background: rgba(148,183,255,0.12);
-      border-color: rgba(148,183,255,0.28);
-      color: var(--info);
-    }
-
-    .badge[data-tone="transcript"] {
-      background: rgba(148,183,255,0.12);
-      border-color: rgba(148,183,255,0.28);
-      color: var(--info);
-    }
-
     .badge[data-tone="transcribe"] {
       background: rgba(148,183,255,0.12);
       border-color: rgba(148,183,255,0.28);
@@ -1025,178 +1500,6 @@ function renderMiniPanelDocument(targetWindow) {
       gap: 6px;
     }
 
-    .settings-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .setting-group {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      min-width: 0;
-    }
-
-    .setting-label-wrap {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      min-width: 0;
-    }
-    .mini-help-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
-}
-
-.mini-help-wrap::after {
-  content: "";
-  position: absolute;
-  right: -4px;
-  bottom: 100%;
-  width: 40px;
-  height: 10px;
-  background: transparent;
-}
-
-.mini-tooltip {
-  position: fixed;
-  top: 8px;
-  right: 8px;
-  z-index: 9999;
-  width: min(320px, calc(100vw - 16px));
-  max-width: calc(100vw - 16px);
-  max-height: calc(100vh - 16px);
-  overflow-y: auto;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--text);
-  font-size: 10px;
-  line-height: 1.35;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.35);
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-4px);
-  transition: opacity 0.16s ease, transform 0.16s ease;
-  white-space: normal;
-  overflow-wrap: break-word;
-}
-
-.mini-tooltip a {
-  color: var(--accent);
-  text-decoration: underline;
-}
-
-.mini-tooltip code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 10px;
-}
-
-.mini-help-wrap:hover .mini-tooltip,
-.mini-help-wrap:focus-within .mini-tooltip {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateY(0);
-}
-
-    .setting-group--copy {
-      flex: 0 0 auto;
-    }
-
-    .toggle-label,
-    .setting-label {
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--muted);
-      white-space: nowrap;
-    }
-
-    .mini-help {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 16px;
-      height: 16px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      background: transparent;
-      font-size: 10px;
-      font-weight: 700;
-      cursor: help;
-      user-select: none;
-      line-height: 1;
-      padding: 0;
-    }
-
-    .mini-help:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .mini-switch {
-      position: relative;
-      display: inline-flex;
-      width: 34px;
-      height: 20px;
-      flex: 0 0 auto;
-    }
-
-    .mini-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-      position: absolute;
-    }
-
-    .mini-slider {
-      position: absolute;
-      inset: 0;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid var(--button-border);
-      border-radius: 999px;
-      transition: background-color 0.18s ease, border-color 0.18s ease;
-    }
-
-    .mini-slider::before {
-      content: "";
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      left: 2px;
-      top: 2px;
-      border-radius: 50%;
-      background: var(--text);
-      transition: transform 0.18s ease;
-    }
-
-    .mini-switch input:checked + .mini-slider {
-      background: rgba(111,211,166,0.18);
-      border-color: rgba(111,211,166,0.38);
-    }
-
-    .mini-switch input:checked + .mini-slider::before {
-      transform: translateX(14px);
-    }
-
-    .mini-select {
-      min-width: 88px;
-      border: 1px solid var(--button-border);
-      background: var(--select-bg);
-      color: var(--text);
-      border-radius: 10px;
-      padding: 6px 8px;
-      font-size: 11px;
-      font-weight: 600;
-      min-height: 28px;
-      outline: none;
-    }
-
     .primary-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1209,22 +1512,17 @@ function renderMiniPanelDocument(targetWindow) {
       gap: 6px;
     }
 
-    .grid {
-      display: grid;
-      gap: 6px;
-    }
-
     .ctrl {
-      min-height: 34px;
-      border-radius: 10px;
       border: 1px solid var(--button-border);
       background: var(--button);
-      padding: 6px 8px;
+      color: var(--text);
+      min-height: 32px;
+      border-radius: 10px;
+      cursor: pointer;
       font-size: 12px;
       font-weight: 700;
-      color: var(--text);
-      cursor: pointer;
-      transition: transform 0.08s ease, border-color 0.18s ease, background-color 0.18s ease;
+      padding: 6px 8px;
+      transition: border-color 0.15s ease, transform 0.08s ease;
     }
 
     .ctrl:hover:not(:disabled) {
@@ -1258,6 +1556,179 @@ function renderMiniPanelDocument(targetWindow) {
     .ctrl:disabled {
       opacity: 0.45;
       cursor: not-allowed;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .setting-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .setting-group--copy {
+      flex: 1 1 auto;
+      justify-content: flex-end;
+    }
+
+    .toggle-label,
+    .setting-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .setting-label-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .mini-help-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      flex: 0 0 auto;
+    }
+
+    .mini-help-wrap::after {
+      content: "";
+      position: absolute;
+      right: -4px;
+      bottom: 100%;
+      width: 40px;
+      height: 10px;
+      background: transparent;
+    }
+
+    .mini-tooltip {
+      position: fixed;
+      top: 8px;
+      right: 8px;
+      z-index: 9999;
+      width: min(320px, calc(100vw - 16px));
+      max-width: calc(100vw - 16px);
+      max-height: calc(100vh - 16px);
+      overflow-y: auto;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      font-size: 10px;
+      line-height: 1.35;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-4px);
+      transition: opacity 0.14s ease, transform 0.14s ease;
+    }
+
+    .mini-help-wrap:hover .mini-tooltip,
+    .mini-help-wrap:focus-within .mini-tooltip {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .mini-help {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(148,183,255,0.15);
+      border: 1px solid rgba(148,183,255,0.35);
+      color: var(--info);
+      font-size: 10px;
+      font-weight: 800;
+      cursor: help;
+      user-select: none;
+      outline: none;
+    }
+
+    .mini-tooltip a {
+      color: #9fd7ff;
+      text-decoration: underline;
+    }
+
+    .mini-tooltip code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 10px;
+      color: #cde1ff;
+    }
+
+    .mini-select {
+      min-width: 110px;
+      border: 1px solid var(--button-border);
+      background: var(--select-bg);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 6px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      min-height: 28px;
+      outline: none;
+    }
+
+    .mini-select:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .mini-switch {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      width: 40px;
+      height: 22px;
+    }
+
+    .mini-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+
+    .mini-slider {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid var(--button-border);
+      border-radius: 999px;
+      transition: background 0.15s ease;
+    }
+
+    .mini-slider::before {
+      content: "";
+      position: absolute;
+      left: 2px;
+      top: 2px;
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      background: #fff;
+      transition: transform 0.15s ease;
+    }
+
+    .mini-switch input:checked + .mini-slider {
+      background: rgba(111,211,166,0.22);
+      border-color: rgba(111,211,166,0.35);
+    }
+
+    .mini-switch input:checked + .mini-slider::before {
+      transform: translateX(18px);
     }
 
     .prompt-wrap {
@@ -1337,7 +1808,10 @@ function renderMiniPanelDocument(targetWindow) {
   <div class="panel-shell">
     <div class="panel">
       <div class="top">
-        <div id="miniTitle" class="title">Mini panel</div>
+        <div class="top-left">
+          <div id="miniTitle" class="title">Mini panel</div>
+          <select id="miniTabSelect" class="mini-tab-select" aria-label="Choose tab"></select>
+        </div>
         <button id="miniCloseButton" class="close-btn" type="button" aria-label="Close mini panel">×</button>
       </div>
 
@@ -1443,10 +1917,14 @@ function attachWindowLifecycle(targetWindow) {
 }
 
 async function openMiniPanel() {
+  ensureHubChannel();
+  publishLocalHubSnapshot('open-request');
+
   if (isMiniWindowOpen()) {
     try {
       miniWindow.focus();
     } catch (_) {}
+    activateLocalHubTab('focus-existing-panel');
     requestUiRefresh();
     return;
   }
@@ -1472,6 +1950,7 @@ async function openMiniPanel() {
 
     renderMiniPanelDocument(miniWindow);
     attachWindowLifecycle(miniWindow);
+    activateLocalHubTab('opened-panel');
     emitMiniPanelStatus({ open: true });
   } catch (err) {
     console.warn('[mini-panel] failed to open', err);
@@ -1479,6 +1958,7 @@ async function openMiniPanel() {
 }
 
 function handleStateRelevantEvent() {
+  publishLocalHubSnapshot('state-relevant-event');
   updateMiniPanelUi();
   requestUiRefresh();
 }
@@ -1529,6 +2009,7 @@ function bindMainWindowEvents() {
     ) {
       hideCopiedIndicator();
     }
+    publishLocalHubSnapshot(`app-state:${reason || 'unknown'}`);
     handleStateRelevantEvent();
   });
 
@@ -1562,6 +2043,8 @@ function bindMainWindowEvents() {
   });
 
   window.addEventListener('beforeunload', () => {
+    stopHubHeartbeat();
+    removeLocalHubTab();
     try {
       miniWindow?.close();
     } catch (_) {}
@@ -1572,7 +2055,12 @@ function boot(existingApp) {
   if (window.__miniPanelBooted === true) return;
   window.__miniPanelBooted = true;
   appRef = existingApp || window.__app || null;
+  ensureHubChannel();
+  upsertHubTab(buildLocalHubSnapshot());
+  ensureSelectedHubTab();
+  startHubHeartbeat();
   bindMainWindowEvents();
+  publishLocalHubSnapshot('boot');
 }
 
 function init(app) {
