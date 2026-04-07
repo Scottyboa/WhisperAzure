@@ -28,6 +28,8 @@ let localTabId = '';
 let selectedHubTabId = '';
 const hubTabs = new Map();
 let nextHubTabOrder = 1;
+const hubOptimisticStateUntil = new Map();
+const MINI_HUB_OPTIMISTIC_MS = 700;
 
 function getApp() {
   return window.__app || appRef || null;
@@ -553,12 +555,72 @@ function upsertHubTab(snapshot) {
   if (!tabId) return null;
 
   const prev = hubTabs.get(tabId) || {};
+  const optimisticUntil = Number(hubOptimisticStateUntil.get(tabId) || 0);
+  const now = Date.now();
+  let mergedSnapshot = { ...snapshot };
+
+  if (optimisticUntil > now && prev?.state && snapshot?.state) {
+    const prevState = prev.state || {};
+    const nextState = snapshot.state || {};
+
+    mergedSnapshot = {
+      ...snapshot,
+      state: {
+        ...nextState,
+        canStart:
+          prevState.canStart === false && nextState.canStart === true
+            ? false
+            : nextState.canStart,
+        canStop:
+          prevState.canStop === true && nextState.canStop === false
+            ? true
+            : nextState.canStop,
+        canPauseResume:
+          prevState.canPauseResume === true && nextState.canPauseResume === false
+            ? true
+            : nextState.canPauseResume,
+        canAbort:
+          prevState.canAbort === true && nextState.canAbort === false
+            ? true
+            : nextState.canAbort,
+        miniPanelStatusPhase:
+          prevState.miniPanelStatusPhase &&
+          ['recording', 'paused', 'transcribing', 'aborted'].includes(String(prevState.miniPanelStatusPhase)) &&
+          String(nextState.miniPanelStatusPhase || 'idle') === 'idle'
+            ? prevState.miniPanelStatusPhase
+            : nextState.miniPanelStatusPhase,
+        statusText:
+          String(prevState.statusText || '').trim() &&
+          !String(nextState.statusText || '').trim()
+            ? prevState.statusText
+            : nextState.statusText,
+        recordingStartedAt:
+          Number(prevState.recordingStartedAt || 0) > 0 &&
+          Number(nextState.recordingStartedAt || 0) === 0 &&
+          String(prevState.miniPanelStatusPhase || '') === 'recording'
+            ? prevState.recordingStartedAt
+            : nextState.recordingStartedAt,
+        recordingPausedAt:
+          Number(prevState.recordingPausedAt || 0) > 0 &&
+          Number(nextState.recordingPausedAt || 0) === 0 &&
+          String(prevState.miniPanelStatusPhase || '') === 'paused'
+            ? prevState.recordingPausedAt
+            : nextState.recordingPausedAt,
+        recordingAccumulatedMs:
+          Math.max(
+            Number(prevState.recordingAccumulatedMs || 0),
+            Number(nextState.recordingAccumulatedMs || 0)
+          ),
+      },
+    };
+  }
+
   const next = {
     ...prev,
-    ...snapshot,
+    ...mergedSnapshot,
     tabId,
     tabOrder: Number(prev?.tabOrder || snapshot?.tabOrder || 0) || nextHubTabOrder++,
-    updatedAt: Number(snapshot?.updatedAt || Date.now()),
+    updatedAt: Number(mergedSnapshot?.updatedAt || Date.now()),
   };
 
   hubTabs.set(tabId, next);
@@ -974,6 +1036,7 @@ function updateSelectedHubSnapshot(mutator) {
     ...next,
     updatedAt: Date.now(),
   });
+  hubOptimisticStateUntil.set(tabId, Date.now() + MINI_HUB_OPTIMISTIC_MS);
 }
 
 function syncHubTabDropdown() {
@@ -2198,6 +2261,10 @@ function bindMainWindowEvents() {
     const reason = event?.detail?.reason || '';
     if (
       reason === 'start-recording-click' ||
+      reason === 'mini-panel-recording-started' ||
+      reason === 'mini-panel-recording-resumed' ||
+      reason === 'mini-panel-recording-aborted' ||
+      reason === 'abort-recording-click' ||
       reason === 'record-hotkey' ||
       reason === 'transcribe-provider-switched' ||
       reason === 'recording-provider-initialized' ||
@@ -2225,7 +2292,7 @@ function bindMainWindowEvents() {
     ]);
 
     if (target.id && watchedIds.has(target.id)) {
-      if (target.id === 'startButton') {
+      if (target.id === 'startButton' || target.id === 'abortButton') {
         hideCopiedIndicator();
       }
       handleStateRelevantEvent();
