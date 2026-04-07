@@ -2023,9 +2023,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Provider selector persistence + soft switching is now handled by
+  // Provider selector persistence + soft switching is handled by
   // js/features/provider-persistence.js.
-  // Do NOT bind legacy reload-on-change listeners here.
+  // Do not bind legacy reload-on-change listeners here.
 
   const generateNoteButton = document.getElementById('generateNoteButton');
   if (generateNoteButton && generateNoteButton.dataset.noteStartPulseBound !== '1') {
