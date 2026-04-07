@@ -1648,6 +1648,9 @@ document.addEventListener('DOMContentLoaded', () => {
       autoCopyMode: getAutoCopyMode(),
       autoCopyExtensionAvailable: isAutoCopyExtensionAvailable(),
       miniPanelStatusPhase: String(getApp().miniPanelStatusPhase || 'idle'),
+      recordingStartedAt: Number(getApp().miniPanelRecordingStartedAt || 0),
+      recordingPausedAt: Number(getApp().miniPanelRecordingPausedAt || 0),
+      recordingAccumulatedMs: Number(getApp().miniPanelRecordingAccumulatedMs || 0),
       usePromptEnabled: getUsePromptEnabled(),
     };
   }
@@ -1675,6 +1678,52 @@ document.addEventListener('DOMContentLoaded', () => {
     if (app.__miniPanelStatusPhaseBound) return;
     app.__miniPanelStatusPhaseBound = true;
 
+    function beginMiniPanelRecordingTimer() {
+      const app = getApp();
+      const now = Date.now();
+
+      if (!Number.isFinite(app.miniPanelRecordingAccumulatedMs)) {
+        app.miniPanelRecordingAccumulatedMs = 0;
+      }
+
+      app.miniPanelRecordingStartedAt = now;
+      app.miniPanelRecordingPausedAt = 0;
+    }
+
+    function pauseMiniPanelRecordingTimer() {
+      const app = getApp();
+      const now = Date.now();
+      const startedAt = Number(app.miniPanelRecordingStartedAt || 0);
+      const pausedAt = Number(app.miniPanelRecordingPausedAt || 0);
+
+      if (startedAt > 0 && pausedAt === 0) {
+        app.miniPanelRecordingAccumulatedMs =
+          Number(app.miniPanelRecordingAccumulatedMs || 0) + Math.max(0, now - startedAt);
+        app.miniPanelRecordingPausedAt = now;
+        app.miniPanelRecordingStartedAt = 0;
+      }
+    }
+
+    function resumeMiniPanelRecordingTimer() {
+      const app = getApp();
+      app.miniPanelRecordingPausedAt = 0;
+      app.miniPanelRecordingStartedAt = Date.now();
+    }
+
+    function finishMiniPanelRecordingTimer() {
+      const app = getApp();
+      pauseMiniPanelRecordingTimer();
+      app.miniPanelRecordingStartedAt = 0;
+      app.miniPanelRecordingPausedAt = 0;
+    }
+
+    function resetMiniPanelRecordingTimer() {
+      const app = getApp();
+      app.miniPanelRecordingStartedAt = 0;
+      app.miniPanelRecordingPausedAt = 0;
+      app.miniPanelRecordingAccumulatedMs = 0;
+    }
+
     const startBtn = document.getElementById('startButton');
     const stopBtn = document.getElementById('stopButton');
     const pauseBtn = document.getElementById('pauseResumeButton');
@@ -1683,14 +1732,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (startBtn && startBtn.dataset.miniPanelStatusBound !== '1') {
       startBtn.dataset.miniPanelStatusBound = '1';
       startBtn.addEventListener('click', () => {
+        resetMiniPanelRecordingTimer();
+        beginMiniPanelRecordingTimer();
         setMiniPanelStatusPhase('recording');
+        emitAppStateChanged('mini-panel-recording-started');
       });
     }
 
     if (stopBtn && stopBtn.dataset.miniPanelStatusBound !== '1') {
       stopBtn.dataset.miniPanelStatusBound = '1';
       stopBtn.addEventListener('click', () => {
+        finishMiniPanelRecordingTimer();
         setMiniPanelStatusPhase('transcribing');
+        emitAppStateChanged('mini-panel-recording-stopped');
       });
     }
 
@@ -1700,9 +1754,13 @@ document.addEventListener('DOMContentLoaded', () => {
         window.setTimeout(() => {
           const label = String(pauseBtn.textContent || '').trim().toLowerCase();
           if (/resume/.test(label)) {
+            pauseMiniPanelRecordingTimer();
             setMiniPanelStatusPhase('paused');
+            emitAppStateChanged('mini-panel-recording-paused');
           } else {
+            resumeMiniPanelRecordingTimer();
             setMiniPanelStatusPhase('recording');
+            emitAppStateChanged('mini-panel-recording-resumed');
           }
         }, 30);
       });
@@ -1711,13 +1769,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (abortBtn && abortBtn.dataset.miniPanelStatusBound !== '1') {
       abortBtn.dataset.miniPanelStatusBound = '1';
       abortBtn.addEventListener('click', () => {
+        resetMiniPanelRecordingTimer();
         setMiniPanelStatusPhase('aborted');
+        emitAppStateChanged('mini-panel-recording-aborted');
       });
     }
 
     window.addEventListener('transcription:finished', (event) => {
       const detail = event?.detail || {};
       if (detail?.status === 'aborted') {
+        resetMiniPanelRecordingTimer();
         setMiniPanelStatusPhase('aborted');
         return;
       }
@@ -1747,10 +1808,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (reason === 'note-generation-begin') {
         setMiniPanelStatusPhase('note-generating');
       } else if (reason === 'start-recording-click' || reason === 'record-hotkey') {
+        resetMiniPanelRecordingTimer();
+        beginMiniPanelRecordingTimer();
         setMiniPanelStatusPhase('recording');
       }
     });
 
+    resetMiniPanelRecordingTimer();
     setMiniPanelStatusPhase('idle');
   }
 
