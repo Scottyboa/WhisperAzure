@@ -21,15 +21,12 @@ const MINI_HUB_HEARTBEAT_MS = 10000;
 let miniWindow = null;
 let refreshTimer = null;
 let appRef = null;
-let copiedVisible = false;
 let hubChannel = null;
 let hubHeartbeatTimer = null;
 let localTabId = '';
 let selectedHubTabId = '';
 const hubTabs = new Map();
 let nextHubTabOrder = 1;
-const hubOptimisticStateUntil = new Map();
-const MINI_HUB_OPTIMISTIC_MS = 700;
 
 function getApp() {
   return window.__app || appRef || null;
@@ -555,72 +552,13 @@ function upsertHubTab(snapshot) {
   if (!tabId) return null;
 
   const prev = hubTabs.get(tabId) || {};
-  const optimisticUntil = Number(hubOptimisticStateUntil.get(tabId) || 0);
-  const now = Date.now();
-  let mergedSnapshot = { ...snapshot };
-
-  if (optimisticUntil > now && prev?.state && snapshot?.state) {
-    const prevState = prev.state || {};
-    const nextState = snapshot.state || {};
-
-    mergedSnapshot = {
-      ...snapshot,
-      state: {
-        ...nextState,
-        canStart:
-          prevState.canStart === false && nextState.canStart === true
-            ? false
-            : nextState.canStart,
-        canStop:
-          prevState.canStop === true && nextState.canStop === false
-            ? true
-            : nextState.canStop,
-        canPauseResume:
-          prevState.canPauseResume === true && nextState.canPauseResume === false
-            ? true
-            : nextState.canPauseResume,
-        canAbort:
-          prevState.canAbort === true && nextState.canAbort === false
-            ? true
-            : nextState.canAbort,
-        miniPanelStatusPhase:
-          prevState.miniPanelStatusPhase &&
-          ['recording', 'paused', 'transcribing', 'aborted'].includes(String(prevState.miniPanelStatusPhase)) &&
-          String(nextState.miniPanelStatusPhase || 'idle') === 'idle'
-            ? prevState.miniPanelStatusPhase
-            : nextState.miniPanelStatusPhase,
-        statusText:
-          String(prevState.statusText || '').trim() &&
-          !String(nextState.statusText || '').trim()
-            ? prevState.statusText
-            : nextState.statusText,
-        recordingStartedAt:
-          Number(prevState.recordingStartedAt || 0) > 0 &&
-          Number(nextState.recordingStartedAt || 0) === 0 &&
-          String(prevState.miniPanelStatusPhase || '') === 'recording'
-            ? prevState.recordingStartedAt
-            : nextState.recordingStartedAt,
-        recordingPausedAt:
-          Number(prevState.recordingPausedAt || 0) > 0 &&
-          Number(nextState.recordingPausedAt || 0) === 0 &&
-          String(prevState.miniPanelStatusPhase || '') === 'paused'
-            ? prevState.recordingPausedAt
-            : nextState.recordingPausedAt,
-        recordingAccumulatedMs:
-          Math.max(
-            Number(prevState.recordingAccumulatedMs || 0),
-            Number(nextState.recordingAccumulatedMs || 0)
-          ),
-      },
-    };
-  }
 
   const next = {
     ...prev,
-    ...mergedSnapshot,
+    ...snapshot,
     tabId,
     tabOrder: Number(prev?.tabOrder || snapshot?.tabOrder || 0) || nextHubTabOrder++,
-    updatedAt: Number(mergedSnapshot?.updatedAt || Date.now()),
+    updatedAt: Number(snapshot?.updatedAt || Date.now()),
   };
 
   hubTabs.set(tabId, next);
@@ -943,15 +881,14 @@ function updateMiniRecordingTimer(state) {
 }
 
 function hideCopiedIndicator() {
-  copiedVisible = false;
   const indicator = $('miniCopiedIndicator');
   if (!indicator) return;
   indicator.hidden = true;
+  indicator.textContent = tMini('copied');
   indicator.dataset.show = '0';
 }
 
 function showCopiedIndicator() {
-  copiedVisible = true;
   const indicator = $('miniCopiedIndicator');
   if (!indicator) return;
   indicator.hidden = false;
@@ -960,12 +897,24 @@ function showCopiedIndicator() {
 }
 
 function showCopyFailedIndicator() {
-  copiedVisible = true;
   const indicator = $('miniCopiedIndicator');
   if (!indicator) return;
   indicator.hidden = false;
   indicator.textContent = tMini('copyFailed');
   indicator.dataset.show = '1';
+}
+
+function syncCopiedIndicatorFromState(state) {
+  const copiedState = String(state?.miniPanelCopiedState || '').trim();
+  if (copiedState === 'copied') {
+    showCopiedIndicator();
+    return;
+  }
+  if (copiedState === 'copyFailed') {
+    showCopyFailedIndicator();
+    return;
+  }
+  hideCopiedIndicator();
 }
 
 function normalizePromptOptionLabel(item) {
@@ -1036,7 +985,6 @@ function updateSelectedHubSnapshot(mutator) {
     ...next,
     updatedAt: Date.now(),
   });
-  hubOptimisticStateUntil.set(tabId, Date.now() + MINI_HUB_OPTIMISTIC_MS);
 }
 
 function syncHubTabDropdown() {
@@ -1222,13 +1170,7 @@ function updateMiniPanelUi() {
 
   const indicator = $('miniCopiedIndicator');
   if (indicator) {
-    if (copiedVisible) {
-      indicator.hidden = false;
-      indicator.dataset.show = '1';
-    } else {
-      indicator.hidden = true;
-      indicator.dataset.show = '0';
-    }
+    syncCopiedIndicatorFromState(state);
   }
 
   syncPromptDropdown(snapshot);
@@ -1303,21 +1245,7 @@ function bindMiniPanelEvents() {
   if (startButton) {
     startButton.addEventListener('click', () => {
       dispatchHubAction('startRecording');
-      updateSelectedHubSnapshot((prev) => ({
-        ...prev,
-        state: {
-          ...(prev.state || {}),
-          canStart: false,
-          canStop: true,
-          canPauseResume: true,
-          canAbort: true,
-          miniPanelStatusPhase: 'recording',
-          statusText: 'Listening for speech...',
-          recordingStartedAt: Date.now(),
-          recordingPausedAt: 0,
-          recordingAccumulatedMs: 0,
-        },
-      }));
+      hideCopiedIndicator();
       requestUiRefresh();
     });
   }
@@ -1325,28 +1253,6 @@ function bindMiniPanelEvents() {
   if (stopButton) {
     stopButton.addEventListener('click', () => {
       dispatchHubAction('stopRecording');
-      updateSelectedHubSnapshot((prev) => {
-        const prevState = prev.state || {};
-        const startedAt = Number(prevState.recordingStartedAt || 0);
-        const accumulatedMs = Number(prevState.recordingAccumulatedMs || 0);
-        const elapsedMs = startedAt > 0 ? accumulatedMs + Math.max(0, Date.now() - startedAt) : accumulatedMs;
-
-        return {
-          ...prev,
-          state: {
-            ...prevState,
-            canStart: false,
-            canStop: false,
-            canPauseResume: false,
-            canAbort: true,
-            miniPanelStatusPhase: 'transcribing',
-            statusText: 'Generating transcript...',
-            recordingStartedAt: 0,
-            recordingPausedAt: 0,
-            recordingAccumulatedMs: elapsedMs,
-          },
-        };
-      });
       requestUiRefresh();
     });
   }
@@ -1354,43 +1260,7 @@ function bindMiniPanelEvents() {
   if (pauseButton) {
     pauseButton.addEventListener('click', () => {
       dispatchHubAction('pauseResumeRecording');
-      updateSelectedHubSnapshot((prev) => {
-        const prevState = prev.state || {};
-        const pauseLabel = String(prevState.pauseResumeLabel || '').trim().toLowerCase();
-        const isGoingToPause = !/resume/.test(pauseLabel);
-        const now = Date.now();
-        const startedAt = Number(prevState.recordingStartedAt || 0);
-        const accumulatedMs = Number(prevState.recordingAccumulatedMs || 0);
-
-        if (isGoingToPause) {
-          const nextAccumulated = startedAt > 0 ? accumulatedMs + Math.max(0, now - startedAt) : accumulatedMs;
-          return {
-            ...prev,
-            state: {
-              ...prevState,
-              miniPanelStatusPhase: 'paused',
-              statusText: 'Paused',
-              pauseResumeLabel: 'Resume',
-              recordingStartedAt: 0,
-              recordingPausedAt: now,
-              recordingAccumulatedMs: nextAccumulated,
-            },
-          };
-        }
-
-        return {
-          ...prev,
-          state: {
-            ...prevState,
-            miniPanelStatusPhase: 'recording',
-            statusText: 'Listening for speech...',
-            pauseResumeLabel: 'Pause',
-            recordingStartedAt: now,
-            recordingPausedAt: 0,
-            recordingAccumulatedMs: accumulatedMs,
-          },
-        };
-      });
+      hideCopiedIndicator();
       requestUiRefresh();
     });
   }
@@ -1410,6 +1280,8 @@ function bindMiniPanelEvents() {
   if (abortButton) {
     abortButton.addEventListener('click', () => {
       dispatchHubAction('abortRecording');
+      hideCopiedIndicator();
+      requestUiRefresh();
     });
   }
 
@@ -1418,6 +1290,15 @@ function bindMiniPanelEvents() {
       const nextTabId = String(tabSelect.value || '').trim();
       if (!nextTabId) return;
       selectedHubTabId = nextTabId;
+      hideCopiedIndicator();
+      updateSelectedHubSnapshot((prev) => ({
+        ...prev,
+        state: {
+          ...(prev.state || {}),
+          miniPanelCopiedState: '',
+          miniPanelCopiedAt: 0,
+        },
+      }));
       requestUiRefresh();
     });
   }
@@ -2230,25 +2111,10 @@ function bindMainWindowEvents() {
     openMiniPanel();
   });
 
-  window.addEventListener('note-copied', () => {
-    showCopiedIndicator();
-    handleStateRelevantEvent();
-  });
-
-  window.addEventListener('transcript-copied', () => {
-    showCopiedIndicator();
-    handleStateRelevantEvent();
-  });
-
-  window.addEventListener('note-copy-failed', () => {
-    showCopyFailedIndicator();
-    handleStateRelevantEvent();
-  });
-
-  window.addEventListener('transcript-copy-failed', () => {
-    showCopyFailedIndicator();
-    handleStateRelevantEvent();
-  });
+  window.addEventListener('note-copied', handleStateRelevantEvent);
+  window.addEventListener('transcript-copied', handleStateRelevantEvent);
+  window.addEventListener('note-copy-failed', handleStateRelevantEvent);
+  window.addEventListener('transcript-copy-failed', handleStateRelevantEvent);
 
   window.addEventListener('note-generation-finished', handleStateRelevantEvent);
   window.addEventListener('note:finished', handleStateRelevantEvent);
@@ -2292,7 +2158,11 @@ function bindMainWindowEvents() {
     ]);
 
     if (target.id && watchedIds.has(target.id)) {
-      if (target.id === 'startButton' || target.id === 'abortButton') {
+      if (
+        target.id === 'startButton' ||
+        target.id === 'pauseResumeButton' ||
+        target.id === 'abortButton'
+      ) {
         hideCopiedIndicator();
       }
       handleStateRelevantEvent();
