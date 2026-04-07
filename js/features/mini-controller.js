@@ -837,6 +837,49 @@ function setBadge(text, tone) {
   badge.dataset.tone = tone;
 }
 
+function formatElapsedMs(ms) {
+  const totalSeconds = Math.max(0, Math.floor(Number(ms || 0) / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function computeRecordingElapsedMs(state) {
+  const accumulatedMs = Number(state?.recordingAccumulatedMs || 0);
+  const startedAt = Number(state?.recordingStartedAt || 0);
+
+  if (startedAt > 0) {
+    return accumulatedMs + Math.max(0, Date.now() - startedAt);
+  }
+  return accumulatedMs;
+}
+
+function updateMiniRecordingTimer(state) {
+  const timerEl = $('miniRecordingTimer');
+  if (!timerEl) return;
+
+  const phase = String(state?.miniPanelStatusPhase || '').trim();
+  const shouldShow =
+    phase === 'recording' ||
+    phase === 'paused' ||
+    Number(state?.recordingAccumulatedMs || 0) > 0 ||
+    Number(state?.recordingStartedAt || 0) > 0;
+
+  if (!shouldShow) {
+    timerEl.hidden = true;
+    timerEl.textContent = '';
+    return;
+  }
+
+  timerEl.hidden = false;
+  timerEl.textContent = formatElapsedMs(computeRecordingElapsedMs(state));
+}
+
 function hideCopiedIndicator() {
   copiedVisible = false;
   const indicator = $('miniCopiedIndicator');
@@ -1004,39 +1047,39 @@ function getMiniPhasePresentation(state) {
 
   switch (phase) {
     case 'recording':
-      return { badge: tMini('recording'), text: state.statusText || tMini('recording'), tone: 'recording' };
+      return { badge: tMini('recording'), text: tMini('recording'), tone: 'recording' };
     case 'paused':
-      return { badge: tMini('paused'), text: state.statusText || tMini('paused'), tone: 'paused' };
+      return { badge: tMini('paused'), text: tMini('paused'), tone: 'paused' };
     case 'transcribing':
     case 'generating-transcript':
       return {
         badge: tMini('generatingTranscript'),
-        text: state.statusText || tMini('generatingTranscript'),
+        text: tMini('generatingTranscript'),
         tone: 'transcribe',
       };
     case 'transcript-completed':
     case 'transcript-complete':
       return {
         badge: tMini('transcriptCompleted'),
-        text: state.statusText || tMini('transcriptCompleted'),
+        text: tMini('transcriptCompleted'),
         tone: 'ready',
       };
     case 'note-generating':
       return {
         badge: tMini('generatingNote'),
-        text: state.statusText || tMini('generatingNote'),
+        text: tMini('generatingNote'),
         tone: 'transcribe',
       };
     case 'note-completed':
       return {
         badge: tMini('noteCompleted'),
-        text: state.statusText || tMini('noteCompleted'),
+        text: tMini('noteCompleted'),
         tone: 'ready',
       };
     case 'aborted':
-      return { badge: tMini('recordingAborted'), text: state.statusText || tMini('recordingAborted'), tone: 'aborted' };
+      return { badge: tMini('recordingAborted'), text: tMini('recordingAborted'), tone: 'aborted' };
     default:
-      return { badge: tMini('idle'), text: state.statusText || tMini('ready'), tone: 'idle' };
+      return { badge: tMini('idle'), text: tMini('ready'), tone: 'idle' };
   }
 }
 
@@ -1080,7 +1123,10 @@ function updateMiniPanelUi() {
   setText('miniCopyTranscriptButton', tMini('copyTranscript'));
   setText('miniCopyNoteButton', tMini('copyNote'));
   setText('miniAbortButton', tMini('abort'));
-  setText('miniStatusText', phaseUi?.text || statusText || (snapshot ? tMini('ready') : tMini('noTabSelected')));
+  setText(
+    'miniStatusText',
+    statusText || phaseUi?.text || (snapshot ? tMini('ready') : tMini('noTabSelected'))
+  );
   setText('miniTitle', tMini('sharedMiniPanel'));
   setText('miniAutoGenerateLabel', tMini('autoGenerate'));
   setText('miniAutoCopyLabel', tMini('autoCopy'));
@@ -1109,6 +1155,8 @@ function updateMiniPanelUi() {
     setBadge(tMini('idle'), 'idle');
   }
 
+  updateMiniRecordingTimer(state);
+
   const indicator = $('miniCopiedIndicator');
   if (indicator) {
     if (copiedVisible) {
@@ -1126,6 +1174,7 @@ function updateMiniPanelUi() {
 function requestUiRefresh() {
   window.setTimeout(updateMiniPanelUi, 20);
   window.setTimeout(updateMiniPanelUi, 120);
+  window.setTimeout(updateMiniPanelUi, 300);
 }
 
 function startRefreshLoop() {
@@ -1191,18 +1240,95 @@ function bindMiniPanelEvents() {
   if (startButton) {
     startButton.addEventListener('click', () => {
       dispatchHubAction('startRecording');
+      updateSelectedHubSnapshot((prev) => ({
+        ...prev,
+        state: {
+          ...(prev.state || {}),
+          canStart: false,
+          canStop: true,
+          canPauseResume: true,
+          canAbort: true,
+          miniPanelStatusPhase: 'recording',
+          statusText: 'Listening for speech...',
+          recordingStartedAt: Date.now(),
+          recordingPausedAt: 0,
+          recordingAccumulatedMs: 0,
+        },
+      }));
+      requestUiRefresh();
     });
   }
 
   if (stopButton) {
     stopButton.addEventListener('click', () => {
       dispatchHubAction('stopRecording');
+      updateSelectedHubSnapshot((prev) => {
+        const prevState = prev.state || {};
+        const startedAt = Number(prevState.recordingStartedAt || 0);
+        const accumulatedMs = Number(prevState.recordingAccumulatedMs || 0);
+        const elapsedMs = startedAt > 0 ? accumulatedMs + Math.max(0, Date.now() - startedAt) : accumulatedMs;
+
+        return {
+          ...prev,
+          state: {
+            ...prevState,
+            canStart: false,
+            canStop: false,
+            canPauseResume: false,
+            canAbort: true,
+            miniPanelStatusPhase: 'transcribing',
+            statusText: 'Generating transcript...',
+            recordingStartedAt: 0,
+            recordingPausedAt: 0,
+            recordingAccumulatedMs: elapsedMs,
+          },
+        };
+      });
+      requestUiRefresh();
     });
   }
 
   if (pauseButton) {
     pauseButton.addEventListener('click', () => {
       dispatchHubAction('pauseResumeRecording');
+      updateSelectedHubSnapshot((prev) => {
+        const prevState = prev.state || {};
+        const pauseLabel = String(prevState.pauseResumeLabel || '').trim().toLowerCase();
+        const isGoingToPause = !/resume/.test(pauseLabel);
+        const now = Date.now();
+        const startedAt = Number(prevState.recordingStartedAt || 0);
+        const accumulatedMs = Number(prevState.recordingAccumulatedMs || 0);
+
+        if (isGoingToPause) {
+          const nextAccumulated = startedAt > 0 ? accumulatedMs + Math.max(0, now - startedAt) : accumulatedMs;
+          return {
+            ...prev,
+            state: {
+              ...prevState,
+              miniPanelStatusPhase: 'paused',
+              statusText: 'Paused',
+              pauseResumeLabel: 'Resume',
+              recordingStartedAt: 0,
+              recordingPausedAt: now,
+              recordingAccumulatedMs: nextAccumulated,
+            },
+          };
+        }
+
+        return {
+          ...prev,
+          state: {
+            ...prevState,
+            miniPanelStatusPhase: 'recording',
+            statusText: 'Listening for speech...',
+            pauseResumeLabel: 'Pause',
+            recordingStartedAt: now,
+            recordingPausedAt: 0,
+            recordingAccumulatedMs: accumulatedMs,
+          },
+        };
+      });
+      requestUiRefresh();
     });
   }
 
@@ -1471,6 +1597,21 @@ function renderMiniPanelDocument(targetWindow) {
       gap: 6px;
       min-height: 24px;
       min-width: 0;
+    }
+
+    .status-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      margin-bottom: 8px;
+    }
+
+    .recording-timer {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.02em;
+      font-variant-numeric: tabular-nums;
     }
 
     .badge {
@@ -1872,8 +2013,10 @@ function renderMiniPanelDocument(targetWindow) {
         <div id="miniStatusBadge" class="badge" data-tone="idle">Idle</div>
         <div id="miniCopiedIndicator" class="copied" data-show="0" hidden>Copied!</div>
       </div>
-
-      <div id="miniStatusText" class="status-text">Ready</div>
+      <div class="status-meta">
+        <div id="miniStatusText" class="status-text">Ready</div>
+        <div id="miniRecordingTimer" class="recording-timer" hidden>00:00</div>
+      </div>
 
       <div class="controls-wrap">
         <div class="primary-grid">
