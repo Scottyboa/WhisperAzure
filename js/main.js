@@ -115,7 +115,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getMiniPanelPromptOptionsSnapshot() {
     const app = getApp();
-    if (typeof app.getMiniPanelPromptOptions !== 'function' || app.getMiniPanelPromptOptions === getMiniPanelPromptOptionsSnapshot) {
+    if (
+      typeof app.getMiniPanelPromptOptions !== 'function' ||
+      app.getMiniPanelPromptOptions === getMiniPanelPromptOptionsSnapshot
+    ) {
       return [];
     }
 
@@ -130,7 +133,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getSelectedPromptSlotSnapshot() {
     const app = getApp();
-    if (typeof app.getSelectedPromptSlot !== 'function' || app.getSelectedPromptSlot === getSelectedPromptSlotSnapshot) {
+    if (
+      typeof app.getSelectedPromptSlot !== 'function' ||
+      app.getSelectedPromptSlot === getSelectedPromptSlotSnapshot
+    ) {
       return '1';
     }
 
@@ -168,6 +174,8 @@ document.addEventListener('DOMContentLoaded', () => {
         autoCopyMode: 'off',
         autoCopyExtensionAvailable: false,
         miniPanelStatusPhase: 'idle',
+        miniPanelCopiedState: '',
+        miniPanelCopiedAt: 0,
         usePromptEnabled: false,
       };
     }
@@ -177,6 +185,31 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (_) {
       return {};
     }
+  }
+
+  function setMiniPanelCopyState(kind = '', at = Date.now()) {
+    const app = getApp();
+    const nextKind = String(kind || '').trim();
+    const nextAt = Number(at || 0);
+
+    if (
+      String(app.miniPanelCopiedState || '') === nextKind &&
+      Number(app.miniPanelCopiedAt || 0) === nextAt
+    ) {
+      return;
+    }
+
+    app.miniPanelCopiedState = nextKind;
+    app.miniPanelCopiedAt = nextAt;
+    emitAppStateChanged('mini-panel-copy-state', { kind: nextKind, at: nextAt });
+  }
+
+  function clearMiniPanelCopyState(reason = 'clear') {
+    const app = getApp();
+    if (!app.miniPanelCopiedState && !app.miniPanelCopiedAt) return;
+    app.miniPanelCopiedState = '';
+    app.miniPanelCopiedAt = 0;
+    emitAppStateChanged('mini-panel-copy-state-cleared', { reason });
   }
 
   function publishMiniHubSnapshot(reason = 'state') {
@@ -294,6 +327,57 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.setTimeout(() => publishMiniHubSnapshot('bridge-ready'), 0);
+  }
+
+  function bindMiniPanelButtonStateObserver() {
+    const app = getApp();
+    if (app.__miniPanelButtonStateObserverBound) return;
+    app.__miniPanelButtonStateObserverBound = true;
+
+    const ids = ['startButton', 'stopButton', 'pauseResumeButton', 'abortButton'];
+    const elements = ids
+      .map((id) => document.getElementById(id))
+      .filter(Boolean);
+
+    if (!elements.length || typeof MutationObserver !== 'function') {
+      return;
+    }
+
+    let queued = false;
+    const queuePublish = (reason) => {
+      if (queued) return;
+      queued = true;
+      window.setTimeout(() => {
+        queued = false;
+        publishMiniHubSnapshot(reason || 'button-state-observed');
+      }, 0);
+    };
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'attributes') {
+          queuePublish('button-state-observed');
+          return;
+        }
+        if (mutation.type === 'characterData' || mutation.type === 'childList') {
+          queuePublish('pause-label-observed');
+          return;
+        }
+      }
+    });
+
+    elements.forEach((el) => {
+      observer.observe(el, {
+        attributes: true,
+        attributeFilter: ['disabled', 'aria-disabled', 'class'],
+        childList: true,
+        characterData: true,
+        subtree: true,
+      });
+    });
+
+    app.__miniPanelButtonStateObserver = observer;
+    window.setTimeout(() => publishMiniHubSnapshot('button-state-observer-bound'), 0);
   }
 
   function setMiniPanelStatusPhase(phase) {
@@ -584,14 +668,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function emitCopiedEvent(text, source = 'manual-copy') {
     try {
-      window.dispatchEvent(new CustomEvent('note-copied', {
-        detail: {
-          textLength: String(text || '').length,
-          copiedAt: Date.now(),
-          source,
-        }
-      }));
+      window.dispatchEvent(
+        new CustomEvent('note-copied', {
+          detail: {
+            textLength: String(text || '').length,
+            copiedAt: Date.now(),
+            source,
+          },
+        })
+      );
     } catch (_) {}
+    setMiniPanelCopyState('copied', Date.now());
     emitAppStateChanged('note-copied', {
       textLength: String(text || '').length,
       source,
@@ -600,31 +687,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function emitTranscriptCopiedEvent(text, source = 'manual-copy-transcript') {
     try {
-      window.dispatchEvent(new CustomEvent('transcript-copied', {
-        detail: {
-          textLength: String(text || '').length,
-          copiedAt: Date.now(),
-          source,
-        }
-      }));
+      window.dispatchEvent(
+        new CustomEvent('transcript-copied', {
+          detail: {
+            textLength: String(text || '').length,
+            copiedAt: Date.now(),
+            source,
+          },
+        })
+      );
     } catch (_) {}
+    setMiniPanelCopyState('copied', Date.now());
     emitAppStateChanged('transcript-copied', {
       textLength: String(text || '').length,
       source,
     });
   }
 
-  function emitTranscriptCopyFailedEvent(text, source = 'manual-copy-transcript', reason = 'unknown') {
+  function emitTranscriptCopyFailedEvent(
+    text,
+    source = 'manual-copy-transcript',
+    reason = 'unknown'
+  ) {
     try {
-      window.dispatchEvent(new CustomEvent('transcript-copy-failed', {
-        detail: {
-          textLength: String(text || '').length,
-          failedAt: Date.now(),
-          source,
-          reason,
-        }
-      }));
+      window.dispatchEvent(
+        new CustomEvent('transcript-copy-failed', {
+          detail: {
+            textLength: String(text || '').length,
+            failedAt: Date.now(),
+            source,
+            reason,
+          },
+        })
+      );
     } catch (_) {}
+    setMiniPanelCopyState('copyFailed', Date.now());
     emitAppStateChanged('transcript-copy-failed', {
       textLength: String(text || '').length,
       source,
@@ -674,15 +771,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function emitCopyFailedEvent(text, source = 'manual-copy', reason = 'unknown') {
     try {
-      window.dispatchEvent(new CustomEvent('note-copy-failed', {
-        detail: {
-          textLength: String(text || '').length,
-          failedAt: Date.now(),
-          source,
-          reason,
-        }
-      }));
+      window.dispatchEvent(
+        new CustomEvent('note-copy-failed', {
+          detail: {
+            textLength: String(text || '').length,
+            failedAt: Date.now(),
+            source,
+            reason,
+          },
+        })
+      );
     } catch (_) {}
+    setMiniPanelCopyState('copyFailed', Date.now());
     emitAppStateChanged('note-copy-failed', {
       textLength: String(text || '').length,
       source,
@@ -741,7 +841,11 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (_) {}
 
       try {
-        if (previousActive && typeof previousActive.focus === 'function' && previousActive !== field) {
+        if (
+          previousActive &&
+          typeof previousActive.focus === 'function' &&
+          previousActive !== field
+        ) {
           previousActive.focus();
         }
       } catch (_) {}
@@ -756,11 +860,17 @@ document.addEventListener('DOMContentLoaded', () => {
       emitCopyFailedEvent(text, source, 'execCommand-threw');
       return false;
     } finally {
-      try { window.getSelection()?.removeAllRanges?.(); } catch (_) {}
+      try {
+        window.getSelection()?.removeAllRanges?.();
+      } catch (_) {}
     }
   }
 
-  function tryExecCommandCopyTranscriptFromField(field, text, source = 'manual-copy-transcript') {
+  function tryExecCommandCopyTranscriptFromField(
+    field,
+    text,
+    source = 'manual-copy-transcript'
+  ) {
     try {
       if (!field) return false;
       const previousSelectionStart = field.selectionStart;
@@ -781,7 +891,11 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (_) {}
 
       try {
-        if (previousActive && typeof previousActive.focus === 'function' && previousActive !== field) {
+        if (
+          previousActive &&
+          typeof previousActive.focus === 'function' &&
+          previousActive !== field
+        ) {
           previousActive.focus();
         }
       } catch (_) {}
@@ -796,15 +910,14 @@ document.addEventListener('DOMContentLoaded', () => {
       emitTranscriptCopyFailedEvent(text, source, 'execCommand-threw');
       return false;
     } finally {
-      try { window.getSelection()?.removeAllRanges?.(); } catch (_) {}
+      try {
+        window.getSelection()?.removeAllRanges?.();
+      } catch (_) {}
     }
   }
 
   function getPageLanguage() {
-    const lang =
-      document.documentElement?.lang ||
-      localStorage.getItem('selectedLanguage') ||
-      'en';
+    const lang = document.documentElement?.lang || localStorage.getItem('selectedLanguage') || 'en';
     return String(lang || 'en').toLowerCase();
   }
 
@@ -858,12 +971,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function shouldShowCopiedSystemNotification(detail) {
-    return !!(
-      detail &&
-      detail.status !== 'aborted' &&
-      detail.autoCopyEnabled &&
-      !isMiniPanelOpen()
-    );
+    return !!(detail && detail.status !== 'aborted' && detail.autoCopyEnabled && !isMiniPanelOpen());
   }
 
   async function requestNotificationPermissionIfNeeded() {
@@ -1083,7 +1191,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!raw) return {};
     try {
       const parsed = JSON.parse(raw);
-      return (parsed && typeof parsed === 'object') ? parsed : {};
+      return parsed && typeof parsed === 'object' ? parsed : {};
     } catch (_) {
       return {};
     }
@@ -1123,10 +1231,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const namesMap = getPromptSlotNamesMap();
 
     if (!select) {
-      const selected = String(readLocal(`prompt_selected_slot::${getEffectivePromptProfileId()}`, '1') || '1').trim() || '1';
-      return [
-        { id: selected, label: getPromptSlotDisplayLabel(selected, namesMap) }
-      ];
+      const selected =
+        String(readLocal(`prompt_selected_slot::${getEffectivePromptProfileId()}`, '1') || '1')
+          .trim() || '1';
+      return [{ id: selected, label: getPromptSlotDisplayLabel(selected, namesMap) }];
     }
 
     return Array.from(select.options)
@@ -1151,7 +1259,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (select && select.value) {
       return String(select.value).trim();
     }
-    return String(readLocal(`prompt_selected_slot::${getEffectivePromptProfileId()}`, '1') || '1').trim() || '1';
+    return (
+      String(readLocal(`prompt_selected_slot::${getEffectivePromptProfileId()}`, '1') || '1')
+        .trim() || '1'
+    );
   }
 
   function getCurrentPromptSlotTitle() {
@@ -1164,7 +1275,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const selectedSlot = getSelectedPromptSlot();
-    const selected = getMiniPanelPromptOptions().find((item) => String(item.id) === String(selectedSlot));
+    const selected = getMiniPanelPromptOptions().find(
+      (item) => String(item.id) === String(selectedSlot)
+    );
     if (!selected) return '';
 
     return String(selected.label || '')
@@ -1193,12 +1306,14 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (_) {}
 
       try {
-        window.dispatchEvent(new CustomEvent('prompt-slot-selection-changed', {
-          detail: {
-            profileId: getEffectivePromptProfileId(),
-            slot: next,
-          },
-        }));
+        window.dispatchEvent(
+          new CustomEvent('prompt-slot-selection-changed', {
+            detail: {
+              profileId: getEffectivePromptProfileId(),
+              slot: next,
+            },
+          })
+        );
       } catch (_) {}
 
       emitAppStateChanged('prompt-slot-selected', { slot: next });
@@ -1267,7 +1382,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const mod = await loadCachedModule(path);
       if (mod && typeof mod.initNoteGeneration === 'function') {
         mod.initNoteGeneration();
-        emitAppStateChanged('note-provider-initialized', { provider: choice || getSelectedEffectiveNoteProvider() });
+        emitAppStateChanged('note-provider-initialized', {
+          provider: choice || getSelectedEffectiveNoteProvider(),
+        });
       } else {
         console.warn(`Module ${path} missing initNoteGeneration(); falling back to GPT-4-latest`);
         const fallback = await loadCachedModule('./noteGeneration.js');
@@ -1300,7 +1417,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const status = (document.getElementById('statusMessage')?.innerText || '').trim();
     if (!status) return false;
     if (/finishing transcription/i.test(status)) return true;
-    if (/(transcribing|processing|uploading)/i.test(status) && !/transcription finished/i.test(status)) {
+    if (
+      /(transcribing|processing|uploading)/i.test(status) &&
+      !/transcription finished/i.test(status)
+    ) {
       return true;
     }
 
@@ -1317,7 +1437,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setAutoGenerateEnabled(enabled, options = {}) {
     const nextEnabled = !!enabled;
-    const source = String(options?.source || 'auto-generate-toggle').trim() || 'auto-generate-toggle';
+    const source =
+      String(options?.source || 'auto-generate-toggle').trim() || 'auto-generate-toggle';
 
     writeSession(AUTO_GENERATE_KEY, nextEnabled ? '1' : '0');
     const el = document.getElementById('autoGenerateToggle');
@@ -1403,7 +1524,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const now = Date.now();
     const fp = `${eventDetail?.provider || 'unknown'}:${eventDetail?.transcriptLength || transcript.length}`;
     const last = getApp().__lastAutoGenerate || null;
-    if (last && last.fp === fp && (now - last.at) < 2000) return;
+    if (last && last.fp === fp && now - last.at < 2000) return;
     getApp().__lastAutoGenerate = { fp, at: now };
 
     if (getApp().isNoteGenerationBusy?.()) return;
@@ -1497,7 +1618,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-      navigator.clipboard.writeText(text)
+      navigator.clipboard
+        .writeText(text)
         .then(() => {
           emitCopied();
         })
@@ -1513,9 +1635,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           } catch (_) {
             emitCopyFailedEvent(text, 'manual-copy', error?.name || 'clipboard-write-failed');
-          }
-          finally {
-            try { window.getSelection()?.removeAllRanges?.(); } catch (_) {}
+          } finally {
+            try {
+              window.getSelection()?.removeAllRanges?.();
+            } catch (_) {}
           }
         });
       return true;
@@ -1535,7 +1658,9 @@ document.addEventListener('DOMContentLoaded', () => {
       emitCopyFailedEvent(text, 'manual-copy', 'execCommand-threw');
       return false;
     } finally {
-      try { window.getSelection()?.removeAllRanges?.(); } catch (_) {}
+      try {
+        window.getSelection()?.removeAllRanges?.();
+      } catch (_) {}
     }
   }
 
@@ -1549,7 +1674,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-      navigator.clipboard.writeText(text)
+      navigator.clipboard
+        .writeText(text)
         .then(() => {
           emitCopied();
         })
@@ -1561,12 +1687,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (ok) {
               emitCopied();
             } else {
-              emitTranscriptCopyFailedEvent(text, 'manual-copy-transcript', 'execCommand-returned-false');
+              emitTranscriptCopyFailedEvent(
+                text,
+                'manual-copy-transcript',
+                'execCommand-returned-false'
+              );
             }
           } catch (_) {
-            emitTranscriptCopyFailedEvent(text, 'manual-copy-transcript', error?.name || 'clipboard-write-failed');
+            emitTranscriptCopyFailedEvent(
+              text,
+              'manual-copy-transcript',
+              error?.name || 'clipboard-write-failed'
+            );
           } finally {
-            try { window.getSelection()?.removeAllRanges?.(); } catch (_) {}
+            try {
+              window.getSelection()?.removeAllRanges?.();
+            } catch (_) {}
           }
         });
       return true;
@@ -1580,13 +1716,19 @@ document.addEventListener('DOMContentLoaded', () => {
         emitCopied();
         return true;
       }
-      emitTranscriptCopyFailedEvent(text, 'manual-copy-transcript', 'execCommand-returned-false');
+      emitTranscriptCopyFailedEvent(
+        text,
+        'manual-copy-transcript',
+        'execCommand-returned-false'
+      );
       return false;
     } catch (_) {
       emitTranscriptCopyFailedEvent(text, 'manual-copy-transcript', 'execCommand-threw');
       return false;
     } finally {
-      try { window.getSelection()?.removeAllRanges?.(); } catch (_) {}
+      try {
+        window.getSelection()?.removeAllRanges?.();
+      } catch (_) {}
     }
   }
 
@@ -1648,6 +1790,8 @@ document.addEventListener('DOMContentLoaded', () => {
       autoCopyMode: getAutoCopyMode(),
       autoCopyExtensionAvailable: isAutoCopyExtensionAvailable(),
       miniPanelStatusPhase: String(getApp().miniPanelStatusPhase || 'idle'),
+      miniPanelCopiedState: String(getApp().miniPanelCopiedState || ''),
+      miniPanelCopiedAt: Number(getApp().miniPanelCopiedAt || 0),
       recordingStartedAt: Number(getApp().miniPanelRecordingStartedAt || 0),
       recordingPausedAt: Number(getApp().miniPanelRecordingPausedAt || 0),
       recordingAccumulatedMs: Number(getApp().miniPanelRecordingAccumulatedMs || 0),
@@ -1732,6 +1876,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (startBtn && startBtn.dataset.miniPanelStatusBound !== '1') {
       startBtn.dataset.miniPanelStatusBound = '1';
       startBtn.addEventListener('click', () => {
+        clearMiniPanelCopyState('recording-started');
         resetMiniPanelRecordingTimer();
         beginMiniPanelRecordingTimer();
         setMiniPanelStatusPhase('recording');
@@ -1754,10 +1899,12 @@ document.addEventListener('DOMContentLoaded', () => {
         window.setTimeout(() => {
           const label = String(pauseBtn.textContent || '').trim().toLowerCase();
           if (/resume/.test(label)) {
+            clearMiniPanelCopyState('recording-paused');
             pauseMiniPanelRecordingTimer();
             setMiniPanelStatusPhase('paused');
             emitAppStateChanged('mini-panel-recording-paused');
           } else {
+            clearMiniPanelCopyState('recording-resumed');
             resumeMiniPanelRecordingTimer();
             setMiniPanelStatusPhase('recording');
             emitAppStateChanged('mini-panel-recording-resumed');
@@ -1769,6 +1916,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (abortBtn && abortBtn.dataset.miniPanelStatusBound !== '1') {
       abortBtn.dataset.miniPanelStatusBound = '1';
       abortBtn.addEventListener('click', () => {
+        clearMiniPanelCopyState('recording-aborted');
         resetMiniPanelRecordingTimer();
         setMiniPanelStatusPhase('aborted');
         emitAppStateChanged('mini-panel-recording-aborted');
@@ -1808,6 +1956,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (reason === 'note-generation-begin') {
         setMiniPanelStatusPhase('note-generating');
       } else if (reason === 'start-recording-click' || reason === 'record-hotkey') {
+        clearMiniPanelCopyState(reason);
         resetMiniPanelRecordingTimer();
         beginMiniPanelRecordingTimer();
         setMiniPanelStatusPhase('recording');
@@ -1904,9 +2053,11 @@ document.addEventListener('DOMContentLoaded', () => {
   app.getMiniPanelState = () => getMiniPanelState();
   app.openMiniPanel = () => {
     try {
-      window.dispatchEvent(new CustomEvent('mini-panel:open-requested', {
-        detail: { requestedAt: Date.now() }
-      }));
+      window.dispatchEvent(
+        new CustomEvent('mini-panel:open-requested', {
+          detail: { requestedAt: Date.now() },
+        })
+      );
     } catch (_) {}
   };
 
@@ -1947,7 +2098,10 @@ document.addEventListener('DOMContentLoaded', () => {
       noteProvider.value = inferNoteProviderUi(choice);
     }
 
-    const derivedUi = deriveNoteUiStateFromEffectiveProvider(choice, getSelectedNoteProviderMode());
+    const derivedUi = deriveNoteUiStateFromEffectiveProvider(
+      choice,
+      getSelectedNoteProviderMode()
+    );
     if (noteProviderMode) {
       noteProviderMode.value = derivedUi.mode;
     }
@@ -2042,9 +2196,11 @@ document.addEventListener('DOMContentLoaded', () => {
       emitAppStateChanged('prompt-slot-changed', { slot });
 
       try {
-        window.dispatchEvent(new CustomEvent('prompt-slot-selection-changed', {
-          detail: { profileId: getEffectivePromptProfileId(), slot }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('prompt-slot-selection-changed', {
+            detail: { profileId: getEffectivePromptProfileId(), slot },
+          })
+        );
       } catch (_) {}
     });
   }
@@ -2057,9 +2213,11 @@ document.addEventListener('DOMContentLoaded', () => {
       publishMiniHubSnapshot('prompt-slot-names-changed');
       emitAppStateChanged('prompt-slot-names-changed');
       try {
-        window.dispatchEvent(new CustomEvent('prompt-slot-names-changed', {
-          detail: { profileId: getEffectivePromptProfileId() }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('prompt-slot-names-changed', {
+            detail: { profileId: getEffectivePromptProfileId() },
+          })
+        );
       } catch (_) {}
     };
 
@@ -2080,9 +2238,11 @@ document.addEventListener('DOMContentLoaded', () => {
       publishMiniHubSnapshot('prompt-profile-changed');
       emitAppStateChanged('prompt-profile-changed');
       try {
-        window.dispatchEvent(new CustomEvent('prompt-profile-changed', {
-          detail: { profileId: getEffectivePromptProfileId() }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('prompt-profile-changed', {
+            detail: { profileId: getEffectivePromptProfileId() },
+          })
+        );
       } catch (_) {}
     });
   }
@@ -2132,6 +2292,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initRecordingProvider(getSelectedTranscribeProvider());
   initNoteProvider(getSelectedEffectiveNoteProvider());
   bindMiniHubBridge();
+  bindMiniPanelButtonStateObserver();
   publishMiniHubSnapshot('main-ready');
   initMiniControllerFeature();
 
