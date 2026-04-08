@@ -23,9 +23,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const DEFAULT_PROMPT_PROFILE_ID = 'default';
   const MINI_HUB_CHANNEL_NAME = 'whisperazure-mini-panel-hub';
   const MINI_HUB_PAGE_SESSION_KEY = 'mini_panel_page_session_id';
+  const MINI_FAVICON_SYMBOL_URL = 'favicon-32x32.png';
   let miniHubChannel = null;
   let miniHubTabId = '';
   let miniHubPageSessionId = '';
+  let miniHubAccentCache = null;
+  let miniHubAppliedFaviconDataUrl = '';
 
   function getApp() {
     const existing = window.__app || {};
@@ -84,6 +87,127 @@ document.addEventListener('DOMContentLoaded', () => {
 
     app.__miniHubPageSessionId = miniHubPageSessionId;
     return miniHubPageSessionId;
+  }
+
+  function getMiniHubAccentPalette() {
+    return [
+      { key: 'green', color: '#22c55e' },
+      { key: 'blue', color: '#3b82f6' },
+      { key: 'purple', color: '#8b5cf6' },
+      { key: 'orange', color: '#f59e0b' },
+      { key: 'teal', color: '#14b8a6' },
+      { key: 'rose', color: '#f43f5e' },
+      { key: 'indigo', color: '#6366f1' },
+      { key: 'amber', color: '#f59e0b' },
+    ];
+  }
+
+  function hashMiniHubTabId(input) {
+    const text = String(input || '');
+    let hash = 0;
+    for (let i = 0; i < text.length; i += 1) {
+      hash = ((hash << 5) - hash + text.charCodeAt(i)) | 0;
+    }
+    return Math.abs(hash);
+  }
+
+  function getMiniHubTabAccent() {
+    if (miniHubAccentCache) return miniHubAccentCache;
+
+    const palette = getMiniHubAccentPalette();
+    const tabId = getOrCreateMiniHubTabId();
+    const index = hashMiniHubTabId(tabId) % palette.length;
+    miniHubAccentCache = palette[index];
+    return miniHubAccentCache;
+  }
+
+  function ensureFaviconLink() {
+    let link = document.querySelector("link[rel='icon']");
+    if (link) return link;
+
+    link = document.createElement('link');
+    link.rel = 'icon';
+    document.head.appendChild(link);
+    return link;
+  }
+
+  function drawRoundedRect(ctx, x, y, width, height, radius) {
+    const r = Math.max(0, Math.min(radius, Math.min(width, height) / 2));
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + width - r, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+    ctx.lineTo(x + width, y + height - r);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    ctx.lineTo(x + r, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  function hexToRgba(hex, alpha = 1) {
+    const raw = String(hex || '').trim().replace('#', '');
+    if (!/^[0-9a-f]{6}$/i.test(raw)) {
+      return `rgba(34, 197, 94, ${alpha})`;
+    }
+
+    const r = parseInt(raw.slice(0, 2), 16);
+    const g = parseInt(raw.slice(2, 4), 16);
+    const b = parseInt(raw.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  async function buildMiniHubFaviconDataUrl(symbolUrl, accentColor, size = 32) {
+    const img = new Image();
+    img.src = symbolUrl;
+    await img.decode();
+
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return '';
+
+    ctx.clearRect(0, 0, size, size);
+    const radius = Math.round(size * 0.22);
+    const stripWidth = Math.max(3, Math.round(size * 0.26));
+
+    // Neutral center background so the microphone remains easy to see.
+    ctx.fillStyle = '#f8fafc';
+    drawRoundedRect(ctx, 0, 0, size, size, radius);
+    ctx.fill();
+
+    // Clip all accent painting to the rounded icon shape.
+    ctx.save();
+    drawRoundedRect(ctx, 0, 0, size, size, radius);
+    ctx.clip();
+
+    // Narrow accent strips on the far left/right only.
+    ctx.fillStyle = hexToRgba(accentColor, 0.88);
+    ctx.fillRect(0, 0, stripWidth, size);
+    ctx.fillRect(size - stripWidth, 0, stripWidth, size);
+    ctx.restore();
+
+    ctx.drawImage(img, 0, 0, size, size);
+
+    return canvas.toDataURL('image/png');
+  }
+
+  async function applyMiniHubAccentFavicon() {
+    const accent = getMiniHubTabAccent();
+    if (!accent?.color) return;
+
+    try {
+      const href = await buildMiniHubFaviconDataUrl(MINI_FAVICON_SYMBOL_URL, accent.color, 32);
+      if (!href || href === miniHubAppliedFaviconDataUrl) return;
+
+      miniHubAppliedFaviconDataUrl = href;
+      const link = ensureFaviconLink();
+      link.href = href;
+    } catch (error) {
+      console.warn('[mini-hub] failed to apply accent favicon', error);
+    }
   }
 
   function getMiniHubChannel() {
@@ -292,6 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const channel = getMiniHubChannel();
     getOrCreateMiniHubTabId();
     getOrCreateMiniHubPageSessionId();
+    void applyMiniHubAccentFavicon();
 
     if (channel) {
       channel.addEventListener('message', (event) => {
@@ -1830,6 +1955,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function buildMiniHubSnapshot() {
     let promptOptions = getMiniPanelPromptOptions();
     const selectedPromptSlot = getSelectedPromptSlot();
+    const accent = getMiniHubTabAccent();
 
     if (!Array.isArray(promptOptions) || !promptOptions.length) {
       promptOptions = [{ id: selectedPromptSlot, label: `${selectedPromptSlot}. Untitled` }];
@@ -1838,6 +1964,8 @@ document.addEventListener('DOMContentLoaded', () => {
     return {
       tabId: getOrCreateMiniHubTabId(),
       pageSessionId: getOrCreateMiniHubPageSessionId(),
+      accentKey: String(accent?.key || ''),
+      accentColor: String(accent?.color || ''),
       promptLabel: getCurrentPromptSlotTitle() || 'Untitled',
       selectedPromptSlot,
       promptOptions,
@@ -2322,6 +2450,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initNoteProvider(getSelectedEffectiveNoteProvider());
   bindMiniHubBridge();
   bindMiniPanelButtonStateObserver();
+  void applyMiniHubAccentFavicon();
   publishMiniHubSnapshot('main-ready');
   initMiniControllerFeature();
 
