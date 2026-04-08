@@ -146,18 +146,6 @@ document.addEventListener('DOMContentLoaded', () => {
     ctx.closePath();
   }
 
-  function hexToRgba(hex, alpha = 1) {
-    const raw = String(hex || '').trim().replace('#', '');
-    if (!/^[0-9a-f]{6}$/i.test(raw)) {
-      return `rgba(34, 197, 94, ${alpha})`;
-    }
-
-    const r = parseInt(raw.slice(0, 2), 16);
-    const g = parseInt(raw.slice(2, 4), 16);
-    const b = parseInt(raw.slice(4, 6), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  }
-
   async function buildMiniHubFaviconDataUrl(symbolUrl, accentColor, size = 32) {
     const img = new Image();
     img.src = symbolUrl;
@@ -170,25 +158,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!ctx) return '';
 
     ctx.clearRect(0, 0, size, size);
-    const radius = Math.round(size * 0.22);
-    const stripWidth = Math.max(3, Math.round(size * 0.26));
-
-    // Neutral center background so the microphone remains easy to see.
-    ctx.fillStyle = '#f8fafc';
-    drawRoundedRect(ctx, 0, 0, size, size, radius);
+    ctx.fillStyle = accentColor;
+    drawRoundedRect(ctx, 0, 0, size, size, Math.round(size * 0.22));
     ctx.fill();
-
-    // Clip all accent painting to the rounded icon shape.
-    ctx.save();
-    drawRoundedRect(ctx, 0, 0, size, size, radius);
-    ctx.clip();
-
-    // Narrow accent strips on the far left/right only.
-    ctx.fillStyle = hexToRgba(accentColor, 0.88);
-    ctx.fillRect(0, 0, stripWidth, size);
-    ctx.fillRect(size - stripWidth, 0, stripWidth, size);
-    ctx.restore();
-
     ctx.drawImage(img, 0, 0, size, size);
 
     return canvas.toDataURL('image/png');
@@ -2420,38 +2392,96 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const abortNoteButton = document.getElementById('abortNoteButton');
-  if (abortNoteButton && abortNoteButton.dataset.bound !== '1') {
-    abortNoteButton.dataset.bound = '1';
-    abortNoteButton.addEventListener('click', () => {
+  function bindNoteAbortButton() {
+    const abortBtn = document.getElementById('abortNoteButton');
+    if (!abortBtn || abortBtn.dataset.bound === '1') return;
+    abortBtn.dataset.bound = '1';
+    abortBtn.addEventListener('click', () => {
       abortNoteGeneration();
     });
   }
 
-  window.addEventListener('note-generation-finished', (event) => {
-    tryAutoCopyFinishedNote(event?.detail || {});
-  });
+  function bindCopyNoteButton() {
+    const btn = document.getElementById('copyNoteButton');
+    if (!btn || btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', () => {
+      copyGeneratedNoteToClipboard();
+    });
+  }
 
-  window.addEventListener('transcription:finished', (event) => {
-    tryAutoCopyFinishedTranscript(event?.detail || {});
-  });
+  function bindCopyTranscriptButton() {
+    const btn = document.getElementById('copyTranscriptButton');
+    if (!btn || btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', () => {
+      copyTranscriptionToClipboard();
+    });
+  }
 
-  syncNoteActionButtons();
+  function bindUsePromptToggle() {
+    const el = getUsePromptToggleElement();
+    if (!el || el.dataset.bound === '1') return;
+    el.dataset.bound = '1';
+
+    el.addEventListener('change', () => {
+      emitAppStateChanged('use-prompt-toggle-change', { enabled: !!el.checked });
+    });
+  }
+
+  function initPromptBridgeEvents() {
+    window.addEventListener('storage', (event) => {
+      if (!event || typeof event.key !== 'string') return;
+      if (
+        event.key === PROMPT_PROFILE_STORAGE_KEY ||
+        event.key.startsWith('prompt_slot_names::') ||
+        event.key.startsWith('prompt_selected_slot::')
+      ) {
+        publishMiniHubSnapshot('prompt-storage-changed');
+      }
+    });
+  }
+
+  function initMiniHubActivationOnFocus() {
+    const app = getApp();
+    if (app.__miniHubFocusBound) return;
+    app.__miniHubFocusBound = true;
+
+    window.addEventListener('focus', () => {
+      activateMiniHubTab('window-focus');
+      publishMiniHubSnapshot('window-focus');
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        activateMiniHubTab('visibility-visible');
+        publishMiniHubSnapshot('visibility-visible');
+      }
+    });
+  }
+
+  function initMiniHubStateBoot() {
+    bindMiniHubBridge();
+    bindMiniPanelButtonStateObserver();
+    void applyMiniHubAccentFavicon();
+    publishMiniHubSnapshot('main-ready');
+  }
+
   restoreState();
   initAutoGenerateToggle();
   initAutoCopyModeSelect();
+  initNotificationPermissionHooks();
+  initAutoGenerateOnFinishListener();
   initAutoCopyExtensionCopyBridge();
   initMiniPanelStatusPhaseFlow();
-  initAutoGenerateOnFinishListener();
   initStatusFlowListeners();
-  initNotificationPermissionHooks();
-
-  initRecordingProvider(getSelectedTranscribeProvider());
-  initNoteProvider(getSelectedEffectiveNoteProvider());
-  bindMiniHubBridge();
-  bindMiniPanelButtonStateObserver();
-  void applyMiniHubAccentFavicon();
-  publishMiniHubSnapshot('main-ready');
+  bindNoteAbortButton();
+  bindCopyNoteButton();
+  bindCopyTranscriptButton();
+  bindUsePromptToggle();
+  initPromptBridgeEvents();
+  initMiniHubActivationOnFocus();
+  initMiniHubStateBoot();
   initMiniControllerFeature();
 
   emitAppStateChanged('app-boot-complete');
@@ -2469,23 +2499,84 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      if (event.key.toLowerCase() === 'r') {
-        const startButton = document.getElementById('startButton');
-        const stopButton = document.getElementById('stopButton');
-
-        if (startButton && !startButton.disabled) {
-          startButton.click();
-          emitAppStateChanged('record-hotkey');
-          event.preventDefault();
-          return;
-        }
-
-        if (stopButton && !stopButton.disabled) {
-          stopButton.click();
-          emitAppStateChanged('record-hotkey-stop');
-          event.preventDefault();
-        }
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        !event.shiftKey &&
+        !event.altKey &&
+        String(event.key || '').toLowerCase() === 'e'
+      ) {
+        event.preventDefault();
+        getApp().startRecording?.();
+        emitAppStateChanged('record-hotkey');
       }
     });
   }
+
+  syncNoteActionButtons();
+
+  const transcribeProviderSelect = document.getElementById('transcribeProvider');
+  if (transcribeProviderSelect) {
+    transcribeProviderSelect.value = getSelectedTranscribeProvider();
+  }
+
+  const noteProviderSelect = document.getElementById('noteProvider');
+  if (noteProviderSelect) {
+    noteProviderSelect.value = getSelectedNoteProviderUi();
+  }
+
+  const noteProviderModeSelect = document.getElementById('noteProviderMode');
+  if (noteProviderModeSelect) {
+    noteProviderModeSelect.value = getSelectedNoteProviderMode();
+  }
+
+  const openaiModelSelect = document.getElementById('openaiModel');
+  if (openaiModelSelect) {
+    openaiModelSelect.value = getSelectedOpenAiModel();
+  }
+
+  const vertexModelSelect = document.getElementById('vertexModel');
+  if (vertexModelSelect) {
+    vertexModelSelect.value = getSelectedVertexModel();
+  }
+
+  const bedrockModelSelect = document.getElementById('bedrockModel');
+  if (bedrockModelSelect) {
+    bedrockModelSelect.value = getSelectedBedrockModel();
+  }
+
+  initRecordingProvider(getSelectedTranscribeProvider());
+  initNoteProvider(getSelectedEffectiveNoteProvider());
+
+  const generatedNote = document.getElementById('generatedNote');
+  if (generatedNote && generatedNote.dataset.bound !== '1') {
+    generatedNote.dataset.bound = '1';
+    generatedNote.addEventListener('input', () => {
+      emitAppStateChanged('generated-note-input', {
+        textLength: String(generatedNote.value || '').length,
+      });
+    });
+  }
+
+  const transcription = document.getElementById('transcription');
+  if (transcription && transcription.dataset.bound !== '1') {
+    transcription.dataset.bound = '1';
+    transcription.addEventListener('input', () => {
+      emitAppStateChanged('transcription-input', {
+        textLength: String(transcription.value || '').length,
+      });
+    });
+  }
+
+  window.addEventListener('note-generation-finished', (event) => {
+    const detail = event?.detail || {};
+    tryAutoCopyFinishedNote(detail);
+    if (shouldShowCopiedSystemNotification(detail)) {
+      showCopiedSystemNotification(detail);
+    }
+  });
+
+  window.addEventListener('transcription:finished', (event) => {
+    const detail = event?.detail || {};
+    tryAutoCopyFinishedTranscript(detail);
+  });
 });
