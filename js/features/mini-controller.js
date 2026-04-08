@@ -14,23 +14,67 @@ const STATE_REFRESH_MS = 350;
 const AUTO_COPY_DOWNLOAD_HREF = 'div/autocopy.zip';
 const MINI_HUB_CHANNEL_NAME = 'whisperazure-mini-panel-hub';
 const MINI_HUB_PAGE_SESSION_KEY = 'mini_panel_page_session_id';
-// Stale timeout must be comfortably longer than Chrome's background-tab
-// throttle interval. When the Mini Panel (PiP or popup window) is
-// focused, the main app tabs become background tabs and Chrome throttles
-// their setInterval to roughly once per minute — so a 10s heartbeat
-// actually fires every ~60s. If the stale timeout is shorter than that,
-// the Mini Panel prunes tabs before their throttled heartbeat arrives,
-// causing cyclical "tab vanishes and reappears" flicker. 90s gives
-// comfortable margin above the worst-case throttled heartbeat while
-// still cleaning up genuinely crashed tabs within a reasonable window.
-const MINI_HUB_STALE_MS = 90 * 1000;
+
+// Liveness model: instead of blindly pruning tabs whose updatedAt has
+// gone stale (which was causing "tab vanishes and reappears" flicker
+// due to Chrome background-tab throttling), we use an active
+// ping/pong probe protocol. Any tab whose updatedAt is older than
+// PROBE_THRESHOLD is probed with a targeted `mini-hub-ping`. Live
+// tabs respond with `mini-hub-pong` — which refreshes their
+// updatedAt without actually changing any UI state. If no pong
+// arrives within PROBE_TIMEOUT, the tab is confirmed dead and
+// removed.
+//
+// BroadcastChannel message delivery is NOT throttled by Chrome's
+// background-tab rules (only setInterval/setTimeout are). A pong
+// from a deeply-backgrounded tab still arrives within milliseconds
+// of the ping, so PROBE_TIMEOUT can be very short without risking
+// false positives.
+//
+// This gives three properties simultaneously:
+//   1. Immediate removal when a tab posts mini-hub-tab-closed
+//      (normal close: beforeunload / pagehide).
+//   2. Fast removal of crashed tabs (~PROBE_THRESHOLD + PROBE_TIMEOUT
+//      worst case = ~26.5s, independent of heartbeat throttling).
+//   3. Never wrongly removes a live tab, even under aggressive
+//      background throttling, deep sleep, or OS freeze.
 const MINI_HUB_HEARTBEAT_MS = 10000;
+// Two probe cadences:
+//
+// - "idle" (Mini Panel window is NOT open in this tab): gentle probing
+//   at 5s intervals with a 25s threshold. Just enough to clean up
+//   crashed peers eventually, without generating channel traffic for
+//   no visible benefit.
+//
+// - "active" (Mini Panel window IS open in this tab): aggressive
+//   probing at 400ms intervals with ~0ms threshold and a 350ms pong
+//   window. This means any tab in the picker gets pinged constantly
+//   and a dead peer is detected within ~750ms, independent of whether
+//   the closing tab's beforeunload message was successfully delivered.
+//
+// Chrome does NOT throttle BroadcastChannel message delivery or the
+// message-event handlers that receive them, only setInterval timing.
+// The probe scanner's setInterval IS throttled when the parent tab
+// is backgrounded (which happens when the user focuses the PiP
+// window), so we ALSO wake the probe scan from the 350ms UI refresh
+// loop which runs whenever the Mini Panel is visible — see
+// updateMiniPanelUi.
+const MINI_HUB_PROBE_INTERVAL_MS_IDLE = 5000;
+const MINI_HUB_PROBE_THRESHOLD_MS_IDLE = 25000;
+const MINI_HUB_PROBE_TIMEOUT_MS_IDLE = 1500;
+
+const MINI_HUB_PROBE_INTERVAL_MS_ACTIVE = 500;
+const MINI_HUB_PROBE_THRESHOLD_MS_ACTIVE = 0;  // probe every scan
+const MINI_HUB_PROBE_TIMEOUT_MS_ACTIVE = 450;
 
 let miniWindow = null;
 let refreshTimer = null;
 let appRef = null;
 let hubChannel = null;
 let hubHeartbeatTimer = null;
+let probeTimer = null;
+// tabId -> timeout handle for in-flight probes
+const pendingProbes = new Map();
 let localTabId = '';
 let localPageSessionId = '';
 let selectedHubTabId = '';
@@ -763,15 +807,46 @@ function upsertHubTab(snapshot) {
   return merged;
 }
 
+// True when the Mini Panel window is open in this tab. Probing runs
+// aggressively in this mode so the picker reflects tab closures
+// within ~750ms even if the closing tab's beforeunload message was
+// dropped by Chrome during the unload race.
+function isProbingActive() {
+  return isMiniWindowOpen();
+}
+
+function getProbeThresholdMs() {
+  return isProbingActive()
+    ? MINI_HUB_PROBE_THRESHOLD_MS_ACTIVE
+    : MINI_HUB_PROBE_THRESHOLD_MS_IDLE;
+}
+
+function getProbeTimeoutMs() {
+  return isProbingActive()
+    ? MINI_HUB_PROBE_TIMEOUT_MS_ACTIVE
+    : MINI_HUB_PROBE_TIMEOUT_MS_IDLE;
+}
+
+function getProbeIntervalMs() {
+  return isProbingActive()
+    ? MINI_HUB_PROBE_INTERVAL_MS_ACTIVE
+    : MINI_HUB_PROBE_INTERVAL_MS_IDLE;
+}
+
+// Walks hubTabs and kicks off a probe for any peer that has gone
+// beyond the current threshold. In active mode the threshold is 0,
+// so every peer gets probed on every scan.
 function pruneStaleHubTabs() {
-  // Safety fallback only. Normal removal happens via mini-hub-tab-closed.
   const now = Date.now();
+  const ownId = getOrCreateLocalTabId();
+  const threshold = getProbeThresholdMs();
+
   for (const [tabId, entry] of hubTabs.entries()) {
+    if (tabId === ownId) continue; // we know we're alive
     const updatedAt = Number(entry?.updatedAt || 0);
-    if (!updatedAt || now - updatedAt > MINI_HUB_STALE_MS) {
-      hubTabs.delete(tabId);
-      releaseColorForTab(tabId);
-    }
+    if (threshold > 0 && updatedAt && now - updatedAt <= threshold) continue;
+    if (pendingProbes.has(tabId)) continue; // probe already in flight
+    startProbe(tabId);
   }
 
   if (selectedHubTabId && !hubTabs.has(selectedHubTabId)) {
@@ -786,6 +861,80 @@ function pruneStaleHubTabs() {
     });
     selectedHubTabId = remaining[0]?.tabId || '';
   }
+}
+
+function startProbe(tabId) {
+  const id = String(tabId || '').trim();
+  if (!id) return;
+  if (pendingProbes.has(id)) return;
+
+  // Fire the targeted ping first, then arm the timeout. If the pong
+  // arrives before the timeout, resolveProbe() clears the timeout and
+  // refreshes the tab's updatedAt. If not, the timeout handler runs
+  // and removes the tab.
+  postHubMessage({
+    type: 'mini-hub-ping',
+    targetTabId: id,
+    at: Date.now(),
+  });
+
+  const handle = window.setTimeout(() => {
+    pendingProbes.delete(id);
+    if (!hubTabs.has(id)) return; // already gone for another reason
+    hubTabs.delete(id);
+    releaseColorForTab(id);
+    if (selectedHubTabId === id) {
+      selectedHubTabId = '';
+      ensureSelectedHubTab();
+    }
+    updateMiniPanelUi();
+  }, getProbeTimeoutMs());
+
+  pendingProbes.set(id, handle);
+}
+
+function resolveProbe(tabId) {
+  const id = String(tabId || '').trim();
+  if (!id) return;
+  const handle = pendingProbes.get(id);
+  if (handle === undefined) return;
+  window.clearTimeout(handle);
+  pendingProbes.delete(id);
+
+  const entry = hubTabs.get(id);
+  if (entry) {
+    entry.updatedAt = Date.now();
+    hubTabs.set(id, entry);
+  }
+}
+
+function startProbeScanner() {
+  if (probeTimer) return;
+  probeTimer = window.setInterval(() => {
+    pruneStaleHubTabs();
+  }, getProbeIntervalMs());
+}
+
+// Called when the Mini Panel opens or closes so the scanner switches
+// between idle (5s) and active (400ms) cadences without waiting for
+// the current interval to elapse.
+function restartProbeScanner() {
+  if (probeTimer) {
+    window.clearInterval(probeTimer);
+    probeTimer = null;
+  }
+  // Don't clear pendingProbes here — in-flight probes remain valid.
+  startProbeScanner();
+}
+
+function stopProbeScanner() {
+  if (!probeTimer) return;
+  window.clearInterval(probeTimer);
+  probeTimer = null;
+  for (const handle of pendingProbes.values()) {
+    window.clearTimeout(handle);
+  }
+  pendingProbes.clear();
 }
 
 function getOrderedHubTabs() {
@@ -981,7 +1130,9 @@ function ensureHubChannel() {
     if (type === 'mini-hub-tab-state') {
       upsertHubTab(data.snapshot || null);
       ensureSelectedHubTab();
-      requestUiRefresh();
+      // Synchronous update — see the long comment in mini-hub-tab-closed
+      // below for why we don't go through requestUiRefresh here.
+      updateMiniPanelUi();
       return;
     }
 
@@ -997,7 +1148,7 @@ function ensureHubChannel() {
       if (tabId) {
         selectedHubTabId = tabId;
       }
-      requestUiRefresh();
+      updateMiniPanelUi();
       return;
     }
 
@@ -1011,7 +1162,16 @@ function ensureHubChannel() {
           ensureSelectedHubTab();
         }
       }
-      requestUiRefresh();
+      // CRITICAL: call updateMiniPanelUi synchronously rather than
+      // via requestUiRefresh(). requestUiRefresh schedules via
+      // setTimeout, which Chrome throttles to ~1 Hz minimum when the
+      // parent tab is backgrounded — and the parent tab IS
+      // backgrounded whenever the user is focused on the PiP window.
+      // A synchronous call from inside the message handler runs as
+      // part of the message task, which Chrome does not throttle, so
+      // the PiP DOM updates with no perceptible delay regardless of
+      // parent tab state.
+      updateMiniPanelUi();
       return;
     }
 
@@ -1056,7 +1216,28 @@ function ensureHubChannel() {
           } catch (_) {}
         }
       }
-      requestUiRefresh();
+      updateMiniPanelUi();
+      return;
+    }
+
+    if (type === 'mini-hub-ping') {
+      // Someone wants to confirm we're alive. Respond immediately
+      // with our own tabId. BroadcastChannel message delivery isn't
+      // throttled by background-tab rules, so this round-trip works
+      // even when our setInterval is being throttled.
+      const targetTabId = String(data?.targetTabId || '').trim();
+      if (!targetTabId || targetTabId !== getOrCreateLocalTabId()) return;
+      postHubMessage({
+        type: 'mini-hub-pong',
+        tabId: getOrCreateLocalTabId(),
+        at: Date.now(),
+      });
+      return;
+    }
+
+    if (type === 'mini-hub-pong') {
+      const tabId = String(data?.tabId || '').trim();
+      if (tabId) resolveProbe(tabId);
       return;
     }
 
@@ -1474,7 +1655,10 @@ function updateMiniPanelUi() {
   const doc = getMiniDoc();
   if (!doc) return;
 
-  pruneStaleHubTabs();
+  // Pruning/probing is driven by startProbeScanner() on its own 5s
+  // cadence plus on focus/visibility wake-ups. The 350ms UI refresh
+  // loop does not need to probe — it just renders whatever is
+  // currently in hubTabs.
   syncHubTabDropdown();
 
   const snapshot = getSelectedHubSnapshot();
@@ -2542,6 +2726,9 @@ function attachWindowLifecycle(targetWindow) {
     stopRefreshLoop();
     miniWindow = null;
     emitMiniPanelStatus({ open: false });
+    // Switch the probe scanner back to idle cadence now that we're
+    // not watching.
+    restartProbeScanner();
   };
 
   try {
@@ -2550,6 +2737,34 @@ function attachWindowLifecycle(targetWindow) {
 
   try {
     targetWindow.addEventListener('beforeunload', handleClose);
+  } catch (_) {}
+}
+
+// Install a wake-up loop inside the PiP window itself. The PiP
+// window's setInterval / rAF is NOT throttled by Chrome's
+// background-tab rules (because the PiP window is a separate visible
+// surface, not a hidden tab) even when the user has focused the PiP
+// and the parent tab has become background. This loop calls back
+// into the parent tab to run pruneStaleHubTabs and updateMiniPanelUi
+// at full cadence, which is what makes tab-close detection feel
+// immediate regardless of parent-tab throttling.
+function installMiniPanelWakeupLoop(targetWindow) {
+  if (!targetWindow || targetWindow.__miniHubWakeupBound === true) return;
+  targetWindow.__miniHubWakeupBound = true;
+
+  try {
+    const timer = targetWindow.setInterval(() => {
+      try {
+        pruneStaleHubTabs();
+        updateMiniPanelUi();
+      } catch (_) {}
+    }, MINI_HUB_PROBE_INTERVAL_MS_ACTIVE);
+
+    const teardown = () => {
+      try { targetWindow.clearInterval(timer); } catch (_) {}
+    };
+    try { targetWindow.addEventListener('pagehide', teardown); } catch (_) {}
+    try { targetWindow.addEventListener('beforeunload', teardown); } catch (_) {}
   } catch (_) {}
 }
 
@@ -2587,6 +2802,10 @@ async function openMiniPanel() {
 
     renderMiniPanelDocument(miniWindow);
     attachWindowLifecycle(miniWindow);
+    installMiniPanelWakeupLoop(miniWindow);
+    // Switch probe scanner to active cadence now that there's a
+    // panel to feed.
+    restartProbeScanner();
     activateLocalHubTab('opened-panel');
     emitMiniPanelStatus({ open: true });
   } catch (err) {
@@ -2622,6 +2841,12 @@ function wireAppEvents(app) {
     'recording:resumed',
     'recording:aborted',
     'prompt:changed',
+    // main.js emits this for every internal UI change. Listening to it
+    // keeps the Mini Panel in lockstep with whatever main.js considers
+    // publishable state — without it, this tab's hubTabs entry only
+    // updates via the narrower recording/transcription events above,
+    // and the Mini Panel lags behind the main app.
+    'app:state-changed',
   ];
 
   eventNames.forEach((eventName) => {
@@ -2659,10 +2884,14 @@ function initMiniPanelBridge() {
 
   ensureHubChannel();
   startHubHeartbeat();
+  startProbeScanner();
 
   try {
     window.addEventListener('focus', () => {
       activateLocalHubTab('window-focus');
+      // Wake up the probe scanner immediately rather than waiting
+      // for the next throttled interval tick.
+      pruneStaleHubTabs();
     });
   } catch (_) {}
 
@@ -2670,6 +2899,10 @@ function initMiniPanelBridge() {
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         activateLocalHubTab('visibility-visible');
+        // On return to foreground, any peer that has drifted should
+        // be probed immediately. This is especially important after
+        // sleep/wake, when many updatedAt values look ancient.
+        pruneStaleHubTabs();
       } else {
         publishLocalHubSnapshot('visibility-hidden');
       }
@@ -2680,6 +2913,7 @@ function initMiniPanelBridge() {
     window.addEventListener('beforeunload', () => {
       removeLocalHubTab();
       stopHubHeartbeat();
+      stopProbeScanner();
     });
   } catch (_) {}
 
@@ -2687,6 +2921,7 @@ function initMiniPanelBridge() {
     window.addEventListener('pagehide', () => {
       removeLocalHubTab();
       stopHubHeartbeat();
+      stopProbeScanner();
     });
   } catch (_) {}
 
@@ -2753,6 +2988,59 @@ function bootMiniController() {
         console.warn('[mini-panel] open-requested failed', err);
       });
     });
+  } catch (_) {}
+
+  // The main page's recording runner mutates #statusMessage.innerText
+  // directly (e.g. "Listening for speech…" → "Recording…") without
+  // firing any event. Without a direct observer the Mini Panel only
+  // picks up these transitions on the next heartbeat or button state
+  // change, which is the lag the user sees. Observing the element
+  // itself turns every silent text mutation into an immediate
+  // publishLocalHubSnapshot, so the Mini Panel updates within ~20ms
+  // of the main page.
+  try {
+    const bindStatusObserver = () => {
+      const statusEl = document.getElementById('statusMessage');
+      if (!statusEl || typeof MutationObserver !== 'function') return false;
+      if (statusEl.dataset.miniHubStatusObserverBound === '1') return true;
+      statusEl.dataset.miniHubStatusObserverBound = '1';
+
+      let queued = false;
+      const queuePublish = () => {
+        if (queued) return;
+        queued = true;
+        // Microtask scheduling is NOT throttled by Chrome's background
+        // tab rules, unlike setTimeout. Using a microtask means the
+        // publish and UI update happen in the same task as the DOM
+        // mutation that triggered the observer — no perceptible lag
+        // even when the parent tab is backgrounded (PiP focus case).
+        Promise.resolve().then(() => {
+          queued = false;
+          publishLocalHubSnapshot('status-text-observed');
+          updateMiniPanelUi();
+        });
+      };
+
+      const observer = new MutationObserver(() => queuePublish());
+      observer.observe(statusEl, {
+        childList: true,
+        characterData: true,
+        subtree: true,
+      });
+      return true;
+    };
+
+    if (!bindStatusObserver()) {
+      // The status element may not exist yet at boot. Retry a few
+      // times on DOMContentLoaded-ish intervals.
+      let tries = 0;
+      const retry = window.setInterval(() => {
+        tries += 1;
+        if (bindStatusObserver() || tries > 20) {
+          window.clearInterval(retry);
+        }
+      }, 250);
+    }
   } catch (_) {}
 }
 
