@@ -24,11 +24,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const MINI_HUB_CHANNEL_NAME = 'whisperazure-mini-panel-hub';
   const MINI_HUB_PAGE_SESSION_KEY = 'mini_panel_page_session_id';
   const MINI_FAVICON_SYMBOL_URL = 'favicon-32x32.png';
+  const MINI_HUB_STALE_MS = 45 * 1000;
   let miniHubChannel = null;
   let miniHubTabId = '';
   let miniHubPageSessionId = '';
-  let miniHubAccentCache = null;
   let miniHubAppliedFaviconDataUrl = '';
+  // Accent for THIS tab, as reported by mini-controller.js (the hub
+  // authority). Updated via 'mini-panel:accent-changed' events or via
+  // 'mini-hub-accent-assigned' channel messages targeted at this tab.
+  // main.js no longer maintains a tab registry — the hub owns it.
+  let miniHubOwnAccentKey = '';
+  let miniHubOwnAccentColor = '';
+  let miniHubLiveTabCount = 1;
 
   function getApp() {
     const existing = window.__app || {};
@@ -89,36 +96,25 @@ document.addEventListener('DOMContentLoaded', () => {
     return miniHubPageSessionId;
   }
 
-  function getMiniHubAccentPalette() {
-    return [
-      { key: 'green', color: '#22c55e' },
-      { key: 'blue', color: '#3b82f6' },
-      { key: 'purple', color: '#8b5cf6' },
-      { key: 'orange', color: '#f59e0b' },
-      { key: 'teal', color: '#14b8a6' },
-      { key: 'rose', color: '#f43f5e' },
-      { key: 'indigo', color: '#6366f1' },
-      { key: 'amber', color: '#f59e0b' },
-    ];
-  }
+  // NOTE: the old local tab registry and accent-reconcile system
+  // (miniHubLiveTabs, getMiniHubAccentPalette, reconcileMiniHubTabAccents,
+  // upsertMiniHubLiveTab, removeMiniHubLiveTab, pruneMiniHubLiveTabs,
+  // getMiniHubLiveTabCount, getMiniHubTabAccent) has been removed.
+  // The authoritative registry and color assignment live in
+  // js/features/mini-controller.js. main.js now publishes its own
+  // state onto the hub channel and listens for 'mini-hub-accent-assigned'
+  // messages + the local 'mini-panel:accent-changed' event to drive
+  // its favicon. See mini-controller.js for the hub protocol.
 
-  function hashMiniHubTabId(input) {
-    const text = String(input || '');
-    let hash = 0;
-    for (let i = 0; i < text.length; i += 1) {
-      hash = ((hash << 5) - hash + text.charCodeAt(i)) | 0;
-    }
-    return Math.abs(hash);
-  }
 
-  function getMiniHubTabAccent() {
-    if (miniHubAccentCache) return miniHubAccentCache;
-
-    const palette = getMiniHubAccentPalette();
-    const tabId = getOrCreateMiniHubTabId();
-    const index = hashMiniHubTabId(tabId) % palette.length;
-    miniHubAccentCache = palette[index];
-    return miniHubAccentCache;
+  function shouldUseMiniHubAccentMode() {
+    // Only show colored favicon when there are 2+ tabs open AND
+    // the hub has assigned us a color. Both pieces of data come from
+    // mini-controller.js via 'mini-panel:accent-changed' events.
+    return (
+      miniHubLiveTabCount > 1 &&
+      !!miniHubOwnAccentColor
+    );
   }
 
   function ensureFaviconLink() {
@@ -167,15 +163,44 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function applyMiniHubAccentFavicon() {
-    const accent = getMiniHubTabAccent();
-    if (!accent?.color) return;
-
     try {
-      const href = await buildMiniHubFaviconDataUrl(MINI_FAVICON_SYMBOL_URL, accent.color, 32);
+      const link = ensureFaviconLink();
+
+      // Prefer hub-supplied accent over any cached value. If the hub
+      // controller is available and reports a current color for this
+      // tab, trust it — that's the authoritative source.
+      const controller = window.__miniPanelController;
+      if (controller) {
+        const count = typeof controller.getLiveTabCount === 'function'
+          ? Number(controller.getLiveTabCount() || 0)
+          : miniHubLiveTabCount;
+        miniHubLiveTabCount = count;
+
+        if (typeof controller.getAccentForTabId === 'function') {
+          const assigned = controller.getAccentForTabId(getOrCreateMiniHubTabId());
+          if (assigned?.color) {
+            miniHubOwnAccentKey = String(assigned.key || '');
+            miniHubOwnAccentColor = String(assigned.color || '');
+          }
+        }
+      }
+
+      if (!shouldUseMiniHubAccentMode()) {
+        if (miniHubAppliedFaviconDataUrl !== MINI_FAVICON_SYMBOL_URL) {
+          miniHubAppliedFaviconDataUrl = MINI_FAVICON_SYMBOL_URL;
+          link.href = MINI_FAVICON_SYMBOL_URL;
+        }
+        return;
+      }
+
+      const href = await buildMiniHubFaviconDataUrl(
+        MINI_FAVICON_SYMBOL_URL,
+        miniHubOwnAccentColor,
+        32
+      );
       if (!href || href === miniHubAppliedFaviconDataUrl) return;
 
       miniHubAppliedFaviconDataUrl = href;
-      const link = ensureFaviconLink();
       link.href = href;
     } catch (error) {
       console.warn('[mini-hub] failed to apply accent favicon', error);
@@ -336,16 +361,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function publishMiniHubSnapshot(reason = 'state') {
+    const snapshot = buildMiniHubSnapshot();
+    void applyMiniHubAccentFavicon();
+
     postMiniHubMessage({
       type: 'mini-hub-tab-state',
       reason,
-      snapshot: buildMiniHubSnapshot(),
+      snapshot,
     });
   }
 
   function activateMiniHubTab(reason = 'activate') {
     const snapshot = buildMiniHubSnapshot();
     const activatedAt = Date.now();
+    void applyMiniHubAccentFavicon();
 
     postMiniHubMessage({
       type: 'mini-hub-activate-tab',
@@ -360,6 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function closeMiniHubTab() {
+    void applyMiniHubAccentFavicon();
     postMiniHubMessage({
       type: 'mini-hub-tab-closed',
       tabId: getOrCreateMiniHubTabId(),
@@ -393,7 +423,35 @@ document.addEventListener('DOMContentLoaded', () => {
     if (channel) {
       channel.addEventListener('message', (event) => {
         const data = event?.data || {};
-        if (String(data?.type || '') !== 'mini-hub-command') return;
+        const type = String(data?.type || '').trim();
+
+        // Tab-state and tab-closed messages used to be consumed here
+        // to maintain a local tab registry. That registry has been
+        // deleted — the hub (mini-controller.js) is now the sole
+        // authority. main.js only reacts to messages that affect its
+        // own favicon or that invoke a command on this tab.
+
+        if (type === 'mini-hub-accent-assigned') {
+          // The hub (or another tab) is telling us what color a tab
+          // was assigned. If the message is about OUR tab, cache the
+          // color and re-apply the favicon. Other tabs' assignments
+          // are tracked by mini-controller.js, not here.
+          const tabId = String(data?.tabId || '').trim();
+          if (tabId && tabId === getOrCreateMiniHubTabId()) {
+            const key = String(data?.accentKey || '').trim();
+            const color = String(data?.accentColor || '').trim();
+            if (key && color) {
+              miniHubOwnAccentKey = key;
+              miniHubOwnAccentColor = color;
+            }
+          }
+          const count = Number(data?.liveTabCount || 0);
+          if (count > 0) miniHubLiveTabCount = count;
+          void applyMiniHubAccentFavicon();
+          return;
+        }
+
+        if (type !== 'mini-hub-command') return;
 
         const targetTabId = String(data?.targetTabId || '').trim();
         if (!targetTabId || targetTabId !== getOrCreateMiniHubTabId()) return;
@@ -408,11 +466,28 @@ document.addEventListener('DOMContentLoaded', () => {
             actionName,
             targetTabId,
           });
+          // Single settle publish — the old 150ms settle timer was
+          // redundant noise that contributed to the echo chain.
           window.setTimeout(() => publishMiniHubSnapshot(`command:${actionName}`), 0);
-          window.setTimeout(() => publishMiniHubSnapshot(`command:${actionName}:settled`), 150);
         }
       });
     }
+
+    // mini-controller.js dispatches this locally after the hub picks
+    // or updates this tab's color. No channel round-trip needed for
+    // same-tab updates.
+    window.addEventListener('mini-panel:accent-changed', (event) => {
+      const detail = event?.detail || {};
+      const key = String(detail.accentKey || '').trim();
+      const color = String(detail.accentColor || '').trim();
+      if (key && color) {
+        miniHubOwnAccentKey = key;
+        miniHubOwnAccentColor = color;
+      }
+      const count = Number(detail.liveTabCount || 0);
+      if (count > 0) miniHubLiveTabCount = count;
+      void applyMiniHubAccentFavicon();
+    });
 
     window.addEventListener('app:state-changed', (event) => {
       const reason = String(event?.detail?.reason || 'unknown').trim() || 'unknown';
@@ -448,6 +523,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.addEventListener('beforeunload', () => {
+      closeMiniHubTab();
+    });
+
+    window.addEventListener('pagehide', () => {
       closeMiniHubTab();
     });
 
@@ -1857,6 +1936,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Keep Mini Panel transcript copy on the exact same path as the main-page button.
+  getApp().copyTranscriptionToClipboard = copyTranscriptionToClipboard;
+  getApp().copyTranscription = copyTranscriptionToClipboard;
+
   function getUsePromptToggleElement() {
     return (
       document.getElementById('includePromptToggle') ||
@@ -1927,17 +2010,19 @@ document.addEventListener('DOMContentLoaded', () => {
   function buildMiniHubSnapshot() {
     let promptOptions = getMiniPanelPromptOptions();
     const selectedPromptSlot = getSelectedPromptSlot();
-    const accent = getMiniHubTabAccent();
 
     if (!Array.isArray(promptOptions) || !promptOptions.length) {
       promptOptions = [{ id: selectedPromptSlot, label: `${selectedPromptSlot}. Untitled` }];
     }
 
+    // Outbound snapshot intentionally omits accentKey/accentColor.
+    // The hub (mini-controller.js) owns color assignment and will
+    // broadcast 'mini-hub-accent-assigned' separately. Including
+    // accent data here would re-introduce the echo-chain bug where
+    // multiple tabs overwrote each other's color state.
     return {
       tabId: getOrCreateMiniHubTabId(),
       pageSessionId: getOrCreateMiniHubPageSessionId(),
-      accentKey: String(accent?.key || ''),
-      accentColor: String(accent?.color || ''),
       promptLabel: getCurrentPromptSlotTitle() || 'Untitled',
       selectedPromptSlot,
       promptOptions,
@@ -2181,6 +2266,20 @@ document.addEventListener('DOMContentLoaded', () => {
   app.setSelectedPromptSlot = (slot) => selectPromptSlot(slot);
   app.getMiniPanelState = () => getMiniPanelState();
   app.openMiniPanel = () => {
+    // Prefer calling the controller directly if mini-controller.js
+    // has booted and exposed its opener. This keeps the user-gesture
+    // activation chain intact, which is required for window.open and
+    // documentPictureInPicture.requestWindow to succeed.
+    if (typeof window.__openMiniPanel === 'function') {
+      try {
+        window.__openMiniPanel();
+        return;
+      } catch (err) {
+        console.warn('[mini-panel] app.openMiniPanel direct call failed', err);
+      }
+    }
+    // Fallback: dispatch the event in case the controller booted late
+    // and registered its listener after this call site was wired up.
     try {
       window.dispatchEvent(
         new CustomEvent('mini-panel:open-requested', {
@@ -2199,384 +2298,335 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   app.switchNoteProvider = async function switchNoteProvider(next) {
-    if (getApp().noteGenerationInFlight) {
-      console.warn('[note:switch] Ignored provider switch while note generation is active.');
-      syncNoteActionButtons();
-      emitAppStateChanged('note-provider-switch-ignored');
-      return;
+    const normalizedNext = String(next || '').trim().toLowerCase();
+    if (!normalizedNext) return false;
+
+    const noteProviderSelect = document.getElementById('noteProvider');
+    if (noteProviderSelect && noteProviderSelect.value !== normalizedNext) {
+      noteProviderSelect.value = normalizedNext;
+      noteProviderSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
     }
 
-    const choice = String(next || '').trim().toLowerCase();
-    if (!choice) return;
-
-    resetNoteGenerationState();
-    delete getApp().__noteStartPulseBound;
-
-    replaceButtonWithClone('generateNoteButton', (clone) => {
-      delete clone.dataset.noteStartPulseBound;
-      clone.removeAttribute('data-note-start-pulse-bound');
+    writeSession('note_provider', normalizedNext);
+    await initNoteProvider(normalizedNext);
+    emitAppStateChanged('note-provider-switched-programmatically', {
+      provider: normalizedNext,
     });
-
-    const abortBtn = document.getElementById('abortNoteButton');
-    if (abortBtn) abortBtn.disabled = true;
-
-    const noteProvider = document.getElementById('noteProvider');
-    const noteProviderMode = document.getElementById('noteProviderMode');
-
-    if (noteProvider) {
-      noteProvider.value = inferNoteProviderUi(choice);
-    }
-
-    const derivedUi = deriveNoteUiStateFromEffectiveProvider(
-      choice,
-      getSelectedNoteProviderMode()
-    );
-    if (noteProviderMode) {
-      noteProviderMode.value = derivedUi.mode;
-    }
-
-    writeSession('note_provider', choice);
-    writeSession('note_provider_mode', derivedUi.mode);
-
-    const path = resolveNoteModulePath(choice);
-
-    try {
-      const mod = await loadCachedModule(path);
-      if (mod && typeof mod.initNoteGeneration === 'function') {
-        mod.initNoteGeneration();
-        getApp().bindNoteStartPulse?.();
-        syncNoteActionButtons();
-        emitAppStateChanged('note-provider-switched', { provider: choice });
-      } else {
-        throw new Error('initNoteGeneration() missing');
-      }
-    } catch (e) {
-      console.warn('Switch note provider failed without reload', e);
-      syncNoteActionButtons();
-      emitAppStateChanged('note-provider-switch-failed', {
-        provider: choice,
-        message: String(e?.message || e || 'Unknown error'),
-      });
-    }
+    return true;
   };
 
   app.switchTranscribeProvider = async function switchTranscribeProvider(next) {
-    if (getApp().isTranscribeBusy?.()) {
-      console.warn('[recording:switch] Ignored provider switch while transcription is active.');
-      emitAppStateChanged('transcribe-provider-switch-ignored');
-      return;
-    }
-
-    ['startButton', 'stopButton', 'pauseResumeButton', 'abortButton'].forEach((id) => {
-      replaceButtonWithClone(id);
-    });
-
-    const provider = normalizeTranscribeProvider(next);
-    writeSession('transcribe_provider', provider);
-
+    const normalizedNext = normalizeTranscribeProvider(next);
     const transcribeProviderSelect = document.getElementById('transcribeProvider');
-    if (transcribeProviderSelect) {
-      transcribeProviderSelect.value = provider;
+    if (transcribeProviderSelect && transcribeProviderSelect.value !== normalizedNext) {
+      transcribeProviderSelect.value = normalizedNext;
+      transcribeProviderSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
     }
 
-    const path = resolveTranscribeModulePath(provider);
+    writeSession('transcribe_provider', normalizedNext);
+    await initRecordingProvider(normalizedNext);
+    emitAppStateChanged('transcribe-provider-switched-programmatically', {
+      provider: normalizedNext,
+    });
+    return true;
+  };
+
+  app.setOpenAiModel = function setOpenAiModel(next) {
+    const normalizedNext = String(next || '').trim().toLowerCase();
+    if (!normalizedNext) return false;
+
+    const el = document.getElementById('openaiModel');
+    if (el && el.value !== normalizedNext) {
+      el.value = normalizedNext;
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    }
+
+    writeSession('openai_model', normalizedNext);
+    emitAppStateChanged('openai-model-set-programmatically', {
+      model: normalizedNext,
+    });
+    return true;
+  };
+
+  app.setVertexModel = function setVertexModel(next) {
+    const normalizedNext = String(next || '').trim().toLowerCase();
+    if (!normalizedNext) return false;
+
+    const el = document.getElementById('vertexModel');
+    if (el && el.value !== normalizedNext) {
+      el.value = normalizedNext;
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    }
+
+    writeSession('vertex_model', normalizedNext);
+    emitAppStateChanged('vertex-model-set-programmatically', {
+      model: normalizedNext,
+    });
+    return true;
+  };
+
+  app.setBedrockModel = function setBedrockModel(next) {
+    const normalizedNext = String(next || '').trim().toLowerCase();
+    if (!normalizedNext) return false;
+
+    const el = document.getElementById('bedrockModel');
+    if (el && el.value !== normalizedNext) {
+      el.value = normalizedNext;
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    }
+
+    writeSession('bedrock_model', normalizedNext);
+    emitAppStateChanged('bedrock-model-set-programmatically', {
+      model: normalizedNext,
+    });
+    return true;
+  };
+
+  app.setNoteProviderMode = function setNoteProviderMode(next) {
+    const normalizedNext = String(next || '').trim().toLowerCase();
+    if (!normalizedNext) return false;
+
+    const el = document.getElementById('noteProviderMode');
+    if (el && el.value !== normalizedNext) {
+      el.value = normalizedNext;
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    }
+
+    writeSession('note_provider_mode', normalizedNext);
+    emitAppStateChanged('note-provider-mode-set-programmatically', {
+      mode: normalizedNext,
+    });
+    return true;
+  };
+
+  app.openPromptPanel = function openPromptPanel() {
+    const btn =
+      document.getElementById('openPromptPanelButton') ||
+      document.querySelector('[data-open-prompt-panel]');
+    if (btn) {
+      btn.click();
+      emitAppStateChanged('open-prompt-panel-click');
+      return true;
+    }
 
     try {
-      const mod = await loadCachedModule(path);
-      if (mod && typeof mod.initRecording === 'function') {
-        mod.initRecording();
-        emitAppStateChanged('transcribe-provider-switched', { provider });
-      } else {
-        throw new Error('initRecording() missing');
-      }
-    } catch (e) {
-      console.warn('Switch transcribe provider failed without reload', e);
-      emitAppStateChanged('transcribe-provider-switch-failed', {
-        provider,
-        message: String(e?.message || e || 'Unknown error'),
-      });
+      window.dispatchEvent(
+        new CustomEvent('prompt-panel:open-requested', {
+          detail: { requestedAt: Date.now() },
+        })
+      );
+      emitAppStateChanged('open-prompt-panel-dispatched');
+      return true;
+    } catch (_) {
+      return false;
     }
   };
+
+  app.closePromptPanel = function closePromptPanel() {
+    const btn =
+      document.getElementById('closePromptPanelButton') ||
+      document.querySelector('[data-close-prompt-panel]');
+    if (btn) {
+      btn.click();
+      emitAppStateChanged('close-prompt-panel-click');
+      return true;
+    }
+
+    try {
+      window.dispatchEvent(
+        new CustomEvent('prompt-panel:close-requested', {
+          detail: { requestedAt: Date.now() },
+        })
+      );
+      emitAppStateChanged('close-prompt-panel-dispatched');
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
+  bindMiniHubBridge();
+  bindMiniPanelButtonStateObserver();
+  initAutoGenerateOnFinishListener();
+  initAutoGenerateToggle();
+  initAutoCopyModeSelect();
+  initNotificationPermissionHooks();
+  initAutoCopyExtensionCopyBridge();
+  initMiniPanelStatusPhaseFlow();
+  initStatusFlowListeners();
+  syncNoteActionButtons();
+  restoreState();
+
+  const transcriptionEl = document.getElementById('transcription');
+  const generatedNoteEl = document.getElementById('generatedNote');
+  const customPromptEl = document.getElementById('customPrompt');
+
+  [transcriptionEl, generatedNoteEl, customPromptEl].forEach((el) => {
+    if (!el) return;
+    el.addEventListener('input', saveState);
+    el.addEventListener('select', saveState);
+    el.addEventListener('keyup', saveState);
+    el.addEventListener('scroll', saveState);
+  });
 
   const openMiniPanelButton = document.getElementById('openMiniPanelButton');
   if (openMiniPanelButton && openMiniPanelButton.dataset.bound !== '1') {
     openMiniPanelButton.dataset.bound = '1';
     openMiniPanelButton.addEventListener('click', () => {
-      getApp().openMiniPanel?.();
-      activateMiniHubTab('mini-panel-open-button-click');
-      publishMiniHubSnapshot('mini-panel-open-button-click');
+      // Preferred path: call the controller's opener directly if
+      // mini-controller.js has booted. The synchronous call from
+      // inside the click handler preserves the user-gesture
+      // activation that window.open / documentPictureInPicture
+      // require. app.openMiniPanel() itself also prefers this path,
+      // but we call __openMiniPanel directly here to keep the
+      // activation chain as short as possible.
+      if (typeof window.__openMiniPanel === 'function') {
+        try {
+          window.__openMiniPanel();
+        } catch (err) {
+          console.warn('[mini-panel] direct open from button failed', err);
+        }
+      } else {
+        // Fallback: dispatch the event. mini-controller.js listens
+        // for this and calls openMiniPanel() from the handler, which
+        // still runs inside the user activation window.
+        try {
+          window.dispatchEvent(
+            new CustomEvent('mini-panel:open-requested', {
+              detail: { at: Date.now() },
+            })
+          );
+        } catch (_) {}
+        getApp().openMiniPanel?.();
+      }
       emitAppStateChanged('mini-panel-open-button-click');
     });
   }
 
-  window.addEventListener('mini-panel:status', (event) => {
-    const open = !!event?.detail?.open;
-    getApp().miniPanelOpen = open;
-    publishMiniHubSnapshot(open ? 'mini-panel-opened' : 'mini-panel-closed');
-    emitAppStateChanged('mini-panel-status-changed', { open });
-  });
-
-  const promptSlotSelect = document.getElementById('promptSlot');
-  if (promptSlotSelect && promptSlotSelect.dataset.miniBound !== '1') {
-    promptSlotSelect.dataset.miniBound = '1';
-    promptSlotSelect.addEventListener('change', () => {
-      const slot = String(promptSlotSelect.value || '').trim();
-      publishMiniHubSnapshot('prompt-slot-changed');
-      emitAppStateChanged('prompt-slot-changed', { slot });
-
-      try {
-        window.dispatchEvent(
-          new CustomEvent('prompt-slot-selection-changed', {
-            detail: { profileId: getEffectivePromptProfileId(), slot },
-          })
-        );
-      } catch (_) {}
-    });
-  }
-
-  const promptSlotNameInput = document.getElementById('promptSlotName');
-  if (promptSlotNameInput && promptSlotNameInput.dataset.miniBound !== '1') {
-    promptSlotNameInput.dataset.miniBound = '1';
-
-    const emitPromptNamesChanged = () => {
-      publishMiniHubSnapshot('prompt-slot-names-changed');
-      emitAppStateChanged('prompt-slot-names-changed');
-      try {
-        window.dispatchEvent(
-          new CustomEvent('prompt-slot-names-changed', {
-            detail: { profileId: getEffectivePromptProfileId() },
-          })
-        );
-      } catch (_) {}
-    };
-
-    promptSlotNameInput.addEventListener('blur', emitPromptNamesChanged);
-    promptSlotNameInput.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        window.setTimeout(() => {
-          emitPromptNamesChanged();
-        }, 0);
-      }
-    });
-  }
-
-  const promptProfileInput = document.getElementById('promptProfileValue');
-  if (promptProfileInput && promptProfileInput.dataset.miniBound !== '1') {
-    promptProfileInput.dataset.miniBound = '1';
-    promptProfileInput.addEventListener('change', () => {
-      publishMiniHubSnapshot('prompt-profile-changed');
-      emitAppStateChanged('prompt-profile-changed');
-      try {
-        window.dispatchEvent(
-          new CustomEvent('prompt-profile-changed', {
-            detail: { profileId: getEffectivePromptProfileId() },
-          })
-        );
-      } catch (_) {}
-    });
-  }
-
-  // Provider selector persistence + soft switching is handled by
-  // js/features/provider-persistence.js.
-  // Do not bind legacy reload-on-change listeners here.
-
   const generateNoteButton = document.getElementById('generateNoteButton');
-  if (generateNoteButton && generateNoteButton.dataset.noteStartPulseBound !== '1') {
-    generateNoteButton.dataset.noteStartPulseBound = '1';
+  if (generateNoteButton) {
     generateNoteButton.addEventListener('click', () => {
-      if (getApp().noteGenerationInFlight) return;
-      beginNoteGeneration({
-        source: 'generate-button-click',
-        provider: getSelectedEffectiveNoteProvider(),
-      });
+      emitAppStateChanged('generate-note-click');
     });
   }
 
-  function bindNoteAbortButton() {
-    const abortBtn = document.getElementById('abortNoteButton');
-    if (!abortBtn || abortBtn.dataset.bound === '1') return;
-    abortBtn.dataset.bound = '1';
-    abortBtn.addEventListener('click', () => {
+  const abortNoteButton = document.getElementById('abortNoteButton');
+  if (abortNoteButton) {
+    abortNoteButton.addEventListener('click', () => {
       abortNoteGeneration();
     });
   }
 
-  function bindCopyNoteButton() {
-    const btn = document.getElementById('copyNoteButton');
-    if (!btn || btn.dataset.bound === '1') return;
-    btn.dataset.bound = '1';
-    btn.addEventListener('click', () => {
+  const copyNoteButton = document.getElementById('copyNoteButton');
+  if (copyNoteButton) {
+    copyNoteButton.addEventListener('click', () => {
       copyGeneratedNoteToClipboard();
     });
   }
 
-  function bindCopyTranscriptButton() {
-    const btn = document.getElementById('copyTranscriptButton');
-    if (!btn || btn.dataset.bound === '1') return;
-    btn.dataset.bound = '1';
-    btn.addEventListener('click', () => {
+  const copyTranscriptButton = document.getElementById('copyTranscriptButton');
+  if (copyTranscriptButton) {
+    copyTranscriptButton.addEventListener('click', () => {
       copyTranscriptionToClipboard();
     });
   }
 
-  function bindUsePromptToggle() {
-    const el = getUsePromptToggleElement();
-    if (!el || el.dataset.bound === '1') return;
-    el.dataset.bound = '1';
-
-    el.addEventListener('change', () => {
-      emitAppStateChanged('use-prompt-toggle-change', { enabled: !!el.checked });
-    });
-  }
-
-  function initPromptBridgeEvents() {
-    window.addEventListener('storage', (event) => {
-      if (!event || typeof event.key !== 'string') return;
-      if (
-        event.key === PROMPT_PROFILE_STORAGE_KEY ||
-        event.key.startsWith('prompt_slot_names::') ||
-        event.key.startsWith('prompt_selected_slot::')
-      ) {
-        publishMiniHubSnapshot('prompt-storage-changed');
-      }
-    });
-  }
-
-  function initMiniHubActivationOnFocus() {
-    const app = getApp();
-    if (app.__miniHubFocusBound) return;
-    app.__miniHubFocusBound = true;
-
-    window.addEventListener('focus', () => {
-      activateMiniHubTab('window-focus');
-      publishMiniHubSnapshot('window-focus');
-    });
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        activateMiniHubTab('visibility-visible');
-        publishMiniHubSnapshot('visibility-visible');
-      }
-    });
-  }
-
-  function initMiniHubStateBoot() {
-    bindMiniHubBridge();
-    bindMiniPanelButtonStateObserver();
-    void applyMiniHubAccentFavicon();
-    publishMiniHubSnapshot('main-ready');
-  }
-
-  restoreState();
-  initAutoGenerateToggle();
-  initAutoCopyModeSelect();
-  initNotificationPermissionHooks();
-  initAutoGenerateOnFinishListener();
-  initAutoCopyExtensionCopyBridge();
-  initMiniPanelStatusPhaseFlow();
-  initStatusFlowListeners();
-  bindNoteAbortButton();
-  bindCopyNoteButton();
-  bindCopyTranscriptButton();
-  bindUsePromptToggle();
-  initPromptBridgeEvents();
-  initMiniHubActivationOnFocus();
-  initMiniHubStateBoot();
-  initMiniControllerFeature();
-
-  emitAppStateChanged('app-boot-complete');
-
-  if (!document.body.dataset.recordHotkeyBound) {
-    document.body.dataset.recordHotkeyBound = '1';
-    document.addEventListener('keydown', (event) => {
-      const activeElement = document.activeElement;
-      if (
-        activeElement &&
-        (activeElement.tagName === 'INPUT' ||
-          activeElement.tagName === 'TEXTAREA' ||
-          activeElement.isContentEditable)
-      ) {
-        return;
-      }
-
-      if (
-        (event.ctrlKey || event.metaKey) &&
-        !event.shiftKey &&
-        !event.altKey &&
-        String(event.key || '').toLowerCase() === 'e'
-      ) {
-        event.preventDefault();
-        getApp().startRecording?.();
-        emitAppStateChanged('record-hotkey');
-      }
-    });
-  }
-
-  syncNoteActionButtons();
-
   const transcribeProviderSelect = document.getElementById('transcribeProvider');
   if (transcribeProviderSelect) {
-    transcribeProviderSelect.value = getSelectedTranscribeProvider();
+    transcribeProviderSelect.addEventListener('change', async () => {
+      const provider = getSelectedTranscribeProvider();
+      writeSession('transcribe_provider', provider);
+      await initRecordingProvider(provider);
+      emitAppStateChanged('transcribe-provider-changed', { provider });
+    });
   }
 
   const noteProviderSelect = document.getElementById('noteProvider');
   if (noteProviderSelect) {
-    noteProviderSelect.value = getSelectedNoteProviderUi();
-  }
-
-  const noteProviderModeSelect = document.getElementById('noteProviderMode');
-  if (noteProviderModeSelect) {
-    noteProviderModeSelect.value = getSelectedNoteProviderMode();
+    noteProviderSelect.addEventListener('change', async () => {
+      const uiProvider = getSelectedNoteProviderUi();
+      writeSession('note_provider', uiProvider);
+      await initNoteProvider(uiProvider);
+      syncNoteActionButtons();
+      emitAppStateChanged('note-provider-changed', { provider: uiProvider });
+    });
   }
 
   const openaiModelSelect = document.getElementById('openaiModel');
   if (openaiModelSelect) {
-    openaiModelSelect.value = getSelectedOpenAiModel();
+    openaiModelSelect.addEventListener('change', () => {
+      writeSession('openai_model', openaiModelSelect.value);
+      emitAppStateChanged('openai-model-changed', { model: openaiModelSelect.value });
+    });
   }
 
   const vertexModelSelect = document.getElementById('vertexModel');
   if (vertexModelSelect) {
-    vertexModelSelect.value = getSelectedVertexModel();
+    vertexModelSelect.addEventListener('change', () => {
+      writeSession('vertex_model', vertexModelSelect.value);
+      emitAppStateChanged('vertex-model-changed', { model: vertexModelSelect.value });
+    });
   }
 
   const bedrockModelSelect = document.getElementById('bedrockModel');
   if (bedrockModelSelect) {
-    bedrockModelSelect.value = getSelectedBedrockModel();
+    bedrockModelSelect.addEventListener('change', () => {
+      writeSession('bedrock_model', bedrockModelSelect.value);
+      emitAppStateChanged('bedrock-model-changed', { model: bedrockModelSelect.value });
+    });
   }
 
-  initRecordingProvider(getSelectedTranscribeProvider());
-  initNoteProvider(getSelectedEffectiveNoteProvider());
+  const noteProviderModeSelect = document.getElementById('noteProviderMode');
+  if (noteProviderModeSelect) {
+    noteProviderModeSelect.addEventListener('change', () => {
+      writeSession('note_provider_mode', noteProviderModeSelect.value);
+      emitAppStateChanged('note-provider-mode-changed', { mode: noteProviderModeSelect.value });
+    });
+  }
 
-  const generatedNote = document.getElementById('generatedNote');
-  if (generatedNote && generatedNote.dataset.bound !== '1') {
-    generatedNote.dataset.bound = '1';
-    generatedNote.addEventListener('input', () => {
-      emitAppStateChanged('generated-note-input', {
-        textLength: String(generatedNote.value || '').length,
+  const promptSlotSelect = document.getElementById('promptSlot');
+  if (promptSlotSelect) {
+    promptSlotSelect.addEventListener('change', () => {
+      try {
+        writeLocal(`prompt_selected_slot::${getEffectivePromptProfileId()}`, promptSlotSelect.value);
+      } catch (_) {}
+      emitAppStateChanged('prompt-slot-changed', { slot: promptSlotSelect.value });
+    });
+  }
+
+  const includePromptToggle = getUsePromptToggleElement();
+  if (includePromptToggle && includePromptToggle.dataset.bound !== '1') {
+    includePromptToggle.dataset.bound = '1';
+    includePromptToggle.addEventListener('change', () => {
+      emitAppStateChanged('use-prompt-toggle-change', {
+        enabled: !!includePromptToggle.checked,
       });
     });
   }
 
-  const transcription = document.getElementById('transcription');
-  if (transcription && transcription.dataset.bound !== '1') {
-    transcription.dataset.bound = '1';
-    transcription.addEventListener('input', () => {
-      emitAppStateChanged('transcription-input', {
-        textLength: String(transcription.value || '').length,
-      });
-    });
-  }
+  window.addEventListener('note-copied', (event) => {
+    const detail = event?.detail || {};
+    if (!shouldShowCopiedSystemNotification(detail)) return;
+    showCopiedSystemNotification(detail);
+  });
 
   window.addEventListener('note-generation-finished', (event) => {
     const detail = event?.detail || {};
     tryAutoCopyFinishedNote(detail);
-    if (shouldShowCopiedSystemNotification(detail)) {
-      showCopiedSystemNotification(detail);
-    }
   });
 
   window.addEventListener('transcription:finished', (event) => {
     const detail = event?.detail || {};
     tryAutoCopyFinishedTranscript(detail);
   });
+
+  void initRecordingProvider(getSelectedTranscribeProvider());
+  void initNoteProvider(getSelectedEffectiveNoteProvider());
+  void initMiniControllerFeature();
 });
