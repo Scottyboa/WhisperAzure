@@ -13,7 +13,7 @@ const MINI_PANEL_HEIGHT = 255;
 const STATE_REFRESH_MS = 350;
 const AUTO_COPY_DOWNLOAD_HREF = 'div/autocopy.zip';
 const MINI_HUB_CHANNEL_NAME = 'whisperazure-mini-panel-hub';
-const MINI_HUB_TAB_ID_KEY = 'mini_panel_tab_id';
+const MINI_HUB_PAGE_SESSION_KEY = 'mini_panel_page_session_id';
 // Safety fallback only. Normal tab removal should happen via `mini-hub-tab-closed`.
 const MINI_HUB_STALE_MS = 10 * 60 * 1000;
 const MINI_HUB_HEARTBEAT_MS = 10000;
@@ -24,6 +24,7 @@ let appRef = null;
 let hubChannel = null;
 let hubHeartbeatTimer = null;
 let localTabId = '';
+let localPageSessionId = '';
 let selectedHubTabId = '';
 const hubTabs = new Map();
 let nextHubTabOrder = 1;
@@ -484,24 +485,51 @@ function getSafeSelectedPromptSlot() {
 function getOrCreateLocalTabId() {
   if (localTabId) return localTabId;
 
-  try {
-    const existing = String(sessionStorage.getItem(MINI_HUB_TAB_ID_KEY) || '').trim();
-    if (existing) {
-      localTabId = existing;
-      return localTabId;
-    }
-  } catch (_) {}
+  const app = getApp() || (window.__app = window.__app || {});
+  const shared = String(app.__miniHubRuntimeTabId || '').trim();
+  if (shared) {
+    localTabId = shared;
+    return localTabId;
+  }
 
-  const generated =
+  localTabId =
     (window.crypto?.randomUUID && window.crypto.randomUUID()) ||
     `mini-tab-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+  app.__miniHubRuntimeTabId = localTabId;
+
+  return localTabId;
+}
+
+function getOrCreateLocalPageSessionId() {
+  if (localPageSessionId) return localPageSessionId;
+
+  const app = getApp() || (window.__app = window.__app || {});
+  const shared = String(app.__miniHubPageSessionId || '').trim();
+  if (shared) {
+    localPageSessionId = shared;
+    return localPageSessionId;
+  }
+
   try {
-    sessionStorage.setItem(MINI_HUB_TAB_ID_KEY, generated);
+    const existing = String(sessionStorage.getItem(MINI_HUB_PAGE_SESSION_KEY) || '').trim();
+    if (existing) {
+      localPageSessionId = existing;
+      app.__miniHubPageSessionId = localPageSessionId;
+      return localPageSessionId;
+    }
   } catch (_) {}
 
-  localTabId = generated;
-  return localTabId;
+  localPageSessionId =
+    (window.crypto?.randomUUID && window.crypto.randomUUID()) ||
+    `mini-page-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  try {
+    sessionStorage.setItem(MINI_HUB_PAGE_SESSION_KEY, localPageSessionId);
+  } catch (_) {}
+
+  app.__miniHubPageSessionId = localPageSessionId;
+  return localPageSessionId;
 }
 
 function stripPromptNumericPrefix(label) {
@@ -539,6 +567,7 @@ function buildLocalHubSnapshot() {
 
   return {
     tabId: getOrCreateLocalTabId(),
+    pageSessionId: getOrCreateLocalPageSessionId(),
     promptLabel,
     selectedPromptSlot,
     promptOptions,
@@ -2188,6 +2217,8 @@ function boot(existingApp) {
   if (window.__miniPanelBooted === true) return;
   window.__miniPanelBooted = true;
   appRef = existingApp || window.__app || null;
+  getOrCreateLocalTabId();
+  getOrCreateLocalPageSessionId();
   ensureHubChannel();
   upsertHubTab(buildLocalHubSnapshot());
   ensureSelectedHubTab();
