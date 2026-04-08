@@ -22,9 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const PROMPT_PROFILE_STORAGE_KEY = 'prompt_profile_id';
   const DEFAULT_PROMPT_PROFILE_ID = 'default';
   const MINI_HUB_CHANNEL_NAME = 'whisperazure-mini-panel-hub';
-  const MINI_HUB_TAB_ID_KEY = 'mini_panel_tab_id';
+  const MINI_HUB_PAGE_SESSION_KEY = 'mini_panel_page_session_id';
   let miniHubChannel = null;
   let miniHubTabId = '';
+  let miniHubPageSessionId = '';
 
   function getApp() {
     const existing = window.__app || {};
@@ -39,24 +40,50 @@ document.addEventListener('DOMContentLoaded', () => {
   function getOrCreateMiniHubTabId() {
     if (miniHubTabId) return miniHubTabId;
 
-    try {
-      const existing = String(sessionStorage.getItem(MINI_HUB_TAB_ID_KEY) || '').trim();
-      if (existing) {
-        miniHubTabId = existing;
-        return miniHubTabId;
-      }
-    } catch (_) {}
+    const app = getApp();
+    const shared = String(app.__miniHubRuntimeTabId || '').trim();
+    if (shared) {
+      miniHubTabId = shared;
+      return miniHubTabId;
+    }
 
-    const generated =
+    miniHubTabId =
       (window.crypto?.randomUUID && window.crypto.randomUUID()) ||
       `mini-tab-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+    app.__miniHubRuntimeTabId = miniHubTabId;
+    return miniHubTabId;
+  }
+
+  function getOrCreateMiniHubPageSessionId() {
+    if (miniHubPageSessionId) return miniHubPageSessionId;
+
+    const app = getApp();
+    const shared = String(app.__miniHubPageSessionId || '').trim();
+    if (shared) {
+      miniHubPageSessionId = shared;
+      return miniHubPageSessionId;
+    }
+
     try {
-      sessionStorage.setItem(MINI_HUB_TAB_ID_KEY, generated);
+      const existing = String(sessionStorage.getItem(MINI_HUB_PAGE_SESSION_KEY) || '').trim();
+      if (existing) {
+        miniHubPageSessionId = existing;
+        app.__miniHubPageSessionId = miniHubPageSessionId;
+        return miniHubPageSessionId;
+      }
     } catch (_) {}
 
-    miniHubTabId = generated;
-    return miniHubTabId;
+    miniHubPageSessionId =
+      (window.crypto?.randomUUID && window.crypto.randomUUID()) ||
+      `mini-page-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    try {
+      sessionStorage.setItem(MINI_HUB_PAGE_SESSION_KEY, miniHubPageSessionId);
+    } catch (_) {}
+
+    app.__miniHubPageSessionId = miniHubPageSessionId;
+    return miniHubPageSessionId;
   }
 
   function getMiniHubChannel() {
@@ -264,6 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const channel = getMiniHubChannel();
     getOrCreateMiniHubTabId();
+    getOrCreateMiniHubPageSessionId();
 
     if (channel) {
       channel.addEventListener('message', (event) => {
@@ -1809,6 +1837,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return {
       tabId: getOrCreateMiniHubTabId(),
+      pageSessionId: getOrCreateMiniHubPageSessionId(),
       promptLabel: getCurrentPromptSlotTitle() || 'Untitled',
       selectedPromptSlot,
       promptOptions,
