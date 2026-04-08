@@ -14,8 +14,16 @@ const STATE_REFRESH_MS = 350;
 const AUTO_COPY_DOWNLOAD_HREF = 'div/autocopy.zip';
 const MINI_HUB_CHANNEL_NAME = 'whisperazure-mini-panel-hub';
 const MINI_HUB_PAGE_SESSION_KEY = 'mini_panel_page_session_id';
-// Safety fallback only. Normal tab removal should happen via `mini-hub-tab-closed`.
-const MINI_HUB_STALE_MS = 45 * 1000;
+// Stale timeout must be comfortably longer than Chrome's background-tab
+// throttle interval. When the Mini Panel (PiP or popup window) is
+// focused, the main app tabs become background tabs and Chrome throttles
+// their setInterval to roughly once per minute — so a 10s heartbeat
+// actually fires every ~60s. If the stale timeout is shorter than that,
+// the Mini Panel prunes tabs before their throttled heartbeat arrives,
+// causing cyclical "tab vanishes and reappears" flicker. 90s gives
+// comfortable margin above the worst-case throttled heartbeat while
+// still cleaning up genuinely crashed tabs within a reasonable window.
+const MINI_HUB_STALE_MS = 90 * 1000;
 const MINI_HUB_HEARTBEAT_MS = 10000;
 
 let miniWindow = null;
@@ -781,8 +789,10 @@ function pruneStaleHubTabs() {
 }
 
 function getOrderedHubTabs() {
-  pruneStaleHubTabs();
-
+  // Read-only: does not prune. Prune is done centrally by
+  // updateMiniPanelUi on its 350ms refresh tick so that all three
+  // consumers (dropdown sync, selection resolution, ordered list)
+  // see a consistent snapshot within a single frame.
   return Array.from(hubTabs.values()).sort((a, b) => {
     const aActivated = Number(a?.activatedAt || 0);
     const bActivated = Number(b?.activatedAt || 0);
@@ -795,8 +805,7 @@ function getOrderedHubTabs() {
 }
 
 function ensureSelectedHubTab() {
-  pruneStaleHubTabs();
-
+  // Read-only: does not prune. See getOrderedHubTabs().
   if (selectedHubTabId && hubTabs.has(selectedHubTabId)) {
     return selectedHubTabId;
   }
@@ -1299,7 +1308,10 @@ function syncHubTabDropdown() {
     option.textContent = tMini('noTabsOpen');
     select.appendChild(option);
     select.disabled = true;
-    if (trigger) trigger.disabled = true;
+    if (trigger) {
+      trigger.disabled = false;
+      trigger.hidden = true;
+    }
     if (triggerText) triggerText.textContent = tMini('noTabsOpen');
     if (triggerDot) {
       triggerDot.hidden = true;
@@ -1321,7 +1333,15 @@ function syncHubTabDropdown() {
   });
 
   select.disabled = items.length === 0;
-  if (trigger) trigger.disabled = items.length <= 1;
+  // Do NOT disable the trigger based on item count. A disabled button
+  // shows the red-circle not-allowed cursor, which was misleading
+  // users during brief prune/heartbeat races. Instead, hide the
+  // trigger entirely when there is nothing to pick between, and show
+  // it when there are 2+ tabs. Hiding is cursor-neutral.
+  if (trigger) {
+    trigger.disabled = false;
+    trigger.hidden = items.length <= 1;
+  }
 
   const selected =
     items.find((item) => String(item?.tabId || '') === String(selectedTabId || '')) ||
