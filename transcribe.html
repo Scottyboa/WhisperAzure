@@ -2301,6 +2301,13 @@
   <!-- Ensure main boot script runs after provider wiring -->
   <script type="module" src="./js/main.js"></script>
 
+  <!-- Floating Mini Panel (multi-tab controller).
+       Must load after main.js so window.__app exists by the time
+       bootMiniController() runs. Registers window.__openMiniPanel,
+       listens for 'mini-panel:open-requested', and owns the
+       BroadcastChannel hub used to mirror open tabs. -->
+  <script type="module" src="./js/features/mini-controller.js"></script>
+
   <!-- Guide Overlay (outside the grid container) -->
   <div id="guideView">
     <button id="guideClose" type="button" aria-label="Close">×</button>
