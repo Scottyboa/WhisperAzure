@@ -15,7 +15,7 @@ const AUTO_COPY_DOWNLOAD_HREF = 'div/autocopy.zip';
 const MINI_HUB_CHANNEL_NAME = 'whisperazure-mini-panel-hub';
 const MINI_HUB_PAGE_SESSION_KEY = 'mini_panel_page_session_id';
 // Safety fallback only. Normal tab removal should happen via `mini-hub-tab-closed`.
-const MINI_HUB_STALE_MS = 10 * 60 * 1000;
+const MINI_HUB_STALE_MS = 45 * 1000;
 const MINI_HUB_HEARTBEAT_MS = 10000;
 
 let miniWindow = null;
@@ -28,6 +28,146 @@ let localPageSessionId = '';
 let selectedHubTabId = '';
 const hubTabs = new Map();
 let nextHubTabOrder = 1;
+
+// Authoritative color assignment. Each tab owns its OWN color
+// assignment exclusively — it picks a color for itself on first sight
+// and broadcasts it via `mini-hub-accent-assigned`. Other tabs record
+// the assignment in `tabColors` as observed fact and use it for
+// display purposes. If two tabs race and pick the same color, the
+// tab with the lexicographically-lower tabId keeps it and the loser
+// re-picks. This way every tab's Mini Panel shows the same color for
+// a given tab, and that color matches the tab's own Chrome favicon.
+//
+// The palette has exactly 8 distinct colors (fixes the previous
+// orange/amber `#f59e0b` duplicate).
+const MINI_HUB_ACCENT_PALETTE = [
+  { key: 'green',  color: '#22c55e' },
+  { key: 'blue',   color: '#3b82f6' },
+  { key: 'purple', color: '#8b5cf6' },
+  { key: 'orange', color: '#f59e0b' },
+  { key: 'teal',   color: '#14b8a6' },
+  { key: 'rose',   color: '#f43f5e' },
+  { key: 'indigo', color: '#6366f1' },
+  { key: 'cyan',   color: '#06b6d4' },
+];
+
+// tabId -> { key, color }. Contains both the local tab's own
+// assignment (made once, broadcast once) and observed assignments
+// from other tabs (recorded as fact, never re-chosen).
+const tabColors = new Map();
+
+function getPaletteByKey(key) {
+  const k = String(key || '').trim();
+  if (!k) return null;
+  return MINI_HUB_ACCENT_PALETTE.find((p) => p.key === k) || null;
+}
+
+// Pick a color for the LOCAL tab only. Called exactly once per tab
+// lifetime. Picks the lowest-index palette entry not already claimed
+// by another tab this tab has observed.
+function pickOwnColor() {
+  const ownId = getOrCreateLocalTabId();
+  const existing = tabColors.get(ownId);
+  if (existing) return existing;
+
+  const used = new Set();
+  for (const [id, entry] of tabColors.entries()) {
+    if (id !== ownId && entry?.key) used.add(entry.key);
+  }
+
+  let chosen = MINI_HUB_ACCENT_PALETTE.find((p) => !used.has(p.key));
+  if (!chosen) {
+    // Fallback for >8 tabs: wrap around deterministically.
+    chosen = MINI_HUB_ACCENT_PALETTE[tabColors.size % MINI_HUB_ACCENT_PALETTE.length];
+  }
+
+  tabColors.set(ownId, chosen);
+  return chosen;
+}
+
+// Record an accent assignment broadcast by another tab. If the
+// incoming tab claims a color that WE have already assigned to
+// ourselves, the lexicographically-lower tabId wins and the loser
+// re-picks on its next publish cycle.
+function recordObservedAccent(tabId, accentKey, accentColor) {
+  const id = String(tabId || '').trim();
+  if (!id) return { changed: false, conflict: false };
+
+  const palette = getPaletteByKey(accentKey);
+  if (!palette || palette.color !== accentColor) {
+    // Ignore malformed assignments.
+    return { changed: false, conflict: false };
+  }
+
+  const ownId = getOrCreateLocalTabId();
+  const prev = tabColors.get(id);
+  if (prev && prev.key === palette.key) {
+    return { changed: false, conflict: false };
+  }
+
+  // Conflict with our own color?
+  const ownAssignment = tabColors.get(ownId);
+  if (id !== ownId && ownAssignment && ownAssignment.key === palette.key) {
+    // Lower tabId wins. If the incoming tab wins, we drop our own
+    // assignment and pick a new color on the next publish cycle.
+    if (id < ownId) {
+      tabColors.set(id, palette);
+      tabColors.delete(ownId);
+      return { changed: true, conflict: true };
+    }
+    // We win: keep our own color, ignore the incoming claim for now.
+    // The other tab will see our broadcast and re-pick.
+    return { changed: false, conflict: true };
+  }
+
+  tabColors.set(id, palette);
+  return { changed: true, conflict: false };
+}
+
+function releaseColorForTab(tabId) {
+  const id = String(tabId || '').trim();
+  if (!id) return;
+  tabColors.delete(id);
+}
+
+// Sticky vs live field policy for tab snapshots. Sticky fields only
+// get overwritten when the incoming value is meaningful (non-empty);
+// live fields always overwrite. accentKey/accentColor are intentionally
+// NOT in either list — they are owned locally by tabColors.
+const STICKY_FIELDS = [
+  'promptOptions',
+  'promptLabel',
+  'selectedPromptSlot',
+  'tabOrder',
+  'pageSessionId',
+];
+const LIVE_FIELDS = ['state', 'updatedAt', 'activatedAt'];
+
+function isMeaningfulValue(v) {
+  if (v === undefined || v === null) return false;
+  if (typeof v === 'string') return v.trim() !== '';
+  if (Array.isArray(v)) return v.length > 0;
+  if (typeof v === 'object') return Object.keys(v).length > 0;
+  return true;
+}
+
+function mergeTabSnapshot(prev, incoming) {
+  const base = prev || {};
+  const src = incoming || {};
+  const next = { ...base };
+
+  for (const key of LIVE_FIELDS) {
+    if (src[key] !== undefined) next[key] = src[key];
+  }
+
+  for (const key of STICKY_FIELDS) {
+    if (isMeaningfulValue(src[key])) next[key] = src[key];
+    // else: keep base[key]
+  }
+
+  next.tabId = base.tabId || src.tabId;
+  return next;
+}
 
 function getApp() {
   return window.__app || appRef || null;
@@ -553,6 +693,7 @@ function getPromptLabelFromOptions(options, selectedSlot) {
 }
 
 function buildLocalHubSnapshot() {
+  const tabId = getOrCreateLocalTabId();
   const state = getSafeState();
   let promptOptions = getSafePromptOptions()
     .map(normalizePromptOptionLabel)
@@ -565,8 +706,11 @@ function buildLocalHubSnapshot() {
 
   const promptLabel = getPromptLabelFromOptions(promptOptions, selectedPromptSlot);
 
+  // Outbound snapshot intentionally omits accentKey/accentColor. Color
+  // is owned by the hub via tabColors and is not part of the snapshot
+  // protocol. Receivers assign/lookup their own color locally.
   return {
-    tabId: getOrCreateLocalTabId(),
+    tabId,
     pageSessionId: getOrCreateLocalPageSessionId(),
     promptLabel,
     selectedPromptSlot,
@@ -580,27 +724,45 @@ function upsertHubTab(snapshot) {
   const tabId = String(snapshot?.tabId || '').trim();
   if (!tabId) return null;
 
-  const prev = hubTabs.get(tabId) || {};
+  const prev = hubTabs.get(tabId) || null;
 
-  const next = {
-    ...prev,
-    ...snapshot,
-    tabId,
-    tabOrder: Number(prev?.tabOrder || snapshot?.tabOrder || 0) || nextHubTabOrder++,
-    updatedAt: Number(snapshot?.updatedAt || Date.now()),
-  };
+  // Single merge path. STICKY fields are preserved when incoming is
+  // empty; LIVE fields always overwrite. Accent fields are NOT merged
+  // from the snapshot — they come exclusively from the tabColors map.
+  const merged = mergeTabSnapshot(prev, snapshot);
 
-  hubTabs.set(tabId, next);
-  return next;
+  // Assign tabOrder exactly once per tab, the first time the hub sees it.
+  if (!Number(merged.tabOrder) || merged.tabOrder <= 0) {
+    merged.tabOrder = nextHubTabOrder++;
+  }
+
+  // Look up the accent this tab is known to have. For the LOCAL tab
+  // this is set by pickOwnColor(); for other tabs it comes from
+  // recordObservedAccent() called on `mini-hub-accent-assigned`
+  // messages. If nothing is known yet, the entry simply has no accent
+  // until an assignment message arrives.
+  const ownId = getOrCreateLocalTabId();
+  if (tabId === ownId && !tabColors.has(ownId)) {
+    pickOwnColor();
+  }
+  const assigned = tabColors.get(tabId);
+  merged.accentKey = assigned ? assigned.key : '';
+  merged.accentColor = assigned ? assigned.color : '';
+
+  merged.updatedAt = Number(snapshot?.updatedAt || merged.updatedAt || Date.now());
+
+  hubTabs.set(tabId, merged);
+  return merged;
 }
 
 function pruneStaleHubTabs() {
-  // Safety fallback only. Do not aggressively prune normal background tabs.
+  // Safety fallback only. Normal removal happens via mini-hub-tab-closed.
   const now = Date.now();
   for (const [tabId, entry] of hubTabs.entries()) {
     const updatedAt = Number(entry?.updatedAt || 0);
     if (!updatedAt || now - updatedAt > MINI_HUB_STALE_MS) {
       hubTabs.delete(tabId);
+      releaseColorForTab(tabId);
     }
   }
 
@@ -660,7 +822,12 @@ function getDisplayLabelForHubTab(snapshot, index) {
   return `${tMini('currentTab')} ${ordinal} - ${promptLabel}`;
 }
 
+function shouldShowTabAccents() {
+  return getOrderedHubTabs().length > 1;
+}
+
 function getAccentColorForHubTab(snapshot) {
+  if (!shouldShowTabAccents()) return '';
   const color = String(snapshot?.accentColor || '').trim();
   return color || '';
 }
@@ -674,6 +841,27 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
+function closeMiniTabPicker() {
+  const popover = $('miniTabPickerPopover');
+  const trigger = $('miniTabPickerTrigger');
+  if (popover) popover.hidden = true;
+  if (trigger) trigger.setAttribute('aria-expanded', 'false');
+}
+
+function openMiniTabPicker() {
+  const popover = $('miniTabPickerPopover');
+  const trigger = $('miniTabPickerTrigger');
+  if (popover) popover.hidden = false;
+  if (trigger) trigger.setAttribute('aria-expanded', 'true');
+}
+
+function toggleMiniTabPicker() {
+  const popover = $('miniTabPickerPopover');
+  if (!popover) return;
+  if (popover.hidden) openMiniTabPicker();
+  else closeMiniTabPicker();
+}
+
 function postHubMessage(message) {
   ensureHubChannel();
   if (!hubChannel) return;
@@ -685,20 +873,9 @@ function postHubMessage(message) {
 
 function publishLocalHubSnapshot(reason = 'state') {
   const snapshot = buildLocalHubSnapshot();
-  const previous = hubTabs.get(snapshot.tabId);
-  const hasIncomingPrompts = Array.isArray(snapshot.promptOptions) && snapshot.promptOptions.length > 0;
-  const hasPreviousPrompts = Array.isArray(previous?.promptOptions) && previous.promptOptions.length > 0;
 
-  // Do not let an incomplete heartbeat wipe out a previously good prompt snapshot.
-  if (!hasIncomingPrompts && hasPreviousPrompts) {
-    snapshot.promptOptions = previous.promptOptions;
-    snapshot.selectedPromptSlot = snapshot.selectedPromptSlot || previous.selectedPromptSlot || '';
-    snapshot.promptLabel =
-      snapshot.promptLabel && snapshot.promptLabel !== tMini('untitled')
-        ? snapshot.promptLabel
-        : (previous.promptLabel || tMini('untitled'));
-  }
-
+  // upsertHubTab handles sticky-field preservation via mergeTabSnapshot
+  // and triggers local-own color pick via pickOwnColor() when needed.
   upsertHubTab(snapshot);
 
   postHubMessage({
@@ -706,27 +883,17 @@ function publishLocalHubSnapshot(reason = 'state') {
     reason,
     snapshot,
   });
+
+  // Always re-broadcast our own accent. This is cheap, idempotent,
+  // and ensures new tabs that come online learn our color from every
+  // heartbeat instead of waiting for the next pickOwnColor event.
+  broadcastOwnAccentAssignment();
 }
 
 function activateLocalHubTab(reason = 'activate') {
   const tabId = getOrCreateLocalTabId();
-  const existing = hubTabs.get(tabId) || {};
-  const snapshot = {
-    ...existing,
-    ...buildLocalHubSnapshot(),
-    activatedAt: Date.now(),
-  };
-
-  const hasIncomingPrompts = Array.isArray(snapshot.promptOptions) && snapshot.promptOptions.length > 0;
-  const hasExistingPrompts = Array.isArray(existing?.promptOptions) && existing.promptOptions.length > 0;
-  if (!hasIncomingPrompts && hasExistingPrompts) {
-    snapshot.promptOptions = existing.promptOptions;
-    snapshot.selectedPromptSlot = snapshot.selectedPromptSlot || existing.selectedPromptSlot || '';
-    snapshot.promptLabel =
-      snapshot.promptLabel && snapshot.promptLabel !== tMini('untitled')
-        ? snapshot.promptLabel
-        : (existing.promptLabel || tMini('untitled'));
-  }
+  const snapshot = buildLocalHubSnapshot();
+  snapshot.activatedAt = Date.now();
 
   upsertHubTab(snapshot);
   selectedHubTabId = tabId;
@@ -738,17 +905,52 @@ function activateLocalHubTab(reason = 'activate') {
     activatedAt: snapshot.activatedAt,
     snapshot,
   });
+
+  broadcastOwnAccentAssignment();
 }
 
 function removeLocalHubTab() {
   const tabId = getOrCreateLocalTabId();
   hubTabs.delete(tabId);
+  releaseColorForTab(tabId);
 
   postHubMessage({
     type: 'mini-hub-tab-closed',
     tabId,
     at: Date.now(),
   });
+}
+
+// Broadcast this tab's own color assignment to every other tab. Called
+// after pickOwnColor, after heartbeats, after activation, and after
+// losing a color-conflict and picking a fresh color. Idempotent.
+function broadcastOwnAccentAssignment() {
+  const ownId = getOrCreateLocalTabId();
+  const assigned = tabColors.get(ownId);
+  if (!assigned) return;
+
+  postHubMessage({
+    type: 'mini-hub-accent-assigned',
+    tabId: ownId,
+    accentKey: assigned.key,
+    accentColor: assigned.color,
+    liveTabCount: hubTabs.size,
+    at: Date.now(),
+  });
+
+  // Also notify main.js locally so the favicon updates immediately
+  // without waiting for a channel round-trip.
+  try {
+    window.dispatchEvent(
+      new CustomEvent('mini-panel:accent-changed', {
+        detail: {
+          accentKey: assigned.key,
+          accentColor: assigned.color,
+          liveTabCount: hubTabs.size,
+        },
+      })
+    );
+  } catch (_) {}
 }
 
 function ensureHubChannel() {
@@ -794,9 +996,55 @@ function ensureHubChannel() {
       const tabId = String(data?.tabId || '').trim();
       if (tabId) {
         hubTabs.delete(tabId);
+        releaseColorForTab(tabId);
         if (selectedHubTabId === tabId) {
           selectedHubTabId = '';
           ensureSelectedHubTab();
+        }
+      }
+      requestUiRefresh();
+      return;
+    }
+
+    if (type === 'mini-hub-accent-assigned') {
+      const tabId = String(data?.tabId || '').trim();
+      const accentKey = String(data?.accentKey || '').trim();
+      const accentColor = String(data?.accentColor || '').trim();
+      if (!tabId || !accentKey || !accentColor) return;
+
+      const result = recordObservedAccent(tabId, accentKey, accentColor);
+
+      // If we lost a color conflict (the incoming tab had a lower
+      // tabId and claimed our color), our own assignment was dropped
+      // by recordObservedAccent. Pick a fresh color and re-broadcast
+      // so everyone converges.
+      const ownId = getOrCreateLocalTabId();
+      if (result.conflict && !tabColors.has(ownId)) {
+        const fresh = pickOwnColor();
+        if (fresh) {
+          broadcastOwnAccentAssignment();
+        }
+      }
+
+      // Re-apply the new accent to the existing hubTabs entry so the
+      // UI picks it up on the next render.
+      if (result.changed) {
+        const existing = hubTabs.get(tabId);
+        if (existing) {
+          existing.accentKey = accentKey;
+          existing.accentColor = accentColor;
+          hubTabs.set(tabId, existing);
+        }
+        // Tell main.js to refresh its favicon (only matters for
+        // the local tab — main.js ignores messages for other tabs).
+        if (tabId === ownId) {
+          try {
+            window.dispatchEvent(
+              new CustomEvent('mini-panel:accent-changed', {
+                detail: { accentKey, accentColor, liveTabCount: hubTabs.size },
+              })
+            );
+          } catch (_) {}
         }
       }
       requestUiRefresh();
@@ -1032,11 +1280,16 @@ function updateSelectedHubSnapshot(mutator) {
 
 function syncHubTabDropdown() {
   const select = $('miniTabSelect');
-  const label = $('miniTabSelectLabel');
+  const trigger = $('miniTabPickerTrigger');
+  const triggerText = $('miniTabPickerText');
+  const triggerDot = $('miniTabPickerDot');
+  const list = $('miniTabPickerList');
+  const popover = $('miniTabPickerPopover');
   if (!select) return;
 
   const items = getOrderedHubTabs();
   const selectedTabId = ensureSelectedHubTab();
+  const showAccents = items.length > 1;
 
   select.innerHTML = '';
 
@@ -1046,11 +1299,14 @@ function syncHubTabDropdown() {
     option.textContent = tMini('noTabsOpen');
     select.appendChild(option);
     select.disabled = true;
-
-    if (label) {
-      label.innerHTML = '';
-      label.hidden = true;
+    if (trigger) trigger.disabled = true;
+    if (triggerText) triggerText.textContent = tMini('noTabsOpen');
+    if (triggerDot) {
+      triggerDot.hidden = true;
+      triggerDot.style.setProperty('--tab-accent', 'transparent');
     }
+    if (list) list.innerHTML = '';
+    if (popover) popover.hidden = true;
     return;
   }
 
@@ -1065,25 +1321,65 @@ function syncHubTabDropdown() {
   });
 
   select.disabled = items.length === 0;
+  if (trigger) trigger.disabled = items.length <= 1;
 
-  if (label) {
-    const selected =
-      items.find((item) => String(item?.tabId || '') === String(selectedTabId || '')) ||
-      items[0] ||
-      null;
-    if (!selected) {
-      label.innerHTML = '';
-      label.hidden = true;
-      return;
+  const selected =
+    items.find((item) => String(item?.tabId || '') === String(selectedTabId || '')) ||
+    items[0] ||
+    null;
+
+  if (selected) {
+    const accentColor = showAccents ? getAccentColorForHubTab(selected) : '';
+    const text = getDisplayLabelForHubTab(selected, items.indexOf(selected));
+
+    if (triggerText) {
+      triggerText.textContent = text;
     }
 
-    const accentColor = getAccentColorForHubTab(selected);
-    const text = getDisplayLabelForHubTab(selected, items.indexOf(selected));
-    label.innerHTML = `
-      <span class="mini-tab-select-label-dot" style="--tab-accent:${escapeHtml(accentColor)};"></span>
-      <span class="mini-tab-select-label-text">${escapeHtml(text)}</span>
-    `;
-    label.hidden = false;
+    if (triggerDot) {
+      triggerDot.hidden = !accentColor;
+      triggerDot.style.setProperty('--tab-accent', accentColor || 'transparent');
+    }
+  }
+
+  if (list) {
+    list.innerHTML = '';
+
+    items.forEach((snapshot, index) => {
+      const button = list.ownerDocument.createElement('button');
+      button.type = 'button';
+      button.className = 'mini-tab-picker-item';
+      if (String(snapshot?.tabId || '') === String(selectedTabId || '')) {
+        button.classList.add('is-active');
+      }
+
+      const accentColor = showAccents ? getAccentColorForHubTab(snapshot) : '';
+      const text = getDisplayLabelForHubTab(snapshot, index);
+
+      button.innerHTML = `
+        <span class="mini-tab-picker-item-dot" style="--tab-accent:${escapeHtml(accentColor || 'transparent')};" ${accentColor ? '' : 'hidden'}></span>
+        <span class="mini-tab-picker-item-text">${escapeHtml(text)}</span>
+      `;
+
+      button.addEventListener('click', () => {
+        const nextTabId = String(snapshot?.tabId || '').trim();
+        if (!nextTabId) return;
+        selectedHubTabId = nextTabId;
+        closeMiniTabPicker();
+        hideCopiedIndicator();
+        updateSelectedHubSnapshot((prev) => ({
+          ...prev,
+          state: {
+            ...(prev.state || {}),
+            miniPanelCopiedState: '',
+            miniPanelCopiedAt: 0,
+          },
+        }));
+        requestUiRefresh();
+      });
+
+      list.appendChild(button);
+    });
   }
 }
 
@@ -1298,6 +1594,8 @@ function bindMiniPanelEvents() {
   const closeButton = $('miniCloseButton');
   const promptSelect = $('miniPromptSelect');
   const tabSelect = $('miniTabSelect');
+  const tabPickerTrigger = $('miniTabPickerTrigger');
+  const tabPickerPopover = $('miniTabPickerPopover');
   const autoGenerateToggle = $('miniAutoGenerateToggle');
   const autoCopyModeSelect = $('miniAutoCopyModeSelect');
   const usePromptToggle = $('miniUsePromptToggle');
@@ -1327,6 +1625,10 @@ function bindMiniPanelEvents() {
 
   if (copyTranscriptButton) {
     copyTranscriptButton.addEventListener('click', () => {
+      // main.js exposes this method as `app.copyTranscription`
+      // (it wraps the internal copyTranscriptionToClipboard()).
+      // Using the canonical name here is what lets the Mini Panel
+      // button call the exact same function as the main page button.
       dispatchHubAction('copyTranscription');
     });
   }
@@ -1360,6 +1662,26 @@ function bindMiniPanelEvents() {
         },
       }));
       requestUiRefresh();
+    });
+  }
+
+  if (tabPickerTrigger) {
+    tabPickerTrigger.addEventListener('click', () => {
+      toggleMiniTabPicker();
+    });
+  }
+
+  const doc = getMiniDoc();
+  if (doc && !doc.body.dataset.miniTabPickerBound) {
+    doc.body.dataset.miniTabPickerBound = '1';
+
+    doc.addEventListener('click', (event) => {
+      const target = event.target;
+      const trigger = $('miniTabPickerTrigger');
+      const popover = $('miniTabPickerPopover');
+      if (!trigger || !popover || popover.hidden) return;
+      if (trigger.contains(target) || popover.contains(target)) return;
+      closeMiniTabPicker();
     });
   }
 
@@ -1563,13 +1885,23 @@ function renderMiniPanelDocument(targetWindow) {
       color: var(--text);
     }
 
-    .mini-tab-select-wrap {
+    .mini-tab-picker {
       position: relative;
       width: 100%;
       min-width: 0;
+      max-width: 100%;
     }
 
-    .mini-tab-select {
+    .mini-tab-select--hidden {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      width: 1px;
+      height: 1px;
+    }
+
+    .mini-tab-picker-trigger {
       width: 100%;
       min-width: 0;
       border: 1px solid var(--button-border);
@@ -1580,50 +1912,81 @@ function renderMiniPanelDocument(targetWindow) {
       font-size: 11px;
       font-weight: 600;
       min-height: 28px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-align: left;
       outline: none;
-      position: relative;
-      z-index: 2;
-      opacity: 0;
     }
 
-    .mini-tab-select:disabled {
+    .mini-tab-picker-trigger:disabled {
       opacity: 0.65;
       cursor: not-allowed;
     }
 
-    .mini-tab-select-label {
-      position: absolute;
-      inset: 0;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 0;
-      border: 1px solid var(--button-border);
-      background: var(--select-bg);
-      color: var(--text);
-      border-radius: 10px;
-      padding: 6px 8px;
-      font-size: 11px;
-      font-weight: 600;
-      min-height: 28px;
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    .mini-tab-select-label-dot {
+    .mini-tab-picker-dot,
+    .mini-tab-picker-item-dot {
       width: 10px;
       height: 10px;
       border-radius: 999px;
-      background: var(--tab-accent, var(--accent));
+      background: var(--tab-accent, transparent);
       box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset;
       flex: 0 0 auto;
     }
 
-    .mini-tab-select-label-text {
+    .mini-tab-picker-text,
+    .mini-tab-picker-item-text {
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      flex: 1 1 auto;
+    }
+
+    .mini-tab-picker-caret {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .mini-tab-picker-popover {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      z-index: 20;
+      background: #10131a;
+      border: 1px solid var(--button-border);
+      border-radius: 12px;
+      box-shadow: 0 12px 24px rgba(0,0,0,0.28);
+      overflow: hidden;
+    }
+
+    .mini-tab-picker-list {
+      display: flex;
+      flex-direction: column;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .mini-tab-picker-item {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      padding: 8px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .mini-tab-picker-item:hover,
+    .mini-tab-picker-item.is-active {
+      background: rgba(255,255,255,0.08);
     }
 
     .close-btn {
@@ -2052,9 +2415,16 @@ function renderMiniPanelDocument(targetWindow) {
       <div class="top">
         <div class="top-left">
           <div id="miniTitle" class="title">Mini panel</div>
-          <div class="mini-tab-select-wrap">
-            <div id="miniTabSelectLabel" class="mini-tab-select-label" hidden></div>
-            <select id="miniTabSelect" class="mini-tab-select" aria-label="Mini panel tab selector"></select>
+          <div class="mini-tab-picker">
+            <select id="miniTabSelect" class="mini-tab-select mini-tab-select--hidden" aria-label="Mini panel tab selector"></select>
+            <button id="miniTabPickerTrigger" class="mini-tab-picker-trigger" type="button" aria-label="Mini panel tab selector" aria-expanded="false">
+              <span id="miniTabPickerDot" class="mini-tab-picker-dot" hidden></span>
+              <span id="miniTabPickerText" class="mini-tab-picker-text">Choose tab</span>
+              <span class="mini-tab-picker-caret">▾</span>
+            </button>
+            <div id="miniTabPickerPopover" class="mini-tab-picker-popover" hidden>
+              <div id="miniTabPickerList" class="mini-tab-picker-list"></div>
+            </div>
           </div>
         </div>
         <button id="miniCloseButton" class="close-btn" type="button" aria-label="Close mini panel">×</button>
@@ -2206,113 +2576,164 @@ async function openMiniPanel() {
 
 function handleStateRelevantEvent() {
   publishLocalHubSnapshot('state-relevant-event');
-  updateMiniPanelUi();
   requestUiRefresh();
 }
 
-function bindMainWindowEvents() {
-  if (window.__miniPanelEventsBound === true) return;
-  window.__miniPanelEventsBound = true;
+function tryHookApp(reference) {
+  if (!reference) return null;
+  appRef = reference;
+  return reference;
+}
 
-  window.addEventListener('mini-panel:open-requested', () => {
-    openMiniPanel();
-  });
+function wireAppEvents(app) {
+  if (!app || app.__miniPanelEventsBound) return;
+  app.__miniPanelEventsBound = true;
 
-  window.addEventListener('note-copied', handleStateRelevantEvent);
-  window.addEventListener('transcript-copied', handleStateRelevantEvent);
-  window.addEventListener('note-copy-failed', handleStateRelevantEvent);
-  window.addEventListener('transcript-copy-failed', handleStateRelevantEvent);
+  const eventNames = [
+    'mini-panel:update',
+    'mini-panel:state',
+    'transcription:updated',
+    'transcription:complete',
+    'note:updated',
+    'note:complete',
+    'recording:started',
+    'recording:stopped',
+    'recording:paused',
+    'recording:resumed',
+    'recording:aborted',
+    'prompt:changed',
+  ];
 
-  window.addEventListener('note-generation-finished', handleStateRelevantEvent);
-  window.addEventListener('note:finished', handleStateRelevantEvent);
-  window.addEventListener('transcription:finished', handleStateRelevantEvent);
-  window.addEventListener('prompt-slot-selection-changed', handleStateRelevantEvent);
-  window.addEventListener('prompt-slot-names-changed', handleStateRelevantEvent);
-  window.addEventListener('prompt-profile-changed', handleStateRelevantEvent);
-
-  window.addEventListener('app:state-changed', (event) => {
-    const reason = event?.detail?.reason || '';
-    if (
-      reason === 'start-recording-click' ||
-      reason === 'mini-panel-recording-started' ||
-      reason === 'mini-panel-recording-resumed' ||
-      reason === 'mini-panel-recording-aborted' ||
-      reason === 'abort-recording-click' ||
-      reason === 'record-hotkey' ||
-      reason === 'transcribe-provider-switched' ||
-      reason === 'recording-provider-initialized' ||
-      reason === 'note-generation-begin'
-    ) {
-      hideCopiedIndicator();
-    }
-    publishLocalHubSnapshot(`app-state:${reason || 'unknown'}`);
-    handleStateRelevantEvent();
-  });
-
-  document.addEventListener('click', (event) => {
-    const target = event.target;
-    if (!(target instanceof Element)) return;
-
-    const watchedIds = new Set([
-      'startButton',
-      'stopButton',
-      'pauseResumeButton',
-      'abortButton',
-      'generateNoteButton',
-      'abortNoteButton',
-      'copyNoteButton',
-      'copyTranscriptionButton',
-    ]);
-
-    if (target.id && watchedIds.has(target.id)) {
-      if (
-        target.id === 'startButton' ||
-        target.id === 'pauseResumeButton' ||
-        target.id === 'abortButton'
-      ) {
-        hideCopiedIndicator();
-      }
-      handleStateRelevantEvent();
-
-      if (target.id === 'copyNoteButton' || target.id === 'copyTranscriptionButton') {
-        window.setTimeout(() => {
-          showCopiedIndicator();
-        }, 40);
-      }
-    }
-  });
-
-  window.addEventListener('beforeunload', () => {
-    stopHubHeartbeat();
-    removeLocalHubTab();
+  eventNames.forEach((eventName) => {
     try {
-      miniWindow?.close();
+      window.addEventListener(eventName, handleStateRelevantEvent);
     } catch (_) {}
   });
 }
 
-function boot(existingApp) {
-  if (window.__miniPanelBooted === true) return;
-  window.__miniPanelBooted = true;
-  appRef = existingApp || window.__app || null;
-  getOrCreateLocalTabId();
-  getOrCreateLocalPageSessionId();
+function discoverApp() {
+  const direct = tryHookApp(window.__app);
+  if (direct) {
+    wireAppEvents(direct);
+    return direct;
+  }
+
+  try {
+    if (window.parent && window.parent !== window && window.parent.__app) {
+      const parentApp = tryHookApp(window.parent.__app);
+      if (parentApp) {
+        wireAppEvents(parentApp);
+        return parentApp;
+      }
+    }
+  } catch (_) {}
+
+  return null;
+}
+
+function initMiniPanelBridge() {
+  const app = discoverApp();
+  if (app) {
+    publishLocalHubSnapshot('init');
+  }
+
   ensureHubChannel();
-  upsertHubTab(buildLocalHubSnapshot());
-  ensureSelectedHubTab();
   startHubHeartbeat();
-  bindMainWindowEvents();
-  publishLocalHubSnapshot('boot');
+
+  try {
+    window.addEventListener('focus', () => {
+      activateLocalHubTab('window-focus');
+    });
+  } catch (_) {}
+
+  try {
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        activateLocalHubTab('visibility-visible');
+      } else {
+        publishLocalHubSnapshot('visibility-hidden');
+      }
+    });
+  } catch (_) {}
+
+  try {
+    window.addEventListener('beforeunload', () => {
+      removeLocalHubTab();
+      stopHubHeartbeat();
+    });
+  } catch (_) {}
+
+  try {
+    window.addEventListener('pagehide', () => {
+      removeLocalHubTab();
+      stopHubHeartbeat();
+    });
+  } catch (_) {}
+
+  publishLocalHubSnapshot('bridge-ready');
 }
 
-function init(app) {
-  boot(app);
+function bootMiniController() {
+  initMiniPanelBridge();
+
+  const app = discoverApp();
+  if (!app) {
+    const retryUntil = Date.now() + 8000;
+    const timer = window.setInterval(() => {
+      const found = discoverApp();
+      if (found) {
+        window.clearInterval(timer);
+        publishLocalHubSnapshot('app-found-late');
+        requestUiRefresh();
+        return;
+      }
+      if (Date.now() > retryUntil) {
+        window.clearInterval(timer);
+      }
+    }, 250);
+  }
+
+  try {
+    window.__openMiniPanel = openMiniPanel;
+  } catch (_) {}
+
+  try {
+    window.__miniPanelController = {
+      open: openMiniPanel,
+      refresh: requestUiRefresh,
+      publishState: publishLocalHubSnapshot,
+      activate: activateLocalHubTab,
+      // main.js asks the hub what color was assigned to it so the
+      // favicon can match the Mini Panel dot. Returns { key, color }
+      // or null. Accent is only considered "live" when there are 2+
+      // tabs open; callers should also check getLiveTabCount().
+      getAccentForTabId: (tabId) => {
+        const id = String(tabId || '').trim();
+        if (!id) return null;
+        const assigned = tabColors.get(id);
+        return assigned ? { key: assigned.key, color: assigned.color } : null;
+      },
+      getLiveTabCount: () => hubTabs.size,
+    };
+  } catch (_) {}
+
+  // main.js dispatches 'mini-panel:open-requested' from the toolbar
+  // button click handler and from app.openMiniPanel(). We are the only
+  // listener — without this binding, clicking the Mini-panel button
+  // does nothing because the event fires into the void.
+  //
+  // Note: window.open() and documentPictureInPicture.requestWindow()
+  // both require a transient user activation. Dispatching a
+  // CustomEvent from a click handler and handling it synchronously
+  // here preserves that activation, so openMiniPanel() will still be
+  // allowed to create the popup / PiP window.
+  try {
+    window.addEventListener('mini-panel:open-requested', () => {
+      openMiniPanel().catch((err) => {
+        console.warn('[mini-panel] open-requested failed', err);
+      });
+    });
+  } catch (_) {}
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => boot(window.__app || null), { once: true });
-} else {
-  boot(window.__app || null);
-}
-
-export { init };
+bootMiniController();
