@@ -660,6 +660,20 @@ function getDisplayLabelForHubTab(snapshot, index) {
   return `${tMini('currentTab')} ${ordinal} - ${promptLabel}`;
 }
 
+function getAccentColorForHubTab(snapshot) {
+  const color = String(snapshot?.accentColor || '').trim();
+  return color || '';
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function postHubMessage(message) {
   ensureHubChannel();
   if (!hubChannel) return;
@@ -1018,42 +1032,59 @@ function updateSelectedHubSnapshot(mutator) {
 
 function syncHubTabDropdown() {
   const select = $('miniTabSelect');
+  const label = $('miniTabSelectLabel');
   if (!select) return;
 
-  const tabs = getOrderedHubTabs();
-  const desired = tabs.map((item, index) => ({
-    value: item.tabId,
-    label: getDisplayLabelForHubTab(item, index),
-  }));
+  const items = getOrderedHubTabs();
+  const selectedTabId = ensureSelectedHubTab();
 
-  const existingSignature = Array.from(select.options)
-    .map((opt) => `${opt.value}|${opt.textContent}`)
-    .join('||');
-  const nextSignature = desired
-    .map((opt) => `${opt.value}|${opt.label}`)
-    .join('||');
+  select.innerHTML = '';
 
-  if (existingSignature !== nextSignature) {
-    select.innerHTML = '';
+  if (!items.length) {
+    const option = select.ownerDocument.createElement('option');
+    option.value = '';
+    option.textContent = tMini('noTabsOpen');
+    select.appendChild(option);
+    select.disabled = true;
 
-    if (!desired.length) {
-      const option = select.ownerDocument.createElement('option');
-      option.value = '';
-      option.textContent = tMini('noTabsOpen');
-      select.appendChild(option);
-    } else {
-      desired.forEach((item) => {
-        const option = select.ownerDocument.createElement('option');
-        option.value = item.value;
-        option.textContent = item.label;
-        select.appendChild(option);
-      });
+    if (label) {
+      label.innerHTML = '';
+      label.hidden = true;
     }
+    return;
   }
 
-  const selected = ensureSelectedHubTab();
-  select.value = selected || '';
-  select.disabled = desired.length <= 1;
+  items.forEach((snapshot, index) => {
+    const option = select.ownerDocument.createElement('option');
+    option.value = String(snapshot?.tabId || '').trim();
+    option.textContent = getDisplayLabelForHubTab(snapshot, index);
+    if (option.value === selectedTabId) {
+      option.selected = true;
+    }
+    select.appendChild(option);
+  });
+
+  select.disabled = items.length === 0;
+
+  if (label) {
+    const selected =
+      items.find((item) => String(item?.tabId || '') === String(selectedTabId || '')) ||
+      items[0] ||
+      null;
+    if (!selected) {
+      label.innerHTML = '';
+      label.hidden = true;
+      return;
+    }
+
+    const accentColor = getAccentColorForHubTab(selected);
+    const text = getDisplayLabelForHubTab(selected, items.indexOf(selected));
+    label.innerHTML = `
+      <span class="mini-tab-select-label-dot" style="--tab-accent:${escapeHtml(accentColor)};"></span>
+      <span class="mini-tab-select-label-text">${escapeHtml(text)}</span>
+    `;
+    label.hidden = false;
+  }
 }
 
 function syncAutoCopyOptions() {
@@ -1532,6 +1563,12 @@ function renderMiniPanelDocument(targetWindow) {
       color: var(--text);
     }
 
+    .mini-tab-select-wrap {
+      position: relative;
+      width: 100%;
+      min-width: 0;
+    }
+
     .mini-tab-select {
       width: 100%;
       min-width: 0;
@@ -1544,11 +1581,49 @@ function renderMiniPanelDocument(targetWindow) {
       font-weight: 600;
       min-height: 28px;
       outline: none;
+      position: relative;
+      z-index: 2;
+      opacity: 0;
     }
 
     .mini-tab-select:disabled {
       opacity: 0.65;
       cursor: not-allowed;
+    }
+
+    .mini-tab-select-label {
+      position: absolute;
+      inset: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      border: 1px solid var(--button-border);
+      background: var(--select-bg);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 6px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      min-height: 28px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .mini-tab-select-label-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--tab-accent, var(--accent));
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset;
+      flex: 0 0 auto;
+    }
+
+    .mini-tab-select-label-text {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .close-btn {
@@ -1977,7 +2052,10 @@ function renderMiniPanelDocument(targetWindow) {
       <div class="top">
         <div class="top-left">
           <div id="miniTitle" class="title">Mini panel</div>
-          <select id="miniTabSelect" class="mini-tab-select" aria-label="Choose tab"></select>
+          <div class="mini-tab-select-wrap">
+            <div id="miniTabSelectLabel" class="mini-tab-select-label" hidden></div>
+            <select id="miniTabSelect" class="mini-tab-select" aria-label="Mini panel tab selector"></select>
+          </div>
         </div>
         <button id="miniCloseButton" class="close-btn" type="button" aria-label="Close mini panel">×</button>
       </div>
