@@ -970,14 +970,19 @@ function getSelectedHubSnapshot() {
   return hubTabs.get(tabId) || null;
 }
 
-function getDisplayLabelForHubTab(snapshot, index) {
-  const ordinal = Number(index) + 1;
+function getDisplayLabelForHubTab(snapshot, _index) {
+  // Option B: no tab numbers. The prompt label is the primary
+  // identifier; the accent color (already shown as a dot next to the
+  // label) distinguishes tabs that happen to share the same prompt.
+  // Removing the number also eliminates the "reshuffling" problem
+  // where the freshly-selected tab always became "Tab 1" because
+  // activatedAt bumped it to the top of the sort order.
   const promptLabel = String(
     snapshot?.promptLabel ||
     snapshot?.selectedPromptLabel ||
     ''
-  ).trim() || tMini('untitled');
-  return `${tMini('currentTab')} ${ordinal} - ${promptLabel}`;
+  ).trim();
+  return promptLabel || tMini('untitled');
 }
 
 function shouldShowTabAccents() {
@@ -2753,15 +2758,43 @@ function installMiniPanelWakeupLoop(targetWindow) {
   targetWindow.__miniHubWakeupBound = true;
 
   try {
-    const timer = targetWindow.setInterval(() => {
+    // Capture the opener window reference so we can detect if the
+    // main tab has gone away (reload, navigate, crash). In Chrome PiP
+    // the panel dies with its opener, but in a Safari popup the
+    // window can outlive its opener — in which case the closures
+    // below would reference dead functions.
+    const opener = window;
+    let timer = null;
+
+    const tick = () => {
       try {
+        // If the opener is gone or closed, stop trying.
+        if (!opener || opener.closed) {
+          if (timer) {
+            try { targetWindow.clearInterval(timer); } catch (_) {}
+            timer = null;
+          }
+          return;
+        }
         pruneStaleHubTabs();
         updateMiniPanelUi();
-      } catch (_) {}
-    }, MINI_HUB_PROBE_INTERVAL_MS_ACTIVE);
+      } catch (_) {
+        // Any error (including "can't access dead closure") stops
+        // the loop cleanly rather than thrashing every 500ms.
+        if (timer) {
+          try { targetWindow.clearInterval(timer); } catch (_) {}
+          timer = null;
+        }
+      }
+    };
+
+    timer = targetWindow.setInterval(tick, MINI_HUB_PROBE_INTERVAL_MS_ACTIVE);
 
     const teardown = () => {
-      try { targetWindow.clearInterval(timer); } catch (_) {}
+      if (timer) {
+        try { targetWindow.clearInterval(timer); } catch (_) {}
+        timer = null;
+      }
     };
     try { targetWindow.addEventListener('pagehide', teardown); } catch (_) {}
     try { targetWindow.addEventListener('beforeunload', teardown); } catch (_) {}
@@ -2795,7 +2828,16 @@ async function openMiniPanel() {
         `popup=yes,width=${MINI_PANEL_WIDTH},height=${MINI_PANEL_HEIGHT},resizable=yes`
       );
       if (!miniWindow) {
-        console.warn('[mini-panel] popup open failed');
+        // window.open returning null in Safari almost always means
+        // the popup blocker intercepted the call. The user needs to
+        // allow popups for this site (Safari > Settings > Websites >
+        // Pop-up Windows). Surface this as a status event so the
+        // main page can show a helpful message if it wants.
+        console.warn(
+          '[mini-panel] popup open failed — likely blocked by the browser popup blocker. ' +
+          'Allow popups for this site to use the Mini Panel.'
+        );
+        emitMiniPanelStatus({ open: false, blocked: true });
         return;
       }
     }
