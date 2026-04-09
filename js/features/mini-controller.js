@@ -1904,7 +1904,6 @@ function bindMiniPanelEvents() {
         state: {
           ...(prev.state || {}),
           autoGenerateEnabled: nextEnabled,
-          autoCopyMode: nextEnabled ? 'note' : 'transcript',
         },
       }));
 
