@@ -1043,10 +1043,44 @@ function initRecording() {
   const pauseResumeButton = document.getElementById("pauseResumeButton");
   const abortButton       = document.getElementById("abortButton");
   if (!startButton || !stopButton || !pauseResumeButton) return;
-  // Make init idempotent: if initRecording() is called again, kill old listeners.
+
+  // Cross-abort: kill the OTHER Soniox module's listeners and
+  // destroy its VAD instance if it's live. Without this, toggling
+  // speaker labels leaves both SONIOX_UPDATE.js and
+  // SONIOX_UPDATE_dia.js loaded with both sets of click listeners
+  // and both Silero VAD pipelines running in parallel — producing
+  // duplicate VAD logs, dual transcription chunks, and incoherent
+  // button states.
+  try { window.__sonioxUIAbort_soniox?.abort("switched-to-dia"); } catch (_) {}
+  try { window.__sonioxTeardownVAD_soniox?.(); } catch (_) {}
+
+  // Make self init idempotent: if initRecording() is called again, kill old listeners.
   window.__sonioxUIAbort_soniox_dia?.abort("re-init");
   window.__sonioxUIAbort_soniox_dia = new AbortController();
   const uiSignal = window.__sonioxUIAbort_soniox_dia.signal;
+
+  // Expose a teardown hook so the non-dia module can stop our VAD
+  // cleanly if the user toggles speaker labels off. This mirrors the
+  // teardown logic in the stopButton/abortButton handlers but runs
+  // on demand rather than on user action.
+  window.__sonioxTeardownVAD_soniox_dia = () => {
+    try {
+      if (sileroVAD && typeof sileroVAD.pause === "function") {
+        sileroVAD.pause().catch(() => {});
+      }
+      if (sileroVAD && sileroVAD.stream) {
+        sileroVAD.stream.getTracks().forEach((t) => {
+          try { t.stop(); } catch (_) {}
+        });
+      }
+      if (sileroVAD && !sileroVAD._destroyed) {
+        sileroVAD._destroyed = true;
+        try { sileroVAD.destroy?.(); } catch (_) {}
+      }
+    } catch (_) {}
+    sileroVAD = null;
+  };
+
 
   // --- PULL readLoop INTO SHARED SCOPE ---
   async function readLoop() {
@@ -1394,3 +1428,4 @@ installSafeRecordingLoadStop({
   stopMicrophone,
   getSileroVAD: () => sileroVAD,
 });
+
