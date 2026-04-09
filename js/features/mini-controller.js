@@ -1,3 +1,14 @@
+import {
+  DEFAULTS,
+  getNoteUiVisibility,
+  getTranscribeProviderShortLabel,
+  listBedrockModelOptions,
+  listNoteModeOptions,
+  listNoteUiProviderOptions,
+  listOpenAiModelOptions,
+  listVertexModelOptions,
+} from '../core/provider-registry.js';
+
 // js/features/mini-controller.js
 //
 // Floating mini controller for transcribe.html
@@ -75,6 +86,8 @@ let hubHeartbeatTimer = null;
 let probeTimer = null;
 // tabId -> timeout handle for in-flight probes
 const pendingProbes = new Map();
+// requestId -> { resolve, timeoutHandle, targetTabId, kind }
+const pendingContentRequests = new Map();
 let localTabId = '';
 let localPageSessionId = '';
 let selectedHubTabId = '';
@@ -1246,6 +1259,23 @@ function ensureHubChannel() {
       return;
     }
 
+    if (type === 'mini-hub-content-response') {
+      const requestId = String(data?.requestId || '').trim();
+      if (!requestId) return;
+
+      const pending = pendingContentRequests.get(requestId);
+      if (!pending) return;
+
+      const responseTabId = String(data?.tabId || '').trim();
+      const responseKind = normalizeLower(data?.kind, 'transcript');
+      if (responseTabId !== pending.targetTabId || responseKind !== pending.kind) return;
+
+      pendingContentRequests.delete(requestId);
+      window.clearTimeout(pending.timeoutHandle);
+      pending.resolve(String(data?.text || ''));
+      return;
+    }
+
     if (type === 'mini-hub-command') {
       const targetTabId = String(data?.targetTabId || '').trim();
       if (!targetTabId || targetTabId !== getOrCreateLocalTabId()) return;
@@ -1314,6 +1344,122 @@ function setValue(id, value) {
   if (el && 'value' in el) {
     el.value = value;
   }
+}
+
+function setHidden(id, hidden) {
+  const el = $(id);
+  if (el) {
+    el.hidden = !!hidden;
+  }
+}
+
+function normalizeLower(value, fallback = '') {
+  const next = String(value ?? '').trim().toLowerCase();
+  return next || fallback;
+}
+
+function getOptionSignature(options) {
+  return (Array.isArray(options) ? options : [])
+    .map((item) => `${String(item?.value || '').trim()}|${String(item?.label || item?.value || '').trim()}`)
+    .join('||');
+}
+
+function ensureSelectOptions(selectId, options) {
+  const el = $(selectId);
+  if (!el) return;
+
+  const normalizedOptions = (Array.isArray(options) ? options : []).map((item) => ({
+    value: String(item?.value || '').trim(),
+    label: String(item?.label || item?.value || '').trim(),
+  }));
+
+  const nextSignature = getOptionSignature(normalizedOptions);
+  if (el.dataset.optionsSignature === nextSignature) return;
+
+  const previousValue = String(el.value || '').trim();
+  el.innerHTML = '';
+
+  normalizedOptions.forEach((item) => {
+    const optionEl = el.ownerDocument.createElement('option');
+    optionEl.value = item.value;
+    optionEl.textContent = item.label;
+    el.appendChild(optionEl);
+  });
+
+  el.dataset.optionsSignature = nextSignature;
+
+  if (normalizedOptions.some((item) => item.value === previousValue)) {
+    el.value = previousValue;
+  }
+}
+
+function syncMiniNoteProviderOptions() {
+  ensureSelectOptions('miniNoteProviderSelect', listNoteUiProviderOptions());
+  ensureSelectOptions('miniOpenAiModelSelect', listOpenAiModelOptions());
+  ensureSelectOptions('miniNoteProviderModeSelect', listNoteModeOptions());
+  ensureSelectOptions('miniVertexModelSelect', listVertexModelOptions());
+  ensureSelectOptions('miniBedrockModelSelect', listBedrockModelOptions());
+}
+
+function formatMiniSttSummary(state) {
+  const provider = normalizeLower(state?.transcribeProvider, DEFAULTS.transcribeProvider);
+  const providerLabel = getTranscribeProviderShortLabel(provider);
+  if (!providerLabel) return '';
+
+  if (provider !== 'soniox') {
+    return providerLabel;
+  }
+
+  const speakerLabels = normalizeLower(
+    state?.sonioxSpeakerLabels,
+    DEFAULTS.sonioxSpeakerLabels
+  );
+  return speakerLabels === 'on' ? 'Soniox (dia)' : 'Soniox';
+}
+
+function syncMiniSttSummary(state) {
+  const text = formatMiniSttSummary(state);
+  const el = $('miniSttSummary');
+  if (!el) return;
+  el.hidden = !text;
+  el.textContent = text;
+}
+
+function syncMiniNoteProviderControls(state, snapshot) {
+  syncMiniNoteProviderOptions();
+
+  const noteProvider = normalizeLower(state?.noteProviderUi, 'aws-bedrock');
+  const openaiModel = normalizeLower(state?.openaiModel, DEFAULTS.openaiModel);
+  const noteMode = normalizeLower(state?.noteProviderMode, DEFAULTS.noteMode);
+  const vertexModel = normalizeLower(state?.vertexModel, DEFAULTS.vertexModel);
+  const bedrockModel = normalizeLower(state?.bedrockModel, DEFAULTS.bedrockModel);
+  const hasSnapshot = !!snapshot;
+  const visibility = getNoteUiVisibility({
+    provider: noteProvider,
+    openaiModel,
+  });
+
+  setValue('miniNoteProviderSelect', noteProvider);
+  setValue('miniOpenAiModelSelect', openaiModel);
+  setValue('miniNoteProviderModeSelect', noteMode);
+  setValue('miniVertexModelSelect', vertexModel);
+  setValue('miniBedrockModelSelect', bedrockModel);
+
+  const noteConfigControls = $('miniNoteConfigControls');
+  if (noteConfigControls) {
+    noteConfigControls.dataset.noteProvider = noteProvider;
+  }
+
+  setHidden('miniOpenAiModelSelect', !visibility.showOpenAi);
+  setHidden('miniNoteProviderModeSelect', !visibility.showOpenAiMode);
+  setHidden('miniVertexModelSelect', !visibility.showVertex);
+  setHidden('miniBedrockModelSelect', !visibility.showBedrock);
+
+  setDisabled('miniNoteProviderSelect', !hasSnapshot);
+  setDisabled('miniOpenAiModelSelect', !hasSnapshot || !visibility.showOpenAi);
+  setDisabled('miniNoteProviderModeSelect', !hasSnapshot || !visibility.showOpenAiMode);
+  setDisabled('miniVertexModelSelect', !hasSnapshot || !visibility.showVertex);
+  setDisabled('miniBedrockModelSelect', !hasSnapshot || !visibility.showBedrock);
 }
 
 function setBadge(text, tone) {
@@ -1703,11 +1849,13 @@ function updateMiniPanelUi() {
     'miniStatusText',
     statusText || phaseUi?.text || (snapshot ? tMini('ready') : tMini('noTabSelected'))
   );
+  syncMiniSttSummary(state);
   setText('miniTitle', tMini('sharedMiniPanel'));
   setText('miniAutoGenerateLabel', tMini('autoGenerate'));
   setText('miniAutoCopyLabel', tMini('autoCopy'));
   setText('miniPromptLabel', tMini('prompt'));
   setText('miniUsePromptLabel', tMini('usePrompt'));
+  setText('miniNoteModelLabel', 'Note model');
 
   setChecked('miniAutoGenerateToggle', !!state.autoGenerateEnabled);
   setChecked('miniUsePromptToggle', !!state.usePromptEnabled);
@@ -1739,6 +1887,7 @@ function updateMiniPanelUi() {
   }
 
   syncPromptDropdown(snapshot);
+  syncMiniNoteProviderControls(state, snapshot);
 }
 
 function requestUiRefresh() {
@@ -1793,6 +1942,134 @@ function dispatchHubAction(actionName, ...args) {
   return true;
 }
 
+function getLocalMiniContentText(kind) {
+  const normalizedKind = normalizeLower(kind, 'transcript');
+  const fieldId = normalizedKind === 'note' ? 'generatedNote' : 'transcription';
+  return String(document.getElementById(fieldId)?.value || '');
+}
+
+function requestHubTabContent(targetTabId, kind) {
+  const channel = ensureHubChannel();
+  const normalizedTargetTabId = String(targetTabId || '').trim();
+  const normalizedKind = normalizeLower(kind, 'transcript');
+
+  if (!channel || !normalizedTargetTabId) {
+    return Promise.resolve('');
+  }
+
+  const requestId =
+    (window.crypto?.randomUUID && window.crypto.randomUUID()) ||
+    `mini-content-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  return new Promise((resolve) => {
+    const timeoutHandle = window.setTimeout(() => {
+      pendingContentRequests.delete(requestId);
+      resolve('');
+    }, 1500);
+
+    pendingContentRequests.set(requestId, {
+      resolve,
+      timeoutHandle,
+      targetTabId: normalizedTargetTabId,
+      kind: normalizedKind,
+    });
+
+    postHubMessage({
+      type: 'mini-hub-content-request',
+      requestId,
+      targetTabId: normalizedTargetTabId,
+      kind: normalizedKind,
+      at: Date.now(),
+    });
+  });
+}
+
+function getSelectedHubContentText(kind) {
+  const targetTabId = ensureSelectedHubTab();
+  if (!targetTabId) {
+    return Promise.resolve('');
+  }
+
+  if (targetTabId === getOrCreateLocalTabId()) {
+    return Promise.resolve(getLocalMiniContentText(kind));
+  }
+
+  return requestHubTabContent(targetTabId, kind);
+}
+
+async function writeMiniPanelTextToClipboard(text) {
+  const value = String(text || '');
+  if (!value) return false;
+
+  const doc = getMiniDoc() || document;
+  const ownerWindow = doc.defaultView || miniWindow || window;
+  const clipboard = ownerWindow?.navigator?.clipboard || navigator.clipboard;
+
+  if (clipboard && typeof clipboard.writeText === 'function') {
+    try {
+      await clipboard.writeText(value);
+      return true;
+    } catch (_) {}
+  }
+
+  const textarea = doc.createElement('textarea');
+  textarea.value = value;
+  textarea.setAttribute('readonly', 'readonly');
+  textarea.setAttribute('aria-hidden', 'true');
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  textarea.style.pointerEvents = 'none';
+  textarea.style.top = '-9999px';
+  textarea.style.left = '-9999px';
+
+  try {
+    doc.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    textarea.setSelectionRange(0, textarea.value.length);
+    return !!doc.execCommand('copy');
+  } catch (_) {
+    return false;
+  } finally {
+    textarea.remove();
+    try {
+      ownerWindow?.getSelection?.()?.removeAllRanges?.();
+    } catch (_) {}
+  }
+}
+
+function syncMiniPanelCopyFeedback(kind) {
+  const nextKind = String(kind || '').trim();
+  const at = Date.now();
+
+  updateSelectedHubSnapshot((prev) => ({
+    ...(prev || {}),
+    state: {
+      ...((prev && prev.state) || {}),
+      miniPanelCopiedState: nextKind,
+      miniPanelCopiedAt: at,
+    },
+  }));
+
+  if (nextKind) {
+    dispatchHubAction('setMiniPanelCopyFeedback', nextKind);
+  }
+  requestUiRefresh();
+}
+
+async function copySelectedHubContent(kind) {
+  const normalizedKind = normalizeLower(kind, 'transcript');
+  const text = await getSelectedHubContentText(normalizedKind);
+  if (!String(text || '').trim()) {
+    syncMiniPanelCopyFeedback('copyFailed');
+    return false;
+  }
+
+  const ok = await writeMiniPanelTextToClipboard(text);
+  syncMiniPanelCopyFeedback(ok ? 'copied' : 'copyFailed');
+  return ok;
+}
+
 function bindMiniPanelEvents() {
   const startButton = $('miniStartButton');
   const stopButton = $('miniStopButton');
@@ -1808,6 +2085,11 @@ function bindMiniPanelEvents() {
   const autoGenerateToggle = $('miniAutoGenerateToggle');
   const autoCopyModeSelect = $('miniAutoCopyModeSelect');
   const usePromptToggle = $('miniUsePromptToggle');
+  const miniNoteProviderSelect = $('miniNoteProviderSelect');
+  const miniOpenAiModelSelect = $('miniOpenAiModelSelect');
+  const miniNoteProviderModeSelect = $('miniNoteProviderModeSelect');
+  const miniVertexModelSelect = $('miniVertexModelSelect');
+  const miniBedrockModelSelect = $('miniBedrockModelSelect');
 
   if (startButton) {
     startButton.addEventListener('click', () => {
@@ -1834,17 +2116,13 @@ function bindMiniPanelEvents() {
 
   if (copyTranscriptButton) {
     copyTranscriptButton.addEventListener('click', () => {
-      // main.js exposes this method as `app.copyTranscription`
-      // (it wraps the internal copyTranscriptionToClipboard()).
-      // Using the canonical name here is what lets the Mini Panel
-      // button call the exact same function as the main page button.
-      dispatchHubAction('copyTranscription');
+      void copySelectedHubContent('transcript');
     });
   }
 
   if (copyNoteButton) {
     copyNoteButton.addEventListener('click', () => {
-      dispatchHubAction('copyGeneratedNote');
+      void copySelectedHubContent('note');
     });
   }
 
@@ -1931,6 +2209,52 @@ function bindMiniPanelEvents() {
   if (usePromptToggle) {
     usePromptToggle.addEventListener('change', () => {
       dispatchHubAction('setUsePromptEnabled', !!usePromptToggle.checked);
+      requestUiRefresh();
+    });
+  }
+
+  if (miniNoteProviderSelect) {
+    miniNoteProviderSelect.addEventListener('change', () => {
+      const next = String(miniNoteProviderSelect.value || '').trim().toLowerCase();
+      if (!next) return;
+      dispatchHubAction('switchNoteProvider', next);
+      requestUiRefresh();
+    });
+  }
+
+  if (miniOpenAiModelSelect) {
+    miniOpenAiModelSelect.addEventListener('change', () => {
+      const next = String(miniOpenAiModelSelect.value || '').trim().toLowerCase();
+      if (!next) return;
+      dispatchHubAction('setOpenAiModel', next);
+      requestUiRefresh();
+    });
+  }
+
+  if (miniNoteProviderModeSelect) {
+    miniNoteProviderModeSelect.addEventListener('change', () => {
+      const next = String(miniNoteProviderModeSelect.value || '').trim().toLowerCase();
+      if (!next) return;
+      dispatchHubAction('setNoteProviderMode', next);
+      requestUiRefresh();
+    });
+  }
+
+  if (miniVertexModelSelect) {
+    miniVertexModelSelect.addEventListener('change', () => {
+      const next = String(miniVertexModelSelect.value || '').trim().toLowerCase();
+      if (!next) return;
+      dispatchHubAction('setVertexModel', next);
+      requestUiRefresh();
+    });
+  }
+
+  if (miniBedrockModelSelect) {
+    miniBedrockModelSelect.addEventListener('change', () => {
+      const next = String(miniBedrockModelSelect.value || '').trim().toLowerCase();
+      if (!next) return;
+      dispatchHubAction('setBedrockModel', next);
+      requestUiRefresh();
     });
   }
 
@@ -2210,12 +2534,31 @@ function renderMiniPanelDocument(targetWindow) {
     }
 
     .status-row {
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(74px, 1fr);
       align-items: center;
-      justify-content: space-between;
-      gap: 6px;
+      gap: 8px;
       min-height: 24px;
       min-width: 0;
+      margin-bottom: 1px;
+    }
+
+    .status-slot {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .status-slot--left {
+      justify-content: flex-start;
+    }
+
+    .status-slot--center {
+      justify-content: center;
+    }
+
+    .status-slot--right {
+      justify-content: flex-end;
     }
 
     .status-meta {
@@ -2223,6 +2566,14 @@ function renderMiniPanelDocument(targetWindow) {
       flex-direction: column;
       gap: 3px;
       margin-bottom: 8px;
+    }
+
+    .status-meta-main {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
     }
 
     .recording-timer {
@@ -2292,6 +2643,10 @@ function renderMiniPanelDocument(targetWindow) {
       opacity: 0;
       transition: opacity 0.18s ease;
       white-space: nowrap;
+      flex: 0 0 auto;
+      min-width: 74px;
+      text-align: right;
+      justify-self: end;
     }
 
     .copied[data-show="1"] {
@@ -2305,6 +2660,21 @@ function renderMiniPanelDocument(targetWindow) {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      flex: 1 1 auto;
+    }
+
+    .stt-summary {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+      max-width: 100%;
+      flex: 0 1 auto;
+      text-align: center;
     }
 
     .controls-wrap {
@@ -2552,6 +2922,79 @@ function renderMiniPanelDocument(targetWindow) {
       min-width: 0;
     }
 
+    .note-config-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-width: 0;
+      margin-top: 6px;
+    }
+
+    .note-config-left {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      flex: 0 0 auto;
+    }
+
+    .note-config-right {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      min-width: 0;
+      flex: 1 1 auto;
+      flex-wrap: nowrap;
+    }
+
+    .note-config-select {
+      min-width: 0;
+      font-size: 10px;
+      min-height: 26px;
+      padding: 5px 7px;
+    }
+
+    .note-config-select--provider {
+      flex: 0 1 96px;
+    }
+
+    .note-config-select--model {
+      flex: 1 1 0;
+    }
+
+    .note-config-select--mode {
+      flex: 0 1 88px;
+    }
+
+    .note-config-right[data-note-provider="openai"] .note-config-select--provider {
+      flex-basis: 102px;
+    }
+
+    .note-config-right[data-note-provider="openai"] #miniOpenAiModelSelect {
+      flex: 0 1 82px;
+    }
+
+    .note-config-right[data-note-provider="openai"] #miniNoteProviderModeSelect {
+      flex: 0 1 92px;
+    }
+
+    .note-config-right[data-note-provider="aws-bedrock"] .note-config-select--provider {
+      flex-basis: 90px;
+    }
+
+    .note-config-right[data-note-provider="aws-bedrock"] #miniBedrockModelSelect {
+      flex: 1 1 0;
+    }
+
+    .note-config-right[data-note-provider="gemini3-vertex"] .note-config-select--provider {
+      flex-basis: 92px;
+    }
+
+    .note-config-right[data-note-provider="gemini3-vertex"] #miniVertexModelSelect {
+      flex: 1 1 0;
+    }
+
     .prompt-left {
       display: flex;
       align-items: center;
@@ -2639,12 +3082,21 @@ function renderMiniPanelDocument(targetWindow) {
       </div>
 
       <div class="status-row">
-        <div id="miniStatusBadge" class="badge" data-tone="idle">Idle</div>
-        <div id="miniCopiedIndicator" class="copied" data-show="0" hidden>Copied!</div>
+        <div class="status-slot status-slot--left">
+          <div id="miniStatusBadge" class="badge" data-tone="idle">Idle</div>
+        </div>
+        <div class="status-slot status-slot--center">
+          <div id="miniSttSummary" class="stt-summary" hidden>Soniox</div>
+        </div>
+        <div class="status-slot status-slot--right">
+          <div id="miniCopiedIndicator" class="copied" data-show="0" hidden>Copied!</div>
+        </div>
       </div>
       <div class="status-meta">
-        <div id="miniStatusText" class="status-text">Ready</div>
-        <div id="miniRecordingTimer" class="recording-timer" hidden>00:00</div>
+        <div class="status-meta-main">
+          <div id="miniStatusText" class="status-text">Ready</div>
+          <div id="miniRecordingTimer" class="recording-timer" hidden>00:00</div>
+        </div>
       </div>
 
       <div class="controls-wrap">
@@ -2711,6 +3163,19 @@ function renderMiniPanelDocument(targetWindow) {
             <input id="miniUsePromptToggle" type="checkbox" />
             <span id="miniUsePromptLabel">Use</span>
           </label>
+        </div>
+      </div>
+
+      <div class="note-config-row">
+        <div class="note-config-left">
+          <div id="miniNoteModelLabel" class="prompt-label">Note model</div>
+        </div>
+        <div id="miniNoteConfigControls" class="note-config-right" data-note-provider="">
+          <select id="miniNoteProviderSelect" class="prompt-select note-config-select note-config-select--provider" aria-label="Note provider"></select>
+          <select id="miniOpenAiModelSelect" class="prompt-select note-config-select note-config-select--model" aria-label="OpenAI model" hidden></select>
+          <select id="miniNoteProviderModeSelect" class="prompt-select note-config-select note-config-select--mode" aria-label="Note mode" hidden></select>
+          <select id="miniVertexModelSelect" class="prompt-select note-config-select note-config-select--model" aria-label="Vertex model" hidden></select>
+          <select id="miniBedrockModelSelect" class="prompt-select note-config-select note-config-select--model" aria-label="Bedrock model" hidden></select>
         </div>
       </div>
     </div>
