@@ -811,9 +811,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getAutoCopyMode() {
-    const next = normalizeAutoCopyMode(readLocal(AUTO_COPY_MODE_KEY, ''));
-    if (next !== readLocal(AUTO_COPY_MODE_KEY, '')) {
-      writeLocal(AUTO_COPY_MODE_KEY, next);
+    const raw = readSession(AUTO_COPY_MODE_KEY, '');
+    const next = normalizeAutoCopyMode(raw);
+    if (next !== raw) {
+      writeSession(AUTO_COPY_MODE_KEY, next);
     }
     return next;
   }
@@ -821,7 +822,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function setAutoCopyMode(mode) {
     const next = normalizeAutoCopyMode(mode);
     if (next !== 'off' && !isAutoCopyExtensionAvailable()) {
-      writeLocal(AUTO_COPY_MODE_KEY, 'off');
+      writeSession(AUTO_COPY_MODE_KEY, 'off');
 
       const el = document.getElementById('autoCopyModeSelect');
       if (el && el.value !== 'off') {
@@ -835,7 +836,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return 'off';
     }
 
-    writeLocal(AUTO_COPY_MODE_KEY, next);
+    writeSession(AUTO_COPY_MODE_KEY, next);
 
     const el = document.getElementById('autoCopyModeSelect');
     if (el && el.value !== next) {
