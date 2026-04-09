@@ -69,6 +69,21 @@ function getApp() {
   return existing;
 }
 
+function readSession(key, fallback = "") {
+  try {
+    const value = sessionStorage.getItem(key);
+    return value == null ? fallback : value;
+  } catch (_) {
+    return fallback;
+  }
+}
+
+function writeSession(key, value) {
+  try {
+    sessionStorage.setItem(key, String(value ?? ""));
+  } catch (_) {}
+}
+
 function isAutoCopyExtensionAvailable() {
   return !!getApp().isAutoCopyExtensionAvailable?.();
 }
@@ -123,20 +138,21 @@ If notifications are allowed in Chrome/Windows, you may also get a notification 
     });
   };
 
-  const stored = normalizeAutoCopyMode(localStorage.getItem(AUTO_COPY_STORAGE_KEY));
-  if ((localStorage.getItem(AUTO_COPY_STORAGE_KEY) || "") !== stored) {
-    localStorage.setItem(AUTO_COPY_STORAGE_KEY, stored);
+  const storedRaw = readSession(AUTO_COPY_STORAGE_KEY, "");
+  const stored = normalizeAutoCopyMode(storedRaw);
+  if (storedRaw !== stored) {
+    writeSession(AUTO_COPY_STORAGE_KEY, stored);
   }
   selectEl.value = stored;
   selectEl.addEventListener("change", () => {
     const next = normalizeAutoCopyMode(selectEl.value);
     selectEl.value = next;
-    localStorage.setItem(AUTO_COPY_STORAGE_KEY, next);
+    writeSession(AUTO_COPY_STORAGE_KEY, next);
   });
 
   const syncAvailabilityUi = () => {
     const available = isAutoCopyExtensionAvailable();
-    const storedMode = normalizeAutoCopyMode(localStorage.getItem(AUTO_COPY_STORAGE_KEY) || "off");
+    const storedMode = normalizeAutoCopyMode(readSession(AUTO_COPY_STORAGE_KEY, "off"));
     const appliedMode = available ? storedMode : "off";
 
     selectEl.disabled = !available;
