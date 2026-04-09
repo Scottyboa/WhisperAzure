@@ -14,6 +14,14 @@ import {
   deriveNoteUiStateFromEffectiveProvider,
   getNoteUiVisibility,
   getTranscribeActiveApiKeyStorageKey,
+  listBedrockModelOptions,
+  listNoteModeOptions,
+  listNoteUiProviderOptions,
+  listOpenAiModelOptions,
+  listSonioxRegionOptions,
+  listSonioxSpeakerLabelOptions,
+  listTranscribeProviderOptions,
+  listVertexModelOptions,
   normalizeNoteMode,
   normalizeTranscribeProvider,
   resolveEffectiveNoteProvider,
@@ -60,6 +68,40 @@ import {
   function setDisplay(el, show, displayValue = 'flex') {
     if (!el) return;
     el.style.display = show ? displayValue : 'none';
+  }
+
+  function getOptionSignature(options) {
+    return (Array.isArray(options) ? options : [])
+      .map((item) => `${String(item?.value || '').trim()}|${String(item?.label || item?.value || '').trim()}`)
+      .join('||');
+  }
+
+  function ensureSelectOptions(selectEl, options) {
+    if (!selectEl) return;
+
+    const normalizedOptions = (Array.isArray(options) ? options : []).map((item) => ({
+      value: String(item?.value || '').trim(),
+      label: String(item?.label || item?.value || '').trim(),
+    }));
+
+    const nextSignature = getOptionSignature(normalizedOptions);
+    if (selectEl.dataset.optionsSignature === nextSignature) return;
+
+    const previousValue = String(selectEl.value || '').trim();
+    selectEl.innerHTML = '';
+
+    normalizedOptions.forEach((item) => {
+      const optionEl = selectEl.ownerDocument.createElement('option');
+      optionEl.value = item.value;
+      optionEl.textContent = item.label;
+      selectEl.appendChild(optionEl);
+    });
+
+    selectEl.dataset.optionsSignature = nextSignature;
+
+    if (normalizedOptions.some((item) => item.value === previousValue)) {
+      selectEl.value = previousValue;
+    }
   }
 
   function isSoniox(providerValue) {
@@ -289,6 +331,10 @@ import {
     if (providerSelect.dataset.providerPersistenceBound === '1') return;
     providerSelect.dataset.providerPersistenceBound = '1';
 
+    ensureSelectOptions(providerSelect, listTranscribeProviderOptions());
+    ensureSelectOptions(regionSelect, listSonioxRegionOptions());
+    ensureSelectOptions(speakerSelect, listSonioxSpeakerLabelOptions());
+
     const storedProvider = persistSelectedTranscribeProvider(readSelectedTranscribeProvider());
 
     if (regionSelect) {
@@ -398,6 +444,12 @@ import {
     const vertexModelSelect = document.getElementById('vertexModel');
     const bedrockModelContainer = document.getElementById('bedrock-model-container');
     const bedrockModelSelect = document.getElementById('bedrockModel');
+
+    ensureSelectOptions(providerSelect, listNoteUiProviderOptions());
+    ensureSelectOptions(openaiModelSelect, listOpenAiModelOptions());
+    ensureSelectOptions(noteModeSelect, listNoteModeOptions());
+    ensureSelectOptions(vertexModelSelect, listVertexModelOptions());
+    ensureSelectOptions(bedrockModelSelect, listBedrockModelOptions());
 
     const stored = readSelectedNoteState();
 
