@@ -2301,13 +2301,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const normalizedNext = String(next || '').trim().toLowerCase();
     if (!normalizedNext) return false;
 
+    // Callers may pass either a UI provider ('openai', 'lemonfox',
+    // 'aws-bedrock', ...) or an EFFECTIVE provider ('gpt5', 'gpt52-ns',
+    // ...). Derive the matching UI value via inferNoteProviderUi so we
+    // never write a non-option value into the select — which would
+    // silently snap it to empty and cascade back to aws-bedrock on
+    // the next change event.
+    //
+    // For providers that are already UI-level (lemonfox, mistral, etc.)
+    // inferNoteProviderUi returns the same string. For gpt5/gpt52/...
+    // it returns 'openai'.
+    const uiValue = inferNoteProviderUi(normalizedNext);
+
     const noteProviderSelect = document.getElementById('noteProvider');
-    if (noteProviderSelect && noteProviderSelect.value !== normalizedNext) {
-      noteProviderSelect.value = normalizedNext;
+    if (noteProviderSelect && noteProviderSelect.value !== uiValue) {
+      noteProviderSelect.value = uiValue;
       noteProviderSelect.dispatchEvent(new Event('change', { bubbles: true }));
       return true;
     }
 
+    // Select was already on the right UI value (or there's no select).
+    // Write the EFFECTIVE provider to sessionStorage and init the
+    // correct module. provider-persistence.js uses this same
+    // effective-value convention for the stored key.
     writeSession('note_provider', normalizedNext);
     await initNoteProvider(normalizedNext);
     emitAppStateChanged('note-provider-switched-programmatically', {
@@ -2547,16 +2563,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const noteProviderSelect = document.getElementById('noteProvider');
-  if (noteProviderSelect) {
-    noteProviderSelect.addEventListener('change', async () => {
-      const uiProvider = getSelectedNoteProviderUi();
-      writeSession('note_provider', uiProvider);
-      await initNoteProvider(uiProvider);
-      syncNoteActionButtons();
-      emitAppStateChanged('note-provider-changed', { provider: uiProvider });
-    });
-  }
+  // NOTE: the #noteProvider change handler lives in
+  // provider-persistence.js, which is the authoritative owner of
+  // note-provider selection and persistence. It already resolves the
+  // UI value ('openai') to an effective provider ('gpt5', 'gpt52-ns',
+  // etc.) via resolveEffectiveNoteProvider and writes the correct
+  // value to sessionStorage. main.js used to ALSO bind a listener
+  // here that wrote the raw UI value — which overwrote the correct
+  // effective value with 'openai', which then failed to resolve at
+  // init time and silently fell back to aws-bedrock. Removing it.
 
   const openaiModelSelect = document.getElementById('openaiModel');
   if (openaiModelSelect) {
