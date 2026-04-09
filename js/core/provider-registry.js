@@ -23,12 +23,14 @@ const TRANSCRIBE_PROVIDER_REGISTRY = {
   openai: {
     id: 'openai',
     label: 'OpenAI',
+    shortLabel: 'OpenAI',
     modulePath: './recording.js',
     activeApiKeyStorageKey: 'openai_api_key',
   },
   soniox: {
     id: 'soniox',
     label: 'Soniox',
+    shortLabel: 'Soniox',
     modulePath: './SONIOX_UPDATE.js',
     diarizedModulePath: './SONIOX_UPDATE_dia.js',
     activeApiKeyStorageKey: 'soniox_api_key',
@@ -36,18 +38,21 @@ const TRANSCRIBE_PROVIDER_REGISTRY = {
   lemonfox: {
     id: 'lemonfox',
     label: 'Lemonfox',
+    shortLabel: 'Lemonfox',
     modulePath: './LemonfoxSTT.js',
     activeApiKeyStorageKey: 'lemonfox_api_key',
   },
   voxtral: {
     id: 'voxtral',
     label: 'Mistral (Voxtral Mini Transcribe)',
+    shortLabel: 'Mistral',
     modulePath: './VoxtralminiSTT.js',
     activeApiKeyStorageKey: 'mistral_api_key',
   },
   deepgram: {
     id: 'deepgram',
     label: 'Deepgram Nova-3',
+    shortLabel: 'Deepgram',
     modulePath: './deepgram_nova3.js',
     activeApiKeyStorageKey: 'deepgram_api_key',
   },
@@ -134,12 +139,90 @@ const NOTE_PROVIDER_REGISTRY = {
   },
 };
 
+const NOTE_UI_PROVIDER_OPTIONS = [
+  { value: 'openai', label: 'OpenAI' },
+  { value: 'lemonfox', label: 'Lemonfox' },
+  { value: 'mistral', label: 'Mistral' },
+  { value: 'gemini3', label: 'Gemini 3' },
+  { value: 'gemini3-vertex', label: 'Google Vertex' },
+  { value: 'aws-bedrock', label: 'AWS Bedrock' },
+];
+
+const OPENAI_NOTE_MODEL_OPTIONS = [
+  { value: 'gpt5', label: 'GPT-5.1' },
+  { value: 'gpt52', label: 'GPT-5.2' },
+  { value: 'gpt54', label: 'GPT-5.4' },
+  { value: 'gpt4', label: 'GPT-4-latest' },
+];
+
+const NOTE_MODE_OPTIONS = [
+  { value: 'streaming', label: 'streaming' },
+  { value: 'non-streaming', label: 'non-streaming' },
+];
+
+const VERTEX_MODEL_OPTIONS = [
+  { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+];
+
+const BEDROCK_MODEL_OPTIONS = [
+  { value: 'haiku-4-5', label: 'Claude Haiku 4.5' },
+  { value: 'sonnet-4-5', label: 'Claude Sonnet 4.5' },
+  { value: 'sonnet-4-6', label: 'Claude Sonnet 4.6' },
+  { value: 'opus-4-5', label: 'Claude Opus 4.5' },
+  { value: 'opus-4-6', label: 'Claude Opus 4.6' },
+];
+
+const SONIOX_REGION_OPTIONS = [
+  { value: 'us', label: 'US' },
+  { value: 'eu', label: 'EU (GDPR Compliant)' },
+];
+
+const SONIOX_SPEAKER_LABEL_OPTIONS = [
+  { value: 'off', label: 'Off' },
+  { value: 'on', label: 'On' },
+];
+
 export function listTranscribeProviders() {
   return Object.keys(TRANSCRIBE_PROVIDER_REGISTRY);
 }
 
 export function listNoteEffectiveProviders() {
   return Object.keys(NOTE_PROVIDER_REGISTRY);
+}
+
+export function listTranscribeProviderOptions() {
+  return listTranscribeProviders().map((providerId) => ({
+    value: providerId,
+    label: getTranscribeProviderLabel(providerId),
+  }));
+}
+
+export function listNoteUiProviderOptions() {
+  return NOTE_UI_PROVIDER_OPTIONS.map((item) => ({ ...item }));
+}
+
+export function listOpenAiModelOptions() {
+  return OPENAI_NOTE_MODEL_OPTIONS.map((item) => ({ ...item }));
+}
+
+export function listNoteModeOptions() {
+  return NOTE_MODE_OPTIONS.map((item) => ({ ...item }));
+}
+
+export function listVertexModelOptions() {
+  return VERTEX_MODEL_OPTIONS.map((item) => ({ ...item }));
+}
+
+export function listBedrockModelOptions() {
+  return BEDROCK_MODEL_OPTIONS.map((item) => ({ ...item }));
+}
+
+export function listSonioxRegionOptions() {
+  return SONIOX_REGION_OPTIONS.map((item) => ({ ...item }));
+}
+
+export function listSonioxSpeakerLabelOptions() {
+  return SONIOX_SPEAKER_LABEL_OPTIONS.map((item) => ({ ...item }));
 }
 
 export function normalizeTranscribeProvider(value) {
@@ -172,9 +255,26 @@ export function getTranscribeActiveApiKeyStorageKey(provider) {
   return getTranscribeProviderConfig(provider).activeApiKeyStorageKey;
 }
 
+export function getTranscribeProviderLabel(provider) {
+  const config = getTranscribeProviderConfig(provider);
+  return String(config.label || config.id || '').trim();
+}
+
+export function getTranscribeProviderShortLabel(provider) {
+  const config = getTranscribeProviderConfig(provider);
+  return String(config.shortLabel || config.label || config.id || '').trim();
+}
+
 export function normalizeNoteEffectiveProvider(value) {
   const raw = String(value || '').trim().toLowerCase();
   return NOTE_PROVIDER_REGISTRY[raw] ? raw : DEFAULTS.noteProvider;
+}
+
+export function normalizeNoteUiProvider(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  return NOTE_UI_PROVIDER_OPTIONS.some((item) => item.value === raw)
+    ? raw
+    : inferNoteProviderUi(DEFAULTS.noteProvider);
 }
 
 export function resolveEffectiveNoteProvider({ provider, openaiModel, noteMode } = {}) {
