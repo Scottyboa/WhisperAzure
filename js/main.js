@@ -3,8 +3,21 @@ import {
   DEFAULTS,
   deriveNoteUiStateFromEffectiveProvider,
   getNoteProviderLogLabel,
+  getNoteUiVisibility,
+  getTranscribeProviderLabel,
+  getTranscribeProviderShortLabel,
   inferNoteProviderUi,
+  normalizeNoteUiProvider,
+  listBedrockModelOptions,
+  listNoteModeOptions,
+  listNoteUiProviderOptions,
+  listOpenAiModelOptions,
+  listSonioxRegionOptions,
+  listSonioxSpeakerLabelOptions,
+  listTranscribeProviderOptions,
+  listVertexModelOptions,
   normalizeTranscribeProvider,
+  resolveEffectiveNoteProvider,
   resolveNoteModulePath as resolveNoteModulePathFromRegistry,
   resolveTranscribeModulePath as resolveTranscribeModulePathFromRegistry,
 } from './core/provider-registry.js';
@@ -397,6 +410,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function getCurrentMiniHubContentText(kind) {
+    const normalizedKind = String(kind || '').trim().toLowerCase();
+    const fieldId = normalizedKind === 'note' ? 'generatedNote' : 'transcription';
+    const field = document.getElementById(fieldId);
+    return String(field?.value || '');
+  }
+
   function invokeMiniHubCommand(actionName, args = []) {
     const app = getApp();
     const fn = app && typeof app[actionName] === 'function' ? app[actionName] : null;
@@ -448,6 +468,26 @@ document.addEventListener('DOMContentLoaded', () => {
           const count = Number(data?.liveTabCount || 0);
           if (count > 0) miniHubLiveTabCount = count;
           void applyMiniHubAccentFavicon();
+          return;
+        }
+
+        if (type === 'mini-hub-content-request') {
+          const targetTabId = String(data?.targetTabId || '').trim();
+          if (!targetTabId || targetTabId !== getOrCreateMiniHubTabId()) return;
+
+          const requestId = String(data?.requestId || '').trim();
+          const kind = String(data?.kind || '').trim().toLowerCase();
+          if (!requestId || !kind) return;
+
+          postMiniHubMessage({
+            type: 'mini-hub-content-response',
+            requestId,
+            tabId: getOrCreateMiniHubTabId(),
+            pageSessionId: getOrCreateMiniHubPageSessionId(),
+            kind,
+            text: getCurrentMiniHubContentText(kind),
+            at: Date.now(),
+          });
           return;
         }
 
@@ -2005,6 +2045,15 @@ document.addEventListener('DOMContentLoaded', () => {
       recordingPausedAt: Number(getApp().miniPanelRecordingPausedAt || 0),
       recordingAccumulatedMs: Number(getApp().miniPanelRecordingAccumulatedMs || 0),
       usePromptEnabled: getUsePromptEnabled(),
+      transcribeProvider: getSelectedTranscribeProvider(),
+      sonioxRegion: getSelectedSonioxRegion(),
+      sonioxSpeakerLabels: getSelectedSonioxSpeakerLabels(),
+      noteProviderUi: getSelectedNoteProviderUi(),
+      noteProviderEffective: getSelectedEffectiveNoteProvider(),
+      noteProviderMode: getSelectedNoteProviderMode(),
+      openaiModel: getSelectedOpenAiModel(),
+      vertexModel: getSelectedVertexModel(),
+      bedrockModel: getSelectedBedrockModel(),
     };
   }
 
@@ -2234,7 +2283,19 @@ document.addEventListener('DOMContentLoaded', () => {
   app.providerRegistry = {
     defaults: DEFAULTS,
     deriveNoteUiStateFromEffectiveProvider,
+    getNoteUiVisibility,
+    getTranscribeProviderLabel,
+    getTranscribeProviderShortLabel,
     inferNoteProviderUi,
+    listBedrockModelOptions,
+    listNoteModeOptions,
+    listNoteUiProviderOptions,
+    normalizeNoteUiProvider,
+    listOpenAiModelOptions,
+    listSonioxRegionOptions,
+    listSonioxSpeakerLabelOptions,
+    listTranscribeProviderOptions,
+    listVertexModelOptions,
     normalizeTranscribeProvider,
     resolveTranscribeModulePath,
     resolveNoteModulePath,
@@ -2264,6 +2325,17 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   app.copyGeneratedNote = () => copyGeneratedNoteToClipboard();
   app.copyTranscription = () => copyTranscriptionToClipboard();
+  app.setMiniPanelCopyFeedback = (kind) => {
+    const nextKind = String(kind || '').trim();
+    if (!nextKind) {
+      clearMiniPanelCopyState('mini-panel-feedback-cleared');
+      return true;
+    }
+
+    setMiniPanelCopyState(nextKind, Date.now());
+    emitAppStateChanged('mini-panel-copy-feedback', { kind: nextKind });
+    return true;
+  };
   app.setSelectedPromptSlot = (slot) => selectPromptSlot(slot);
   app.getMiniPanelState = () => getMiniPanelState();
   app.openMiniPanel = () => {
@@ -2304,15 +2376,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Callers may pass either a UI provider ('openai', 'lemonfox',
     // 'aws-bedrock', ...) or an EFFECTIVE provider ('gpt5', 'gpt52-ns',
-    // ...). Derive the matching UI value via inferNoteProviderUi so we
-    // never write a non-option value into the select — which would
-    // silently snap it to empty and cascade back to aws-bedrock on
-    // the next change event.
-    //
-    // For providers that are already UI-level (lemonfox, mistral, etc.)
-    // inferNoteProviderUi returns the same string. For gpt5/gpt52/...
-    // it returns 'openai'.
-    const uiValue = inferNoteProviderUi(normalizedNext);
+    // ...). A raw UI value like 'openai' must stay 'openai' here; if we
+    // feed it through inferNoteProviderUi() it gets treated like an
+    // unknown effective provider and can fall back to the default UI.
+    const normalizedUiProvider = normalizeNoteUiProvider(normalizedNext);
+    const isUiProvider = normalizedNext === normalizedUiProvider;
+    const uiValue = isUiProvider
+      ? normalizedNext
+      : inferNoteProviderUi(normalizedNext);
 
     const noteProviderSelect = document.getElementById('noteProvider');
     if (noteProviderSelect && noteProviderSelect.value !== uiValue) {
@@ -2321,14 +2392,22 @@ document.addEventListener('DOMContentLoaded', () => {
       return true;
     }
 
+    const effectiveProvider = isUiProvider
+      ? resolveEffectiveNoteProvider({
+          provider: normalizedNext,
+          openaiModel: document.getElementById('openaiModel')?.value || DEFAULTS.openaiModel,
+          noteMode: document.getElementById('noteProviderMode')?.value || DEFAULTS.noteMode,
+        })
+      : normalizedNext;
+
     // Select was already on the right UI value (or there's no select).
     // Write the EFFECTIVE provider to sessionStorage and init the
     // correct module. provider-persistence.js uses this same
     // effective-value convention for the stored key.
-    writeSession('note_provider', normalizedNext);
-    await initNoteProvider(normalizedNext);
+    writeSession('note_provider', effectiveProvider);
+    await initNoteProvider(effectiveProvider);
     emitAppStateChanged('note-provider-switched-programmatically', {
-      provider: normalizedNext,
+      provider: effectiveProvider,
     });
     return true;
   };
