@@ -107,9 +107,9 @@ let nextHubTabOrder = 1;
 // orange/amber `#f59e0b` duplicate).
 const MINI_HUB_ACCENT_PALETTE = [
   { key: 'green',  color: '#22c55e' },
-  { key: 'blue',   color: '#3b82f6' },
-  { key: 'purple', color: '#8b5cf6' },
+  { key: 'blue',   color: '#3b82f6' }, 
   { key: 'orange', color: '#f59e0b' },
+  { key: 'purple', color: '#8b5cf6' },
   { key: 'teal',   color: '#14b8a6' },
   { key: 'rose',   color: '#f43f5e' },
   { key: 'indigo', color: '#6366f1' },
