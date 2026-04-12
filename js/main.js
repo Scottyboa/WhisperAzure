@@ -1614,6 +1614,34 @@ document.addEventListener('DOMContentLoaded', () => {
     return clone;
   }
 
+  const RECORDING_UI_ABORT_KEYS = [
+    '__recordingUIAbort_openai',
+    '__recordingUIAbort_lemonfox',
+    '__recordingUIAbort_voxtral',
+    '__recordingUIAbort_deepgram',
+    '__sonioxUIAbort_soniox',
+    '__sonioxUIAbort_soniox_dia',
+  ];
+
+  const RECORDING_VAD_TEARDOWN_KEYS = [
+    '__sonioxTeardownVAD_soniox',
+    '__sonioxTeardownVAD_soniox_dia',
+  ];
+
+  function teardownRecordingProviderRuntime(reason = 'provider-switch') {
+    RECORDING_UI_ABORT_KEYS.forEach((key) => {
+      try {
+        window[key]?.abort?.(reason);
+      } catch (_) {}
+    });
+
+    RECORDING_VAD_TEARDOWN_KEYS.forEach((key) => {
+      try {
+        window[key]?.();
+      } catch (_) {}
+    });
+  }
+
   async function initRecordingProvider(provider) {
     const normalized = normalizeTranscribeProvider(provider || getSelectedTranscribeProvider());
     const path = resolveTranscribeModulePath(normalized);
@@ -1621,6 +1649,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.info('[recording:init] provider:', normalized, 'module:', path);
 
     try {
+      teardownRecordingProviderRuntime(`switch-to:${normalized}`);
       const mod = await loadCachedModule(path);
       if (mod && typeof mod.initRecording === 'function') {
         mod.initRecording();
