@@ -15,6 +15,7 @@ export const DEFAULTS = {
   noteProvider: 'aws-bedrock',
   openaiModel: 'gpt5',
   noteMode: 'streaming',
+  geminiModel: 'gemini-3-pro-preview',
   vertexModel: 'gemini-2.5-pro',
   bedrockModel: 'opus-4-5',
 };
@@ -121,7 +122,7 @@ const NOTE_PROVIDER_REGISTRY = {
   },
   gemini3: {
     id: 'gemini3',
-    label: 'Gemini 3',
+    label: 'Google AI Studio',
     uiProvider: 'gemini3',
     modulePath: './Gemini3.js',
   },
@@ -143,7 +144,7 @@ const NOTE_UI_PROVIDER_OPTIONS = [
   { value: 'openai', label: 'OpenAI' },
   { value: 'lemonfox', label: 'Lemonfox' },
   { value: 'mistral', label: 'Mistral' },
-  { value: 'gemini3', label: 'Gemini 3' },
+  { value: 'gemini3', label: 'Google AI Studio' },
   { value: 'gemini3-vertex', label: 'Google Vertex' },
   { value: 'aws-bedrock', label: 'AWS Bedrock' },
 ];
@@ -158,6 +159,12 @@ const OPENAI_NOTE_MODEL_OPTIONS = [
 const NOTE_MODE_OPTIONS = [
   { value: 'streaming', label: 'streaming' },
   { value: 'non-streaming', label: 'non-streaming' },
+];
+
+const GEMINI_API_MODEL_OPTIONS = [
+  { value: 'gemini-3-pro-preview', label: 'gemini-3-pro-preview' },
+  { value: 'gemini-3.1-pro-preview', label: 'gemini-3.1-pro-preview' },
+  { value: 'gemini-3-flash-preview', label: 'gemini-3-flash-preview' },
 ];
 
 const VERTEX_MODEL_OPTIONS = [
@@ -207,6 +214,10 @@ export function listOpenAiModelOptions() {
 
 export function listNoteModeOptions() {
   return NOTE_MODE_OPTIONS.map((item) => ({ ...item }));
+}
+
+export function listGeminiApiModelOptions() {
+  return GEMINI_API_MODEL_OPTIONS.map((item) => ({ ...item }));
 }
 
 export function listVertexModelOptions() {
@@ -347,11 +358,13 @@ export function resolveNoteModulePath(effectiveProvider) {
 export function getNoteProviderLogLabel({
   effectiveProvider,
   openaiModel,
+  geminiModel,
   vertexModel,
   bedrockModel,
 } = {}) {
   const normalized = normalizeNoteEffectiveProvider(effectiveProvider);
   if (normalized === 'aws-bedrock' && bedrockModel) return String(bedrockModel).toLowerCase();
+  if (normalized === 'gemini3' && geminiModel) return String(geminiModel).toLowerCase();
   if (normalized === 'gemini3-vertex' && vertexModel) return String(vertexModel).toLowerCase();
 
   const config = getNoteProviderConfig(normalized);
@@ -386,6 +399,7 @@ export function isBedrockEffectiveNoteProvider(effectiveProvider) {
 export function getDefaultModelIdForEffectiveNoteProvider({
   effectiveProvider,
   openaiModel,
+  geminiModel,
   vertexModel,
   bedrockModel,
 } = {}) {
@@ -400,7 +414,7 @@ export function getDefaultModelIdForEffectiveNoteProvider({
   }
 
   if (isGeminiApiEffectiveNoteProvider(normalized)) {
-    return 'gemini-3-pro-preview';
+    return String(geminiModel || DEFAULTS.geminiModel || '').trim() || null;
   }
 
   if (isMistralEffectiveNoteProvider(normalized)) {
@@ -435,6 +449,7 @@ export function getNoteUiVisibility({ provider, openaiModel } = {}) {
   return {
     showOpenAi: isOpenAi,
     showOpenAiMode: isGpt5x,
+    showGeminiApi: uiProvider === 'gemini3',
     showVertex: uiProvider === 'gemini3-vertex',
     showBedrock: uiProvider === 'aws-bedrock',
   };
