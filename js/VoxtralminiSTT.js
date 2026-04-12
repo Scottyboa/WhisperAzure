@@ -735,6 +735,7 @@ function initRecording() {
   if (!startButton || !stopButton || !pauseResumeButton) return;
 
   const uiSignal = createRecordingUiBindingScope("__recordingUIAbort_voxtral");
+  const uiListenerOptions = { signal: uiSignal };
 
   // --- PULL readLoop INTO SHARED SCOPE ---
   async function readLoop() {
@@ -813,7 +814,7 @@ function initRecording() {
       startButton.disabled = false;
       setAbortButtonDisabled(true);
     }
-  });
+  }, uiListenerOptions);
 
   pauseResumeButton.addEventListener("click", async () => {
     if (pauseResumeButton.disabled) return;
@@ -869,7 +870,7 @@ function initRecording() {
       updateStatusMessage("Recording paused", "orange");
       logInfo("Recording paused; buffered speech flushed");
     }
-  });
+  }, uiListenerOptions);
 
   if (abortButton) {
     abortButton.addEventListener("click", async () => {
@@ -932,7 +933,7 @@ function initRecording() {
       setRecordingControlsIdle();
       updateStatusMessage("Recording aborted.", "orange");
       logInfo("Recording aborted by user; discarded pending transcription work.");
-    });
+    }, uiListenerOptions);
   }
 
   stopButton.addEventListener("click", async () => {
@@ -1087,7 +1088,7 @@ function initRecording() {
         }
       }
     }
-  });
+  }, uiListenerOptions);
 }
 
 export { initRecording };
