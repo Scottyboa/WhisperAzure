@@ -1758,7 +1758,7 @@ function syncHubTabDropdown() {
       );
       button.title = isRecording ? `${text} — ${tMini('recording')}` : text;
 
-      button.addEventListener('click', () => {
+      const selectHubTabFromPicker = () => {
         const nextTabId = String(snapshot?.tabId || '').trim();
         if (!nextTabId) return;
         selectedHubTabId = nextTabId;
@@ -1774,6 +1774,17 @@ function syncHubTabDropdown() {
           },
         }));
         requestUiRefresh();
+      };
+
+      button.addEventListener('pointerdown', (event) => {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        event.preventDefault();
+        selectHubTabFromPicker();
+      });
+
+      button.addEventListener('click', (event) => {
+        if (event.detail > 0) return;
+        selectHubTabFromPicker();
       });
 
       list.appendChild(button);
