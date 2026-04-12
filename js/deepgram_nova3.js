@@ -423,8 +423,8 @@ async function transcribeChunkDirectly(wavBlob, chunkNum, { signal, sessionId } 
     transcriptionError = true;
     return `[Missing API key for chunk ${chunkNum}]`;
   }
-  // Nova-3 with smart formatting; set your default language here (e.g., "no" for Norwegian)
-  const url = `${DEEPGRAM_LISTEN_URL}?model=nova-3&smart_format=true&language=no`;
+  // Nova-3 with smart formatting; allow mixed-language consultations.
+  const url = `${DEEPGRAM_LISTEN_URL}?model=nova-3&smart_format=true&language=multi`;
   try {
     const rsp = await fetchWithTimeout(url, {
       method: "POST",
@@ -440,7 +440,24 @@ async function transcribeChunkDirectly(wavBlob, chunkNum, { signal, sessionId } 
       throw new Error(`Deepgram error ${rsp.status}: ${txt}`);
     }
     const data = await rsp.json();
-    const text = data?.results?.channels?.[0]?.alternatives?.[0]?.transcript || "";
+    const alternative = data?.results?.channels?.[0]?.alternatives?.[0] || {};
+    let text = typeof alternative?.transcript === "string"
+      ? alternative.transcript.trim()
+      : "";
+
+    // Defensive fallback: reconstruct text from word-level output when transcript is blank.
+    if (!text && Array.isArray(alternative?.words)) {
+      text = alternative.words
+        .map((w) => (w?.punctuated_word || w?.word || "").trim())
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+    }
+
+    if (!text) {
+      logDebug("Deepgram returned empty transcript payload:", data);
+    }
+
     return text;
   } catch (error) {
     // If user started a new session, treat this as a silent cancel.
