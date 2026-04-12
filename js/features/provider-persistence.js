@@ -15,6 +15,7 @@ import {
   getNoteUiVisibility,
   getTranscribeActiveApiKeyStorageKey,
   listBedrockModelOptions,
+  listGeminiApiModelOptions,
   listNoteModeOptions,
   listNoteUiProviderOptions,
   listOpenAiModelOptions,
@@ -37,6 +38,7 @@ import {
 
     noteProvider: 'note_provider',
     noteProviderMode: 'note_provider_mode',
+    geminiModel: 'gemini_model',
     vertexModel: 'vertex_model',
     bedrockModel: 'bedrock_model',
   };
@@ -195,6 +197,10 @@ import {
       provider: ui.provider,
       openaiModel: ui.openaiModel,
       mode: ui.mode,
+      geminiModel: normalizeLower(
+        readSession(STORAGE_KEYS.geminiModel, DEFAULTS.geminiModel),
+        DEFAULTS.geminiModel
+      ),
       vertexModel: normalizeLower(
         readSession(STORAGE_KEYS.vertexModel, DEFAULTS.vertexModel),
         DEFAULTS.vertexModel
@@ -210,6 +216,7 @@ import {
     provider,
     openaiModel,
     noteMode,
+    geminiModel,
     vertexModel,
     bedrockModel,
   }) {
@@ -221,6 +228,7 @@ import {
 
     writeSession(STORAGE_KEYS.noteProvider, effectiveProvider);
     writeSession(STORAGE_KEYS.noteProviderMode, normalizeNoteMode(noteMode));
+    writeSession(STORAGE_KEYS.geminiModel, normalizeLower(geminiModel, DEFAULTS.geminiModel));
     writeSession(STORAGE_KEYS.vertexModel, normalizeLower(vertexModel, DEFAULTS.vertexModel));
     writeSession(STORAGE_KEYS.bedrockModel, normalizeLower(bedrockModel, DEFAULTS.bedrockModel));
 
@@ -233,6 +241,8 @@ import {
     openaiModelSelect,
     noteModeContainer,
     noteModeSelect,
+    geminiModelContainer,
+    geminiModelSelect,
     vertexModelContainer,
     vertexModelSelect,
     bedrockModelContainer,
@@ -252,11 +262,16 @@ import {
 
     setDisplay(openaiModelContainer, visibility.showOpenAi);
     setDisplay(noteModeContainer, visibility.showOpenAiMode);
+    setDisplay(geminiModelContainer, visibility.showGeminiApi);
     setDisplay(vertexModelContainer, visibility.showVertex);
     setDisplay(bedrockModelContainer, visibility.showBedrock);
 
     if (noteModeSelect && !visibility.showOpenAiMode && noteModeSelect.value !== DEFAULTS.noteMode) {
       noteModeSelect.value = DEFAULTS.noteMode;
+    }
+
+    if (geminiModelSelect && !geminiModelSelect.value) {
+      geminiModelSelect.value = DEFAULTS.geminiModel;
     }
 
     if (vertexModelSelect && !vertexModelSelect.value) {
@@ -440,6 +455,8 @@ import {
     const openaiModelSelect = document.getElementById('openaiModel');
     const noteModeContainer = document.getElementById('note-provider-mode-container');
     const noteModeSelect = document.getElementById('noteProviderMode');
+    const geminiModelContainer = document.getElementById('gemini-model-container');
+    const geminiModelSelect = document.getElementById('geminiModel');
     const vertexModelContainer = document.getElementById('vertex-model-container');
     const vertexModelSelect = document.getElementById('vertexModel');
     const bedrockModelContainer = document.getElementById('bedrock-model-container');
@@ -448,6 +465,7 @@ import {
     ensureSelectOptions(providerSelect, listNoteUiProviderOptions());
     ensureSelectOptions(openaiModelSelect, listOpenAiModelOptions());
     ensureSelectOptions(noteModeSelect, listNoteModeOptions());
+    ensureSelectOptions(geminiModelSelect, listGeminiApiModelOptions());
     ensureSelectOptions(vertexModelSelect, listVertexModelOptions());
     ensureSelectOptions(bedrockModelSelect, listBedrockModelOptions());
 
@@ -456,6 +474,7 @@ import {
     providerSelect.value = stored.provider;
     if (openaiModelSelect) openaiModelSelect.value = stored.openaiModel;
     if (noteModeSelect) noteModeSelect.value = stored.mode;
+    if (geminiModelSelect) geminiModelSelect.value = stored.geminiModel;
     if (vertexModelSelect) vertexModelSelect.value = stored.vertexModel;
     if (bedrockModelSelect) bedrockModelSelect.value = stored.bedrockModel;
 
@@ -465,6 +484,8 @@ import {
       openaiModelSelect,
       noteModeContainer,
       noteModeSelect,
+      geminiModelContainer,
+      geminiModelSelect,
       vertexModelContainer,
       vertexModelSelect,
       bedrockModelContainer,
@@ -477,6 +498,7 @@ import {
         provider: providerSelect.value,
         openaiModel: openaiModelSelect?.value || DEFAULTS.openaiModel,
         noteMode: noteModeSelect?.value || DEFAULTS.noteMode,
+        geminiModel: geminiModelSelect?.value || DEFAULTS.geminiModel,
         vertexModel: vertexModelSelect?.value || DEFAULTS.vertexModel,
         bedrockModel: bedrockModelSelect?.value || DEFAULTS.bedrockModel,
       });
@@ -487,6 +509,8 @@ import {
         openaiModelSelect,
         noteModeContainer,
         noteModeSelect,
+        geminiModelContainer,
+        geminiModelSelect,
         vertexModelContainer,
         vertexModelSelect,
         bedrockModelContainer,
@@ -511,6 +535,24 @@ import {
     openaiModelSelect?.addEventListener('change', persistAndSwitchNoteProvider);
     noteModeSelect?.addEventListener('change', persistAndSwitchNoteProvider);
 
+    geminiModelSelect?.addEventListener('change', () => {
+      writeSession(STORAGE_KEYS.geminiModel, normalizeLower(geminiModelSelect.value, DEFAULTS.geminiModel));
+      applyNoteProviderUI({
+        providerSelect,
+        openaiModelContainer,
+        openaiModelSelect,
+        noteModeContainer,
+        noteModeSelect,
+        geminiModelContainer,
+        geminiModelSelect,
+        vertexModelContainer,
+        vertexModelSelect,
+        bedrockModelContainer,
+        bedrockModelSelect,
+        providerValue: providerSelect.value,
+      });
+    });
+
     vertexModelSelect?.addEventListener('change', () => {
       writeSession(STORAGE_KEYS.vertexModel, normalizeLower(vertexModelSelect.value, DEFAULTS.vertexModel));
       applyNoteProviderUI({
@@ -519,6 +561,8 @@ import {
         openaiModelSelect,
         noteModeContainer,
         noteModeSelect,
+        geminiModelContainer,
+        geminiModelSelect,
         vertexModelContainer,
         vertexModelSelect,
         bedrockModelContainer,
@@ -535,6 +579,8 @@ import {
         openaiModelSelect,
         noteModeContainer,
         noteModeSelect,
+        geminiModelContainer,
+        geminiModelSelect,
         vertexModelContainer,
         vertexModelSelect,
         bedrockModelContainer,
