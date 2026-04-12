@@ -12,10 +12,17 @@ import {
   streamGeminiSse
 } from "./core/note-runner.js";
 
-const RUN_META = {
-  provider: "gemini3",
-  model: "gemini-3-pro-preview"
-};
+const DEFAULT_MODEL_ID = "gemini-3-pro-preview";
+
+function getSelectedGeminiModel() {
+  const value = String(
+    document.getElementById("geminiModel")?.value ||
+      sessionStorage.getItem("gemini_model") ||
+      DEFAULT_MODEL_ID
+  ).trim().toLowerCase();
+
+  return value || DEFAULT_MODEL_ID;
+}
 
 function buildGeminiPrompt({ promptText, supplementaryRaw, transcriptionText }) {
   const baseInstruction = [
@@ -36,8 +43,8 @@ function buildGeminiPrompt({ promptText, supplementaryRaw, transcriptionText }) 
   return sections.filter(Boolean).join("\n\n");
 }
 
-function makeGeminiUrl(apiVersion, apiKey) {
-  return `https://generativelanguage.googleapis.com/${apiVersion}/models/${RUN_META.model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`;
+function makeGeminiUrl(apiVersion, apiKey, modelId) {
+  return `https://generativelanguage.googleapis.com/${apiVersion}/models/${modelId}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`;
 }
 
 function logGeminiUsage(usage) {
@@ -89,7 +96,13 @@ function logGeminiUsage(usage) {
 }
 
 async function generateNote() {
-  const { app, controller } = beginNoteRun(RUN_META);
+  const modelId = getSelectedGeminiModel();
+  const runMeta = {
+    provider: "gemini3",
+    model: modelId
+  };
+
+  const { app, controller } = beginNoteRun(runMeta);
   if (!controller) {
     return;
   }
@@ -131,7 +144,7 @@ async function generateNote() {
   const geminiThinkingLevel = getSelectValue("geminiReasoning", "low");
 
   try {
-    let response = await fetch(makeGeminiUrl("v1beta", apiKey), {
+    let response = await fetch(makeGeminiUrl("v1beta", apiKey, modelId), {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -158,7 +171,7 @@ async function generateNote() {
     if (response.status === 404) {
       console.warn("v1beta streamGenerateContent returned 404, trying v1alpha");
 
-      response = await fetch(makeGeminiUrl("v1alpha", apiKey), {
+      response = await fetch(makeGeminiUrl("v1alpha", apiKey, modelId), {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -204,13 +217,13 @@ async function generateNote() {
     });
 
     noteTimer.stop("Text generation completed!");
-    app.emitNoteFinished?.(RUN_META);
+    app.emitNoteFinished?.(runMeta);
 
     logGeminiUsage(finalUsage);
 
     pushNormalizedNoteUsage({
-      providerKey: RUN_META.provider,
-      modelId: RUN_META.model,
+      providerKey: runMeta.provider,
+      modelId: runMeta.model,
       usage: finalUsage
     });
   } catch (error) {
@@ -218,7 +231,7 @@ async function generateNote() {
       finishNoteAbort({
         generatedNoteField,
         noteTimer,
-        runMeta: RUN_META
+        runMeta
       });
       return;
     }
