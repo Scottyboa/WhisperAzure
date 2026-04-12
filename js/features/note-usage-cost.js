@@ -36,6 +36,18 @@ import {
     return {};
   }
 
+  function getSelectedGeminiModelKey() {
+    const app = getApp();
+    if (typeof app.getSelectedGeminiModel === "function") {
+      const value = app.getSelectedGeminiModel();
+      return value ? String(value).trim() : null;
+    }
+
+    const sel = document.getElementById("geminiModel");
+    const value = (sel && sel.value) || readSession("gemini_model", DEFAULTS.geminiModel) || "";
+    return value ? String(value).trim() : null;
+  }
+
   function getSelectedBedrockModelKey() {
     const app = getApp();
     if (typeof app.getSelectedBedrockModel === "function") {
@@ -61,6 +73,10 @@ import {
     return getDefaultModelIdForEffectiveNoteProvider({
       effectiveProvider: providerKey,
       openaiModel: snapshot.openaiModel || readSession("openai_model", "") || DEFAULTS.openaiModel,
+      geminiModel:
+        snapshot.geminiModel ||
+        getSelectedGeminiModelKey() ||
+        DEFAULTS.geminiModel,
       vertexModel: snapshot.vertexModel || readSession("vertex_model", "") || DEFAULTS.vertexModel,
       bedrockModel:
         snapshot.bedrockModel ||
@@ -102,11 +118,21 @@ import {
     "mistral-large-latest": { input: 0.5, output: 1.5 },
   };
 
-  // Gemini API (AI Studio): Gemini 3 Pro Preview (USD per 1M tokens)
-  const GEMINI_3_PRO_API_USD_PER_MTOK = {
-    thresholdInputTokens: 200_000,
-    short: { input: 2.0, output: 12.0 },
-    long: { input: 4.0, output: 18.0 },
+  // Gemini API (AI Studio): USD per 1M billable tokens.
+  const GEMINI_API_USD_PER_MTOK = {
+    "gemini-3-pro-preview": {
+      thresholdInputTokens: 200_000,
+      short: { input: 2.0, output: 12.0 },
+      long: { input: 4.0, output: 18.0 },
+    },
+    "gemini-3.1-pro-preview": {
+      thresholdInputTokens: 200_000,
+      short: { input: 2.0, output: 12.0 },
+      long: { input: 4.0, output: 18.0 },
+    },
+    "gemini-3-flash-preview": {
+      rates: { input: 0.5, output: 3.0 },
+    },
   };
 
   // Vertex AI: Gemini 2.5 Pro (USD per 1M tokens)
@@ -188,9 +214,24 @@ import {
 
       const billableInput = promptTokens + toolUsePrompt;
       const billableOutput = outTokens + thoughts;
+      const modelId = String(
+        payload.modelId || getSelectedGeminiModelKey() || DEFAULTS.geminiModel
+      ).trim().toLowerCase();
+      const pricing = GEMINI_API_USD_PER_MTOK[modelId];
+      if (!pricing) return null;
+
+      if (pricing.rates) {
+        return estimateUsdFromRates({
+          rates: pricing.rates,
+          inputTokens: billableInput,
+          outputTokens: billableOutput,
+        });
+      }
+
       const tier =
-        promptTokens > GEMINI_3_PRO_API_USD_PER_MTOK.thresholdInputTokens ? "long" : "short";
-      const rates = GEMINI_3_PRO_API_USD_PER_MTOK[tier];
+        promptTokens > Number(pricing.thresholdInputTokens || 0) ? "long" : "short";
+      const rates = pricing[tier];
+      if (!rates) return null;
 
       return estimateUsdFromRates({
         rates,
@@ -442,6 +483,7 @@ import {
       "noteProvider",
       "openaiModel",
       "noteProviderMode",
+      "geminiModel",
       "vertexModel",
       "bedrockModel",
     ].forEach((id) => {
