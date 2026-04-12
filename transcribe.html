@@ -1968,7 +1968,7 @@
               <option value="openai">OpenAI</option>
               <option value="lemonfox">Lemonfox</option>
               <option value="mistral">Mistral</option>
-              <option value="gemini3">Gemini 3(Google AI studio)</option> <!-- Gemini via public API -->
+              <option value="gemini3">Google AI Studio</option> <!-- Gemini via public API -->
               <option value="gemini3-vertex">Google Vertex</option> <!-- Vertex-backed models (e.g. Gemini 2.5 Pro) -->
               <option value="aws-bedrock" selected>AWS Bedrock</option>
             </select>
@@ -1988,6 +1988,16 @@
               <select id="noteProviderMode">
                 <option value="streaming" selected>streaming</option>
                 <option value="non-streaming">non-streaming</option>
+              </select>
+            </div>
+
+            <div id="gemini-model-container"
+                 style="display:none; align-items:center; gap:6px; margin-left:8px;">
+              <label for="geminiModel" id="geminiModelLabel">Model:</label>
+              <select id="geminiModel">
+                <option value="gemini-3-pro-preview" selected>gemini-3-pro-preview</option>
+                <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview</option>
+                <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
               </select>
             </div>
 
@@ -2351,4 +2361,3 @@
 
 </body>
 </html>
-
