@@ -1013,6 +1013,10 @@ function getAccentColorForHubTab(snapshot) {
   return color || '';
 }
 
+function isHubTabActivelyRecording(snapshot) {
+  return String(snapshot?.state?.miniPanelStatusPhase || '').trim().toLowerCase() === 'recording';
+}
+
 function escapeHtml(value) {
   return String(value || '')
     .replace(/&/g, '&amp;')
@@ -1636,6 +1640,7 @@ function syncHubTabDropdown() {
   const trigger = $('miniTabPickerTrigger');
   const triggerText = $('miniTabPickerText');
   const triggerDot = $('miniTabPickerDot');
+  const triggerRecording = $('miniTabPickerRecording');
   const list = $('miniTabPickerList');
   const popover = $('miniTabPickerPopover');
   if (!select) return;
@@ -1655,11 +1660,16 @@ function syncHubTabDropdown() {
     if (trigger) {
       trigger.disabled = false;
       trigger.hidden = true;
+      trigger.setAttribute('aria-label', 'Mini panel tab selector');
     }
     if (triggerText) triggerText.textContent = tMini('noTabsOpen');
     if (triggerDot) {
       triggerDot.hidden = true;
       triggerDot.style.setProperty('--tab-accent', 'transparent');
+    }
+    if (triggerRecording) {
+      triggerRecording.hidden = true;
+      triggerRecording.title = '';
     }
     if (list) list.innerHTML = '';
     if (popover) popover.hidden = true;
@@ -1695,6 +1705,7 @@ function syncHubTabDropdown() {
   if (selected) {
     const accentColor = showAccents ? getAccentColorForHubTab(selected) : '';
     const text = getDisplayLabelForHubTab(selected, items.indexOf(selected));
+    const isRecording = isHubTabActivelyRecording(selected);
 
     if (triggerText) {
       triggerText.textContent = text;
@@ -1703,6 +1714,20 @@ function syncHubTabDropdown() {
     if (triggerDot) {
       triggerDot.hidden = !accentColor;
       triggerDot.style.setProperty('--tab-accent', accentColor || 'transparent');
+    }
+
+    if (triggerRecording) {
+      triggerRecording.hidden = !isRecording;
+      triggerRecording.title = isRecording ? tMini('recording') : '';
+    }
+
+    if (trigger) {
+      trigger.setAttribute(
+        'aria-label',
+        isRecording
+          ? `Mini panel tab selector, ${text}, ${tMini('recording')}`
+          : `Mini panel tab selector, ${text}`
+      );
     }
   }
 
@@ -1719,11 +1744,19 @@ function syncHubTabDropdown() {
 
       const accentColor = showAccents ? getAccentColorForHubTab(snapshot) : '';
       const text = getDisplayLabelForHubTab(snapshot, index);
+      const isRecording = isHubTabActivelyRecording(snapshot);
 
       button.innerHTML = `
         <span class="mini-tab-picker-item-dot" style="--tab-accent:${escapeHtml(accentColor || 'transparent')};" ${accentColor ? '' : 'hidden'}></span>
         <span class="mini-tab-picker-item-text">${escapeHtml(text)}</span>
+        ${isRecording ? `<span class="mini-tab-picker-item-recording" aria-hidden="true"></span>` : ''}
       `;
+
+      button.setAttribute(
+        'aria-label',
+        isRecording ? `${text}, ${tMini('recording')}` : text
+      );
+      button.title = isRecording ? `${text} — ${tMini('recording')}` : text;
 
       button.addEventListener('click', () => {
         const nextTabId = String(snapshot?.tabId || '').trim();
@@ -2490,6 +2523,20 @@ function renderMiniPanelDocument(targetWindow) {
       flex: 0 0 auto;
     }
 
+    .mini-tab-picker-recording,
+    .mini-tab-picker-item-recording {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #ef4444;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.16) inset,
+        0 0 0 0 rgba(239,68,68,0.45);
+      flex: 0 0 auto;
+      animation: mini-recording-pulse 1.35s ease-out infinite;
+      will-change: transform, opacity, box-shadow;
+    }
+
     .mini-tab-picker-text,
     .mini-tab-picker-item-text {
       min-width: 0;
@@ -2503,6 +2550,39 @@ function renderMiniPanelDocument(targetWindow) {
       flex: 0 0 auto;
       color: var(--muted);
       font-size: 11px;
+    }
+
+    @keyframes mini-recording-pulse {
+      0% {
+        transform: scale(0.92);
+        opacity: 0.95;
+        box-shadow:
+          0 0 0 1px rgba(255,255,255,0.16) inset,
+          0 0 0 0 rgba(239,68,68,0.45);
+      }
+
+      65% {
+        transform: scale(1.1);
+        opacity: 1;
+        box-shadow:
+          0 0 0 1px rgba(255,255,255,0.16) inset,
+          0 0 0 5px rgba(239,68,68,0);
+      }
+
+      100% {
+        transform: scale(0.92);
+        opacity: 0.95;
+        box-shadow:
+          0 0 0 1px rgba(255,255,255,0.16) inset,
+          0 0 0 0 rgba(239,68,68,0);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .mini-tab-picker-recording,
+      .mini-tab-picker-item-recording {
+        animation: none;
+      }
     }
 
     .mini-tab-picker-popover {
@@ -3103,6 +3183,7 @@ function renderMiniPanelDocument(targetWindow) {
             <button id="miniTabPickerTrigger" class="mini-tab-picker-trigger" type="button" aria-label="Mini panel tab selector" aria-expanded="false">
               <span id="miniTabPickerDot" class="mini-tab-picker-dot" hidden></span>
               <span id="miniTabPickerText" class="mini-tab-picker-text">Choose tab</span>
+              <span id="miniTabPickerRecording" class="mini-tab-picker-recording" hidden aria-hidden="true"></span>
               <span class="mini-tab-picker-caret">▾</span>
             </button>
             <div id="miniTabPickerPopover" class="mini-tab-picker-popover" hidden>
