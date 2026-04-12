@@ -402,7 +402,7 @@ function enqueueTranscription(wavBlob, chunkNum) {
   // Using a microtask avoids races where isProcessingQueue flips after we check it.
   queueMicrotask(() => {
     processTranscriptionQueue();
-  }, { signal: uiSignal });
+  });
 }
 
 async function processTranscriptionQueue() {
