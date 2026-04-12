@@ -9,6 +9,7 @@ import {
   inferNoteProviderUi,
   normalizeNoteUiProvider,
   listBedrockModelOptions,
+  listGeminiApiModelOptions,
   listNoteModeOptions,
   listNoteUiProviderOptions,
   listOpenAiModelOptions,
@@ -785,6 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const noteProviderSelect = document.getElementById('noteProvider');
     const openaiModelSelect = document.getElementById('openaiModel');
     const noteModeSelect = document.getElementById('noteProviderMode');
+    const geminiModelSelect = document.getElementById('geminiModel');
     const vertexModelSelect = document.getElementById('vertexModel');
     const bedrockModelSelect = document.getElementById('bedrockModel');
     const busy = !!getApp().noteGenerationInFlight;
@@ -803,6 +805,7 @@ document.addEventListener('DOMContentLoaded', () => {
       noteProviderSelect,
       openaiModelSelect,
       noteModeSelect,
+      geminiModelSelect,
       vertexModelSelect,
       bedrockModelSelect,
     ].forEach((el) => {
@@ -1370,6 +1373,13 @@ document.addEventListener('DOMContentLoaded', () => {
     return getDerivedNoteUiState().openaiModel;
   }
 
+  function getSelectedGeminiModel() {
+    return String(
+      document.getElementById('geminiModel')?.value ||
+        readSession('gemini_model', DEFAULTS.geminiModel)
+    ).toLowerCase();
+  }
+
   function getSelectedVertexModel() {
     return String(
       document.getElementById('vertexModel')?.value ||
@@ -1405,6 +1415,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function getNoteProviderSnapshot() {
     const effective = getSelectedEffectiveNoteProvider();
     const uiProvider = getSelectedNoteProviderUi();
+    const geminiModel = getSelectedGeminiModel();
     const vertexModel = getSelectedVertexModel();
     const bedrockModel = getSelectedBedrockModel();
     const openaiModel = getSelectedOpenAiModel();
@@ -1415,11 +1426,13 @@ document.addEventListener('DOMContentLoaded', () => {
       noteProviderEffective: effective,
       noteProviderMode,
       openaiModel,
+      geminiModel,
       vertexModel,
       bedrockModel,
       noteProviderLogLabel: getNoteProviderLogLabel({
         effectiveProvider: effective,
         openaiModel,
+        geminiModel,
         vertexModel,
         bedrockModel,
       }),
@@ -2016,6 +2029,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getMiniPanelState() {
+    const app = getApp();
     const startBtn = document.getElementById('startButton');
     const stopBtn = document.getElementById('stopButton');
     const pauseBtn = document.getElementById('pauseResumeButton');
@@ -2023,27 +2037,70 @@ document.addEventListener('DOMContentLoaded', () => {
     const transcriptEl = document.getElementById('transcription');
     const noteEl = document.getElementById('generatedNote');
     const statusEl = document.getElementById('statusMessage');
+    const statusText = String(statusEl?.innerText || '').trim();
+    const pauseResumeLabel = String(pauseBtn?.textContent || '').trim();
+    const canStart = !(startBtn?.disabled ?? true);
+    const canStop = !(stopBtn?.disabled ?? true);
+    const canPauseResume = !(pauseBtn?.disabled ?? true);
+    const canAbort = !(abortBtn?.disabled ?? true);
+    const transcribeBusy = !!app.isTranscribeBusy?.();
+    const noteBusy = !!app.isNoteGenerationBusy?.();
+    const recordingStartedAt = Number(app.miniPanelRecordingStartedAt || 0);
+    const recordingPausedAt = Number(app.miniPanelRecordingPausedAt || 0);
+    const recordingAccumulatedMs = Number(app.miniPanelRecordingAccumulatedMs || 0);
+
+    let effectiveMiniPanelStatusPhase = String(app.miniPanelStatusPhase || 'idle');
+    const statusLower = statusText.toLowerCase();
+    const pauseLabelLower = pauseResumeLabel.toLowerCase();
+
+    const looksPausedByUi =
+      /recording paused|paused/.test(statusLower) ||
+      (canPauseResume && /resume/.test(pauseLabelLower));
+    const looksRecordingByUi =
+      /listening for speech|resuming recording/.test(statusLower) ||
+      /^recording(?:\s*\.\.\.)?$/.test(statusLower) ||
+      (canPauseResume && /pause/.test(pauseLabelLower));
+    const looksIdleByUi =
+      canStart &&
+      !canStop &&
+      !canPauseResume &&
+      !canAbort &&
+      !transcribeBusy &&
+      !noteBusy &&
+      recordingStartedAt <= 0 &&
+      recordingPausedAt <= 0;
+    const staleActivePhase =
+      /^(recording|paused|transcribing|generating-transcript|note-generating)$/
+        .test(effectiveMiniPanelStatusPhase);
+
+    if (looksPausedByUi) {
+      effectiveMiniPanelStatusPhase = 'paused';
+    } else if (looksRecordingByUi) {
+      effectiveMiniPanelStatusPhase = 'recording';
+    } else if (looksIdleByUi && staleActivePhase) {
+      effectiveMiniPanelStatusPhase = 'idle';
+    }
 
     return {
-      transcribeBusy: !!getApp().isTranscribeBusy?.(),
-      noteBusy: !!getApp().isNoteGenerationBusy?.(),
-      canStart: !(startBtn?.disabled ?? true),
-      canStop: !(stopBtn?.disabled ?? true),
-      canPauseResume: !(pauseBtn?.disabled ?? true),
-      canAbort: !(abortBtn?.disabled ?? true),
+      transcribeBusy,
+      noteBusy,
+      canStart,
+      canStop,
+      canPauseResume,
+      canAbort,
       hasTranscript: !!String(transcriptEl?.value || '').trim(),
       hasNote: !!String(noteEl?.value || '').trim(),
-      statusText: String(statusEl?.innerText || '').trim(),
-      pauseResumeLabel: String(pauseBtn?.textContent || '').trim(),
+      statusText,
+      pauseResumeLabel,
       autoGenerateEnabled: !!getAutoGenerateEnabled(),
       autoCopyMode: getAutoCopyMode(),
       autoCopyExtensionAvailable: isAutoCopyExtensionAvailable(),
-      miniPanelStatusPhase: String(getApp().miniPanelStatusPhase || 'idle'),
-      miniPanelCopiedState: String(getApp().miniPanelCopiedState || ''),
-      miniPanelCopiedAt: Number(getApp().miniPanelCopiedAt || 0),
-      recordingStartedAt: Number(getApp().miniPanelRecordingStartedAt || 0),
-      recordingPausedAt: Number(getApp().miniPanelRecordingPausedAt || 0),
-      recordingAccumulatedMs: Number(getApp().miniPanelRecordingAccumulatedMs || 0),
+      miniPanelStatusPhase: effectiveMiniPanelStatusPhase,
+      miniPanelCopiedState: String(app.miniPanelCopiedState || ''),
+      miniPanelCopiedAt: Number(app.miniPanelCopiedAt || 0),
+      recordingStartedAt,
+      recordingPausedAt,
+      recordingAccumulatedMs,
       usePromptEnabled: getUsePromptEnabled(),
       transcribeProvider: getSelectedTranscribeProvider(),
       sonioxRegion: getSelectedSonioxRegion(),
@@ -2052,6 +2109,7 @@ document.addEventListener('DOMContentLoaded', () => {
       noteProviderEffective: getSelectedEffectiveNoteProvider(),
       noteProviderMode: getSelectedNoteProviderMode(),
       openaiModel: getSelectedOpenAiModel(),
+      geminiModel: getSelectedGeminiModel(),
       vertexModel: getSelectedVertexModel(),
       bedrockModel: getSelectedBedrockModel(),
     };
@@ -2160,9 +2218,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (pauseBtn && pauseBtn.dataset.miniPanelStatusBound !== '1') {
       pauseBtn.dataset.miniPanelStatusBound = '1';
       pauseBtn.addEventListener('click', () => {
+        const labelBeforeClick = String(pauseBtn.textContent || '').trim().toLowerCase();
+        const wasPausedBeforeClick = /resume/.test(labelBeforeClick);
+
         window.setTimeout(() => {
-          const label = String(pauseBtn.textContent || '').trim().toLowerCase();
-          if (/resume/.test(label)) {
+          if (!wasPausedBeforeClick) {
             clearMiniPanelCopyState('recording-paused');
             pauseMiniPanelRecordingTimer();
             setMiniPanelStatusPhase('paused');
@@ -2173,7 +2233,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setMiniPanelStatusPhase('recording');
             emitAppStateChanged('mini-panel-recording-resumed');
           }
-        }, 30);
+        }, 0);
       });
     }
 
@@ -2266,6 +2326,7 @@ document.addEventListener('DOMContentLoaded', () => {
   app.getSelectedEffectiveNoteProvider = getSelectedEffectiveNoteProvider;
   app.getSelectedNoteProviderUi = getSelectedNoteProviderUi;
   app.getSelectedOpenAiModel = getSelectedOpenAiModel;
+  app.getSelectedGeminiModel = getSelectedGeminiModel;
   app.getSelectedVertexModel = getSelectedVertexModel;
   app.getSelectedBedrockModel = getSelectedBedrockModel;
   app.getSelectedNoteProviderMode = getSelectedNoteProviderMode;
@@ -2288,6 +2349,7 @@ document.addEventListener('DOMContentLoaded', () => {
     getTranscribeProviderShortLabel,
     inferNoteProviderUi,
     listBedrockModelOptions,
+    listGeminiApiModelOptions,
     listNoteModeOptions,
     listNoteUiProviderOptions,
     normalizeNoteUiProvider,
@@ -2442,6 +2504,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     writeSession('openai_model', normalizedNext);
     emitAppStateChanged('openai-model-set-programmatically', {
+      model: normalizedNext,
+    });
+    return true;
+  };
+
+  app.setGeminiModel = function setGeminiModel(next) {
+    const normalizedNext = String(next || '').trim().toLowerCase();
+    if (!normalizedNext) return false;
+
+    const el = document.getElementById('geminiModel');
+    if (el && el.value !== normalizedNext) {
+      el.value = normalizedNext;
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    }
+
+    writeSession('gemini_model', normalizedNext);
+    emitAppStateChanged('gemini-model-set-programmatically', {
       model: normalizedNext,
     });
     return true;
