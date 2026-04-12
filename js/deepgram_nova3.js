@@ -423,8 +423,9 @@ async function transcribeChunkDirectly(wavBlob, chunkNum, { signal, sessionId } 
     transcriptionError = true;
     return `[Missing API key for chunk ${chunkNum}]`;
   }
-  // Nova-3 with smart formatting; allow mixed-language consultations.
-  const url = `${DEEPGRAM_LISTEN_URL}?model=nova-3&smart_format=true&language=multi`;
+  // Deepgram automatic dominant-language detection.
+  // Do not also send `language=...` here, because detect_language overrides it.
+  const url = `${DEEPGRAM_LISTEN_URL}?model=nova-3-general&smart_format=true&detect_language=true`;
   try {
     const rsp = await fetchWithTimeout(url, {
       method: "POST",
@@ -440,6 +441,12 @@ async function transcribeChunkDirectly(wavBlob, chunkNum, { signal, sessionId } 
       throw new Error(`Deepgram error ${rsp.status}: ${txt}`);
     }
     const data = await rsp.json();
+    console.log(
+      "[Deepgram] detected_language:",
+      data?.results?.channels?.[0]?.detected_language,
+      "confidence:",
+      data?.results?.channels?.[0]?.language_confidence
+    );
     const alternative = data?.results?.channels?.[0]?.alternatives?.[0] || {};
     let text = typeof alternative?.transcript === "string"
       ? alternative.transcript.trim()
