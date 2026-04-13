@@ -10,7 +10,7 @@
 
 export const DEFAULTS = {
   transcribeProvider: 'soniox',
-  sonioxRegion: 'us',
+  sonioxRegion: 'eu',
   sonioxSpeakerLabels: 'off',
   noteProvider: 'aws-bedrock',
   openaiModel: 'gpt5',
