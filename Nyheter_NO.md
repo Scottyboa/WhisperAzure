@@ -1,3 +1,41 @@
+## 13. april 2026
+
+### Nytt Mini panel lagt til
+
+Appen er nå oppdatert med et nytt **Mini panel**.
+
+Mini panelet gjør det enklere å styre opptak og jobbe med transkripsjon/notat i et mindre kontrollvindu som kan holdes synlig mens du arbeider videre. Panelet inneholder de viktigste funksjonene fra hovedsiden, som opptakskontroller og rask tilgang til transkripsjon-/notatrelaterte handlinger.
+
+Mini panelet er foreløpig først og fremst tilpasset **Google Chrome**. Det vil sannsynligvis også fungere i andre nettlesere, men den spesielle **sticky**-funksjonen er i hovedsak forventet å fungere i Chrome.
+
+Med **sticky** menes at Mini panelet kan ligge synlig over andre programmer og nettleservinduer mens du jobber videre andre steder, slik at du slipper å bytte tilbake til app-fanen hele tiden.
+
+I nettlesere som **Safari** og **Firefox** kan Mini panelet fortsatt åpnes og fungere, men den sticky always-on-top-funksjonen kan ikke forventes å fungere på samme måte.
+
+### Nye Google AI Studio-modeller lagt til
+
+Det er nå lagt til nye modeller for **Google AI Studio** i notatmodulen, inkludert **Gemini 3.1** og **Gemini 3 Flash**.
+
+### Viktig om personvern / GDPR
+
+Vær oppmerksom på at bruk av **Google AI Studio** i dagens oppsett **ikke er GDPR-kompatibelt** for sensitive/pasientrelaterte data. Dette må brukere ta hensyn til før modellene tas i bruk. De beste GDPR vennlige modellene for notatgenerering i denne appen vil være Claude modellene via AWS Bedrock. For mer info om hvordan man setter opp AWS Bedrock, se forsiden.
+
+### Auto-copy-utvidelsen er oppdatert
+
+**Auto-copy**-utvidelsen er nå oppdatert slik at den også kan auto-kopiere **transkripsjonen**, og ikke bare det ferdige notatet.
+
+For å få denne nye funksjonen må du laste ned **Auto-copy zip-filen** på nytt fra hyperlenken i appen og installere den oppdaterte versjonen av utvidelsen.
+
+Hvis du installerte utvidelsen **før 13. april 2026**, bør du først fjerne den gamle versjonen og deretter installere den nye.
+
+### Ny fargekoding for faner
+
+Hvis du har flere app-faner åpne samtidig, får hver fane nå sin egen **fargekode**.
+
+Dette vises både på selve fanesymbolet og i **fanevelgeren** i Mini panelet, slik at det blir enklere å se hvilken fane du styrer.
+
+---
+
 ## 30. mars 2026
 
 ### Ny auto-copy funksjon lagt til for ferdige notater
