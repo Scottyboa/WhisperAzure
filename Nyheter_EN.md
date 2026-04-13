@@ -20,11 +20,11 @@ New models have now been added for **Google AI Studio** in the note module, incl
 
 Please note that use of **Google AI Studio** is **not GDPR compliant** for sensitive/patient-related data in the current setup. Users must take this into consideration before using these models. On this app the best models are still the Claude models via AWS Bedrock. Information about AWS Bedrock setup can be read on the front page.
 
-### Auto-copy extension updated
+### Auto-copy extension updated - Chrome
 
 The **Auto-copy** extension has now been updated so that it can also auto-copy the **transcript**, and not only the finished note.
 
-To get this new function, you must download the **Auto-copy zip file** again from the hyperlink in the app and install the updated version of the extension.
+To get this new function, you must download the **Auto-copy zip file** again here: <a href="div/autocopy.zip" download>autocopy.zip</a>, and install the updated version of the chrome extension.
 
 If you installed the extension **before 13 April, 2026**, you should remove the old version first and then install the new one.
 
