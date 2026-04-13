@@ -540,7 +540,17 @@ async function streamGeminiSse(body, {
 
 function bindGenerateNoteButton(handler) {
   const generateNoteButton = document.getElementById("generateNoteButton");
-  if (!generateNoteButton) return;
+  if (!generateNoteButton || typeof handler !== "function") return;
+
+  // Only one provider-owned Generate Note handler should be active at a time.
+  // Provider modules are re-initialized on runtime switches, so remove the
+  // previously bound provider handler before attaching the new one.
+  const previousHandler = generateNoteButton.__providerGenerateNoteHandler;
+  if (typeof previousHandler === "function") {
+    generateNoteButton.removeEventListener("click", previousHandler);
+  }
+
+  generateNoteButton.__providerGenerateNoteHandler = handler;
   generateNoteButton.addEventListener("click", handler);
 }
 
