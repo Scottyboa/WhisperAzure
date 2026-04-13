@@ -1,3 +1,41 @@
+## 13 April, 2026
+
+### New Mini panel added
+
+The app has now been updated with a new **Mini panel**.
+
+The Mini panel makes it easier to control recordings and work with transcripts/notes while keeping a smaller control window visible. It includes the most important functions from the main page, such as recording controls and quick access to transcript/note-related actions.
+
+The Mini panel is currently mainly optimized for **Google Chrome**. It will most likely also work in other browsers, but the special **sticky** behavior is primarily expected to work in Chrome.
+
+By **sticky**, this means that the Mini panel can stay visible above other browser windows and programs while you continue working elsewhere, so you do not need to keep switching back to the main app tab.
+
+In browsers such as **Safari** and **Firefox**, the Mini panel may still open and work, but the sticky always-on-top behavior should not be expected to work in the same way.
+
+### New Google AI Studio models added
+
+New models have now been added for **Google AI Studio** in the note module, including **Gemini 3.1** and **Gemini 3 Flash**.
+
+### Important regarding privacy / GDPR
+
+Please note that use of **Google AI Studio** is **not GDPR compliant** for sensitive/patient-related data in the current setup. Users must take this into consideration before using these models. On this app the best models are still the Claude models via AWS Bedrock. Information about AWS Bedrock setup can be read on the front page.
+
+### Auto-copy extension updated
+
+The **Auto-copy** extension has now been updated so that it can also auto-copy the **transcript**, and not only the finished note.
+
+To get this new function, you must download the **Auto-copy zip file** again from the hyperlink in the app and install the updated version of the extension.
+
+If you installed the extension **before 13 April, 2026**, you should remove the old version first and then install the new one.
+
+### New tab color coding added
+
+If you have multiple app tabs open at the same time, each tab now gets its own **color coding**.
+
+This is visible both on the tab symbol itself and in the **tab selector** inside the Mini panel, which makes it easier to see which tab you are currently controlling.
+
+---
+
 ## 30 March, 2026
 
 ### New auto-copy function added for finished notes
