@@ -20,11 +20,11 @@ Det er nå lagt til nye modeller for **Google AI Studio** i notatmodulen, inklud
 
 Vær oppmerksom på at bruk av **Google AI Studio** i dagens oppsett **ikke er GDPR-kompatibelt** for sensitive/pasientrelaterte data. Dette må brukere ta hensyn til før modellene tas i bruk. De beste GDPR vennlige modellene for notatgenerering i denne appen vil være Claude modellene via AWS Bedrock. For mer info om hvordan man setter opp AWS Bedrock, se forsiden.
 
-### Auto-copy-utvidelsen er oppdatert
+### Auto-copy-utvidelsen er oppdatert (Chrome)
 
 **Auto-copy**-utvidelsen er nå oppdatert slik at den også kan auto-kopiere **transkripsjonen**, og ikke bare det ferdige notatet.
 
-For å få denne nye funksjonen må du laste ned **Auto-copy zip-filen** på nytt fra hyperlenken i appen og installere den oppdaterte versjonen av utvidelsen.
+For å få denne nye funksjonen må du laste ned **Auto-copy zip-filen** på nytt her: <a href="div/autocopy.zip" download>autocopy.zip</a>, og installere den oppdaterte versjonen av Chrome-utvidelsen.
 
 Hvis du installerte utvidelsen **før 13. april 2026**, bør du først fjerne den gamle versjonen og deretter installere den nye.
 
