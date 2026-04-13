@@ -162,9 +162,9 @@ const NOTE_MODE_OPTIONS = [
 ];
 
 const GEMINI_API_MODEL_OPTIONS = [
-  { value: 'gemini-3-pro-preview', label: 'gemini-3-pro-preview' },
-  { value: 'gemini-3.1-pro-preview', label: 'gemini-3.1-pro-preview' },
-  { value: 'gemini-3-flash-preview', label: 'gemini-3-flash-preview' },
+  { value: 'gemini-3-pro-preview', label: 'Gemini 3 Pro' },
+  { value: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro' },
+  { value: 'gemini-3-flash-preview', label: 'Gemini 3 Flash' },
 ];
 
 const VERTEX_MODEL_OPTIONS = [
