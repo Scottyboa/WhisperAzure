@@ -330,7 +330,7 @@ function getAPIKey() {
 
 // Region-aware base: reads sessionStorage on every call
 function getSonioxBase() {
-  const region = (sessionStorage.getItem("soniox_region") || "us").toLowerCase();
+  const region = (sessionStorage.getItem("soniox_region") || "eu").toLowerCase();
   return region === "eu"
     ? "https://api.eu.soniox.com/v1"
     : "https://api.soniox.com/v1";
