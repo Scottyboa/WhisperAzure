@@ -11,6 +11,7 @@ import {
   startNoteTimer,
   streamGeminiSse
 } from "./core/note-runner.js";
+import { normalizeGeminiReasoning } from "./core/provider-registry.js";
 
 const DEFAULT_MODEL_ID = "gemini-3-pro-preview";
 
@@ -141,7 +142,10 @@ async function generateNote() {
     transcriptionText
   });
 
-  const geminiThinkingLevel = getSelectValue("geminiReasoning", "low");
+  const geminiThinkingLevel = normalizeGeminiReasoning(
+    getSelectValue("geminiReasoning", "high"),
+    modelId
+  );
 
   try {
     let response = await fetch(makeGeminiUrl("v1beta", apiKey, modelId), {

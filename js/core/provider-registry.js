@@ -14,8 +14,10 @@ export const DEFAULTS = {
   sonioxSpeakerLabels: 'off',
   noteProvider: 'aws-bedrock',
   openaiModel: 'gpt5',
+  openaiReasoning: 'none',
   noteMode: 'streaming',
   geminiModel: 'gemini-3-pro-preview',
+  geminiReasoning: 'high',
   vertexModel: 'gemini-2.5-pro',
   bedrockModel: 'opus-4-5',
 };
@@ -60,14 +62,6 @@ const TRANSCRIBE_PROVIDER_REGISTRY = {
 };
 
 const NOTE_PROVIDER_REGISTRY = {
-  gpt4: {
-    id: 'gpt4',
-    label: 'GPT-4-latest',
-    uiProvider: 'openai',
-    openaiModel: 'gpt4',
-    mode: 'streaming',
-    modulePath: './noteGeneration.js',
-  },
   gpt5: {
     id: 'gpt5',
     label: 'GPT-5.1',
@@ -153,13 +147,37 @@ const OPENAI_NOTE_MODEL_OPTIONS = [
   { value: 'gpt5', label: 'GPT-5.1' },
   { value: 'gpt52', label: 'GPT-5.2' },
   { value: 'gpt54', label: 'GPT-5.4' },
-  { value: 'gpt4', label: 'GPT-4-latest' },
 ];
 
 const NOTE_MODE_OPTIONS = [
   { value: 'streaming', label: 'streaming' },
   { value: 'non-streaming', label: 'non-streaming' },
 ];
+
+const OPENAI_REASONING_OPTIONS = [
+  { value: 'none', label: 'None' },
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+];
+
+const GEMINI_REASONING_OPTIONS_COMMON = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+];
+
+const GEMINI_REASONING_OPTIONS_FLASH = [
+  { value: 'minimal', label: 'Minimal' },
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+];
+
+function isGeminiFlashModel(modelId) {
+  return String(modelId || '').trim().toLowerCase().includes('flash');
+}
+
 
 const GEMINI_API_MODEL_OPTIONS = [
   { value: 'gemini-3-pro-preview', label: 'Gemini 3 Pro' },
@@ -214,6 +232,17 @@ export function listOpenAiModelOptions() {
 
 export function listNoteModeOptions() {
   return NOTE_MODE_OPTIONS.map((item) => ({ ...item }));
+}
+
+export function listOpenAiReasoningOptions() {
+  return OPENAI_REASONING_OPTIONS.map((item) => ({ ...item }));
+}
+
+export function listGeminiReasoningOptions(modelId = DEFAULTS.geminiModel) {
+  const options = isGeminiFlashModel(modelId)
+    ? GEMINI_REASONING_OPTIONS_FLASH
+    : GEMINI_REASONING_OPTIONS_COMMON;
+  return options.map((item) => ({ ...item }));
 }
 
 export function listGeminiApiModelOptions() {
@@ -278,6 +307,9 @@ export function getTranscribeProviderShortLabel(provider) {
 
 export function normalizeNoteEffectiveProvider(value) {
   const raw = String(value || '').trim().toLowerCase();
+  // Legacy migration: old saved GPT-4 sessions should land on the current
+  // default OpenAI model, not silently fall back to AWS Bedrock.
+  if (raw === 'gpt4') return DEFAULTS.openaiModel;
   return NOTE_PROVIDER_REGISTRY[raw] ? raw : DEFAULTS.noteProvider;
 }
 
@@ -302,7 +334,6 @@ export function resolveEffectiveNoteProvider({ provider, openaiModel, noteMode }
   }
 
   if (model === 'gpt54') return 'gpt54';
-  if (model === 'gpt4') return 'gpt4';
 
   return DEFAULTS.openaiModel;
 }
@@ -341,6 +372,24 @@ export function normalizeNoteMode(mode) {
   return String(mode || '').trim().toLowerCase() === 'non-streaming'
     ? 'non-streaming'
     : DEFAULTS.noteMode;
+}
+
+export function normalizeOpenAiReasoning(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  return OPENAI_REASONING_OPTIONS.some((item) => item.value === raw)
+    ? raw
+    : DEFAULTS.openaiReasoning;
+}
+
+export function normalizeGeminiReasoning(value, modelId = DEFAULTS.geminiModel) {
+  const raw = String(value || '').trim().toLowerCase();
+  const options = isGeminiFlashModel(modelId)
+    ? GEMINI_REASONING_OPTIONS_FLASH
+    : GEMINI_REASONING_OPTIONS_COMMON;
+
+  return options.some((item) => item.value === raw)
+    ? raw
+    : DEFAULTS.geminiReasoning;
 }
 
 export function getNoteProviderConfig(effectiveProvider) {
@@ -449,7 +498,9 @@ export function getNoteUiVisibility({ provider, openaiModel } = {}) {
   return {
     showOpenAi: isOpenAi,
     showOpenAiMode: isGpt5x,
+    showOpenAiReasoning: isGpt5x,
     showGeminiApi: uiProvider === 'gemini3',
+    showGeminiReasoning: uiProvider === 'gemini3',
     showVertex: uiProvider === 'gemini3-vertex',
     showBedrock: uiProvider === 'aws-bedrock',
   };

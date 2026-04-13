@@ -12,6 +12,7 @@ import {
   startNoteTimer,
   pushNormalizedNoteUsage
 } from "./core/note-runner.js";
+import { normalizeOpenAiReasoning } from "./core/provider-registry.js";
 
 const RUN_META = {
   provider: "openai",
@@ -80,7 +81,9 @@ async function generateNote() {
   }
 
   const finalPromptText = buildStandardNotePrompt(promptText);
-  const reasoningLevel = getSelectValue("gpt5Reasoning", "low");
+  const reasoningLevel = normalizeOpenAiReasoning(
+    getSelectValue("gpt5Reasoning", "none")
+  );
   const requestBody = buildRequestBody({
     finalPromptText,
     supplementaryWrapped,

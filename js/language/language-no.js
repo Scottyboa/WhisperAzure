@@ -44,7 +44,7 @@ export const indexTranslations = {
   <p><strong>2) Notat-/tekstgenerering – leverandører/modeller i appen</strong></p>
   <ul>
     <li><strong>AWS Bedrock (Claude)</strong> – Claude Haiku 4.5, Claude Sonnet 4.5, Claude Opus 4.5</li>
-    <li><strong>OpenAI</strong> – GPT-5.2, GPT-5.1, GPT-4-latest</li>
+    <li><strong>OpenAI</strong> – GPT-5.4, GPT-5.2, GPT-5.1</li>
     <li><strong>Google Gemini (AI Studio)</strong> – Gemini 3</li>
     <li><strong>Google Vertex</strong> – Gemini 2.5 Pro</li>
     <li><strong>Mistral</strong> – Mistral Large (Large 3)</li>
@@ -416,9 +416,9 @@ For å bruke tale-til-tekst og notatgenereringsmodellene i denne appen, må du a
 - Deepgram Nova-3<br><br>
 
 <strong>Tekst/notat-genereringp:</strong><br>
+- GPT-5.4<br>
 - GPT-5.2<br>
 - GPT-5.1<br>
-- GPT-4-latest<br>
 - Claude sonnet 4.5, Claude Opus 4.5 og Claude Haiku 4.5(via AWS Bedrock)<br>
 - Gemini 2.5 pro(via Google Vertex)<br>
 - Lemonfox text generation (Llama 3-based models)<br>

@@ -16,14 +16,18 @@ import {
   getTranscribeActiveApiKeyStorageKey,
   listBedrockModelOptions,
   listGeminiApiModelOptions,
+  listGeminiReasoningOptions,
   listNoteModeOptions,
   listNoteUiProviderOptions,
   listOpenAiModelOptions,
+  listOpenAiReasoningOptions,
   listSonioxRegionOptions,
   listSonioxSpeakerLabelOptions,
   listTranscribeProviderOptions,
   listVertexModelOptions,
+  normalizeGeminiReasoning,
   normalizeNoteMode,
+  normalizeOpenAiReasoning,
   normalizeTranscribeProvider,
   resolveEffectiveNoteProvider,
 } from '../core/provider-registry.js';
@@ -38,7 +42,9 @@ import {
 
     noteProvider: 'note_provider',
     noteProviderMode: 'note_provider_mode',
+    openaiReasoning: 'openai_reasoning',
     geminiModel: 'gemini_model',
+    geminiReasoning: 'gemini_reasoning',
     vertexModel: 'vertex_model',
     bedrockModel: 'bedrock_model',
   };
@@ -196,10 +202,17 @@ import {
       effectiveProvider: ui.effectiveProvider,
       provider: ui.provider,
       openaiModel: ui.openaiModel,
+      openaiReasoning: normalizeOpenAiReasoning(
+        readSession(STORAGE_KEYS.openaiReasoning, DEFAULTS.openaiReasoning)
+      ),
       mode: ui.mode,
       geminiModel: normalizeLower(
         readSession(STORAGE_KEYS.geminiModel, DEFAULTS.geminiModel),
         DEFAULTS.geminiModel
+      ),
+      geminiReasoning: normalizeGeminiReasoning(
+        readSession(STORAGE_KEYS.geminiReasoning, DEFAULTS.geminiReasoning),
+        readSession(STORAGE_KEYS.geminiModel, DEFAULTS.geminiModel)
       ),
       vertexModel: normalizeLower(
         readSession(STORAGE_KEYS.vertexModel, DEFAULTS.vertexModel),
@@ -215,8 +228,10 @@ import {
   function persistSelectedNoteState({
     provider,
     openaiModel,
+    openaiReasoning,
     noteMode,
     geminiModel,
+    geminiReasoning,
     vertexModel,
     bedrockModel,
   }) {
@@ -228,7 +243,12 @@ import {
 
     writeSession(STORAGE_KEYS.noteProvider, effectiveProvider);
     writeSession(STORAGE_KEYS.noteProviderMode, normalizeNoteMode(noteMode));
+    writeSession(STORAGE_KEYS.openaiReasoning, normalizeOpenAiReasoning(openaiReasoning));
     writeSession(STORAGE_KEYS.geminiModel, normalizeLower(geminiModel, DEFAULTS.geminiModel));
+    writeSession(
+      STORAGE_KEYS.geminiReasoning,
+      normalizeGeminiReasoning(geminiReasoning, geminiModel)
+    );
     writeSession(STORAGE_KEYS.vertexModel, normalizeLower(vertexModel, DEFAULTS.vertexModel));
     writeSession(STORAGE_KEYS.bedrockModel, normalizeLower(bedrockModel, DEFAULTS.bedrockModel));
 
@@ -239,10 +259,14 @@ import {
     providerSelect,
     openaiModelContainer,
     openaiModelSelect,
+    openaiReasoningContainer,
+    openaiReasoningSelect,
     noteModeContainer,
     noteModeSelect,
     geminiModelContainer,
     geminiModelSelect,
+    geminiReasoningContainer,
+    geminiReasoningSelect,
     vertexModelContainer,
     vertexModelSelect,
     bedrockModelContainer,
@@ -251,18 +275,41 @@ import {
   }) {
     const selectedProvider = normalizeLower(providerValue, DEFAULTS.noteProvider);
     const selectedOpenAiModel = normalizeLower(openaiModelSelect?.value, DEFAULTS.openaiModel);
+    const selectedGeminiModel = normalizeLower(geminiModelSelect?.value, DEFAULTS.geminiModel);
     const visibility = getNoteUiVisibility({
       provider: selectedProvider,
       openaiModel: selectedOpenAiModel,
     });
+
+    ensureSelectOptions(openaiReasoningSelect, listOpenAiReasoningOptions());
+    ensureSelectOptions(geminiReasoningSelect, listGeminiReasoningOptions(selectedGeminiModel));
+
+    if (openaiReasoningSelect) {
+      const normalizedOpenAiReasoning = normalizeOpenAiReasoning(openaiReasoningSelect.value);
+      if (openaiReasoningSelect.value !== normalizedOpenAiReasoning) {
+        openaiReasoningSelect.value = normalizedOpenAiReasoning;
+      }
+    }
+
+    if (geminiReasoningSelect) {
+      const normalizedGeminiEffort = normalizeGeminiReasoning(
+        geminiReasoningSelect.value,
+        selectedGeminiModel
+      );
+      if (geminiReasoningSelect.value !== normalizedGeminiEffort) {
+        geminiReasoningSelect.value = normalizedGeminiEffort;
+      }
+    }
 
     if (providerSelect && providerSelect.value !== selectedProvider) {
       providerSelect.value = selectedProvider;
     }
 
     setDisplay(openaiModelContainer, visibility.showOpenAi);
+    setDisplay(openaiReasoningContainer, visibility.showOpenAiReasoning);
     setDisplay(noteModeContainer, visibility.showOpenAiMode);
     setDisplay(geminiModelContainer, visibility.showGeminiApi);
+    setDisplay(geminiReasoningContainer, visibility.showGeminiReasoning);
     setDisplay(vertexModelContainer, visibility.showVertex);
     setDisplay(bedrockModelContainer, visibility.showBedrock);
 
@@ -453,10 +500,14 @@ import {
 
     const openaiModelContainer = document.getElementById('openai-model-container');
     const openaiModelSelect = document.getElementById('openaiModel');
+    const openaiReasoningContainer = document.getElementById('gpt5-reasoning-container');
+    const openaiReasoningSelect = document.getElementById('gpt5Reasoning');
     const noteModeContainer = document.getElementById('note-provider-mode-container');
     const noteModeSelect = document.getElementById('noteProviderMode');
     const geminiModelContainer = document.getElementById('gemini-model-container');
     const geminiModelSelect = document.getElementById('geminiModel');
+    const geminiReasoningContainer = document.getElementById('gemini-reasoning-container');
+    const geminiReasoningSelect = document.getElementById('geminiReasoning');
     const vertexModelContainer = document.getElementById('vertex-model-container');
     const vertexModelSelect = document.getElementById('vertexModel');
     const bedrockModelContainer = document.getElementById('bedrock-model-container');
@@ -464,8 +515,10 @@ import {
 
     ensureSelectOptions(providerSelect, listNoteUiProviderOptions());
     ensureSelectOptions(openaiModelSelect, listOpenAiModelOptions());
+    ensureSelectOptions(openaiReasoningSelect, listOpenAiReasoningOptions());
     ensureSelectOptions(noteModeSelect, listNoteModeOptions());
     ensureSelectOptions(geminiModelSelect, listGeminiApiModelOptions());
+    ensureSelectOptions(geminiReasoningSelect, listGeminiReasoningOptions(geminiModelSelect?.value || DEFAULTS.geminiModel));
     ensureSelectOptions(vertexModelSelect, listVertexModelOptions());
     ensureSelectOptions(bedrockModelSelect, listBedrockModelOptions());
 
@@ -473,8 +526,10 @@ import {
 
     providerSelect.value = stored.provider;
     if (openaiModelSelect) openaiModelSelect.value = stored.openaiModel;
+    if (openaiReasoningSelect) openaiReasoningSelect.value = stored.openaiReasoning;
     if (noteModeSelect) noteModeSelect.value = stored.mode;
     if (geminiModelSelect) geminiModelSelect.value = stored.geminiModel;
+    if (geminiReasoningSelect) geminiReasoningSelect.value = stored.geminiReasoning;
     if (vertexModelSelect) vertexModelSelect.value = stored.vertexModel;
     if (bedrockModelSelect) bedrockModelSelect.value = stored.bedrockModel;
 
@@ -482,10 +537,14 @@ import {
       providerSelect,
       openaiModelContainer,
       openaiModelSelect,
+      openaiReasoningContainer,
+      openaiReasoningSelect,
       noteModeContainer,
       noteModeSelect,
       geminiModelContainer,
       geminiModelSelect,
+      geminiReasoningContainer,
+      geminiReasoningSelect,
       vertexModelContainer,
       vertexModelSelect,
       bedrockModelContainer,
@@ -497,8 +556,10 @@ import {
       const effectiveProvider = persistSelectedNoteState({
         provider: providerSelect.value,
         openaiModel: openaiModelSelect?.value || DEFAULTS.openaiModel,
+        openaiReasoning: openaiReasoningSelect?.value || DEFAULTS.openaiReasoning,
         noteMode: noteModeSelect?.value || DEFAULTS.noteMode,
         geminiModel: geminiModelSelect?.value || DEFAULTS.geminiModel,
+        geminiReasoning: geminiReasoningSelect?.value || DEFAULTS.geminiReasoning,
         vertexModel: vertexModelSelect?.value || DEFAULTS.vertexModel,
         bedrockModel: bedrockModelSelect?.value || DEFAULTS.bedrockModel,
       });
@@ -507,10 +568,14 @@ import {
         providerSelect,
         openaiModelContainer,
         openaiModelSelect,
+        openaiReasoningContainer,
+        openaiReasoningSelect,
         noteModeContainer,
         noteModeSelect,
         geminiModelContainer,
         geminiModelSelect,
+        geminiReasoningContainer,
+        geminiReasoningSelect,
         vertexModelContainer,
         vertexModelSelect,
         bedrockModelContainer,
@@ -533,6 +598,12 @@ import {
 
     providerSelect.addEventListener('change', persistAndSwitchNoteProvider);
     openaiModelSelect?.addEventListener('change', persistAndSwitchNoteProvider);
+    openaiReasoningSelect?.addEventListener('change', () => {
+      writeSession(
+        STORAGE_KEYS.openaiReasoning,
+        normalizeOpenAiReasoning(openaiReasoningSelect.value)
+      );
+    });
     noteModeSelect?.addEventListener('change', persistAndSwitchNoteProvider);
 
     geminiModelSelect?.addEventListener('change', () => {
@@ -541,16 +612,36 @@ import {
         providerSelect,
         openaiModelContainer,
         openaiModelSelect,
+        openaiReasoningContainer,
+        openaiReasoningSelect,
         noteModeContainer,
         noteModeSelect,
         geminiModelContainer,
         geminiModelSelect,
+        geminiReasoningContainer,
+        geminiReasoningSelect,
         vertexModelContainer,
         vertexModelSelect,
         bedrockModelContainer,
         bedrockModelSelect,
         providerValue: providerSelect.value,
       });
+      if (geminiReasoningSelect) {
+        writeSession(
+          STORAGE_KEYS.geminiReasoning,
+          normalizeGeminiReasoning(geminiReasoningSelect.value, geminiModelSelect.value)
+        );
+      }
+    });
+
+    geminiReasoningSelect?.addEventListener('change', () => {
+      writeSession(
+        STORAGE_KEYS.geminiReasoning,
+        normalizeGeminiReasoning(
+          geminiReasoningSelect.value,
+          geminiModelSelect?.value || DEFAULTS.geminiModel
+        )
+      );
     });
 
     vertexModelSelect?.addEventListener('change', () => {
@@ -559,10 +650,14 @@ import {
         providerSelect,
         openaiModelContainer,
         openaiModelSelect,
+        openaiReasoningContainer,
+        openaiReasoningSelect,
         noteModeContainer,
         noteModeSelect,
         geminiModelContainer,
         geminiModelSelect,
+        geminiReasoningContainer,
+        geminiReasoningSelect,
         vertexModelContainer,
         vertexModelSelect,
         bedrockModelContainer,
@@ -577,10 +672,14 @@ import {
         providerSelect,
         openaiModelContainer,
         openaiModelSelect,
+        openaiReasoningContainer,
+        openaiReasoningSelect,
         noteModeContainer,
         noteModeSelect,
         geminiModelContainer,
         geminiModelSelect,
+        geminiReasoningContainer,
+        geminiReasoningSelect,
         vertexModelContainer,
         vertexModelSelect,
         bedrockModelContainer,

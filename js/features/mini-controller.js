@@ -92,7 +92,9 @@ const pendingContentRequests = new Map();
 let localTabId = '';
 let localPageSessionId = '';
 let selectedHubTabId = '';
-let selectedHubTabPinnedByUser = false;
+let hubSelectionMode = 'auto';
+const MINI_HUB_ACTIVATION_DEBOUNCE_MS = 150;
+let lastLocalHubActivationAt = 0;
 const hubTabs = new Map();
 let nextHubTabOrder = 1;
 
@@ -875,7 +877,7 @@ function pruneStaleHubTabs() {
       return aOrder - bOrder;
     });
     selectedHubTabId = remaining[0]?.tabId || '';
-    selectedHubTabPinnedByUser = false;
+    setHubSelectionModeAuto();
   }
 }
 
@@ -901,7 +903,7 @@ function startProbe(tabId) {
     releaseColorForTab(id);
     if (selectedHubTabId === id) {
       selectedHubTabId = '';
-      selectedHubTabPinnedByUser = false;
+      setHubSelectionModeAuto();
       ensureSelectedHubTab();
     }
     updateMiniPanelUi();
@@ -970,16 +972,54 @@ function getOrderedHubTabs() {
   });
 }
 
+function setHubSelectionModeAuto() {
+  hubSelectionMode = 'auto';
+}
+
+function setHubSelectionManual(tabId) {
+  const nextTabId = String(tabId || '').trim();
+  if (!nextTabId) return;
+  selectedHubTabId = nextTabId;
+  hubSelectionMode = 'manual';
+}
+
+function isHubSelectionManual() {
+  return hubSelectionMode === 'manual' && !!selectedHubTabId && hubTabs.has(selectedHubTabId);
+}
+
 function ensureSelectedHubTab() {
   // Read-only: does not prune. See getOrderedHubTabs().
   if (selectedHubTabId && hubTabs.has(selectedHubTabId)) {
     return selectedHubTabId;
   }
 
-  selectedHubTabPinnedByUser = false;
+  setHubSelectionModeAuto();
   const fallback = getOrderedHubTabs()[0];
   selectedHubTabId = fallback?.tabId || '';
   return selectedHubTabId;
+}
+
+function shouldAutoFollowHubSelection() {
+  return !isHubSelectionManual();
+}
+
+function triggerLocalHubActivation(reason = 'activate', options = {}) {
+  const { prune = false, force = false } = options || {};
+  const now = Date.now();
+
+  if (!force && now - lastLocalHubActivationAt < MINI_HUB_ACTIVATION_DEBOUNCE_MS) {
+    if (prune) {
+      pruneStaleHubTabs();
+    }
+    return;
+  }
+
+  lastLocalHubActivationAt = now;
+  activateLocalHubTab(reason);
+
+  if (prune) {
+    pruneStaleHubTabs();
+  }
 }
 
 function getSelectedHubSnapshot() {
@@ -1081,7 +1121,7 @@ function activateLocalHubTab(reason = 'activate') {
   snapshot.activatedAt = Date.now();
 
   upsertHubTab(snapshot);
-  if (!selectedHubTabPinnedByUser || !selectedHubTabId || !hubTabs.has(selectedHubTabId)) {
+  if (shouldAutoFollowHubSelection()) {
     selectedHubTabId = tabId;
   }
 
@@ -1174,7 +1214,7 @@ function ensureHubChannel() {
           activatedAt: Number(data?.activatedAt || Date.now()),
         });
       }
-      if (tabId) {
+      if (tabId && shouldAutoFollowHubSelection()) {
         selectedHubTabId = tabId;
       }
       updateMiniPanelUi();
@@ -1649,6 +1689,7 @@ function syncHubTabDropdown() {
   const selectedTabId = ensureSelectedHubTab();
   const showAccents = items.length > 1;
 
+  select.dataset.syncing = '1';
   select.innerHTML = '';
 
   if (!items.length) {
@@ -1673,6 +1714,7 @@ function syncHubTabDropdown() {
     }
     if (list) list.innerHTML = '';
     if (popover) popover.hidden = true;
+    delete select.dataset.syncing;
     return;
   }
 
@@ -1734,6 +1776,40 @@ function syncHubTabDropdown() {
   if (list) {
     list.innerHTML = '';
 
+    if (items.length > 1) {
+      const followButton = list.ownerDocument.createElement('button');
+      followButton.type = 'button';
+      followButton.className = 'mini-tab-picker-item';
+      if (shouldAutoFollowHubSelection()) {
+        followButton.classList.add('is-active');
+      }
+      followButton.innerHTML = `
+        <span class="mini-tab-picker-item-dot" hidden></span>
+        <span class="mini-tab-picker-item-text">${escapeHtml('Follow active tab')}</span>
+      `;
+      const resumeAutoFollow = () => {
+        setHubSelectionModeAuto();
+        const localId = getOrCreateLocalTabId();
+        if (localId && hubTabs.has(localId)) {
+          selectedHubTabId = localId;
+        } else {
+          ensureSelectedHubTab();
+        }
+        closeMiniTabPicker();
+        requestUiRefresh();
+      };
+      followButton.addEventListener('pointerdown', (event) => {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        event.preventDefault();
+        resumeAutoFollow();
+      });
+      followButton.addEventListener('click', (event) => {
+        if (event.detail > 0) return;
+        resumeAutoFollow();
+      });
+      list.appendChild(followButton);
+    }
+
     items.forEach((snapshot, index) => {
       const button = list.ownerDocument.createElement('button');
       button.type = 'button';
@@ -1761,8 +1837,7 @@ function syncHubTabDropdown() {
       const selectHubTabFromPicker = () => {
         const nextTabId = String(snapshot?.tabId || '').trim();
         if (!nextTabId) return;
-        selectedHubTabId = nextTabId;
-        selectedHubTabPinnedByUser = true;
+        setHubSelectionManual(nextTabId);
         closeMiniTabPicker();
         hideCopiedIndicator();
         updateSelectedHubSnapshot((prev) => ({
@@ -1790,6 +1865,8 @@ function syncHubTabDropdown() {
       list.appendChild(button);
     });
   }
+
+  delete select.dataset.syncing;
 }
 
 function syncAutoCopyOptions() {
@@ -2194,10 +2271,10 @@ function bindMiniPanelEvents() {
 
   if (tabSelect) {
     tabSelect.addEventListener('change', () => {
+      if (tabSelect.dataset.syncing === '1') return;
       const nextTabId = String(tabSelect.value || '').trim();
       if (!nextTabId) return;
-      selectedHubTabId = nextTabId;
-      selectedHubTabPinnedByUser = true;
+      setHubSelectionManual(nextTabId);
       hideCopiedIndicator();
       updateSelectedHubSnapshot((prev) => ({
         ...prev,
@@ -3519,25 +3596,40 @@ function initMiniPanelBridge() {
 
   try {
     window.addEventListener('focus', () => {
-      activateLocalHubTab('window-focus');
-      // Wake up the probe scanner immediately rather than waiting
-      // for the next throttled interval tick.
-      pruneStaleHubTabs();
+      triggerLocalHubActivation('window-focus', { prune: true });
+    });
+  } catch (_) {}
+
+  try {
+    window.addEventListener('pageshow', () => {
+      // The opener tab that owns the Mini Panel can miss a clean
+      // focus/visibility transition when returning from another tab
+      // or from a PiP/popup interaction. pageshow gives us one more
+      // browser-driven reactivation hook so the owner tab auto-follows
+      // just like peer tabs do.
+      triggerLocalHubActivation('page-show', { prune: true, force: true });
     });
   } catch (_) {}
 
   try {
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
-        activateLocalHubTab('visibility-visible');
-        // On return to foreground, any peer that has drifted should
-        // be probed immediately. This is especially important after
-        // sleep/wake, when many updatedAt values look ancient.
-        pruneStaleHubTabs();
+        triggerLocalHubActivation('visibility-visible', { prune: true });
       } else {
         publishLocalHubSnapshot('visibility-hidden');
       }
     });
+  } catch (_) {}
+
+  try {
+    document.addEventListener('pointerdown', () => {
+      if (document.hidden) return;
+      // Extra safety net for the Mini Panel owner tab: a real user
+      // interaction inside the page should count as "this tab is
+      // active" even if the browser did not emit the focus transition
+      // we expected. Debounced in triggerLocalHubActivation().
+      triggerLocalHubActivation('page-pointerdown');
+    }, { capture: true, passive: true });
   } catch (_) {}
 
   try {

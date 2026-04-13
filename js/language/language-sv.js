@@ -241,9 +241,9 @@ För att använda tal-till-text och anteckningsgenereringsmodellerna i denna app
 - Deepgram Nova-3<br><br>
 
 <strong>Textgenereringsmodeller i appen:</strong><br>
-- GPT-5.1 (streaming)<br>
-- GPT-5.1 (non-streaming)<br>
-- GPT-4-latest<br>
+- GPT-5.4<br>
+- GPT-5.2<br>
+- GPT-5.1<br>
 - Lemonfox textgenerering (Llama 3-baserade modeller)<br>
 - Mistral Large<br>
 - Gemini 3<br><br>

@@ -1,3 +1,4 @@
+
 import {
   DEFAULTS,
   getDefaultModelIdForEffectiveNoteProvider,
@@ -66,6 +67,33 @@ import {
       return normalizeNoteEffectiveProvider(snapshot.noteProviderEffective);
     }
     return normalizeNoteEffectiveProvider(readSession("note_provider", "") || DEFAULTS.noteProvider);
+  }
+
+  function resolveUsageProviderKey(providerKey, modelId = null) {
+    const rawProvider = String(providerKey || "").trim().toLowerCase();
+    if (!rawProvider) {
+      return getEffectiveProviderKey();
+    }
+
+    // Some OpenAI note modules report the UI provider ("openai") instead of an
+    // effective provider key ("gpt5", "gpt52", "gpt54"). Normalize those here
+    // so pricing and logging do not fall back to DEFAULTS.noteProvider.
+    if (rawProvider === "openai") {
+      const rawModel = String(modelId || "").trim().toLowerCase();
+      if (rawModel === "gpt-5.4") return "gpt54";
+      if (rawModel === "gpt-5.2") return "gpt52";
+      if (rawModel === "gpt-5.1") return "gpt5";
+
+      const snapshot = getControllerNoteSnapshot();
+      const openAiModel = String(
+        snapshot.openaiModel || readSession("openai_model", "") || DEFAULTS.openaiModel
+      ).trim().toLowerCase();
+      if (openAiModel === "gpt54") return "gpt54";
+      if (openAiModel === "gpt52") return "gpt52";
+      return "gpt5";
+    }
+
+    return normalizeNoteEffectiveProvider(rawProvider);
   }
 
   function getDefaultModelIdForProvider(providerKey) {
@@ -157,7 +185,7 @@ import {
     if (payload.estimatedUsd != null) return payload.estimatedUsd;
     if (payload.inputTokens == null || payload.outputTokens == null) return null;
 
-    const pk = normalizeNoteEffectiveProvider(payload.providerKey || "");
+    const pk = resolveUsageProviderKey(payload.providerKey, payload.modelId);
 
     if (isOpenAiEffectiveNoteProvider(pk)) {
       const modelId = payload.modelId;
@@ -291,6 +319,55 @@ import {
     return `$${value.toFixed(digits)}`;
   }
 
+  function logUnifiedNoteUsageAndCost({
+    payload,
+    billableInputTokens,
+    billableOutputTokens,
+    notes = [],
+  } = {}) {
+    if (!payload || typeof payload !== "object") return;
+
+    const providerKey = resolveUsageProviderKey(payload.providerKey, payload.modelId);
+    const modelId = payload.modelId || getDefaultModelIdForProvider(providerKey);
+    const billableTotalTokens =
+      Number.isFinite(Number(billableInputTokens)) && Number.isFinite(Number(billableOutputTokens))
+        ? Number(billableInputTokens) + Number(billableOutputTokens)
+        : null;
+
+    const summaryParts = [
+      `[note usage/cost] provider=${providerKey || "unknown"}`,
+      `model=${modelId || "unknown"}`,
+      `input=${fmtTokens(payload.inputTokens)}`,
+      `output=${fmtTokens(payload.outputTokens)}`,
+      `total=${fmtTokens(payload.totalTokens)}`,
+      `billableInput=${fmtTokens(billableInputTokens)}`,
+      `billableOutput=${fmtTokens(billableOutputTokens)}`,
+      `billableTotal=${fmtTokens(billableTotalTokens)}`,
+      `estimated=${payload.estimatedUsd == null ? "—" : fmtUsd(payload.estimatedUsd)}`,
+    ];
+
+    if (notes.length) {
+      summaryParts.push(`extras=${notes.join(", ")}`);
+    }
+
+    console.log(summaryParts.join(" | "));
+
+    if (getDebugNoteCostEnabled()) {
+      console.log("[note cost estimate]", {
+        providerKey: payload.providerKey,
+        modelId: payload.modelId,
+        inputTokens: payload.inputTokens,
+        outputTokens: payload.outputTokens,
+        totalTokens: payload.totalTokens,
+        billableInputTokens,
+        billableOutputTokens,
+        estimatedUsd: payload.estimatedUsd,
+        notes,
+        meta: payload.meta || null,
+      });
+    }
+  }
+
   const app = getApp();
 
   app.normalizeNoteUsage = function normalizeNoteUsage({
@@ -351,7 +428,7 @@ import {
     }
 
     const effectiveProviderKey = providerKey
-      ? normalizeNoteEffectiveProvider(providerKey)
+      ? resolveUsageProviderKey(providerKey, modelId)
       : getEffectiveProviderKey();
 
     const effectiveModelId = modelId
@@ -387,16 +464,6 @@ import {
     try {
       const usd = estimateUsd(payload);
       if (usd != null) payload.estimatedUsd = usd;
-
-      if (getDebugNoteCostEnabled()) {
-        console.log("[note cost estimate]", {
-          providerKey: payload.providerKey,
-          modelId: payload.modelId,
-          inputTokens: payload.inputTokens,
-          outputTokens: payload.outputTokens,
-          estimatedUsd: payload.estimatedUsd,
-        });
-      }
     } catch (_) {}
 
     let billableInputTokens = payload.inputTokens;
@@ -404,7 +471,7 @@ import {
     const notes = [];
 
     try {
-      const pk = normalizeNoteEffectiveProvider(payload.providerKey || "");
+      const pk = resolveUsageProviderKey(payload.providerKey, payload.modelId);
 
       const reasoningTokens =
         payload.meta && typeof payload.meta.reasoningTokens === "number"
@@ -457,6 +524,15 @@ import {
       }
     } catch (_) {}
 
+    try {
+      logUnifiedNoteUsageAndCost({
+        payload,
+        billableInputTokens,
+        billableOutputTokens,
+        notes,
+      });
+    } catch (_) {}
+
     const noteSuffix = notes.length ? ` (${notes.join(", ")})` : "";
     const parts = [
       `Billable input: ${fmtTokens(billableInputTokens)}`,
@@ -498,3 +574,4 @@ import {
     wireAutoClear();
   }
 })();
+

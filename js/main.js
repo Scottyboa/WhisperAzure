@@ -1664,6 +1664,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function initNoteProvider(choice) {
     const path = resolveNoteModulePath(choice || getSelectedEffectiveNoteProvider());
+    const fallbackProvider = DEFAULTS.openaiModel;
+    const fallbackPath = resolveNoteModulePath(fallbackProvider);
 
     try {
       const mod = await loadCachedModule(path);
@@ -1673,16 +1675,20 @@ document.addEventListener('DOMContentLoaded', () => {
           provider: choice || getSelectedEffectiveNoteProvider(),
         });
       } else {
-        console.warn(`Module ${path} missing initNoteGeneration(); falling back to GPT-4-latest`);
-        const fallback = await loadCachedModule('./noteGeneration.js');
+        console.warn(`Module ${path} missing initNoteGeneration(); falling back to GPT-5.1`);
+        const fallback = await loadCachedModule(fallbackPath);
         fallback.initNoteGeneration?.();
-        emitAppStateChanged('note-provider-fallback-initialized');
+        emitAppStateChanged('note-provider-fallback-initialized', {
+          provider: fallbackProvider,
+        });
       }
     } catch (e) {
-      console.warn(`Failed to load ${path}; falling back to GPT-4-latest`, e);
-      const fallback = await loadCachedModule('./noteGeneration.js');
+      console.warn(`Failed to load ${path}; falling back to GPT-5.1`, e);
+      const fallback = await loadCachedModule(fallbackPath);
       fallback.initNoteGeneration?.();
-      emitAppStateChanged('note-provider-fallback-initialized');
+      emitAppStateChanged('note-provider-fallback-initialized', {
+        provider: fallbackProvider,
+      });
     }
   }
 

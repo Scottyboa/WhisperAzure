@@ -15,6 +15,7 @@ import {
   startNoteTimer,
   streamResponsesSse
 } from "./core/note-runner.js";
+import { normalizeOpenAiReasoning } from "./core/provider-registry.js";
 
 const MODEL_ID = "gpt-5.4";
 
@@ -115,7 +116,9 @@ async function generateNote() {
   }
 
   const finalPromptText = buildStandardNotePrompt(promptText);
-  const reasoningLevel = getSelectValue("gpt5Reasoning", "low");
+  const reasoningLevel = normalizeOpenAiReasoning(
+    getSelectValue("gpt5Reasoning", "none")
+  );
   const requestBody = buildRequestBody({
     finalPromptText,
     supplementaryWrapped,

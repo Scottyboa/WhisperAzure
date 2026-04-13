@@ -1,4 +1,4 @@
-// noteGeneration_gpt52.js
+// notegeneration gpt-5.js
 
 import {
   beginNoteRun,
@@ -17,10 +17,15 @@ import { normalizeOpenAiReasoning } from "./core/provider-registry.js";
 
 const RUN_META = {
   provider: "openai",
-  model: "gpt-5.2"
+  model: "gpt-5.1"
 };
 
-function buildRequestBody({ finalPromptText, supplementaryWrapped, transcriptionText, reasoningLevel }) {
+function buildRequestBody({
+  finalPromptText,
+  supplementaryWrapped,
+  transcriptionText,
+  reasoningLevel
+}) {
   const requestBody = {
     model: RUN_META.model,
     input: [
@@ -109,13 +114,13 @@ async function generateNote() {
       onDelta: (textChunk) => {
         generatedNoteField.value += textChunk;
       },
-      onDone: (payload) => {
-        const usage = payload?.response?.usage ?? payload?.usage ?? null;
+      onDone: (finalEvent) => {
+        const usage = finalEvent?.response?.usage ?? finalEvent?.usage ?? null;
         const reasoningTokens = usage?.output_tokens_details?.reasoning_tokens ?? 0;
 
         if (usage) {
           pushNormalizedNoteUsage({
-            providerKey: (getSessionStorageValue("note_provider", "gpt52") || "gpt52").trim(),
+            providerKey: (getSessionStorageValue("note_provider", "gpt5") || "gpt5").trim(),
             modelId: RUN_META.model,
             usage,
             meta: { reasoningTokens }

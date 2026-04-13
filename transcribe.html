@@ -1962,7 +1962,7 @@
             <span class="bottom-section-header-spacer" aria-hidden="true"></span>
           </div>
           <!-- Phase 3: Note Provider selector (module switch only; both use OpenAI key) -->
-          <div id="note-provider-container" style="display:flex; align-items:center; gap:8px; margin: 6px 0 6px;">
+          <div id="note-provider-container" style="display:flex; align-items:center; gap:8px; margin: 6px 0 6px; flex-wrap:wrap;">
             <label for="noteProvider" id="noteProviderLabel">Provider:</label>
             <select id="noteProvider">
               <option value="openai">OpenAI</option>
@@ -1980,7 +1980,6 @@
                 <option value="gpt5" selected>GPT-5.1</option>
                 <option value="gpt52">GPT-5.2</option>
                 <option value="gpt54">GPT-5.4</option>
-                <option value="gpt4">GPT-4-latest</option>
               </select>
             </div>
             <div id="note-provider-mode-container" style="display:none; align-items:center; gap:8px;">
@@ -2043,27 +2042,29 @@
             </span>
           </div>
 
-          <!-- GPT-5.1 reasoning level selector (only shown for GPT-5.1 providers) -->
+          <!-- OpenAI reasoning effort selector (shown only for OpenAI GPT-5 note providers) -->
           <div id="gpt5-reasoning-container"
                style="display:none; align-items:center; gap:8px; margin: 0 0 10px;">
-            <label for="gpt5Reasoning" id="gpt5ReasoningLabel">Reasoning level:</label>
+            <label for="gpt5Reasoning" id="gpt5ReasoningLabel">Reasoning effort:</label>
             <select id="gpt5Reasoning">
-              <option value="none">None</option>
-              <option value="low" selected>Low</option>
+              <option value="none" selected>None</option>
+              <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
-              <option value="xhigh" id="gpt5ReasoningXHigh" hidden disabled>Extra High (xhigh)</option>
             </select>
           </div>
-          <!-- Gemini 3 reasoning level selector (only shown for Gemini3 provider) -->
+
+          <!-- Gemini thinking level selector (shown only when Provider = Google AI Studio) -->
           <div id="gemini-reasoning-container"
                style="display:none; align-items:center; gap:8px; margin: 0 0 10px;">
-            <label for="geminiReasoning" id="geminiReasoningLabel">Gemini reasoning:</label>
+            <label for="geminiReasoning" id="geminiReasoningLabel">Thinking level:</label>
             <select id="geminiReasoning">
-              <option value="low" selected>Low</option>
-              <option value="high">High</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high" selected>High</option>
             </select>
           </div>
+
           <div id="noteActionButtons" style="display:flex; align-items:center; gap:8px; margin-bottom: 6px;">
           <button id="generateNoteButton" type="button">Generate Note</button>
           <button
