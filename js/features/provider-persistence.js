@@ -49,6 +49,12 @@ import {
     bedrockModel: 'bedrock_model',
   };
 
+  // Keep reasoning/thinking defaults local to provider persistence so the
+  // selector hydration defaults can be adjusted without touching every
+  // provider module.
+  const DEFAULT_OPENAI_REASONING = 'low';
+  const DEFAULT_GEMINI_REASONING = 'low';
+
   function getApp() {
     return window.__app || {};
   }
@@ -203,7 +209,7 @@ import {
       provider: ui.provider,
       openaiModel: ui.openaiModel,
       openaiReasoning: normalizeOpenAiReasoning(
-        readSession(STORAGE_KEYS.openaiReasoning, DEFAULTS.openaiReasoning)
+        readSession(STORAGE_KEYS.openaiReasoning, DEFAULT_OPENAI_REASONING)
       ),
       mode: ui.mode,
       geminiModel: normalizeLower(
@@ -211,7 +217,7 @@ import {
         DEFAULTS.geminiModel
       ),
       geminiReasoning: normalizeGeminiReasoning(
-        readSession(STORAGE_KEYS.geminiReasoning, DEFAULTS.geminiReasoning),
+        readSession(STORAGE_KEYS.geminiReasoning, DEFAULT_GEMINI_REASONING),
         readSession(STORAGE_KEYS.geminiModel, DEFAULTS.geminiModel)
       ),
       vertexModel: normalizeLower(
@@ -556,10 +562,10 @@ import {
       const effectiveProvider = persistSelectedNoteState({
         provider: providerSelect.value,
         openaiModel: openaiModelSelect?.value || DEFAULTS.openaiModel,
-        openaiReasoning: openaiReasoningSelect?.value || DEFAULTS.openaiReasoning,
+        openaiReasoning: openaiReasoningSelect?.value || DEFAULT_OPENAI_REASONING,
         noteMode: noteModeSelect?.value || DEFAULTS.noteMode,
         geminiModel: geminiModelSelect?.value || DEFAULTS.geminiModel,
-        geminiReasoning: geminiReasoningSelect?.value || DEFAULTS.geminiReasoning,
+        geminiReasoning: geminiReasoningSelect?.value || DEFAULT_GEMINI_REASONING,
         vertexModel: vertexModelSelect?.value || DEFAULTS.vertexModel,
         bedrockModel: bedrockModelSelect?.value || DEFAULTS.bedrockModel,
       });
