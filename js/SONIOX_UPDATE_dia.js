@@ -85,8 +85,8 @@ function flushPendingVADOnce(reason, extraAudioFloat32 = null) {
     
    },
    onSpeechEnd: (audioFloat32) => {
-     // Prevent VAD callbacks after stop
-     if (manualStop || transcriptFrozen) return;
+     // Prevent late VAD callbacks after pause/stop from buffering or enqueueing more audio.
+     if (!canShowRecordingStatus()) return;
      logInfo("Silero VAD: speech ended — buffering audio");
      // Accumulate this segment
      pendingVADChunks.push(audioFloat32);
@@ -204,7 +204,7 @@ const {
 });
 
 function canShowRecordingStatus() {
-  return !manualStop && !stopInProgress && !transcriptFrozen;
+  return !manualStop && !stopInProgress && !transcriptFrozen && !recordingPaused;
 }
 
 // ───── Completion timer helpers ───────────────────────────────────────────────
@@ -1204,7 +1204,12 @@ pauseResumeButton.addEventListener("click", async () => {
       logError("Error resuming Silero VAD:", err);
     }
   } else {
-   
+    // Flip state immediately so late callbacks/timers cannot re-activate recording
+    // while pause is still in flight.
+    recordingPaused = true;
+    recordingActive = false;
+    clearTimeout(chunkTimeoutId);
+
     // PAUSE: stop VAD and flush any buffered speech
     updateStatusMessage("Pausing recording…", "orange");
     try {
@@ -1223,8 +1228,6 @@ pauseResumeButton.addEventListener("click", async () => {
     flushPendingVADOnce("pause");
     
 
-    recordingPaused = true;
-    
     pauseResumeButton.innerText = "Resume Recording";
     setAbortButtonDisabled(true);
     updateStatusMessage("Recording paused", "orange");
@@ -1428,4 +1431,3 @@ installSafeRecordingLoadStop({
   stopMicrophone,
   getSileroVAD: () => sileroVAD,
 });
-
