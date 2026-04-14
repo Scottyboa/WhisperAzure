@@ -48,8 +48,8 @@ const DEBUG = true;
   // require at least 3 consecutive speech frames to declare onSpeechStart
   minSpeechFrames: 3,
    onSpeechStart: () => {
-     // Prevent VAD callbacks after stop
-     if (manualStop) return;
+     // Prevent late VAD callbacks from reviving recording after pause/stop.
+     if (manualStop || recordingPaused) return;
      logInfo("Silero VAD: speech started");
      recordingActive = true;
      chunkStartTime = Date.now();
@@ -59,8 +59,8 @@ const DEBUG = true;
     
    },
    onSpeechEnd: (audioFloat32) => {
-     // Prevent VAD callbacks after stop
-     if (manualStop) return;
+     // Prevent late VAD callbacks after pause/stop from buffering or enqueueing more audio.
+     if (manualStop || recordingPaused) return;
      logInfo("Silero VAD: speech ended — buffering audio");
      // Accumulate this segment
      pendingVADChunks.push(audioFloat32);
@@ -736,6 +736,11 @@ pauseResumeButton.addEventListener("click", async () => {
       logError("Error resuming Silero VAD:", err);
     }
   } else {
+   // Mark paused immediately so no late callback can revive recording mid-pause.
+   recordingPaused = true;
+   recordingActive = false;
+   clearTimeout(chunkTimeoutId);
+
    // — FLUSH any pending VAD segments before pausing — 
    // — FLUSH any pending VAD segments before pausing —
 flushPendingVADSegments();
@@ -756,8 +761,6 @@ flushPendingVADSegments();
     stopMicrophone();
     // Stop the mic stream so the browser tab indicator turns off
 flushPendingVADSegments();
-
-    recordingPaused = true;
     
     pauseResumeButton.innerText = "Resume Recording";
     updateStatusMessage("Recording paused", "orange");
