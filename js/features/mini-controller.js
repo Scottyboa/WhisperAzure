@@ -976,6 +976,13 @@ function setHubSelectionModeAuto() {
   hubSelectionMode = 'auto';
 }
 
+function syncHubSelectionToActivatedTab(tabId) {
+  const nextTabId = String(tabId || '').trim();
+  if (!nextTabId) return;
+  selectedHubTabId = nextTabId;
+  setHubSelectionModeAuto();
+}
+
 function setHubSelectionManual(tabId) {
   const nextTabId = String(tabId || '').trim();
   if (!nextTabId) return;
@@ -1121,9 +1128,10 @@ function activateLocalHubTab(reason = 'activate') {
   snapshot.activatedAt = Date.now();
 
   upsertHubTab(snapshot);
-  if (shouldAutoFollowHubSelection()) {
-    selectedHubTabId = tabId;
-  }
+  // A real browser/tab activation should always win over a temporary
+  // Mini Panel manual pick. This keeps the panel aligned with the
+  // actual active Chrome tab after normal tab switching.
+  syncHubSelectionToActivatedTab(tabId);
 
   postHubMessage({
     type: 'mini-hub-activate-tab',
@@ -1214,8 +1222,8 @@ function ensureHubChannel() {
           activatedAt: Number(data?.activatedAt || Date.now()),
         });
       }
-      if (tabId && shouldAutoFollowHubSelection()) {
-        selectedHubTabId = tabId;
+      if (tabId) {
+        syncHubSelectionToActivatedTab(tabId);
       }
       updateMiniPanelUi();
       return;
@@ -1837,6 +1845,9 @@ function syncHubTabDropdown() {
       const selectHubTabFromPicker = () => {
         const nextTabId = String(snapshot?.tabId || '').trim();
         if (!nextTabId) return;
+        // Manual pick is a temporary override only. The next real
+        // browser-tab activation will switch the Mini Panel back to
+        // the active tab automatically.
         setHubSelectionManual(nextTabId);
         closeMiniTabPicker();
         hideCopiedIndicator();
