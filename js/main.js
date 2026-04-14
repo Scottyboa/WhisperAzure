@@ -418,20 +418,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return String(field?.value || '');
   }
 
-  function invokeMiniHubCommand(actionName, args = []) {
-    const app = getApp();
-    const fn = app && typeof app[actionName] === 'function' ? app[actionName] : null;
-    if (!fn) return false;
-
-    try {
-      fn(...args);
-      return true;
-    } catch (error) {
-      console.warn('[mini-hub] command failed:', actionName, error);
-      return false;
-    }
-  }
-
   function bindMiniHubBridge() {
     if (window.__miniHubBridgeBound === true) return;
     window.__miniHubBridgeBound = true;
@@ -492,25 +478,10 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
-        if (type !== 'mini-hub-command') return;
-
-        const targetTabId = String(data?.targetTabId || '').trim();
-        if (!targetTabId || targetTabId !== getOrCreateMiniHubTabId()) return;
-
-        const actionName = String(data?.actionName || '').trim();
-        const args = Array.isArray(data?.args) ? data.args : [];
-        if (!actionName) return;
-
-        const ok = invokeMiniHubCommand(actionName, args);
-        if (ok) {
-          emitAppStateChanged('mini-hub-command', {
-            actionName,
-            targetTabId,
-          });
-          // Single settle publish — the old 150ms settle timer was
-          // redundant noise that contributed to the echo chain.
-          window.setTimeout(() => publishMiniHubSnapshot(`command:${actionName}`), 0);
-        }
+        // mini-hub-command is handled exclusively by mini-controller.js.
+        // Do not also invoke the action here — that would cause every
+        // pause/stop/start dispatched from the mini panel to fire twice
+        // in the target tab.
       });
     }
 

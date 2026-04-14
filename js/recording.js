@@ -773,21 +773,14 @@ pauseResumeButton.addEventListener("click", async () => {
       setAbortButtonDisabled(false);
     }
   } else {
-   // Mark paused immediately so no late callback can revive recording mid-pause.
-   recordingPaused = true;
-   recordingActive = false;
-   clearTimeout(chunkTimeoutId);
+    // Do NOT set recordingPaused yet — submitUserSpeechOnPause fires
+    // a final onSpeechEnd inside sileroVAD.pause() with the tail audio.
+    // onSpeechEnd guards on recordingPaused, so flipping the flag
+    // before pause() silently drops the tail segment.
+    recordingActive = false;
+    clearTimeout(chunkTimeoutId);
 
-   // — FLUSH any pending VAD segments before pausing — 
-   chunkNumber = flushPendingVadSegments({
-     segments: pendingVADChunks,
-     sampleRate: 16000,
-     floatTo16BitPCM,
-     encodeWAV,
-     enqueueTranscription,
-     chunkNumber,
-   });
-    // PAUSE: stop VAD and flush any buffered speech
+    // PAUSE: stop VAD (fires final onSpeechEnd with tail audio)
     updateStatusMessage("Pausing recording…", "orange");
     try {
       await sileroVAD.pause();
@@ -795,12 +788,26 @@ pauseResumeButton.addEventListener("click", async () => {
     } catch (err) {
       logError("Error pausing Silero VAD:", err);
     }
+    // Let the final onSpeechEnd land before we set the guard flag.
+    await Promise.resolve();
+    recordingPaused = true;
+
     // Stop the mic Silero opened + kill any leftover media tracks
     if (sileroVAD.stream) {
       sileroVAD.stream.getTracks().forEach(t => t.stop());
     }
     stopMicrophone();
-    
+
+    // Flush everything including the tail segment captured above.
+    chunkNumber = flushPendingVadSegments({
+      segments: pendingVADChunks,
+      sampleRate: 16000,
+      floatTo16BitPCM,
+      encodeWAV,
+      enqueueTranscription,
+      chunkNumber,
+    });
+
     pauseResumeButton.innerText = "Resume Recording";
     setStopPauseDisabled(false);
     setAbortButtonDisabled(true);

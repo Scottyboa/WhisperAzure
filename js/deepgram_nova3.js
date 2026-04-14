@@ -861,13 +861,16 @@ function initRecording() {
         setAbortButtonDisabled(false);
       }
     } else {
-      // Flip state immediately so late callbacks/timers cannot re-activate recording
-      // while pause is still in flight.
-      recordingPaused = true;
+      // Do NOT set recordingPaused yet. The VAD option
+      // submitUserSpeechOnPause fires one final onSpeechEnd inside
+      // sileroVAD.pause() containing the tail audio from the
+      // currently-ongoing speech. onSpeechEnd guards on recordingPaused,
+      // so setting the flag before pause() would drop that tail segment
+      // and truncate the transcript.
       recordingActive = false;
       clearTimeout(chunkTimeoutId);
 
-      // PAUSE: stop VAD and flush any buffered speech
+      // PAUSE: stop VAD (fires final onSpeechEnd with tail audio)
       updateStatusMessage("Pausing recording…", "orange");
       try {
         await sileroVAD.pause();
@@ -875,12 +878,21 @@ function initRecording() {
       } catch (err) {
         logError("Error pausing Silero VAD:", err);
       }
+      // Give the synchronous onSpeechEnd callback a chance to run and
+      // push the tail audio into pendingVADChunks before we set the
+      // guard flag.
+      await Promise.resolve();
+
+      // Now block any further late callbacks from reviving recording.
+      recordingPaused = true;
+
       // **actually stop the mic** that Silero opened:
       if (sileroVAD.stream) {
         sileroVAD.stream.getTracks().forEach(t => t.stop());
       }
-      // **new**: cut the mic feed so the browser indicator goes off
       stopMicrophone();
+
+      // Flush everything including the tail segment captured above.
       await flushPendingVADSegments();
 
       pauseResumeButton.innerText = "Resume Recording";

@@ -736,16 +736,17 @@ pauseResumeButton.addEventListener("click", async () => {
       logError("Error resuming Silero VAD:", err);
     }
   } else {
-   // Mark paused immediately so no late callback can revive recording mid-pause.
-   recordingPaused = true;
-   recordingActive = false;
-   clearTimeout(chunkTimeoutId);
+    // Do NOT set recordingPaused yet — submitUserSpeechOnPause fires
+    // a final onSpeechEnd inside sileroVAD.pause() with the tail audio.
+    // onSpeechEnd guards on recordingPaused, so flipping the flag
+    // before pause() silently drops the tail segment.
+    recordingActive = false;
+    clearTimeout(chunkTimeoutId);
 
-   // — FLUSH any pending VAD segments before pausing — 
-   // — FLUSH any pending VAD segments before pausing —
-flushPendingVADSegments();
+    // Flush any already-buffered chunks (not the in-flight one yet).
+    flushPendingVADSegments();
 
-    // PAUSE: stop VAD and flush any buffered speech
+    // PAUSE: stop VAD (fires final onSpeechEnd with tail audio)
     updateStatusMessage("Pausing recording…", "orange");
     try {
       await sileroVAD.pause();
@@ -753,15 +754,20 @@ flushPendingVADSegments();
     } catch (err) {
       logError("Error pausing Silero VAD:", err);
     }
- // **actually stop the mic** that Silero opened:
- if (sileroVAD.stream) {
-   sileroVAD.stream.getTracks().forEach(t => t.stop());
- }
-    // **new**: cut the mic feed so the browser indicator goes off
+    // Let the final onSpeechEnd land before we set the guard flag.
+    await Promise.resolve();
+    recordingPaused = true;
+
+    // Actually stop the mic that Silero opened:
+    if (sileroVAD.stream) {
+      sileroVAD.stream.getTracks().forEach(t => t.stop());
+    }
     stopMicrophone();
-    // Stop the mic stream so the browser tab indicator turns off
-flushPendingVADSegments();
-    
+
+    // Flush again — captures the tail segment pushed by the final
+    // onSpeechEnd above.
+    flushPendingVADSegments();
+
     pauseResumeButton.innerText = "Resume Recording";
     updateStatusMessage("Recording paused", "orange");
     logInfo("Recording paused; buffered speech flushed");
