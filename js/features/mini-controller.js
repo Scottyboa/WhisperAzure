@@ -1784,40 +1784,6 @@ function syncHubTabDropdown() {
   if (list) {
     list.innerHTML = '';
 
-    if (items.length > 1) {
-      const followButton = list.ownerDocument.createElement('button');
-      followButton.type = 'button';
-      followButton.className = 'mini-tab-picker-item';
-      if (shouldAutoFollowHubSelection()) {
-        followButton.classList.add('is-active');
-      }
-      followButton.innerHTML = `
-        <span class="mini-tab-picker-item-dot" hidden></span>
-        <span class="mini-tab-picker-item-text">${escapeHtml('Follow active tab')}</span>
-      `;
-      const resumeAutoFollow = () => {
-        setHubSelectionModeAuto();
-        const localId = getOrCreateLocalTabId();
-        if (localId && hubTabs.has(localId)) {
-          selectedHubTabId = localId;
-        } else {
-          ensureSelectedHubTab();
-        }
-        closeMiniTabPicker();
-        requestUiRefresh();
-      };
-      followButton.addEventListener('pointerdown', (event) => {
-        if (event.pointerType === 'mouse' && event.button !== 0) return;
-        event.preventDefault();
-        resumeAutoFollow();
-      });
-      followButton.addEventListener('click', (event) => {
-        if (event.detail > 0) return;
-        resumeAutoFollow();
-      });
-      list.appendChild(followButton);
-    }
-
     items.forEach((snapshot, index) => {
       const button = list.ownerDocument.createElement('button');
       button.type = 'button';
@@ -3607,7 +3573,7 @@ function initMiniPanelBridge() {
 
   try {
     window.addEventListener('focus', () => {
-      triggerLocalHubActivation('window-focus', { prune: true });
+      triggerLocalHubActivation('window-focus', { prune: true, force: true });
     });
   } catch (_) {}
 
@@ -3625,7 +3591,7 @@ function initMiniPanelBridge() {
   try {
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
-        triggerLocalHubActivation('visibility-visible', { prune: true });
+        triggerLocalHubActivation('visibility-visible', { prune: true, force: true });
       } else {
         publishLocalHubSnapshot('visibility-hidden');
       }
