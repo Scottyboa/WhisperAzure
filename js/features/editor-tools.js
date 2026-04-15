@@ -723,9 +723,29 @@
       return additions.length;
     };
 
+    // Built-in rule: a Norwegian fødselsnummer is always redacted,
+    // even if the user has not listed it explicitly. Two accepted
+    // formats:
+    //   - 11 digits, no separator:        12345678901
+    //   - 6 digits + ONE space + 5:       123456 78901
+    // The match must be bounded by non-word characters on both sides
+    // ((?<![\w]) / (?![\w]) — \w is [A-Za-z0-9_] in JS), so:
+    //   - 12+ contiguous digits do not match (no digit boundary)
+    //   - letters glued to either end do not match (no letter boundary)
+    //   - other separators (tab, double-space, dot) do not match the
+    //     spaced form — only a single literal space.
+    const ELEVEN_DIGIT_PATTERN = /(?<![\w])(?:\d{6} \d{5}|\d{11})(?![\w])/g;
+
     const redactInText = (text, terms) => {
       let output = text || '';
       let replacedAny = false;
+
+      // Apply built-in 11-digit rule first.
+      const updatedDigits = output.replace(ELEVEN_DIGIT_PATTERN, '[REDACTED]');
+      if (updatedDigits !== output) {
+        replacedAny = true;
+        output = updatedDigits;
+      }
 
       for (const term of terms) {
         const escaped = escapeRegex(term);
@@ -1238,12 +1258,6 @@
     if (applyRedactionButton) {
       applyRedactionButton.addEventListener('click', () => {
         const terms = getRedactorTerms();
-        if (!terms.length) {
-          setRedactorStatusByKey('addAtLeastOneTerm', {}, true);
-          (redactorTermsEl || generalTermsEl)?.focus();
-          return;
-        }
-
         let replacedAny = false;
 
         if (transcriptionEl) {
@@ -1256,6 +1270,16 @@
           const result = redactInText(supplementaryInfoEl.value || '', terms);
           supplementaryInfoEl.value = result.text;
           replacedAny = replacedAny || result.replacedAny;
+        }
+
+        // If nothing matched AND the user supplied no terms, surface
+        // the original "add at least one term" hint so they know why
+        // nothing happened. If they did supply terms but nothing
+        // matched, surface "no matching text" as before.
+        if (!replacedAny && !terms.length) {
+          setRedactorStatusByKey('addAtLeastOneTerm', {}, true);
+          (redactorTermsEl || generalTermsEl)?.focus();
+          return;
         }
 
         setRedactorStatusByKey(
