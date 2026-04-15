@@ -53,6 +53,7 @@
     const addBirthdateFormatsButton = document.getElementById('addBirthdateFormatsButton');
     const copyRedactorRawOutputButton = document.getElementById('copyRedactorRawOutputButton');
     const clearRedactorRawOutputButton = document.getElementById('clearRedactorRawOutputButton');
+    const downloadTranscriptButton = document.getElementById('downloadTranscriptButton');
 
     const REDACTOR_STRINGS = {
       en: {
@@ -1214,6 +1215,22 @@
             return;
           }
           setRedactorStatusByKey('couldNotExportGeneral', { errorMessage: error?.message || error }, true);
+        }
+      });
+    }
+
+    if (downloadTranscriptButton) {
+      downloadTranscriptButton.addEventListener('click', async () => {
+        const content = transcriptionEl?.value || '';
+        if (!content.trim()) {
+          setRedactorStatusByKey('noMatchingText', {}, true);
+          return;
+        }
+        try {
+          await exportTextFile('Redacted.txt', content);
+        } catch (error) {
+          if (error && error.name === 'AbortError') return;
+          console.warn('[redactor] download transcript failed', error);
         }
       });
     }
