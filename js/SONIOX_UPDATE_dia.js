@@ -203,8 +203,17 @@ const {
   setAudioReader: (value) => { audioReader = value; },
 });
 
+// canShowRecordingStatus gates VAD callbacks (onSpeechStart,
+// onSpeechEnd) so stale callbacks arriving after a terminal action
+// don't buffer audio or update UI. It intentionally does NOT check
+// stopInProgress: during stop, sileroVAD.pause() fires one final
+// onSpeechEnd (via submitUserSpeechOnPause) that carries the tail
+// audio of the last utterance. If we rejected it here, the transcript
+// would be truncated by a sentence. The stop handler instead relies
+// on setting manualStop = true AFTER sileroVAD.pause() has resolved,
+// which protects against any further late callbacks.
 function canShowRecordingStatus() {
-  return !manualStop && !stopInProgress && !transcriptFrozen && !recordingPaused;
+  return !manualStop && !transcriptFrozen && !recordingPaused;
 }
 
 // ───── Completion timer helpers ───────────────────────────────────────────────
