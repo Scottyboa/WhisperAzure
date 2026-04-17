@@ -245,7 +245,7 @@ HOW TO UPDATE THE STACK (CLOUDFORMATION)
    ✅ Amazon S3 URL
    Paste this Template URL:
 
-   https://s3.eu-north-1.amazonaws.com/bedrock-note-proxy-cfn-eu-north-1-yourbrand/templates/bedrock-note-proxy.yaml
+   https://bedrock-note-proxy-cfn-eu-north-1-yourbrand.s3.eu-north-1.amazonaws.com/templates/bedrock-note-proxy.yaml
 
    Then click: Next
 
