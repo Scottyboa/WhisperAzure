@@ -2107,6 +2107,8 @@ document.addEventListener('DOMContentLoaded', () => {
       recordingStartedAt,
       recordingPausedAt,
       recordingAccumulatedMs,
+      transcriptStartedAt: Number(app.miniPanelTranscriptStartedAt || 0),
+      transcriptElapsedMs: Number(app.miniPanelTranscriptElapsedMs || 0),
       noteGenerationStartedAt: Number(app.miniPanelNoteGenerationStartedAt || 0),
       noteGenerationElapsedMs: Number(app.miniPanelNoteGenerationElapsedMs || 0),
       usePromptEnabled: getUsePromptEnabled(),
@@ -2196,11 +2198,31 @@ document.addEventListener('DOMContentLoaded', () => {
       app.miniPanelRecordingStartedAt = 0;
       app.miniPanelRecordingPausedAt = 0;
       app.miniPanelRecordingAccumulatedMs = 0;
-      // Also reset note generation timer
-      app.miniPanelNoteGenerationStartedAt = 0;
-      app.miniPanelNoteGenerationElapsedMs = 0;
     }
 
+    // ── Transcript completion timer ──
+    function beginMiniPanelTranscriptTimer() {
+      const app = getApp();
+      app.miniPanelTranscriptStartedAt = Date.now();
+      app.miniPanelTranscriptElapsedMs = 0;
+    }
+
+    function finishMiniPanelTranscriptTimer() {
+      const app = getApp();
+      const startedAt = Number(app.miniPanelTranscriptStartedAt || 0);
+      if (startedAt > 0) {
+        app.miniPanelTranscriptElapsedMs = Math.max(0, Date.now() - startedAt);
+      }
+      app.miniPanelTranscriptStartedAt = 0;
+    }
+
+    function resetMiniPanelTranscriptTimer() {
+      const app = getApp();
+      app.miniPanelTranscriptStartedAt = 0;
+      app.miniPanelTranscriptElapsedMs = 0;
+    }
+
+    // ── Note generation timer ──
     function beginMiniPanelNoteGenerationTimer() {
       const app = getApp();
       app.miniPanelNoteGenerationStartedAt = Date.now();
@@ -2216,6 +2238,19 @@ document.addEventListener('DOMContentLoaded', () => {
       app.miniPanelNoteGenerationStartedAt = 0;
     }
 
+    function resetMiniPanelNoteGenerationTimer() {
+      const app = getApp();
+      app.miniPanelNoteGenerationStartedAt = 0;
+      app.miniPanelNoteGenerationElapsedMs = 0;
+    }
+
+    // ── Reset all three timers at once (called on Start) ──
+    function resetAllMiniPanelTimers() {
+      resetMiniPanelRecordingTimer();
+      resetMiniPanelTranscriptTimer();
+      resetMiniPanelNoteGenerationTimer();
+    }
+
     const startBtn = document.getElementById('startButton');
     const stopBtn = document.getElementById('stopButton');
     const pauseBtn = document.getElementById('pauseResumeButton');
@@ -2225,7 +2260,7 @@ document.addEventListener('DOMContentLoaded', () => {
       startBtn.dataset.miniPanelStatusBound = '1';
       startBtn.addEventListener('click', () => {
         clearMiniPanelCopyState('recording-started');
-        resetMiniPanelRecordingTimer();
+        resetAllMiniPanelTimers();
         beginMiniPanelRecordingTimer();
         setMiniPanelStatusPhase('recording');
         emitAppStateChanged('mini-panel-recording-started');
@@ -2236,6 +2271,7 @@ document.addEventListener('DOMContentLoaded', () => {
       stopBtn.dataset.miniPanelStatusBound = '1';
       stopBtn.addEventListener('click', () => {
         finishMiniPanelRecordingTimer();
+        beginMiniPanelTranscriptTimer();
         setMiniPanelStatusPhase('transcribing');
         emitAppStateChanged('mini-panel-recording-stopped');
       });
@@ -2267,7 +2303,7 @@ document.addEventListener('DOMContentLoaded', () => {
       abortBtn.dataset.miniPanelStatusBound = '1';
       abortBtn.addEventListener('click', () => {
         clearMiniPanelCopyState('recording-aborted');
-        resetMiniPanelRecordingTimer();
+        resetAllMiniPanelTimers();
         setMiniPanelStatusPhase('aborted');
         emitAppStateChanged('mini-panel-recording-aborted');
       });
@@ -2276,10 +2312,12 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('transcription:finished', (event) => {
       const detail = event?.detail || {};
       if (detail?.status === 'aborted') {
-        resetMiniPanelRecordingTimer();
+        resetAllMiniPanelTimers();
         setMiniPanelStatusPhase('aborted');
         return;
       }
+
+      finishMiniPanelTranscriptTimer();
 
       if (getAutoGenerateEnabled()) {
         beginMiniPanelNoteGenerationTimer();
@@ -2311,13 +2349,13 @@ document.addEventListener('DOMContentLoaded', () => {
         setMiniPanelStatusPhase('note-generating');
       } else if (reason === 'start-recording-click' || reason === 'record-hotkey') {
         clearMiniPanelCopyState(reason);
-        resetMiniPanelRecordingTimer();
+        resetAllMiniPanelTimers();
         beginMiniPanelRecordingTimer();
         setMiniPanelStatusPhase('recording');
       }
     });
 
-    resetMiniPanelRecordingTimer();
+    resetAllMiniPanelTimers();
     setMiniPanelStatusPhase('idle');
   }
 
