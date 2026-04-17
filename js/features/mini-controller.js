@@ -1611,8 +1611,12 @@ function updateMiniTranscriptTimer(state) {
     phase === 'note-generating' ||
     phase === 'note-completed';
 
+  // Hide when recording, idle, paused, aborted, or any phase
+  // that isn't actively transcribing/post-transcript
   if (!isTranscribing && !(isPostTranscript && hasTimerData)) {
     row.hidden = true;
+    if (statusEl) statusEl.textContent = '';
+    if (timerEl) { timerEl.hidden = true; timerEl.textContent = ''; }
     return;
   }
 
@@ -1650,6 +1654,8 @@ function updateMiniNoteTimer(state) {
 
   if (!isGenerating && !(isCompleted && hasTimerData)) {
     row.hidden = true;
+    if (statusEl) statusEl.textContent = '';
+    if (timerEl) { timerEl.hidden = true; timerEl.textContent = ''; }
     return;
   }
 
@@ -2315,6 +2321,12 @@ function bindMiniPanelEvents() {
     startButton.addEventListener('click', () => {
       dispatchHubAction('startRecording');
       hideCopiedIndicator();
+      // Force-hide transcript/note rows immediately in the local DOM
+      // to avoid any lag while waiting for the state round-trip.
+      const trRow = $('miniTranscriptRow');
+      const noteRow = $('miniNoteStatusRow');
+      if (trRow) trRow.hidden = true;
+      if (noteRow) noteRow.hidden = true;
       requestUiRefresh();
     });
   }
