@@ -139,6 +139,7 @@ import {
     "sonnet-4-6": { input: 3.0, output: 15.0 },
     "opus-4-5": { input: 5.0, output: 25.0 },
     "opus-4-6": { input: 5.0, output: 25.0 },
+    "opus-4-7": { input: 5.0, output: 25.0 },
   };
 
   // Mistral API (USD per 1M tokens)

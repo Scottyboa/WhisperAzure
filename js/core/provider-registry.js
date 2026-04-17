@@ -195,6 +195,7 @@ const BEDROCK_MODEL_OPTIONS = [
   { value: 'sonnet-4-6', label: 'Claude Sonnet 4.6' },
   { value: 'opus-4-5', label: 'Claude Opus 4.5' },
   { value: 'opus-4-6', label: 'Claude Opus 4.6' },
+  { value: 'opus-4-7', label: 'Claude Opus 4.7' },
 ];
 
 const SONIOX_REGION_OPTIONS = [
