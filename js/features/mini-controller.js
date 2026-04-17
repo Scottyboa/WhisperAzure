@@ -491,6 +491,14 @@ function tMini(key) {
       fr: 'Arrêter',
       it: 'Stop',
     },
+    recordingCompleted: {
+      en: 'Recording completed',
+      no: 'Opptak fullført',
+      sv: 'Inspelning klar',
+      de: 'Aufnahme abgeschlossen',
+      fr: 'Enregistrement terminé',
+      it: 'Registrazione completata',
+    },
     pause: {
       en: 'Pause',
       no: 'Pause',
@@ -1581,59 +1589,84 @@ function updateMiniRecordingTimer(state) {
   timerEl.textContent = formatElapsedMs(computeRecordingElapsedMs(state));
 }
 
-function computeNoteGenerationElapsedMs(state) {
-  const startedAt = Number(state?.noteGenerationStartedAt || 0);
-  const frozenMs = Number(state?.noteGenerationElapsedMs || 0);
+function computeTimerElapsedMs(startedAt, frozenMs) {
+  if (startedAt > 0) return Math.max(0, Date.now() - startedAt);
+  return frozenMs || 0;
+}
 
-  // If still generating (startedAt > 0), compute live elapsed.
-  if (startedAt > 0) {
-    return Math.max(0, Date.now() - startedAt);
+function updateMiniTranscriptTimer(state) {
+  const row = $('miniTranscriptRow');
+  const statusEl = $('miniTranscriptStatusText');
+  const timerEl = $('miniTranscriptTimer');
+  if (!row) return;
+
+  const phase = String(state?.miniPanelStatusPhase || '').trim();
+  const startedAt = Number(state?.transcriptStartedAt || 0);
+  const elapsedMs = Number(state?.transcriptElapsedMs || 0);
+  const hasTimerData = startedAt > 0 || elapsedMs > 0;
+
+  const isTranscribing = phase === 'transcribing' || phase === 'generating-transcript';
+  const isPostTranscript =
+    phase === 'transcript-completed' ||
+    phase === 'note-generating' ||
+    phase === 'note-completed';
+
+  if (!isTranscribing && !(isPostTranscript && hasTimerData)) {
+    row.hidden = true;
+    return;
   }
-  // If finished (frozenMs > 0), show frozen time.
-  return frozenMs;
+
+  row.hidden = false;
+
+  if (statusEl) {
+    statusEl.textContent = isTranscribing
+      ? tMini('generatingTranscript')
+      : tMini('transcriptCompleted');
+  }
+
+  if (timerEl) {
+    if (hasTimerData) {
+      timerEl.hidden = false;
+      timerEl.textContent = formatElapsedMs(computeTimerElapsedMs(startedAt, elapsedMs));
+    } else {
+      timerEl.hidden = true;
+    }
+  }
 }
 
 function updateMiniNoteTimer(state) {
-  const noteRow = $('miniNoteStatusRow');
-  const noteStatusText = $('miniNoteStatusText');
-  const noteTimerEl = $('miniNoteTimer');
-  if (!noteRow) return;
+  const row = $('miniNoteStatusRow');
+  const statusEl = $('miniNoteStatusText');
+  const timerEl = $('miniNoteTimer');
+  if (!row) return;
 
   const phase = String(state?.miniPanelStatusPhase || '').trim();
-  const noteStartedAt = Number(state?.noteGenerationStartedAt || 0);
-  const noteElapsedMs = Number(state?.noteGenerationElapsedMs || 0);
-  const isNoteGenerating = phase === 'note-generating';
-  const isNoteCompleted = phase === 'note-completed';
-  const hasNoteTimerData = noteStartedAt > 0 || noteElapsedMs > 0;
+  const startedAt = Number(state?.noteGenerationStartedAt || 0);
+  const elapsedMs = Number(state?.noteGenerationElapsedMs || 0);
+  const hasTimerData = startedAt > 0 || elapsedMs > 0;
 
-  // Show the note row only when generating or completed with timer data
-  if (!isNoteGenerating && !isNoteCompleted) {
-    noteRow.hidden = true;
+  const isGenerating = phase === 'note-generating';
+  const isCompleted = phase === 'note-completed';
+
+  if (!isGenerating && !(isCompleted && hasTimerData)) {
+    row.hidden = true;
     return;
   }
 
-  if (isNoteCompleted && !hasNoteTimerData) {
-    // Note completed but no timer data (e.g. manual generate without auto-generate)
-    noteRow.hidden = true;
-    return;
-  }
+  row.hidden = false;
 
-  noteRow.hidden = false;
-
-  // Set status text
-  if (noteStatusText) {
-    noteStatusText.textContent = isNoteGenerating
+  if (statusEl) {
+    statusEl.textContent = isGenerating
       ? tMini('generatingNote')
       : tMini('noteCompleted');
   }
 
-  // Set timer
-  if (noteTimerEl) {
-    if (hasNoteTimerData) {
-      noteTimerEl.hidden = false;
-      noteTimerEl.textContent = formatElapsedMs(computeNoteGenerationElapsedMs(state));
+  if (timerEl) {
+    if (hasTimerData) {
+      timerEl.hidden = false;
+      timerEl.textContent = formatElapsedMs(computeTimerElapsedMs(startedAt, elapsedMs));
     } else {
-      noteTimerEl.hidden = true;
+      timerEl.hidden = true;
     }
   }
 }
@@ -2021,14 +2054,14 @@ function updateMiniPanelUi() {
   // Recording line status text: show phase-appropriate label
   const phase = String(state?.miniPanelStatusPhase || 'idle').trim();
   let recordingLineText;
-  if (phase === 'transcribing' || phase === 'generating-transcript') {
-    recordingLineText = tMini('generatingTranscript');
-  } else if (
-    phase === 'transcript-completed' ||
-    phase === 'note-generating' ||
+  const hasRecordingTime = Number(state?.recordingAccumulatedMs || 0) > 0;
+  if (hasRecordingTime && (
+    phase === 'transcribing' || phase === 'generating-transcript' ||
+    phase === 'transcript-completed' || phase === 'note-generating' ||
     phase === 'note-completed'
-  ) {
-    recordingLineText = tMini('transcriptCompleted');
+  )) {
+    // After stop: show "Recording completed" with frozen timer
+    recordingLineText = tMini('recordingCompleted');
   } else {
     recordingLineText = statusText || phaseUi?.text || (snapshot ? tMini('ready') : tMini('noTabSelected'));
   }
@@ -2064,6 +2097,7 @@ function updateMiniPanelUi() {
   }
 
   updateMiniRecordingTimer(state);
+  updateMiniTranscriptTimer(state);
   updateMiniNoteTimer(state);
 
   const indicator = $('miniCopiedIndicator');
@@ -3345,9 +3379,13 @@ function renderMiniPanelDocument(targetWindow) {
         </div>
       </div>
       <div class="status-meta">
-        <div class="status-meta-main">
+        <div class="status-meta-main" id="miniRecordingRow">
           <div id="miniStatusText" class="status-text">Ready</div>
           <div id="miniRecordingTimer" class="recording-timer" hidden>00:00</div>
+        </div>
+        <div class="status-meta-main" id="miniTranscriptRow" hidden>
+          <div id="miniTranscriptStatusText" class="status-text"></div>
+          <div id="miniTranscriptTimer" class="recording-timer" hidden>00:00</div>
         </div>
         <div class="status-meta-main" id="miniNoteStatusRow" hidden>
           <div id="miniNoteStatusText" class="status-text"></div>
