@@ -250,7 +250,7 @@ SLIK OPPDATERER DU STACKEN (CLOUDFORMATION)
    ✅ Amazon S3 URL
    Lim inn denne Template URL-en:
 
-   https://s3.eu-north-1.amazonaws.com/bedrock-note-proxy-cfn-eu-north-1-yourbrand/templates/bedrock-note-proxy.yaml
+   https://bedrock-note-proxy-cfn-eu-north-1-yourbrand.s3.eu-north-1.amazonaws.com/templates/bedrock-note-proxy.yaml
 
    Klikk deretter: Next
 
