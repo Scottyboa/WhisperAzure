@@ -207,6 +207,11 @@
       box-shadow: 0 0 8px rgba(102,175,233,0.6);
       outline: none;
     }
+    /* Mask sensitive fields with dots without changing visual appearance */
+    input.masked-input {
+      -webkit-text-security: disc;
+      text-security: disc;
+    }
 
     /* Provider credentials: 2-column layout */
     .provider-columns {
@@ -700,7 +705,7 @@
 
         <!-- New (Phase 1): Optional Soniox API Key -->
         <p id="soniox-text">Soniox API key:</p>
-        <input type="text" id="sonioxKeyInput" placeholder="Enter Soniox API Key here" autocomplete="off">
+        <input type="text" id="sonioxKeyInput" placeholder="Enter Soniox API Key here" autocomplete="off" class="masked-input">
         <br>
       
         <!-- New: AWS Bedrock proxy configuration (per-user) -->
@@ -719,12 +724,14 @@
             id="bedrockBackendUrlInput"
             placeholder="Bedrock backend URL (https://…lambda-url.eu-north-1.on.aws/)"
             autocomplete="off"
+            class="masked-input"
           >
           <input
             type="text"
             id="bedrockBackendSecretInput"
             placeholder="Bedrock backend secret"
             autocomplete="off"
+            class="masked-input"
           >
         </div>
 
@@ -744,17 +751,19 @@
             id="vertexBackendUrlInput"
             placeholder="Vertex backend URL (https://…run.app)"
             autocomplete="off"
+            class="masked-input"
           >
           <input
             type="text"
             id="vertexBackendSecretInput"
             placeholder="Vertex backend secret"
             autocomplete="off"
+            class="masked-input"
           >
         </div>
         <!-- New: Optional Mistral (Voxtral) API Key -->
         <p id="mistral-text">Mistral API key:</p>
-        <input type="text" id="mistralKeyInput" placeholder="Enter Mistral API Key here" autocomplete="off">
+        <input type="text" id="mistralKeyInput" placeholder="Enter Mistral API Key here" autocomplete="off" class="masked-input">
         <br>
       </fieldset>
 
@@ -765,7 +774,7 @@
 
         <!-- New explicit label above the OpenAI field -->
         <p id="openai-label">OpenAI API key:</p>
-        <input type="text" id="apiKeyInput" placeholder="Enter API Key here" autocomplete="off">
+        <input type="text" id="apiKeyInput" placeholder="Enter API Key here" autocomplete="off" class="masked-input">
         <br>
 
         <!-- New: Optional Google Gemini / Vertex Credentials -->
@@ -776,18 +785,19 @@
             id="geminiKeyInput"
             placeholder="Enter Google Gemini API Key here"
             autocomplete="off"
+            class="masked-input"
           >
         </div>
         <br>
 
         <!-- New: Optional Lemonfox API Key -->
         <p id="lemonfox-text">Lemonfox API key:</p>
-        <input type="text" id="lemonfoxKeyInput" placeholder="Enter Lemonfox API Key here" autocomplete="off">
+        <input type="text" id="lemonfoxKeyInput" placeholder="Enter Lemonfox API Key here" autocomplete="off" class="masked-input">
         <br>
       
         <!-- New: Optional Deepgram API Key -->
         <p id="deepgram-text">Deepgram API key:</p>
-        <input type="text" id="deepgramKeyInput" placeholder="Enter Deepgram API Key here" autocomplete="off">
+        <input type="text" id="deepgramKeyInput" placeholder="Enter Deepgram API Key here" autocomplete="off" class="masked-input">
         <br>
       </fieldset>
     </div>
@@ -1524,4 +1534,5 @@
   
 </body>
 </html>
+
 
