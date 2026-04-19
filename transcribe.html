@@ -1736,7 +1736,8 @@
           <textarea
             id="transcription"
             placeholder="Transcription result will appear here."
-            style="margin-bottom: 6px;"  
+            style="margin-bottom: 6px;"
+            autocomplete="off"
           ></textarea>
         </div>        <!-- Supplementary / Redactor toolbar -->
         <div class="supp-toolbar">
@@ -2136,7 +2137,7 @@
         <div id="noteTimerStatusBelow" class="timer-status-below"></div>
         <!-- Separate (non-timer) UI line for tokens/cost so it never gets overwritten by #noteTimer.innerText -->
         <div id="noteUsageCost" class="note-usage-cost"></div>
-          <textarea id="generatedNote" placeholder="Generated note will appear here..."></textarea>
+          <textarea id="generatedNote" placeholder="Generated note will appear here..." autocomplete="off"></textarea>
         </div>
         <div class="column">
           <div class="bottom-section-header custom-prompt-header">
@@ -2364,3 +2365,4 @@
 
 </body>
 </html>
+
