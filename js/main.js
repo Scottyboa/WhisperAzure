@@ -702,8 +702,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const payload = {
-      transcription: grab('transcription'),
-      generatedNote: grab('generatedNote'),
       customPrompt: grab('customPrompt'),
       ts: Date.now(),
     };
@@ -739,8 +737,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 0);
       };
 
-      put('transcription', s.transcription);
-      put('generatedNote', s.generatedNote);
       put('customPrompt', s.customPrompt);
     } finally {
       try {
@@ -2873,3 +2869,4 @@ document.addEventListener('DOMContentLoaded', () => {
   void initNoteProvider(getSelectedEffectiveNoteProvider());
   void initMiniControllerFeature();
 });
+
