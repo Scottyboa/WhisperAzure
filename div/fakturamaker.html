@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fakturamaker.no – Lag faktura enkelt</title>
+<meta name="description" content="Rask og enkel måte å lage standard fakturaer som PDF">
+<style>
+/* =========================================================
+   Fakturamaker.no – single-file klone v3
+   Fikser fra forrige runde:
+   1. Labels for kontaktinfo er nå alltid synlige (ikke bare ved klikk)
+   2. Kontaktinfo flyttet til korrekt plassering
+   3. Firmanavn-input overlapper IKKE lenger kontaktinfo
+   4. Giroblankett tegnet som nøyaktig SVG-kopi av originalen
+   ========================================================= */
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+
+html{
+  background:#dddddd;
+  background-image:
+    radial-gradient(rgba(0,0,0,.03) 1px, transparent 1px),
+    radial-gradient(rgba(255,255,255,.5) 1px, transparent 1px);
+  background-size: 3px 3px, 5px 5px;
+  background-position: 0 0, 1px 2px;
+}
+body{
+  font-family:Inter,'Helvetica Neue',Helvetica,Arial,sans-serif;
+  color:#222;
+  font-size:14px;
+  line-height:1.4;
+  -webkit-font-smoothing:antialiased;
+}
+
+#root{
+  max-width:950px;
+  min-height:100%;
+  margin:0 auto;
+  padding:0 10px 40px;
+}
+
+/* ==================== APP HEADER ==================== */
+.app-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  height:120px;
+}
+.app-header h1{
+  margin:0;
+  flex:1;
+  font-family:Georgia,'Times New Roman',serif;
+  font-size:48px;
+  font-weight:700;
+  color:#333;
+  text-shadow:1px 1px 1px #fff;
+}
+.app-header h1 a{color:#333;text-decoration:none}
+
+.download-ready a{
+  color:#fff;
+  background:#3498db;
+  padding:20px 30px;
+  font-size:20px;
+  font-weight:700;
+  text-decoration:none;
+  display:block;
+  border:none;
+  cursor:pointer;
+  font-family:inherit;
+  transition:background .15s;
+}
+.download-ready a:hover{background:#2980b9}
+
+/* ==================== BILLING (fakturapapiret) ==================== */
+.billing{
+  background:#fff;
+  position:relative;
+  box-shadow:0 0 20px #999;
+  padding-bottom:20px;
+}
+
+.billing-stamp{
+  font-size:26px;
+  position:absolute;
+  top:20px;
+  right:20px;
+  color:#333;
+  font-weight:400;
+  z-index:5;
+}
+
+/* ==================== CONTACT-INFO (øverst høyre) ==================== */
+.contact-info{
+  z-index:10;
+  font-size:12px;
+  position:absolute;
+  top:60px;
+  right:30px;
+  width:280px;
+}
+.contact-info dl{
+  display:grid;
+  grid-template-columns:70px 1fr;
+  row-gap:4px;
+  column-gap:8px;
+  margin:0;
+}
+.contact-info dt{
+  grid-column:1;
+  align-items:center;
+  display:flex;
+  padding:0;
+  color:#555;
+  font-weight:500;
+}
+.contact-info dd{
+  grid-column:2;
+  margin:0;
+  border-bottom:1px dotted #ccc;
+  min-height:18px;
+}
+.contact-info dd input{width:100%;font-size:12px}
+.contact-info dd input::placeholder{color:#bbb;opacity:1}
+
+/* ==================== BILLING SECTIONS ==================== */
+.billing-header-section,
+.billing-middle-section,
+.billing-items-section,
+.billing-total-section{
+  padding:0 60px;
+}
+.billing-header-section{
+  padding-top:40px;
+  padding-right:340px;
+  min-height:160px;
+}
+
+.billing-header-section input[name=companyName]{
+  font-size:28px;
+  font-weight:400;
+  width:100%;
+  margin-bottom:4px;
+  display:block;
+}
+.billing-header-section input[name=companyName]::placeholder{color:#bbb;opacity:1}
+.billing-header-section textarea[name=companyAddress]{
+  width:100%;
+  min-height:60px;
+  resize:none;
+  font-size:14px;
+  line-height:1.45;
+  display:block;
+}
+.billing-header-section textarea[name=companyAddress]::placeholder{color:#bbb;opacity:1}
+
+/* ==================== MIDDLE SECTION ==================== */
+.billing-middle-section{
+  position:relative;
+  display:flex;
+  gap:30px;
+  align-items:flex-start;
+  margin-top:30px;
+}
+.recipient-block{flex:1;padding-top:10px}
+.recipient-block .lbl{
+  font-size:11px;
+  color:#888;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  margin-bottom:6px;
+  font-weight:600;
+}
+.recipient-block textarea{
+  width:100%;
+  min-height:100px;
+  resize:none;
+  font-size:14px;
+  line-height:1.45;
+}
+.recipient-block textarea::placeholder{color:#bbb;opacity:1}
+
+.invoice-meta{width:280px}
+.invoice-meta h2{
+  font-size:22px;
+  font-weight:400;
+  margin:0 0 10px;
+  color:#333;
+}
+.invoice-meta table{width:100%;border-collapse:collapse;font-size:14px}
+.invoice-meta td{padding:4px 2px;vertical-align:middle}
+.invoice-meta td.lbl{color:#555;width:100px}
+.invoice-meta td.val{text-align:right}
+.invoice-meta td.val input{text-align:right;width:160px;border-bottom:1px dotted #ccc}
+.invoice-meta td.val .with-suffix{
+  display:inline-flex;align-items:baseline;gap:4px;justify-content:flex-end;
+}
+.invoice-meta td.val .with-suffix input{width:60px}
+.invoice-meta td.val .suffix{color:#555;font-size:13px}
+.invoice-meta input::placeholder{color:#bbb;opacity:1}
+
+/* ==================== ITEMS ==================== */
+.billing-items-section{margin-top:40px;min-height:200px}
+.billing-items-list{width:100%;border-collapse:collapse;font-size:11.2px}
+.billing-items-list th{
+  color:#000;font-weight:700;padding:6px;text-align:left;border-bottom:1px solid #ddd;
+}
+.billing-items-list th.num{text-align:right}
+.billing-items-list td{border-top:1px solid #ddd;padding:6px;vertical-align:middle}
+.billing-items-list td.num{text-align:right}
+.billing-items-list .col-desc{width:38%}
+.billing-items-list .col-unit{width:13%}
+.billing-items-list .col-qty{width:10%}
+.billing-items-list .col-net{width:13%}
+.billing-items-list .col-vat{width:10%}
+.billing-items-list .col-sum{width:13%}
+.billing-items-list .col-rm{width:3%}
+.billing-items-list input{width:100%;font-size:inherit;text-align:inherit}
+.billing-items-list input::placeholder{color:#ccc;opacity:1}
+.billing-items-list input.num{text-align:right}
+.billing-items-list .row-remove{
+  border:none;background:transparent;cursor:pointer;color:#c0392b;
+  font-size:14px;padding:0;opacity:.4;transition:opacity .15s;
+}
+.billing-items-list tr:hover .row-remove{opacity:1}
+
+.add-line{
+  margin:5px;padding:5px;display:inline-block;
+  color:#3498db;cursor:pointer;font-size:13px;
+  border:none;background:transparent;font-family:inherit;
+}
+.add-line:hover{text-decoration:underline}
+
+/* ==================== TOTALER ==================== */
+.billing-total-section{margin-top:20px;padding-top:20px}
+.totals{
+  width:100%;max-width:340px;margin-left:auto;border-collapse:collapse;font-size:13px;
+}
+.totals td{padding:5px 4px}
+.totals td.lbl{color:#333}
+.totals td.val{text-align:right;font-variant-numeric:tabular-nums}
+.totals tr.grand td{
+  border-top:2px solid #333;font-weight:700;font-size:15px;padding-top:8px;
+}
+
+/* ==================== GIROBLANKETT ==================== */
+.giro-wrap{
+  position:relative;margin:40px 0 0;width:100%;
+}
+.giro-wrap svg.giro-bg{width:100%;height:auto;display:block}
+
+.giro-overlay{
+  position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;
+}
+.giro-overlay > *{pointer-events:auto}
+.giro-overlay .fld{
+  position:absolute;
+  font-family:Inter,'Helvetica Neue',Arial,sans-serif;
+  color:#333;
+}
+.giro-overlay input,
+.giro-overlay textarea{
+  width:100%;height:100%;background:transparent;font-family:inherit;color:inherit;font-size:inherit;
+}
+.giro-overlay input::placeholder,
+.giro-overlay textarea::placeholder{color:#bbb;opacity:1}
+
+/* Prosentvise posisjoner for presis kobling mot SVG (viewBox 950x480) */
+.fld-payment-info{
+  left:2.8%;top:28%;width:38%;height:32%;font-size:13px;
+}
+.fld-payment-info textarea{
+  resize:none;padding:4px;background:#f5f5f5;border:1px solid #e8e8e8;border-radius:3px;
+}
+
+.fld-betalt-til{
+  left:58%;top:58%;width:34%;font-size:13px;
+}
+.fld-betalt-til .line{
+  padding:5px 8px;background:#f5f5f5;border:1px solid #e8e8e8;border-radius:2px;
+  margin-bottom:3px;min-height:22px;color:#999;
+}
+.fld-betalt-til .line.has-value{color:#222}
+
+.fld-belop{
+  left:37%;top:5.5%;width:22%;height:11%;font-size:14px;
+}
+.fld-belop .inner{
+  padding:8px 10px;background:#fff;font-weight:600;text-align:right;
+  height:100%;display:flex;align-items:center;justify-content:flex-end;
+}
+
+.fld-betalers-konto{
+  left:60%;top:5.5%;width:20%;height:11%;font-size:12px;
+}
+.fld-betalers-konto .inner{padding:8px 10px;background:#fff;height:100%}
+
+.fld-blankett-top{
+  left:82%;top:5.5%;width:15%;height:11%;font-size:12px;
+}
+.fld-blankett-top .inner{
+  padding:8px 10px;background:#fff;height:100%;display:flex;align-items:center;
+}
+
+.fld-forfall{
+  left:73%;top:26%;width:22%;font-size:13px;font-weight:700;color:#000;
+  text-align:center;padding:4px 0;
+}
+
+.fld-kid{
+  left:1%;top:89%;width:26%;height:8%;font-size:13px;font-family:'Courier New',monospace;
+}
+.fld-kid .inner{padding:2px 8px;height:100%;display:flex;align-items:center}
+
+.fld-kroner{
+  left:33%;top:89%;width:12%;height:8%;font-size:14px;
+  font-family:'Courier New',monospace;font-weight:700;text-align:right;
+  padding:2px 10px 0 0;display:flex;align-items:center;justify-content:flex-end;
+}
+.fld-cents{
+  left:46%;top:89%;width:10%;height:8%;font-size:14px;
+  font-family:'Courier New',monospace;font-weight:700;padding:2px 0 0 6px;
+  display:flex;align-items:center;
+}
+.fld-til-konto{
+  left:58%;top:89%;width:24%;height:8%;font-size:13px;
+}
+.fld-til-konto .inner{padding:2px 8px;height:100%;display:flex;align-items:center}
+.fld-blankett-bottom{
+  left:83%;top:89%;width:14%;height:8%;font-size:12px;
+}
+.fld-blankett-bottom .inner{padding:2px 8px;height:100%;display:flex;align-items:center}
+
+/* ==================== INPUTS (transparent, borderless) ==================== */
+input,textarea{
+  font-family:inherit;color:#111;border:0;border-radius:0;padding:0;
+  background:transparent;outline:none;margin:0;
+}
+input:focus,textarea:focus{
+  outline:2px solid rgba(64,122,230,.3);outline-offset:1px;
+  background:rgba(255,253,220,.4);
+}
+
+/* ==================== BETALINGSINFO INPUT ==================== */
+.payment-setup{
+  max-width:950px;margin:20px auto 0;padding:15px 20px;
+  background:#fff;border-radius:4px;box-shadow:0 0 10px rgba(0,0,0,.1);
+}
+.payment-setup h3{
+  margin:0 0 12px;font-size:13px;color:#333;
+  text-transform:uppercase;letter-spacing:.05em;font-weight:600;
+}
+.payment-setup .row{display:flex;gap:15px;flex-wrap:wrap}
+.payment-setup label{flex:1;min-width:180px}
+.payment-setup .lbl{
+  font-size:11px;color:#666;margin-bottom:3px;display:block;
+  text-transform:uppercase;letter-spacing:.04em;
+}
+.payment-setup input{
+  border:1px solid #d1d5db;padding:7px 9px;width:100%;
+  border-radius:4px;font-size:13px;background:#fff;
+}
+.payment-setup input:focus{
+  outline:none;border-color:#3498db;
+  box-shadow:0 0 0 3px rgba(52,152,219,.15);background:#fff;
+}
+
+.footer-link{text-align:center;margin-top:20px;font-size:12px;color:#666}
+.footer-link a{color:#3498db;text-decoration:none}
+.footer-link a:hover{text-decoration:underline}
+
+/* ==================== PRINT ==================== */
+@media print{
+  @page{size:A4 portrait;margin:8mm}
+  html,body{background:#fff}
+  html{background-image:none}
+  #root{max-width:none;padding:0}
+  .app-header,.footer-link,.payment-setup,[data-no-print]{display:none !important}
+  .billing{box-shadow:none;-webkit-box-shadow:none}
+  .add-line,.row-remove{display:none !important}
+  input,textarea{outline:none !important;background:transparent !important}
+}
+
+/* ==================== MOBILE ==================== */
+@media (max-width:720px){
+  .app-header{height:auto;padding:15px 0;flex-direction:column;gap:15px;align-items:stretch}
+  .app-header h1{font-size:32px;text-align:center}
+  .billing-header-section,.billing-middle-section,
+  .billing-items-section,.billing-total-section{padding:0 20px}
+  .billing-header-section{padding-top:20px;padding-right:20px;min-height:auto}
+  .contact-info{position:static;margin:20px 0;width:auto;right:auto;top:auto}
+  .billing-stamp{position:static;text-align:right;padding:10px 20px 0}
+  .billing-middle-section{flex-direction:column;gap:20px}
+  .invoice-meta{width:100%}
+  .billing-items-list{font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<div id="root">
+
+  <header class="app-header" data-no-print>
+    <h1><a href="/">Fakturamaker</a></h1>
+    <div class="download-ready">
+      <a href="#" onclick="makePdf();return false;">PDF</a>
+    </div>
+  </header>
+
+  <main class="billing" id="billing">
+
+    <div class="billing-stamp">Faktura</div>
+
+    <aside class="contact-info">
+      <dl>
+        <dt>Org. nr</dt>
+        <dd><input type="text" name="companyOrgNumber" placeholder="000 000 000"></dd>
+        <dt>E-post</dt>
+        <dd><input type="email" name="companyEmail" placeholder="post@firma.no"></dd>
+        <dt>Web</dt>
+        <dd><input type="text" name="companyWeb" placeholder="firma.no"></dd>
+        <dt>Telefon</dt>
+        <dd><input type="text" name="companyPhone" placeholder="000 00 000"></dd>
+      </dl>
+    </aside>
+
+    <section class="billing-header-section">
+      <input type="text" name="companyName" placeholder="Ditt firmanavn">
+      <textarea name="companyAddress" placeholder="Din firmadresse&#10;0000 Sted"></textarea>
+    </section>
+
+    <section class="billing-middle-section">
+      <div class="recipient-block">
+        <div class="lbl">Faktureres til</div>
+        <textarea name="recipient" placeholder="Mottakers navn og adresse"></textarea>
+      </div>
+      <div class="invoice-meta">
+        <h2>Faktura</h2>
+        <table>
+          <tr>
+            <td class="lbl">Fakturanr.</td>
+            <td class="val"><input type="text" name="billingId" placeholder=""></td>
+          </tr>
+          <tr>
+            <td class="lbl">Fakturadato</td>
+            <td class="val"><input type="date" name="billingDate"></td>
+          </tr>
+          <tr>
+            <td class="lbl">Forfall</td>
+            <td class="val">
+              <span class="with-suffix">
+                <input type="number" name="billingDueDays" min="0" value="14">
+                <span class="suffix">dager</span>
+              </span>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="billing-items-section">
+      <table class="billing-items-list" id="itemsTable">
+        <thead>
+          <tr>
+            <th class="col-desc">Beskrivelse</th>
+            <th class="col-unit num">Enhetspris</th>
+            <th class="col-qty num">Antall</th>
+            <th class="col-net num">Netto</th>
+            <th class="col-vat num">Mva %</th>
+            <th class="col-sum num">Sum</th>
+            <th class="col-rm"></th>
+          </tr>
+        </thead>
+        <tbody id="itemsBody"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="7" style="border-top:1px solid #ddd;padding:4px">
+              <button type="button" class="add-line" onclick="addItem()" data-no-print>+ Legg til linje</button>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </section>
+
+    <section class="billing-total-section">
+      <table class="totals">
+        <tr>
+          <td class="lbl">Totalt eks. mva</td>
+          <td class="val" id="t_subtotal">0,00 kr</td>
+        </tr>
+        <tr>
+          <td class="lbl">Merverdiavgift</td>
+          <td class="val" id="t_vat">0,00 kr</td>
+        </tr>
+        <tr class="grand">
+          <td class="lbl">Å betale</td>
+          <td class="val" id="t_total">0,00 kr</td>
+        </tr>
+      </table>
+    </section>
+
+    <!-- ================= GIROBLANKETT ================= -->
+    <div class="giro-wrap">
+      <svg class="giro-bg" viewBox="0 0 950 480" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <rect x="0" y="0" width="950" height="480" fill="#ffffff"/>
+
+        <!-- ØVERSTE GUL STRIPE -->
+        <rect x="0" y="0" width="950" height="78" fill="#fce64e"/>
+        <text x="14" y="20" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#111">Kvittering</text>
+        <text x="14" y="38" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#111">Innbetalt til konto</text>
+
+        <text x="350" y="20" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#111">Beløp</text>
+        <rect x="350" y="28" width="210" height="40" fill="#ffffff"/>
+
+        <text x="575" y="20" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#111">Betalerens kontonummer</text>
+        <rect x="575" y="28" width="190" height="40" fill="#ffffff"/>
+
+        <text x="780" y="20" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#111">Blankettnummer</text>
+        <rect x="780" y="28" width="145" height="40" fill="#ffffff"/>
+
+        <!-- MIDTSEKSJON -->
+        <text x="14" y="97" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#111">Betalingsinformasjon</text>
+
+        <text x="485" y="105" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="#111">GIRO</text>
+
+        <text x="665" y="96" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#111">Betalings-</text>
+        <text x="665" y="108" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#111">frist</text>
+
+        <g stroke="#111" stroke-width="1.2" fill="none">
+          <path d="M 720 95 L 720 105 L 730 105"/>
+          <path d="M 930 95 L 930 105 L 920 105"/>
+          <path d="M 720 160 L 720 150 L 730 150"/>
+          <path d="M 930 160 L 930 150 L 920 150"/>
+        </g>
+
+        <text x="465" y="140" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#111">Underskrift ved girering</text>
+        <line x1="580" y1="195" x2="700" y2="195" stroke="#fce64e" stroke-width="3"/>
+
+        <text x="14" y="235" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#111">Betalt av</text>
+        <g stroke="#111" stroke-width="1.2" fill="none">
+          <path d="M 14 245 L 14 255 L 24 255"/>
+          <path d="M 440 245 L 440 255 L 430 255"/>
+          <path d="M 14 355 L 14 345 L 24 345"/>
+          <path d="M 440 355 L 440 345 L 430 345"/>
+        </g>
+
+        <text x="460" y="235" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#111">Betalt til</text>
+        <g stroke="#111" stroke-width="1.2" fill="none">
+          <path d="M 460 245 L 460 255 L 470 255"/>
+          <path d="M 930 245 L 930 255 L 920 255"/>
+          <path d="M 460 355 L 460 345 L 470 345"/>
+          <path d="M 930 355 L 930 345 L 920 345"/>
+        </g>
+
+        <!-- MIDT-STRIPE (gul) -->
+        <rect x="0" y="360" width="950" height="40" fill="#fce64e"/>
+        <text x="100" y="377" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#111">Belast</text>
+        <text x="100" y="389" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#111">konto</text>
+
+        <g fill="#ffffff" stroke="#111" stroke-width="0.5">
+          <rect x="140" y="368" width="26" height="24"/>
+          <rect x="166" y="368" width="26" height="24"/>
+          <rect x="192" y="368" width="26" height="24"/>
+          <rect x="218" y="368" width="26" height="24"/>
+          <rect x="244" y="368" width="26" height="24"/>
+          <rect x="270" y="368" width="26" height="24"/>
+          <rect x="296" y="368" width="26" height="24"/>
+          <rect x="322" y="368" width="26" height="24"/>
+          <rect x="348" y="368" width="26" height="24"/>
+          <rect x="374" y="368" width="26" height="24"/>
+          <rect x="400" y="368" width="26" height="24"/>
+        </g>
+
+        <text x="925" y="380" text-anchor="end" font-family="Arial,sans-serif" font-size="11" font-weight="700" fill="#111">Kvittering</text>
+        <text x="925" y="393" text-anchor="end" font-family="Arial,sans-serif" font-size="11" font-weight="700" fill="#111">tilbake</text>
+
+        <line x1="2" y1="400" x2="2" y2="480" stroke="#111" stroke-width="1.2"/>
+
+        <!-- NEDERSTE RAD -->
+        <text x="14" y="417" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#111">Kundeidentifikasjon (KID)</text>
+        <rect x="14" y="425" width="290" height="38" fill="none" stroke="#111" stroke-width="0.5"/>
+
+        <line x1="315" y1="400" x2="315" y2="480" stroke="#111" stroke-width="1.2"/>
+        <text x="324" y="417" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#111">Kroner</text>
+
+        <line x1="437" y1="400" x2="437" y2="480" stroke="#111" stroke-width="1.2"/>
+        <text x="445" y="417" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#111">Øre</text>
+
+        <line x1="540" y1="400" x2="540" y2="480" stroke="#111" stroke-width="1.2"/>
+        <text x="550" y="417" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#111">Til konto</text>
+        <rect x="550" y="425" width="225" height="38" fill="none" stroke="#111" stroke-width="0.5"/>
+
+        <line x1="785" y1="400" x2="785" y2="480" stroke="#111" stroke-width="1.2"/>
+        <text x="795" y="417" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#111">Blankettnummer</text>
+
+        <line x1="0" y1="479" x2="950" y2="479" stroke="#111" stroke-width="1.2"/>
+      </svg>
+
+      <div class="giro-overlay">
+        <div class="fld fld-payment-info">
+          <textarea id="p_description" placeholder="Kort beskrivelse av fakturaen"></textarea>
+        </div>
+
+        <div class="fld fld-betalt-til">
+          <div class="line" id="p_companyName">Din firmadresse</div>
+          <div class="line" id="p_companyAddress">0000 Stedsnavn</div>
+        </div>
+
+        <div class="fld fld-belop">
+          <div class="inner" id="p_belop">0,00</div>
+        </div>
+
+        <div class="fld fld-betalers-konto">
+          <div class="inner"></div>
+        </div>
+
+        <div class="fld fld-blankett-top">
+          <div class="inner" id="p_blankettTop"></div>
+        </div>
+
+        <div class="fld fld-forfall" id="p_dueDate">&nbsp;</div>
+
+        <div class="fld fld-kid">
+          <div class="inner" id="p_kid">&nbsp;</div>
+        </div>
+
+        <div class="fld fld-kroner" id="p_kroner">0</div>
+        <div class="fld fld-cents" id="p_cents">0</div>
+
+        <div class="fld fld-til-konto">
+          <div class="inner" id="p_account" style="color:#bbb">Ditt kontonummer</div>
+        </div>
+
+        <div class="fld fld-blankett-bottom">
+          <div class="inner" id="p_blankettBottom"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <div class="payment-setup" data-no-print>
+    <h3>Betalingsinformasjon (vises på giroblanketten)</h3>
+    <div class="row">
+      <label>
+        <span class="lbl">Kontonummer</span>
+        <input type="text" id="f_accountNumber" placeholder="0000.00.00000">
+      </label>
+      <label>
+        <span class="lbl">KID (valgfritt)</span>
+        <input type="text" id="f_kid" placeholder="">
+      </label>
+    </div>
+  </div>
+
+  <div class="footer-link" data-no-print>
+    <a href="#" onclick="return false;">Fakturamaker.no</a> &middot; Rask og enkel måte å lage standard fakturaer som PDF
+  </div>
+</div>
+
+<script>
+var state = {
+  items: [{ description:'', unitPrice:'', quantity:'', vat:25 }]
+};
+
+function $(id){return document.getElementById(id);}
+function esc(s){return (s==null?'':String(s)).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+});}
+function num(v){var n=parseFloat(v);return isNaN(n)?0:n;}
+function fmtKr(v){
+  return v.toLocaleString('nb-NO',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' kr';
+}
+function fmtNo(v,dec){
+  if(dec==null) dec=2;
+  return v.toLocaleString('nb-NO',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+}
+
+function renderItems(){
+  var tb = $('itemsBody');
+  tb.innerHTML = '';
+  state.items.forEach(function(it,i){
+    var unit = num(it.unitPrice);
+    var qty = num(it.quantity);
+    var net = unit*qty;
+    var vat = num(it.vat);
+    var sum = net * (1 + vat/100);
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="col-desc"><input type="text" value="'+esc(it.description)+'" data-i="'+i+'" data-k="description" placeholder="Beskrivelse"></td>'+
+      '<td class="col-unit num"><input type="number" step="0.01" class="num" value="'+esc(it.unitPrice)+'" data-i="'+i+'" data-k="unitPrice" placeholder="0"></td>'+
+      '<td class="col-qty num"><input type="number" step="1" class="num" value="'+esc(it.quantity)+'" data-i="'+i+'" data-k="quantity" placeholder="0"></td>'+
+      '<td class="col-net num">'+(net?fmtNo(net):'')+'</td>'+
+      '<td class="col-vat num"><input type="number" step="1" class="num" value="'+esc(it.vat)+'" data-i="'+i+'" data-k="vat" placeholder="0"></td>'+
+      '<td class="col-sum num">'+(sum?fmtNo(sum):'')+'</td>'+
+      '<td class="col-rm"><button type="button" class="row-remove" data-rm="'+i+'" title="Fjern linje" data-no-print>✕</button></td>';
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('input').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      var i = +inp.dataset.i, k = inp.dataset.k;
+      state.items[i][k] = inp.value;
+      recalc();
+      var tr = inp.closest('tr');
+      var unit = num(state.items[i].unitPrice);
+      var qty = num(state.items[i].quantity);
+      var vat = num(state.items[i].vat);
+      var net = unit*qty;
+      var sum = net * (1 + vat/100);
+      tr.querySelector('.col-net').textContent = net?fmtNo(net):'';
+      tr.querySelector('.col-sum').textContent = sum?fmtNo(sum):'';
+    });
+  });
+  tb.querySelectorAll('button[data-rm]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var i = +b.dataset.rm;
+      state.items.splice(i,1);
+      if(state.items.length===0) state.items.push({description:'',unitPrice:'',quantity:'',vat:25});
+      renderItems();
+      recalc();
+    });
+  });
+}
+function addItem(){
+  var lastVat = state.items.length ? state.items[state.items.length-1].vat : 25;
+  state.items.push({description:'',unitPrice:'',quantity:'',vat:lastVat});
+  renderItems();
+  recalc();
+}
+
+function recalc(){
+  var sub = 0, vatSum = 0;
+  state.items.forEach(function(it){
+    var net = num(it.unitPrice) * num(it.quantity);
+    var vat = net * num(it.vat)/100;
+    sub += net;
+    vatSum += vat;
+  });
+  var total = sub + vatSum;
+  $('t_subtotal').textContent = fmtKr(sub);
+  $('t_vat').textContent = fmtKr(vatSum);
+  $('t_total').textContent = fmtKr(total);
+
+  var kroner = Math.floor(total);
+  var cents = Math.round((total - kroner)*100);
+  if(cents>=100){kroner+=1;cents=0;}
+  $('p_kroner').textContent = kroner ? kroner.toLocaleString('nb-NO') : '0';
+  $('p_cents').textContent = String(cents).padStart(2,'0');
+  $('p_belop').textContent = fmtNo(total);
+}
+
+function computeDueDate(){
+  var invDate = document.querySelector('[name=billingDate]').value;
+  var days = parseInt(document.querySelector('[name=billingDueDays]').value,10);
+  if(!invDate || isNaN(days)) return '';
+  var d = new Date(invDate);
+  if(isNaN(d.getTime())) return '';
+  d.setDate(d.getDate()+days);
+  var dd = String(d.getDate()).padStart(2,'0');
+  var mm = String(d.getMonth()+1).padStart(2,'0');
+  return dd+'.'+mm+'.'+d.getFullYear();
+}
+
+function updateGiro(){
+  var name = document.querySelector('[name=companyName]').value || '';
+  var addr = document.querySelector('[name=companyAddress]').value || '';
+  var id = document.querySelector('[name=billingId]').value || '';
+  var account = $('f_accountNumber').value || '';
+  var kid = $('f_kid').value || '';
+
+  var addrLines = addr.split('\n').filter(function(l){return l.trim()});
+  var nameEl = $('p_companyName');
+  var addrEl = $('p_companyAddress');
+
+  if(name){
+    nameEl.textContent = name;
+    nameEl.classList.add('has-value');
+  } else {
+    nameEl.textContent = 'Din firmadresse';
+    nameEl.classList.remove('has-value');
+  }
+  if(addrLines.length){
+    addrEl.textContent = addrLines.join(', ');
+    addrEl.classList.add('has-value');
+  } else {
+    addrEl.textContent = '0000 Stedsnavn';
+    addrEl.classList.remove('has-value');
+  }
+
+  var acctEl = $('p_account');
+  if(account){
+    acctEl.textContent = account;
+    acctEl.style.color = '#111';
+  } else {
+    acctEl.textContent = 'Ditt kontonummer';
+    acctEl.style.color = '#bbb';
+  }
+
+  $('p_kid').textContent = kid || '';
+  $('p_dueDate').textContent = computeDueDate();
+  $('p_blankettTop').textContent = id || '';
+  $('p_blankettBottom').textContent = id || '';
+}
+
+document.addEventListener('input', function(e){
+  if(e.target.matches('input, textarea')){
+    updateGiro();
+  }
+});
+
+(function(){
+  var today = new Date();
+  var iso = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  document.querySelector('[name=billingDate]').value = iso;
+})();
+
+(function(){
+  var now = new Date();
+  var autoId = String(now.getFullYear()).slice(2) +
+               String(now.getMonth()+1).padStart(2,'0') + '01';
+  document.querySelector('[name=billingId]').value = autoId;
+})();
+
+renderItems();
+recalc();
+updateGiro();
+
+function makePdf(){
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  setTimeout(function(){ window.print(); }, 100);
+}
+</script>
+
+</body>
+</html>
