@@ -147,6 +147,13 @@ async function generateNote() {
     modelId
   );
 
+  // Safety timeout: abort the request if it takes longer than 120 seconds
+  // (prevents indefinite hangs if the SSE stream stalls).
+  const GEMINI_TIMEOUT_MS = 120_000;
+  const timeoutId = setTimeout(() => {
+    try { controller.abort(); } catch (_) {}
+  }, GEMINI_TIMEOUT_MS);
+
   try {
     let response = await fetch(makeGeminiUrl("v1beta", apiKey, modelId), {
       method: "POST",
@@ -220,6 +227,7 @@ async function generateNote() {
       }
     });
 
+    clearTimeout(timeoutId);
     noteTimer.stop("Text generation completed!");
     app.emitNoteFinished?.(runMeta);
 
@@ -231,6 +239,8 @@ async function generateNote() {
       usage: finalUsage
     });
   } catch (error) {
+    clearTimeout(timeoutId);
+
     if (error?.name === "AbortError") {
       finishNoteAbort({
         generatedNoteField,
@@ -256,3 +266,4 @@ function initNoteGeneration() {
 }
 
 export { initNoteGeneration };
+
