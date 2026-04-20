@@ -576,6 +576,17 @@ function tMini(key) {
       fr: 'Copier la note',
       it: 'Copia nota',
     },
+    generateNote: {
+      en: 'Generate note',
+      no: 'Generer notat',
+      nb: 'Generer notat',
+      nn: 'Generer notat',
+      sv: 'Generera anteckning',
+      da: 'Generér note',
+      de: 'Notiz generieren',
+      fr: 'Générer la note',
+      it: 'Genera nota',
+    },
     currentTab: {
       en: 'Tab',
       no: 'Fane',
@@ -2049,6 +2060,7 @@ function updateMiniPanelUi() {
   setDisabled('miniPauseButton', !state.canPauseResume);
   setDisabled('miniCopyTranscriptButton', !state.hasTranscript);
   setDisabled('miniCopyNoteButton', !state.hasNote);
+  setDisabled('miniGenerateNoteButton', !state.hasTranscript || !!state.noteBusy);
   setDisabled('miniAbortButton', !state.canAbort);
 
   setText('miniStartButton', tMini('start'));
@@ -2056,6 +2068,7 @@ function updateMiniPanelUi() {
   setText('miniPauseButton', pauseResumeLabel);
   setText('miniCopyTranscriptButton', tMini('copyTranscript'));
   setText('miniCopyNoteButton', tMini('copyNote'));
+  setText('miniGenerateNoteButton', tMini('generateNote'));
   setText('miniAbortButton', tMini('abort'));
   // Recording line status text: show phase-appropriate label
   const phase = String(state?.miniPanelStatusPhase || 'idle').trim();
@@ -2355,6 +2368,14 @@ function bindMiniPanelEvents() {
   if (copyNoteButton) {
     copyNoteButton.addEventListener('click', () => {
       void copySelectedHubContent('note');
+    });
+  }
+
+  const generateNoteButton = $('miniGenerateNoteButton');
+  if (generateNoteButton) {
+    generateNoteButton.addEventListener('click', () => {
+      dispatchHubAction('triggerGenerateNote');
+      requestUiRefresh();
     });
   }
 
@@ -2980,7 +3001,7 @@ function renderMiniPanelDocument(targetWindow) {
 
     .copy-row {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 6px;
     }
 
@@ -3414,6 +3435,7 @@ function renderMiniPanelDocument(targetWindow) {
         </div>
 
         <div class="copy-row">
+          <button id="miniGenerateNoteButton" class="ctrl secondary" type="button">Generate note</button>
           <button id="miniCopyTranscriptButton" class="ctrl secondary copy" type="button">Copy transcript</button>
           <button id="miniCopyNoteButton" class="ctrl secondary copy" type="button">Copy note</button>
         </div>
@@ -3873,3 +3895,4 @@ function bootMiniController() {
 }
 
 bootMiniController();
+

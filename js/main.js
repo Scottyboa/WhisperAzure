@@ -2374,6 +2374,10 @@ document.addEventListener('DOMContentLoaded', () => {
   app.emitNoteFinished = emitNoteFinished;
   app.resetNoteGenerationState = resetNoteGenerationState;
   app.isNoteGenerationBusy = () => !!getApp().noteGenerationInFlight;
+  app.triggerGenerateNote = function triggerGenerateNote() {
+    const btn = document.getElementById('generateNoteButton');
+    if (btn && !btn.disabled) btn.click();
+  };
   app.isTranscribeBusy = isTranscribeBusy;
   app.getAutoGenerateEnabled = getAutoGenerateEnabled;
   app.setAutoGenerateEnabled = setAutoGenerateEnabled;
