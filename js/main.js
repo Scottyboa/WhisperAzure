@@ -756,6 +756,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const geminiModelSelect = document.getElementById('geminiModel');
     const vertexModelSelect = document.getElementById('vertexModel');
     const bedrockModelSelect = document.getElementById('bedrockModel');
+    const geminiReasoningSelect = document.getElementById('geminiReasoning');
+    const openaiReasoningSelect = document.getElementById('gpt5Reasoning');
     const busy = !!getApp().noteGenerationInFlight;
 
     if (generateNoteButton) {
@@ -775,6 +777,8 @@ document.addEventListener('DOMContentLoaded', () => {
       geminiModelSelect,
       vertexModelSelect,
       bedrockModelSelect,
+      geminiReasoningSelect,
+      openaiReasoningSelect,
     ].forEach((el) => {
       if (!el) return;
       el.disabled = busy;
