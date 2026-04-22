@@ -1,3 +1,19 @@
+## 22 April, 2026
+
+### Claude Opus 4.7 now available in AWS Bedrock
+
+**Claude Opus 4.7** — Anthropic's latest and most capable model — has been added to the AWS Bedrock model selection menu. You can now select it from the model dropdown when using AWS Bedrock for note generation.
+
+Opus 4.7 is an upgrade from Opus 4.6 with generally stronger performance. It follows instructions more precisely and is more thorough in its problem solving. Pricing remains the same as Opus 4.6.
+
+**To use Claude Opus 4.7, you must update your CloudFormation stack.** This adds the new model to your Lambda proxy. Your existing settings (URL, secret key, other models) will not be affected.
+
+<a href="index.html#bedrock-update-stack" target="_blank">Click here to open the AWS Bedrock update guide</a>
+
+After updating, select **Claude Opus 4.7** from the Bedrock model dropdown in the app and generate a note to verify it works.
+
+---
+
 ## 13 April, 2026
 
 ### New Mini panel added
