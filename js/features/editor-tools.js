@@ -25,6 +25,71 @@
       else el.style.height = '';
     };
 
+    const SUPPLEMENTARY_DATE_TOGGLE_KEY = 'supplementary_date_enabled';
+
+    const getTodaySupplementaryDateLine = () => {
+      const dateStr = new Intl.DateTimeFormat('nb-NO', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }).format(new Date());
+      return `Dagens dato er ${dateStr}`;
+    };
+
+    const normalizeSupplementaryDateLine = (text, { enabled } = {}) => {
+      const normalized = String(text || '').replace(/\r\n/g, '\n');
+      const lines = normalized.split('\n');
+      const withoutDate = lines.filter(
+        (line) => !/^Dagens dato er \d{2}\.\d{2}\.\d{4}\s*$/i.test(String(line).trim())
+      );
+
+      if (!enabled) {
+        return withoutDate.join('\n').replace(/^\n+/, '');
+      }
+
+      const dateLine = getTodaySupplementaryDateLine();
+      const body = withoutDate.join('\n').replace(/^\n+/, '');
+      return body ? `${dateLine}\n${body}` : `${dateLine}\n`;
+    };
+
+    const getSupplementaryDateToggleState = () => {
+      const toggle = document.getElementById('supplementaryDateToggle');
+      if (toggle && toggle.type === 'checkbox') {
+        return !!toggle.checked;
+      }
+      try {
+        return sessionStorage.getItem(SUPPLEMENTARY_DATE_TOGGLE_KEY) !== '0';
+      } catch (_) {
+        return true;
+      }
+    };
+
+    const syncSupplementaryStickyDate = ({ focus = false } = {}) => {
+      if (!supplementaryInfoEl) return;
+      const nextValue = normalizeSupplementaryDateLine(supplementaryInfoEl.value, {
+        enabled: getSupplementaryDateToggleState(),
+      });
+      if (supplementaryInfoEl.value !== nextValue) {
+        supplementaryInfoEl.value = nextValue;
+        supplementaryInfoEl.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      supplementaryInfoEl.scrollTop = 0;
+      const baseline = supplementaryInfoEl.dataset.defaultHeight;
+      if (baseline) supplementaryInfoEl.style.height = baseline;
+      else supplementaryInfoEl.style.height = '';
+      if (focus) supplementaryInfoEl.focus();
+    };
+
+    const resetSupplementaryTextareaSticky = ({ focus = false } = {}) => {
+      if (!supplementaryInfoEl) return;
+      resetTextareaToDefault(supplementaryInfoEl);
+      if (getSupplementaryDateToggleState()) {
+        supplementaryInfoEl.value = normalizeSupplementaryDateLine('', { enabled: true });
+      }
+      supplementaryInfoEl.dispatchEvent(new Event('input', { bubbles: true }));
+      if (focus) supplementaryInfoEl.focus();
+    };
+
     
     const transcriptionEl = document.getElementById('transcription');
     const supplementaryInfoEl = document.getElementById('supplementaryInfo');
@@ -1164,7 +1229,7 @@
     if (clearSupplementaryButton) {
       clearSupplementaryButton.addEventListener('click', () => {
         if (supplementaryInfoEl) {
-          resetTextareaToDefault(supplementaryInfoEl);
+          resetSupplementaryTextareaSticky({ focus: false });
         }
       });
     }
@@ -1396,42 +1461,44 @@
       });
     }
 
-    // Insert/update today's date at the TOP of supplementary field
+    // Sticky date support for Supplementary information.
+    const supplementaryDateToggle = document.getElementById('supplementaryDateToggle');
     const insertSupplementaryDateButton = document.getElementById('insertSupplementaryDateButton');
-    if (insertSupplementaryDateButton) {
-      insertSupplementaryDateButton.addEventListener('click', () => {
-        const supEl = document.getElementById('supplementaryInfo');
-        if (!supEl) return;
 
-        // Format: DD.MM.YYYY (Norwegian-friendly). Uses the browser's local timezone.
-        const today = new Date();
-        const dateStr = new Intl.DateTimeFormat('nb-NO', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-        }).format(today);
-        const line = `Dagens dato er ${dateStr}`;
-
-        const current = supEl.value || '';
-        const normalized = current.replace(/\r\n/g, '\n');
-        const lines = normalized.split('\n');
-
-        if (lines[0]?.startsWith('Dagens dato er ')) {
-          // Update existing date line (keeps the rest intact)
-          lines[0] = line;
-          supEl.value = lines.join('\n');
-        } else {
-          // Prepend date line
-          supEl.value = normalized.trim().length ? `${line}\n${normalized}` : `${line}\n`;
+    if (supplementaryDateToggle && supplementaryDateToggle.type === 'checkbox') {
+      try {
+        if (sessionStorage.getItem(SUPPLEMENTARY_DATE_TOGGLE_KEY) == null) {
+          sessionStorage.setItem(SUPPLEMENTARY_DATE_TOGGLE_KEY, '1');
         }
+      } catch (_) {}
 
-        supEl.focus();
-        // Put cursor at end of first line (handy if they want to continue typing)
-        const pos = line.length;
-        try { supEl.setSelectionRange(pos, pos); } catch (_) {}
+      supplementaryDateToggle.checked = getSupplementaryDateToggleState();
+      syncSupplementaryStickyDate({ focus: false });
+
+      supplementaryDateToggle.addEventListener('change', () => {
+        try {
+          sessionStorage.setItem(
+            SUPPLEMENTARY_DATE_TOGGLE_KEY,
+            supplementaryDateToggle.checked ? '1' : '0'
+          );
+        } catch (_) {}
+        syncSupplementaryStickyDate({ focus: supplementaryDateToggle.checked });
       });
     }
 
+    // Back-compat: keep supporting the old Date button if it still exists.
+    if (insertSupplementaryDateButton) {
+      insertSupplementaryDateButton.addEventListener('click', () => {
+        if (!supplementaryInfoEl) return;
+        supplementaryInfoEl.value = normalizeSupplementaryDateLine(supplementaryInfoEl.value, {
+          enabled: true,
+        });
+        supplementaryInfoEl.dispatchEvent(new Event('input', { bubbles: true }));
+        supplementaryInfoEl.focus();
+        const pos = getTodaySupplementaryDateLine().length;
+        try { supplementaryInfoEl.setSelectionRange(pos, pos); } catch (_) {}
+      });
+    }
 
     // Auto-clear toggle (default OFF; persist in localStorage)
     const AUTO_CLEAR_KEY = 'auto_clear_supplementary';
@@ -1444,12 +1511,13 @@
       });
     }
 
-    // When enabled: starting a new recording clears + resets Supplementary info (same as Clear button)
+    // When enabled: starting a new recording clears + resets Supplementary info,
+    // while preserving the sticky date if that toggle is enabled.
     document.addEventListener('click', (e) => {
       const id = e.target && e.target.id;
       if (id !== 'startButton') return;
       if (!autoClearToggle || autoClearToggle.checked !== true) return;
-      if (supplementaryInfoEl) resetTextareaToDefault(supplementaryInfoEl);
+      if (supplementaryInfoEl) resetSupplementaryTextareaSticky({ focus: false });
     }, true);
 
     // Note Auto-clear toggle (default OFF; persist in localStorage)
