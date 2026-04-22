@@ -90,6 +90,16 @@
       if (focus) supplementaryInfoEl.focus();
     };
 
+    const bindSupplementaryStickyDateBlur = () => {
+      if (!supplementaryInfoEl || supplementaryInfoEl.dataset.stickyDateBlurBound === '1') return;
+      supplementaryInfoEl.dataset.stickyDateBlurBound = '1';
+
+      supplementaryInfoEl.addEventListener('blur', () => {
+        if (!getSupplementaryDateToggleState()) return;
+        syncSupplementaryStickyDate({ focus: false });
+      });
+    };
+
     
     const transcriptionEl = document.getElementById('transcription');
     const supplementaryInfoEl = document.getElementById('supplementaryInfo');
@@ -1499,6 +1509,8 @@
         try { supplementaryInfoEl.setSelectionRange(pos, pos); } catch (_) {}
       });
     }
+
+    bindSupplementaryStickyDateBlur();
 
     // Auto-clear toggle (default OFF; persist in localStorage)
     const AUTO_CLEAR_KEY = 'auto_clear_supplementary';
