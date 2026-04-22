@@ -36,19 +36,60 @@
       return `Dagens dato er ${dateStr}`;
     };
 
+    const isExactSupplementaryDateLine = (line) =>
+      /^Dagens dato er \d{2}\.\d{2}\.\d{4}\s*$/i.test(String(line).trim());
+
+    const looksLikePartialSupplementaryDateLine = (line) => {
+      const raw = String(line || '');
+      const trimmed = raw.trim();
+      if (!trimmed) return false;
+      if (isExactSupplementaryDateLine(trimmed)) return true;
+
+      const compact = trimmed.toLowerCase().replace(/\s+/g, '');
+      const compactTargetPrefix = 'dagensdatoer';
+
+      const hasPrefixSignal =
+        compact.includes('dagens') ||
+        compact.includes('dato') ||
+        compact.includes('datoer') ||
+        compactTargetPrefix.includes(compact) ||
+        compact.includes(compactTargetPrefix.slice(0, 6));
+
+      const hasDateNumberSignal =
+        /\d{1,2}\.\d{1,2}(\.\d{0,4})?/.test(trimmed) ||
+        /\d{1,2}\.\d{1,2}$/.test(trimmed) ||
+        /\d{1,2}\.\d{1,2}\.\d{1,4}$/.test(trimmed);
+
+      return hasPrefixSignal || hasDateNumberSignal;
+    };
+
     const normalizeSupplementaryDateLine = (text, { enabled } = {}) => {
       const normalized = String(text || '').replace(/\r\n/g, '\n');
       const lines = normalized.split('\n');
-      const withoutDate = lines.filter(
-        (line) => !/^Dagens dato er \d{2}\.\d{2}\.\d{4}\s*$/i.test(String(line).trim())
+      const firstLine = lines[0] || '';
+      const restLines = lines.slice(1);
+      const dateLine = getTodaySupplementaryDateLine();
+
+      const cleanedRest = restLines.filter(
+        (line) => !isExactSupplementaryDateLine(line)
       );
 
       if (!enabled) {
-        return withoutDate.join('\n').replace(/^\n+/, '');
+        const nextLines = [];
+        if (!looksLikePartialSupplementaryDateLine(firstLine) && !isExactSupplementaryDateLine(firstLine)) {
+          nextLines.push(firstLine);
+        }
+        nextLines.push(...cleanedRest);
+        return nextLines.join('\n').replace(/^\n+/, '');
       }
 
-      const dateLine = getTodaySupplementaryDateLine();
-      const body = withoutDate.join('\n').replace(/^\n+/, '');
+      if (looksLikePartialSupplementaryDateLine(firstLine)) {
+        const repaired = [dateLine, ...cleanedRest];
+        return repaired.join('\n').replace(/^\n+/, '');
+      }
+
+      const bodyLines = [firstLine, ...cleanedRest];
+      const body = bodyLines.join('\n').replace(/^\n+/, '');
       return body ? `${dateLine}\n${body}` : `${dateLine}\n`;
     };
 
