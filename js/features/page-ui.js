@@ -248,12 +248,33 @@ function setupNoteAutoClearCopy() {
   syncNoteAutoClearCopy();
 }
 
+function setupSupplementaryDateToggleCopy() {
+  const labelEl = document.getElementById("supplementaryDateToggleLabel");
+  const tooltipEl = document.getElementById("supplementaryDateTooltipText");
+  const langSelectTranscribe = document.getElementById("lang-select-transcribe");
+  if (!labelEl || !tooltipEl) return;
+
+  const syncSupplementaryDateCopy = () => {
+    const isNorwegian = getCurrentTranscribeLanguage() === "no";
+
+    labelEl.textContent = isNorwegian ? "Dato" : "Date";
+    tooltipEl.innerHTML = isNorwegian
+      ? "<strong>Når PÅ:</strong><br/>Holder linjen <strong>\"Dagens dato er DD.MM.YYYY\"</strong> øverst i Tilleggsinformasjon og legger den inn igjen etter oppdatering av siden.<br/><br/><strong>Når AV:</strong><br/>Fjerner denne datolinjen fra Tilleggsinformasjon."
+      : "<strong>When ON:</strong><br/>Keeps the line <strong>\"Dagens dato er DD.MM.YYYY\"</strong> at the top of Supplementary information and restores it after refresh.<br/><br/><strong>When OFF:</strong><br/>Removes that date line from Supplementary information.";
+  };
+
+  langSelectTranscribe?.addEventListener("change", syncSupplementaryDateCopy);
+  window.addEventListener("transcribe-language-updated", syncSupplementaryDateCopy);
+  syncSupplementaryDateCopy();
+}
+
 function initPageUi() {
   setupAdsAndGridHeight();
   setupAutoGenerateTooltip();
   setupAutoCopyModeUi();
   setupPromptInclusionToggle();
   setupNoteAutoClearCopy();
+  setupSupplementaryDateToggleCopy();
 }
 
 if (document.readyState === "loading") {

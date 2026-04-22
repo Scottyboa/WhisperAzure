@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const STATE_KEY = '__ui_state_v1';
   const AUTO_GENERATE_KEY = 'auto_generate_enabled';
   const AUTO_COPY_MODE_KEY = 'auto_copy_mode';
+  const SUPPLEMENTARY_DATE_TOGGLE_KEY = 'supplementary_date_enabled';
   const AUTO_COPY_EXTENSION_SIGNAL = 'AUTO_COPY_EXTENSION_PRESENT';
   const AUTO_COPY_EXTENSION_COPY_RESULT = 'AUTO_COPY_EXTENSION_COPY_RESULT';
   const AUTO_COPY_EXTENSION_PING = 'AUTO_COPY_EXTENSION_PING';
@@ -675,6 +676,111 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       localStorage.setItem(key, String(value ?? ''));
     } catch (_) {}
+  }
+
+  function getTodaySupplementaryDateLine() {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = String(now.getFullYear());
+    return `Dagens dato er ${day}.${month}.${year}`;
+  }
+
+  function getSupplementaryDateLineRegex() {
+    return /^Dagens dato er \d{2}\.\d{2}\.\d{4}\s*$/im;
+  }
+
+  function normalizeSupplementaryDateLine(text, { enabled } = {}) {
+    const original = String(text || '');
+    const dateLineRegex = getSupplementaryDateLineRegex();
+
+    const lines = original.split(/\r?\n/);
+    const nonDateLines = lines.filter((line) => !dateLineRegex.test(String(line).trim()));
+
+    if (!enabled) {
+      return nonDateLines.join('\n').replace(/^\n+/, '');
+    }
+
+    const todayLine = getTodaySupplementaryDateLine();
+    const body = nonDateLines.join('\n').replace(/^\n+/, '');
+    return body ? `${todayLine}\n${body}` : todayLine;
+  }
+
+  function syncSupplementaryDateField({ enabled, focus = false, emitReason = '' } = {}) {
+    const supplementaryInfo = document.getElementById('supplementaryInfo');
+    if (!supplementaryInfo) return false;
+
+    const nextValue = normalizeSupplementaryDateLine(supplementaryInfo.value, { enabled });
+    if (supplementaryInfo.value === nextValue) return false;
+
+    supplementaryInfo.value = nextValue;
+
+    try {
+      supplementaryInfo.dispatchEvent(new Event('input', { bubbles: true }));
+    } catch (_) {}
+
+    if (focus) {
+      try {
+        supplementaryInfo.focus();
+      } catch (_) {}
+    }
+
+    if (emitReason) {
+      emitAppStateChanged(emitReason, { enabled: !!enabled });
+    }
+
+    return true;
+  }
+
+  function getSupplementaryDateEnabled() {
+    return readSession(SUPPLEMENTARY_DATE_TOGGLE_KEY, '1') === '1';
+  }
+
+  function setSupplementaryDateEnabled(enabled, options = {}) {
+    const nextEnabled = !!enabled;
+    const source =
+      String(options?.source || 'supplementary-date-toggle').trim() ||
+      'supplementary-date-toggle';
+
+    writeSession(SUPPLEMENTARY_DATE_TOGGLE_KEY, nextEnabled ? '1' : '0');
+
+    const el = document.getElementById('supplementaryDateToggle');
+    if (el && el.type === 'checkbox') {
+      el.checked = nextEnabled;
+    }
+
+    syncSupplementaryDateField({
+      enabled: nextEnabled,
+      focus: !!options?.focus,
+      emitReason: source,
+    });
+  }
+
+  function initSupplementaryDateToggle() {
+    const el = document.getElementById('supplementaryDateToggle');
+    if (!el || el.type !== 'checkbox') return;
+
+    if (el.dataset.bound === '1') return;
+    el.dataset.bound = '1';
+
+    if (readSession(SUPPLEMENTARY_DATE_TOGGLE_KEY, null) == null) {
+      writeSession(SUPPLEMENTARY_DATE_TOGGLE_KEY, '1');
+    }
+
+    el.checked = getSupplementaryDateEnabled();
+
+    syncSupplementaryDateField({
+      enabled: el.checked,
+      focus: false,
+      emitReason: 'supplementary-date-toggle-init',
+    });
+
+    el.addEventListener('change', () => {
+      setSupplementaryDateEnabled(el.checked, {
+        source: 'supplementary-date-toggle-change',
+        focus: true,
+      });
+    });
   }
 
   function reloadWithSavedState(reason = '') {
@@ -2856,6 +2962,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
+
+  initSupplementaryDateToggle();
 
   window.addEventListener('note-copied', (event) => {
     const detail = event?.detail || {};

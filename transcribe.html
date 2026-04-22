@@ -1802,26 +1802,28 @@
                 placeholder="Supplementary information (optional)"></textarea>
             </div>
             <div class="supp-actions" style="display:flex; justify-content:flex-end; align-items:center; gap: 6px; margin-top: 6px;">
-              <span class="help-tip help-tip-left" style="margin-left:0; margin-right:2px;" tabindex="0" aria-label="Insert date help">
+              <div id="supplementaryDateToggleWrap" class="auto-clear-toggle" aria-label="Keep today's date in supplementary information" style="margin-right: 2px;">
+                <label class="switch" title="Keep date">
+                  <input id="supplementaryDateToggle" type="checkbox" />
+                  <span class="slider"></span>
+                </label>
+                <span class="auto-clear-label" id="supplementaryDateToggleLabel">Date</span>
+              </div>
+              <span
+                id="supplementaryDateTooltipContainer"
+                class="help-tip help-tip-left"
+                style="margin-left:0; margin-right:2px;"
+                tabindex="0"
+                aria-label="Supplementary date help"
+              >
                 ?
-                <span class="help-tip-content" role="tooltip">
-                  Adds today’s date to the top of Supplementary information: <br/>
-                  <strong>"Dagens dato er DD.MM.YYYY"</strong><br/>
-
+                <span id="supplementaryDateTooltipText" class="help-tip-content" role="tooltip">
+                  <strong>When ON:</strong><br/>
+                  Keeps today’s date at the top of Supplementary information and restores it after refresh.<br/><br/>
+                  <strong>When OFF:</strong><br/>
+                  Removes that date line from Supplementary information.
                 </span>
               </span>
-              <button
-                id="insertSupplementaryDateButton"
-                type="button"
-                style="
-                  padding: 4px 10px;
-                  font-size: 12px;
-                  border-radius: 6px;
-                  background-color: #5a9;
-                "
-              >
-                Date
-              </button>
             </div>
           </div>
 
