@@ -17,6 +17,11 @@ Med andre ord er GPT-5.5 omtrent **dobbelt så dyr per token** som GPT-5.4. Ford
 
 Standardverdien for reasoning-nivå på OpenAI GPT-5.x-modellene er endret fra **None** til **Low**. Du kan når som helst endre den tilbake fra reasoning-nedtrekksmenyen.
 
+### Viktig om personvern / GDPR:
+Vær oppmerksom på at bruk av **GPT-5.5** og de andre **OpenAI-modellene** i dagens standardoppsett **ikke er GDPR-kompatibelt for sensitive/pasientrelaterte data**, fordi data **ikke behandles i EU som standard**, og OpenAI opplyser at API-data kan **lagres i opptil 30 dager før sletting**.
+
+For arbeidsflyter for notatgenerering som krever et **GDPR-kompatibelt oppsett**, anbefales **AWS Bedrock** i stedet.
+
 ### "Gå til valgt fane"-knapp lagt til i Mini panelet
 
 En ny liten knapp er lagt til i **Mini panelet**, plassert rett under lukke-knappen (×). Når man klikker på denne knappen, hentes Chrome-fanen som er valgt i Mini panelets fanevelger frem i fokus — selv om Chrome er minimert eller ligger bak et annet program på skjermen. Dette er nyttig når Mini panelet ligger sticky i et hjørne og du jobber i et annet program; ett klikk tar deg rett tilbake til riktig Transcribe Notes-fane.
