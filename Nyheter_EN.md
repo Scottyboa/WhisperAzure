@@ -1,3 +1,34 @@
+## 25 April, 2026
+
+### GPT-5.5 added to OpenAI note generation
+
+OpenAI's newest model, **GPT-5.5**, has now been added to the model dropdown when using OpenAI for note generation. Like the other GPT-5.x models, you can choose between **streaming** and **non-streaming** mode, and you can adjust the **reasoning effort** (None / Low / Medium / High).
+
+GPT-5.5 is OpenAI's smartest and most capable model yet. Compared to GPT-5.4, it follows complex instructions more precisely, is stronger at multi-step reasoning, and is more efficient — it generally reaches strong results with fewer reasoning tokens at the same reasoning effort. OpenAI describes it as a "new class of intelligence" intended for serious professional work.
+
+**Pricing — GPT-5.5 vs GPT-5.4 (USD per 1M tokens):**
+
+| Model | Input | Output |
+| --- | --- | --- |
+| GPT-5.4 | $2.50 | $15.00 |
+| GPT-5.5 | $5.00 | $30.00 |
+
+In other words, GPT-5.5 is about **twice as expensive per token** as GPT-5.4. Because GPT-5.5 is more token-efficient in practice, the real-world cost difference per finished note is typically smaller than 2×, but you should still expect a noticeable cost increase if you switch from 5.4 to 5.5.
+
+The default reasoning effort for OpenAI GPT-5.x models has been changed from **None** to **Low**. You can change it back at any time from the reasoning effort dropdown.
+
+### "Go to selected tab" button added to the Mini panel
+
+A small new button has been added to the **Mini panel**, placed directly under the close (×) button. When clicked, this button brings the Chrome tab that is currently selected in the Mini panel's tab selector into focus — even if Chrome is minimized or sitting behind another program on your screen. This is useful when the Mini panel is sticky in a corner and you are working in another program; one click takes you straight to the right Transcribe Notes tab.
+
+**This button only works in Google Chrome**, because it relies on the Auto-copy Chrome extension to actually switch tabs across windows and applications.
+
+For the button to be functional, you must **redownload the Auto-copy zip file** here: <a href="div/autocopy.zip" download>autocopy.zip</a>, and replace the old extension with this updated version. To do that, go to <a href="chrome://extensions" target="_blank" rel="noopener">chrome://extensions</a>, remove the old "Note Auto-Copy Extension", then **Load unpacked** and select the new extracted folder. The auto-copy functionality itself is unchanged — only the new "go to selected tab" capability requires the updated extension.
+
+If the new button does not appear in your Mini panel after replacing the extension, refresh the Transcribe Notes page and reopen the Mini panel.
+
+---
+
 ## 22 April, 2026
 
 ### Claude Opus 4.7 now available in AWS Bedrock
