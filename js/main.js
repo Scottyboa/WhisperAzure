@@ -617,6 +617,21 @@ document.addEventListener('DOMContentLoaded', () => {
     return !!getApp().autoCopyExtensionAvailable;
   }
 
+  // Extension v1.2.0+ advertises a "focus-tab" capability in its
+  // presence announcement. Older extension versions do not, so this
+  // flag stays false and the mini panel hides the jump-to-tab button.
+  function setAutoCopyExtensionFocusTabSupported(supported) {
+    const app = getApp();
+    const next = !!supported;
+    if (app.autoCopyExtensionFocusTabSupported === next) return;
+    app.autoCopyExtensionFocusTabSupported = next;
+    emitAppStateChanged('auto-copy-extension-focus-tab-availability', { supported: next });
+  }
+
+  function isAutoCopyExtensionFocusTabSupported() {
+    return !!getApp().autoCopyExtensionFocusTabSupported;
+  }
+
   function pingAutoCopyExtension() {
     return new Promise((resolve) => {
       let settled = false;
@@ -627,6 +642,10 @@ document.addEventListener('DOMContentLoaded', () => {
         window.clearTimeout(timeoutId);
         window.removeEventListener('message', onMessage);
         setAutoCopyExtensionAvailable(available);
+        if (!available) {
+          // No extension at all -> definitely no focus-tab support.
+          setAutoCopyExtensionFocusTabSupported(false);
+        }
         resolve(available);
       };
 
@@ -634,6 +653,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.source !== window) return;
         const data = event?.data || {};
         if (data.type !== AUTO_COPY_EXTENSION_SIGNAL) return;
+
+        const caps = Array.isArray(data?.capabilities) ? data.capabilities : [];
+        const supportsFocusTab = caps
+          .map((c) => String(c || '').trim().toLowerCase())
+          .includes('focus-tab');
+        setAutoCopyExtensionFocusTabSupported(supportsFocusTab);
+
         finish(true);
       };
 
@@ -1058,6 +1084,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const app = getApp();
     if (app.__autoCopyExtensionCopyBridgeBound) return;
     app.__autoCopyExtensionCopyBridgeBound = true;
+
+    // Permanent listener for unsolicited presence announcements. The
+    // extension's content script announces itself once on page load
+    // (before any ping). Without this listener, capability info from
+    // that early announcement would be missed and the focus-tab button
+    // wouldn't appear until the next ping cycle. Backward-compatible:
+    // older extension versions don't include `capabilities`, so the
+    // focus-tab flag stays false for them.
+    window.addEventListener('message', (event) => {
+      if (event.source !== window) return;
+      const data = event?.data || {};
+      if (data.type !== AUTO_COPY_EXTENSION_SIGNAL) return;
+
+      setAutoCopyExtensionAvailable(true);
+
+      const caps = Array.isArray(data?.capabilities) ? data.capabilities : [];
+      const supportsFocusTab = caps
+        .map((c) => String(c || '').trim().toLowerCase())
+        .includes('focus-tab');
+      setAutoCopyExtensionFocusTabSupported(supportsFocusTab);
+    });
 
     window.addEventListener('message', (event) => {
       if (event.source !== window) return;
@@ -2207,6 +2254,7 @@ document.addEventListener('DOMContentLoaded', () => {
       autoGenerateEnabled: !!getAutoGenerateEnabled(),
       autoCopyMode: getAutoCopyMode(),
       autoCopyExtensionAvailable: isAutoCopyExtensionAvailable(),
+      autoCopyExtensionFocusTabSupported: isAutoCopyExtensionFocusTabSupported(),
       miniPanelStatusPhase: effectiveMiniPanelStatusPhase,
       miniPanelCopiedState: String(app.miniPanelCopiedState || ''),
       miniPanelCopiedAt: Number(app.miniPanelCopiedAt || 0),
@@ -2985,4 +3033,5 @@ document.addEventListener('DOMContentLoaded', () => {
   void initNoteProvider(getSelectedEffectiveNoteProvider());
   void initMiniControllerFeature();
 });
+
 

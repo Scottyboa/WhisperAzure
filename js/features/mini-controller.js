@@ -1363,6 +1363,30 @@ function ensureHubChannel() {
       callLocalAppAction(actionName, ...args);
       publishLocalHubSnapshot(`command:${actionName}`);
     }
+
+    if (type === 'mini-hub-focus-tab') {
+      const targetTabId = String(data?.targetTabId || '').trim();
+      if (!targetTabId || targetTabId !== getOrCreateLocalTabId()) return;
+
+      // Ask the Auto-Copy extension to bring this tab to the
+      // foreground. The extension's content script listens for this
+      // postMessage on the window and forwards it to its service
+      // worker, which uses chrome.tabs.update + chrome.windows.update.
+      // If the extension isn't installed, this is a no-op.
+      try {
+        window.postMessage(
+          { type: 'AUTO_COPY_EXTENSION_FOCUS_TAB', source: 'mini-panel' },
+          window.location.origin
+        );
+      } catch (_) {}
+
+      // Best-effort fallback for the case where the extension is not
+      // installed: a self window.focus() at least selects this tab
+      // inside Chrome if Chrome is already in the foreground.
+      try {
+        window.focus();
+      } catch (_) {}
+    }
   });
 
   return hubChannel;
@@ -2063,6 +2087,8 @@ function updateMiniPanelUi() {
   setDisabled('miniGenerateNoteButton', !state.hasTranscript || !!state.noteBusy);
   setDisabled('miniAbortButton', !state.canAbort);
 
+  refreshFocusTabButtonVisibility();
+
   setText('miniStartButton', tMini('start'));
   setText('miniStopButton', tMini('stop'));
   setText('miniPauseButton', pauseResumeLabel);
@@ -2177,6 +2203,30 @@ function dispatchHubAction(actionName, ...args) {
   });
 
   requestUiRefresh();
+  return true;
+}
+
+// Bring the Chrome tab currently selected in the mini panel to the
+// foreground. Implementation lives in main.js (which then asks the
+// Auto-Copy extension to perform the actual chrome.tabs/windows
+// switch). If the local tab is the selected one, calling
+// window.focus() locally is enough.
+function dispatchFocusSelectedTab() {
+  const targetTabId = ensureSelectedHubTab();
+  if (!targetTabId) return false;
+
+  if (targetTabId === getOrCreateLocalTabId()) {
+    try {
+      window.focus();
+    } catch (_) {}
+    return true;
+  }
+
+  postHubMessage({
+    type: 'mini-hub-focus-tab',
+    targetTabId,
+    at: Date.now(),
+  });
   return true;
 }
 
@@ -2316,6 +2366,7 @@ function bindMiniPanelEvents() {
   const copyNoteButton = $('miniCopyNoteButton');
   const abortButton = $('miniAbortButton');
   const closeButton = $('miniCloseButton');
+  const focusTabButton = $('miniFocusTabButton');
   const promptSelect = $('miniPromptSelect');
   const tabSelect = $('miniTabSelect');
   const tabPickerTrigger = $('miniTabPickerTrigger');
@@ -2555,6 +2606,38 @@ function bindMiniPanelEvents() {
       } catch (_) {}
     });
   }
+
+  if (focusTabButton) {
+    focusTabButton.addEventListener('click', () => {
+      dispatchFocusSelectedTab();
+    });
+
+    // Show the button only when the Auto-Copy extension is present
+    // on at least one open tab. The presence flag is maintained by
+    // main.js and re-broadcast with each hub heartbeat under
+    // snapshot.autoCopyExtension.focusTabSupported.
+    refreshFocusTabButtonVisibility();
+  }
+}
+
+function refreshFocusTabButtonVisibility() {
+  const btn = $('miniFocusTabButton');
+  if (!btn) return;
+
+  const supported = isFocusTabSupportedByAnyTab();
+  btn.hidden = !supported;
+
+  const selectedTabId = ensureSelectedHubTab();
+  btn.disabled = !supported || !selectedTabId;
+}
+
+function isFocusTabSupportedByAnyTab() {
+  try {
+    for (const snap of hubTabs.values()) {
+      if (snap?.state?.autoCopyExtensionFocusTabSupported === true) return true;
+    }
+  } catch (_) {}
+  return false;
 }
 
 function installMiniPanelAutoScale(targetWindow) {
@@ -2841,6 +2924,40 @@ function renderMiniPanelDocument(targetWindow) {
       cursor: pointer;
       font-size: 16px;
       line-height: 1;
+    }
+
+    .top-right {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: flex-end;
+      flex: 0 0 auto;
+    }
+
+    .focus-btn {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      width: 28px;
+      height: 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 11px;
+      line-height: 1;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .focus-btn:hover:not(:disabled) {
+      color: var(--text);
+      background: rgba(255,255,255,0.06);
+    }
+
+    .focus-btn:disabled {
+      opacity: 0.35;
+      cursor: default;
     }
 
     .status-row {
@@ -3397,7 +3514,10 @@ function renderMiniPanelDocument(targetWindow) {
             </div>
           </div>
         </div>
-        <button id="miniCloseButton" class="close-btn" type="button" aria-label="Close mini panel">×</button>
+        <div class="top-right">
+          <button id="miniCloseButton" class="close-btn" type="button" aria-label="Close mini panel">×</button>
+          <button id="miniFocusTabButton" class="focus-btn" type="button" aria-label="Jump to selected tab" title="Jump to selected tab" hidden>↗</button>
+        </div>
       </div>
 
       <div class="status-row">
@@ -3895,4 +4015,5 @@ function bootMiniController() {
 }
 
 bootMiniController();
+
 
