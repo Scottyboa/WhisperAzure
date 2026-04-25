@@ -68,7 +68,8 @@ const NOTE_PROVIDER_REGISTRY = {
     uiProvider: 'openai',
     openaiModel: 'gpt5',
     mode: 'streaming',
-    modulePath: './notegeneration%20gpt-5.js',
+    modulePath: './noteGeneration_openai.js',
+    initExportName: 'initGpt5Streaming',
   },
   'gpt5-ns': {
     id: 'gpt5-ns',
@@ -76,7 +77,8 @@ const NOTE_PROVIDER_REGISTRY = {
     uiProvider: 'openai',
     openaiModel: 'gpt5',
     mode: 'non-streaming',
-    modulePath: './noteGeneration_gpt5_NS.js',
+    modulePath: './noteGeneration_openai.js',
+    initExportName: 'initGpt5NonStreaming',
   },
   gpt52: {
     id: 'gpt52',
@@ -84,7 +86,8 @@ const NOTE_PROVIDER_REGISTRY = {
     uiProvider: 'openai',
     openaiModel: 'gpt52',
     mode: 'streaming',
-    modulePath: './noteGeneration_gpt52.js',
+    modulePath: './noteGeneration_openai.js',
+    initExportName: 'initGpt52Streaming',
   },
   'gpt52-ns': {
     id: 'gpt52-ns',
@@ -92,7 +95,8 @@ const NOTE_PROVIDER_REGISTRY = {
     uiProvider: 'openai',
     openaiModel: 'gpt52',
     mode: 'non-streaming',
-    modulePath: './noteGeneration_gpt52_NS.js',
+    modulePath: './noteGeneration_openai.js',
+    initExportName: 'initGpt52NonStreaming',
   },
   gpt54: {
     id: 'gpt54',
@@ -100,7 +104,8 @@ const NOTE_PROVIDER_REGISTRY = {
     uiProvider: 'openai',
     openaiModel: 'gpt54',
     mode: DEFAULTS.noteMode,
-    modulePath: './noteGeneration_gpt54.js',
+    modulePath: './noteGeneration_openai.js',
+    initExportName: 'initGpt54',
   },
   lemonfox: {
     id: 'lemonfox',
@@ -405,6 +410,16 @@ export function resolveNoteModulePath(effectiveProvider) {
   return getNoteProviderConfig(effectiveProvider).modulePath;
 }
 
+// Returns the name of the named export to call on the loaded module
+// (e.g. 'initGpt5Streaming'). Falls back to 'initNoteGeneration' for
+// providers that don't specify an explicit export, so non-OpenAI
+// modules (Gemini, Lemonfox, Mistral, AWS Bedrock) keep their existing
+// loader behaviour.
+export function resolveNoteInitExportName(effectiveProvider) {
+  const config = getNoteProviderConfig(effectiveProvider);
+  return String(config.initExportName || 'initNoteGeneration');
+}
+
 export function getNoteProviderLogLabel({
   effectiveProvider,
   openaiModel,
@@ -506,3 +521,4 @@ export function getNoteUiVisibility({ provider, openaiModel } = {}) {
     showBedrock: uiProvider === 'aws-bedrock',
   };
 }
+

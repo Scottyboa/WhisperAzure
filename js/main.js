@@ -19,6 +19,7 @@ import {
   listVertexModelOptions,
   normalizeTranscribeProvider,
   resolveEffectiveNoteProvider,
+  resolveNoteInitExportName as resolveNoteInitExportNameFromRegistry,
   resolveNoteModulePath as resolveNoteModulePathFromRegistry,
   resolveTranscribeModulePath as resolveTranscribeModulePathFromRegistry,
 } from './core/provider-registry.js';
@@ -1720,6 +1721,10 @@ document.addEventListener('DOMContentLoaded', () => {
     return resolveNoteModulePathFromRegistry(choice || getSelectedEffectiveNoteProvider());
   }
 
+  function resolveNoteInitExportName(choice) {
+    return resolveNoteInitExportNameFromRegistry(choice || getSelectedEffectiveNoteProvider());
+  }
+
   async function loadCachedModule(path) {
     const app = getApp();
     if (!app.cachedModules[path]) {
@@ -1787,21 +1792,40 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function initNoteProvider(choice) {
-    const path = resolveNoteModulePath(choice || getSelectedEffectiveNoteProvider());
+    const effectiveChoice = choice || getSelectedEffectiveNoteProvider();
+    const path = resolveNoteModulePath(effectiveChoice);
+    const initExportName = resolveNoteInitExportName(effectiveChoice);
+
     const fallbackProvider = DEFAULTS.openaiModel;
     const fallbackPath = resolveNoteModulePath(fallbackProvider);
+    const fallbackInitExportName = resolveNoteInitExportName(fallbackProvider);
+
+    // Prefer the registry-specified named export (e.g. 'initGpt5Streaming'
+    // on the consolidated noteGeneration_openai.js). Fall back to the
+    // legacy 'initNoteGeneration' export for modules that don't declare
+    // initExportName (Gemini, Lemonfox, Mistral, AWS Bedrock).
+    const callInit = (mod, name) => {
+      if (mod && typeof mod[name] === 'function') {
+        mod[name]();
+        return true;
+      }
+      if (mod && typeof mod.initNoteGeneration === 'function') {
+        mod.initNoteGeneration();
+        return true;
+      }
+      return false;
+    };
 
     try {
       const mod = await loadCachedModule(path);
-      if (mod && typeof mod.initNoteGeneration === 'function') {
-        mod.initNoteGeneration();
+      if (callInit(mod, initExportName)) {
         emitAppStateChanged('note-provider-initialized', {
-          provider: choice || getSelectedEffectiveNoteProvider(),
+          provider: effectiveChoice,
         });
       } else {
-        console.warn(`Module ${path} missing initNoteGeneration(); falling back to GPT-5.1`);
+        console.warn(`Module ${path} missing ${initExportName}() / initNoteGeneration(); falling back to GPT-5.1`);
         const fallback = await loadCachedModule(fallbackPath);
-        fallback.initNoteGeneration?.();
+        callInit(fallback, fallbackInitExportName);
         emitAppStateChanged('note-provider-fallback-initialized', {
           provider: fallbackProvider,
         });
@@ -1809,7 +1833,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
       console.warn(`Failed to load ${path}; falling back to GPT-5.1`, e);
       const fallback = await loadCachedModule(fallbackPath);
-      fallback.initNoteGeneration?.();
+      callInit(fallback, fallbackInitExportName);
       emitAppStateChanged('note-provider-fallback-initialized', {
         provider: fallbackProvider,
       });
