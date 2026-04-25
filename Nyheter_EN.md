@@ -17,6 +17,11 @@ In other words, GPT-5.5 is about **twice as expensive per token** as GPT-5.4. Be
 
 The default reasoning effort for OpenAI GPT-5.x models has been changed from **None** to **Low**. You can change it back at any time from the reasoning effort dropdown.
 
+### Important regarding privacy / GDPR:
+Please note that use of **GPT-5.5** and the other **OpenAI models** in the current standard setup is **not GDPR compliant for sensitive/patient data**, because data is **not processed in the EU by default**, and OpenAI states that API data may be **stored for up to 30 days before deletion**.
+
+For note generation workflows that require a **GDPR-compliant setup**, **AWS Bedrock** is recommended instead.
+
 ### "Go to selected tab" button added to the Mini panel
 
 A small new button has been added to the **Mini panel**, placed directly under the close (×) button. When clicked, this button brings the Chrome tab that is currently selected in the Mini panel's tab selector into focus — even if Chrome is minimized or sitting behind another program on your screen. This is useful when the Mini panel is sticky in a corner and you are working in another program; one click takes you straight to the right Transcribe Notes tab.
