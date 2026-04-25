@@ -14,7 +14,7 @@ export const DEFAULTS = {
   sonioxSpeakerLabels: 'off',
   noteProvider: 'aws-bedrock',
   openaiModel: 'gpt5',
-  openaiReasoning: 'none',
+  openaiReasoning: 'low',
   noteMode: 'streaming',
   geminiModel: 'gemini-3-pro-preview',
   geminiReasoning: 'high',
@@ -107,6 +107,24 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './noteGeneration_openai.js',
     initExportName: 'initGpt54',
   },
+  gpt55: {
+    id: 'gpt55',
+    label: 'GPT-5.5',
+    uiProvider: 'openai',
+    openaiModel: 'gpt55',
+    mode: 'streaming',
+    modulePath: './noteGeneration_openai.js',
+    initExportName: 'initGpt55Streaming',
+  },
+  'gpt55-ns': {
+    id: 'gpt55-ns',
+    label: 'GPT-5.5 (non-streaming)',
+    uiProvider: 'openai',
+    openaiModel: 'gpt55',
+    mode: 'non-streaming',
+    modulePath: './noteGeneration_openai.js',
+    initExportName: 'initGpt55NonStreaming',
+  },
   lemonfox: {
     id: 'lemonfox',
     label: 'Lemonfox',
@@ -152,6 +170,7 @@ const OPENAI_NOTE_MODEL_OPTIONS = [
   { value: 'gpt5', label: 'GPT-5.1' },
   { value: 'gpt52', label: 'GPT-5.2' },
   { value: 'gpt54', label: 'GPT-5.4' },
+  { value: 'gpt55', label: 'GPT-5.5' },
 ];
 
 const NOTE_MODE_OPTIONS = [
@@ -335,7 +354,7 @@ export function resolveEffectiveNoteProvider({ provider, openaiModel, noteMode }
   const model = String(openaiModel || DEFAULTS.openaiModel).trim().toLowerCase();
   const mode = String(noteMode || DEFAULTS.noteMode).trim().toLowerCase();
 
-  if (model === 'gpt5' || model === 'gpt52') {
+  if (model === 'gpt5' || model === 'gpt52' || model === 'gpt55') {
     return mode === 'non-streaming' ? `${model}-ns` : model;
   }
 
@@ -499,6 +518,9 @@ export function getDefaultModelIdForEffectiveNoteProvider({
       return 'gpt-5.2';
     case 'gpt54':
       return 'gpt-5.4';
+    case 'gpt55':
+    case 'gpt55-ns':
+      return 'gpt-5.5';
     default:
       return String(openaiModel || '').trim() || null;
   }
@@ -509,7 +531,7 @@ export function getNoteUiVisibility({ provider, openaiModel } = {}) {
   const model = String(openaiModel || DEFAULTS.openaiModel).trim().toLowerCase();
 
   const isOpenAi = uiProvider === 'openai';
-  const isGpt5x = isOpenAi && (model === 'gpt5' || model === 'gpt52' || model === 'gpt54');
+  const isGpt5x = isOpenAi && (model === 'gpt5' || model === 'gpt52' || model === 'gpt54' || model === 'gpt55');
 
   return {
     showOpenAi: isOpenAi,

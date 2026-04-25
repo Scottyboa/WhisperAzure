@@ -76,10 +76,11 @@ import {
     }
 
     // Some OpenAI note modules report the UI provider ("openai") instead of an
-    // effective provider key ("gpt5", "gpt52", "gpt54"). Normalize those here
+    // effective provider key ("gpt5", "gpt52", "gpt54", "gpt55"). Normalize those here
     // so pricing and logging do not fall back to DEFAULTS.noteProvider.
     if (rawProvider === "openai") {
       const rawModel = String(modelId || "").trim().toLowerCase();
+      if (rawModel === "gpt-5.5") return "gpt55";
       if (rawModel === "gpt-5.4") return "gpt54";
       if (rawModel === "gpt-5.2") return "gpt52";
       if (rawModel === "gpt-5.1") return "gpt5";
@@ -88,6 +89,7 @@ import {
       const openAiModel = String(
         snapshot.openaiModel || readSession("openai_model", "") || DEFAULTS.openaiModel
       ).trim().toLowerCase();
+      if (openAiModel === "gpt55") return "gpt55";
       if (openAiModel === "gpt54") return "gpt54";
       if (openAiModel === "gpt52") return "gpt52";
       return "gpt5";
@@ -125,10 +127,12 @@ import {
     "gpt-5.1": { input: 1.25, output: 10.0 },
     "gpt-5.2": { input: 1.75, output: 14.0 },
     "gpt-5.4": { input: 2.5, output: 15.0 },
+    "gpt-5.5": { input: 5.0, output: 30.0 },
     "chatgpt-4o-latest": { input: 5.0, output: 15.0 },
     "GPT-5.1": { input: 1.25, output: 10.0 },
     "GPT-5.2": { input: 1.75, output: 14.0 },
     "GPT-5.4": { input: 2.5, output: 15.0 },
+    "GPT-5.5": { input: 5.0, output: 30.0 },
   };
 
   // AWS Bedrock (Claude) — USD per 1M tokens
@@ -575,4 +579,5 @@ import {
     wireAutoClear();
   }
 })();
+
 

@@ -105,6 +105,22 @@ const VARIANTS = Object.freeze({
     streamingProviderKey: { kind: "literal", value: "openai" },
     nonStreamingProviderKey: "openai",
     abortShape: "standard"
+  },
+  "gpt55-streaming": {
+    model: "gpt-5.5",
+    runMode: "streaming",
+    normalizeReasoning: true,
+    reasoningDefault: "low",
+    streamingProviderKey: { kind: "literal", value: "openai" },
+    abortShape: "standard"
+  },
+  "gpt55-non-streaming": {
+    model: "gpt-5.5",
+    runMode: "non-streaming",
+    normalizeReasoning: true,
+    reasoningDefault: "low",
+    nonStreamingProviderKey: "openai",
+    abortShape: "standard"
   }
 });
 
@@ -378,10 +394,20 @@ function initGpt54() {
   bindGenerateNoteButton(makeGenerateNoteFn("gpt54"));
 }
 
+function initGpt55Streaming() {
+  bindGenerateNoteButton(makeGenerateNoteFn("gpt55-streaming"));
+}
+
+function initGpt55NonStreaming() {
+  bindGenerateNoteButton(makeGenerateNoteFn("gpt55-non-streaming"));
+}
+
 export {
   initGpt5Streaming,
   initGpt5NonStreaming,
   initGpt52Streaming,
   initGpt52NonStreaming,
-  initGpt54
+  initGpt54,
+  initGpt55Streaming,
+  initGpt55NonStreaming
 };
