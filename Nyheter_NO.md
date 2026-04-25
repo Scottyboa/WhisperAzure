@@ -1,3 +1,34 @@
+## 25. april 2026
+
+### GPT-5.5 lagt til i OpenAI notatgenerering
+
+OpenAIs nyeste modell, **GPT-5.5**, er nå lagt til i modell-nedtrekksmenyen når du bruker OpenAI til notatgenerering. På samme måte som de andre GPT-5.x-modellene kan du velge mellom **streaming** og **non-streaming**-modus, og du kan justere **reasoning-nivået** (None / Low / Medium / High).
+
+GPT-5.5 er OpenAIs smarteste og mest kapable modell hittil. Sammenlignet med GPT-5.4 følger den komplekse instrukser mer presist, er sterkere på flertrinnsresonnering, og er mer effektiv — den oppnår generelt sterke resultater med færre reasoning-tokens på samme reasoning-nivå. OpenAI omtaler den som en "ny klasse av intelligens" beregnet for seriøst profesjonelt arbeid.
+
+**Pris — GPT-5.5 vs GPT-5.4 (USD per 1M tokens):**
+
+| Modell | Input | Output |
+| --- | --- | --- |
+| GPT-5.4 | $2,50 | $15,00 |
+| GPT-5.5 | $5,00 | $30,00 |
+
+Med andre ord er GPT-5.5 omtrent **dobbelt så dyr per token** som GPT-5.4. Fordi GPT-5.5 er mer token-effektiv i praksis, vil den reelle kostnadsforskjellen per ferdig notat ofte være mindre enn 2×, men man bør likevel forvente en merkbar økning i kostnad ved å bytte fra 5.4 til 5.5.
+
+Standardverdien for reasoning-nivå på OpenAI GPT-5.x-modellene er endret fra **None** til **Low**. Du kan når som helst endre den tilbake fra reasoning-nedtrekksmenyen.
+
+### "Gå til valgt fane"-knapp lagt til i Mini panelet
+
+En ny liten knapp er lagt til i **Mini panelet**, plassert rett under lukke-knappen (×). Når man klikker på denne knappen, hentes Chrome-fanen som er valgt i Mini panelets fanevelger frem i fokus — selv om Chrome er minimert eller ligger bak et annet program på skjermen. Dette er nyttig når Mini panelet ligger sticky i et hjørne og du jobber i et annet program; ett klikk tar deg rett tilbake til riktig Transcribe Notes-fane.
+
+**Knappen fungerer kun i Google Chrome**, fordi den er avhengig av Auto-copy Chrome-utvidelsen for å faktisk kunne bytte fane på tvers av vinduer og programmer.
+
+For at knappen skal fungere må du **laste ned Auto-copy zip-filen på nytt** her: <a href="div/autocopy.zip" download>autocopy.zip</a>, og erstatte den gamle utvidelsen med denne oppdaterte versjonen. Det gjør du ved å gå til <a href="chrome://extensions" target="_blank" rel="noopener">chrome://extensions</a>, fjerne den gamle "Note Auto-Copy Extension", deretter klikke **Load unpacked** og velge den nye utpakkede mappen. Selve auto-copy-funksjonaliteten er uendret — det er kun den nye "gå til valgt fane"-funksjonen som krever den oppdaterte utvidelsen.
+
+Hvis den nye knappen ikke vises i Mini panelet etter at utvidelsen er erstattet, oppdater Transcribe Notes-siden og åpne Mini panelet på nytt.
+
+---
+
 ## 22. april 2026
 
 ### Claude Opus 4.7 nå tilgjengelig i AWS Bedrock
