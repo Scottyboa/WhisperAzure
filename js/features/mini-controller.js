@@ -1526,6 +1526,37 @@ function syncMiniSttSummary(state) {
   if (!el) return;
   el.hidden = !text;
   el.textContent = text;
+
+  syncMiniSonioxSpeakerLabels(state);
+}
+
+// Mirror of the main-page Soniox speaker-labels selector. Visible only
+// when the active transcribe provider for the selected hub tab is
+// 'soniox', and disabled while that tab is transcribing — same rule
+// as initProviderLockWhileRecording on the main page.
+function syncMiniSonioxSpeakerLabels(state) {
+  const container = $('miniSonioxSpeakerLabelsContainer');
+  const select = $('miniSonioxSpeakerLabels');
+  if (!container || !select) return;
+
+  const provider = normalizeLower(state?.transcribeProvider, DEFAULTS.transcribeProvider);
+  const isSoniox = provider === 'soniox';
+  container.hidden = !isSoniox;
+
+  if (!isSoniox) return;
+
+  const speakerLabels = normalizeLower(
+    state?.sonioxSpeakerLabels,
+    DEFAULTS.sonioxSpeakerLabels
+  );
+  // Avoid clobbering an in-flight user selection that hasn't dispatched yet.
+  if (select.value !== speakerLabels) {
+    select.value = speakerLabels;
+  }
+
+  // Mirror the main-page rule: disabled while transcription is busy.
+  const busy = !!state?.transcribeBusy;
+  select.disabled = busy;
 }
 
 function syncMiniNoteProviderControls(state, snapshot) {
@@ -2380,6 +2411,7 @@ function bindMiniPanelEvents() {
   const miniGeminiModelSelect = $('miniGeminiModelSelect');
   const miniVertexModelSelect = $('miniVertexModelSelect');
   const miniBedrockModelSelect = $('miniBedrockModelSelect');
+  const miniSonioxSpeakerLabelsSelect = $('miniSonioxSpeakerLabels');
 
   if (startButton) {
     startButton.addEventListener('click', () => {
@@ -2504,6 +2536,29 @@ function bindMiniPanelEvents() {
         state: {
           ...(prev.state || {}),
           autoCopyMode: nextMode,
+        },
+      }));
+
+      requestUiRefresh();
+    });
+  }
+
+  if (miniSonioxSpeakerLabelsSelect) {
+    miniSonioxSpeakerLabelsSelect.addEventListener('change', () => {
+      const next = String(miniSonioxSpeakerLabelsSelect.value || 'off').trim().toLowerCase() === 'on'
+        ? 'on'
+        : 'off';
+
+      dispatchHubAction('setSonioxSpeakerLabels', next);
+
+      // Optimistic local update so the "Soniox (dia)" / "Soniox" label
+      // and the selector value both reflect the new choice immediately,
+      // before the heartbeat round-trip from the target tab arrives.
+      updateSelectedHubSnapshot((prev) => ({
+        ...prev,
+        state: {
+          ...(prev.state || {}),
+          sonioxSpeakerLabels: next,
         },
       }));
 
@@ -2982,6 +3037,7 @@ function renderMiniPanelDocument(targetWindow) {
 
     .status-slot--center {
       justify-content: center;
+      gap: 8px;
     }
 
     .status-slot--right {
@@ -3102,6 +3158,47 @@ function renderMiniPanelDocument(targetWindow) {
       max-width: 100%;
       flex: 0 1 auto;
       text-align: center;
+    }
+
+    .mini-speaker-labels {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: 0 0 auto;
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .mini-speaker-labels-label {
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .mini-speaker-labels-select {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 1px 4px;
+      cursor: pointer;
+      line-height: 1.2;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      padding-right: 4px;
+    }
+
+    .mini-speaker-labels-select:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .mini-speaker-labels-select option {
+      color: var(--text);
+      background: var(--panel-bg, #1a1a1a);
     }
 
     .controls-wrap {
@@ -3526,6 +3623,13 @@ function renderMiniPanelDocument(targetWindow) {
         </div>
         <div class="status-slot status-slot--center">
           <div id="miniSttSummary" class="stt-summary" hidden>Soniox</div>
+          <div id="miniSonioxSpeakerLabelsContainer" class="mini-speaker-labels" hidden>
+            <span class="mini-speaker-labels-label">Speaker labels:</span>
+            <select id="miniSonioxSpeakerLabels" class="mini-speaker-labels-select" aria-label="Soniox speaker labels">
+              <option value="off">OFF</option>
+              <option value="on">ON</option>
+            </select>
+          </div>
         </div>
         <div class="status-slot status-slot--right">
           <div id="miniCopiedIndicator" class="copied" data-show="0" hidden>Copied!</div>

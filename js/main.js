@@ -2741,6 +2741,39 @@ document.addEventListener('DOMContentLoaded', () => {
     return true;
   };
 
+  // Programmatic setter for the Soniox speaker-labels dropdown. Used by
+  // the Mini panel mirror so that the change runs through the exact same
+  // code path as a manual click on the main page: dispatch a 'change'
+  // event on the underlying <select>, which the provider-persistence
+  // bridge already handles (writes session storage and calls
+  // switchTranscribeProvider('soniox') to apply the change live).
+  //
+  // Returns false if the change is suppressed because transcription is
+  // currently busy — same rule as on the main page (the select gets
+  // disabled by initProviderLockWhileRecording while recording).
+  app.setSonioxSpeakerLabels = function setSonioxSpeakerLabels(next) {
+    const normalizedNext = String(next || '').trim().toLowerCase() === 'on' ? 'on' : 'off';
+
+    if (typeof app.isTranscribeBusy === 'function' && app.isTranscribeBusy()) {
+      console.warn('[mini-panel] setSonioxSpeakerLabels ignored while transcription is busy.');
+      return false;
+    }
+
+    const el = document.getElementById('sonioxSpeakerLabels');
+    if (el && el.value !== normalizedNext) {
+      el.value = normalizedNext;
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    }
+
+    // Already at target value — no work to do, but persist defensively.
+    writeSession('soniox_speaker_labels', normalizedNext);
+    emitAppStateChanged('soniox-speaker-labels-set-programmatically', {
+      sonioxSpeakerLabels: normalizedNext,
+    });
+    return true;
+  };
+
   app.setOpenAiModel = function setOpenAiModel(next) {
     const normalizedNext = String(next || '').trim().toLowerCase();
     if (!normalizedNext) return false;
