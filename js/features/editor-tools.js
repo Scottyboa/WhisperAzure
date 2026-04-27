@@ -615,7 +615,7 @@
           continue;
         }
 
-        if (/^(?:år|ar|moss|familie|Vei|Forelder|Telefonnummer|Moss|Bam|Barn|foreldre|ektefelle|tlf|ikke|funnet)$/i.test(s)) {
+        if (/^(?:år|ar|moss|familie|Vei|Forelder|bostdsadresse|kvinne|mann|telefon|Telefonnummer|Moss|Bam|Barn|foreldre|ektefelle|tlf|ikke|funnet)$/i.test(s)) {
           if (/^(?:år|ar)$/i.test(s) && out.length && /^\d{1,3}$/.test(out[out.length - 1])) {
             out.pop();
           }
