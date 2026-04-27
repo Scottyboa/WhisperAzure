@@ -3017,27 +3017,30 @@ function renderMiniPanelDocument(targetWindow) {
 
     .status-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(74px, 1fr);
+      grid-template-columns: auto minmax(48px, 1fr) auto;
       align-items: center;
-      gap: 8px;
+      gap: 5px;
       min-height: 24px;
       min-width: 0;
       margin-bottom: 1px;
+      overflow: hidden;
     }
 
     .status-slot {
       min-width: 0;
       display: flex;
       align-items: center;
+      overflow: hidden;
     }
 
     .status-slot--left {
       justify-content: flex-start;
+      max-width: 190px;
     }
 
     .status-slot--center {
-      justify-content: center;
-      gap: 8px;
+      justify-content: flex-end;
+      gap: 4px;
     }
 
     .status-slot--right {
@@ -3071,6 +3074,8 @@ function renderMiniPanelDocument(targetWindow) {
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      min-width: 0;
+      max-width: 100%;
       min-height: 22px;
       padding: 0 9px;
       border-radius: 999px;
@@ -3081,6 +3086,8 @@ function renderMiniPanelDocument(targetWindow) {
       background: rgba(255,255,255,0.06);
       color: var(--text);
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .badge[data-tone="idle"] {
@@ -3127,7 +3134,7 @@ function renderMiniPanelDocument(targetWindow) {
       transition: opacity 0.18s ease;
       white-space: nowrap;
       flex: 0 0 auto;
-      min-width: 74px;
+      min-width: max-content;
       text-align: right;
       justify-self: end;
     }
@@ -3156,7 +3163,7 @@ function renderMiniPanelDocument(targetWindow) {
       text-overflow: ellipsis;
       min-width: 0;
       max-width: 100%;
-      flex: 0 1 auto;
+      flex: 0 0 auto;
       text-align: center;
     }
 
@@ -3164,10 +3171,13 @@ function renderMiniPanelDocument(targetWindow) {
       display: flex;
       align-items: center;
       gap: 4px;
-      flex: 0 0 auto;
+      flex: 0 1 auto;
       font-size: 10px;
       color: var(--muted);
       white-space: nowrap;
+      min-width: 0;
+      max-width: 118px;
+      overflow: hidden;
     }
 
     .mini-speaker-labels-label {
