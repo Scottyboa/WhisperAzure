@@ -974,6 +974,10 @@ function rtAppendFinalTokens(tokens) {
   for (const t of tokens) {
     if (!t || typeof t.text !== 'string') continue;
     if (t.is_final !== true) continue; // strict: only final tokens
+    // Skip Soniox control/marker tokens (e.g. "<end>" emitted by endpoint
+    // detection, or any "<...>"-style protocol token). These are signals,
+    // not transcript text, so they should not appear in the user's notes.
+    if (/^<[^>]*>$/.test(t.text.trim())) continue;
     appended += t.text;
   }
   if (appended) {
