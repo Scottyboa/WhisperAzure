@@ -222,6 +222,14 @@ let ws = null;
 let configSent = false;
 let pendingAudioQueue = []; // ArrayBuffer[] chunks queued before WS open
 let finalTranscriptRT = ''; // final-only running transcript for realtime
+// True once the server has sent {"finished": true}, meaning all final tokens
+// for the closed stream have been delivered. Used by the Stop handler to
+// know when it's safe to finalize the UI without losing the tail.
+let serverFinished = false;
+// True once the server has emitted the "<fin>" marker token in response
+// to our {"type":"finalize"} control message. Indicates that all
+// previously-pending non-final tokens have been finalized and delivered.
+let serverFinalized = false;
 
 // ── Shared session/control state ────────────────────────────────────────────
 let groupId = null;
@@ -974,10 +982,30 @@ function rtAppendFinalTokens(tokens) {
   for (const t of tokens) {
     if (!t || typeof t.text !== 'string') continue;
     if (t.is_final !== true) continue; // strict: only final tokens
-    // Skip Soniox control/marker tokens (e.g. "<end>" emitted by endpoint
-    // detection, or any "<...>"-style protocol token). These are signals,
-    // not transcript text, so they should not appear in the user's notes.
-    if (/^<[^>]*>$/.test(t.text.trim())) continue;
+
+    // Skip Soniox control/marker tokens. Documented examples:
+    //   - "<end>" — emitted when endpoint detection fires
+    //     (https://soniox.com/docs/stt/rt/endpoint-detection)
+    //   - "<fin>" — emitted in response to a manual finalize() request
+    //     (https://soniox.com/docs/stt/rt/manual-finalization)
+    // We accept any "<...>"-shaped token defensively, in case Soniox adds
+    // more markers later. The .trim() handles leading/trailing whitespace
+    // that some tokens carry (Soniox preserves spacing in regular tokens).
+    const trimmed = t.text.trim();
+    if (trimmed.length >= 2 && trimmed.startsWith('<') && trimmed.endsWith('>')) {
+      // The <fin> marker is the signal that the server has completed
+      // finalization in response to our {"type":"finalize"} request.
+      // The Stop handler waits for this so it knows the tail of the
+      // utterance has actually been delivered before closing the stream.
+      if (trimmed === '<fin>') {
+        serverFinalized = true;
+        logInfo('Soniox emitted <fin> — server finalized pending tokens.');
+      } else {
+        logDebug('Skipping Soniox control token:', JSON.stringify(t.text));
+      }
+      continue;
+    }
+
     appended += t.text;
   }
   if (appended) {
@@ -1031,7 +1059,8 @@ function rtHandleSocketMessage(event) {
   if (Array.isArray(res.tokens) && res.tokens.length) rtAppendFinalTokens(res.tokens);
 
   if (res.finished === true) {
-    logInfo('Soniox WS session finished.');
+    serverFinished = true;
+    logInfo('Soniox WS session finished (server flushed all finals).');
     // Server will close the socket after this; the close handler finalizes.
   }
 }
@@ -1119,6 +1148,27 @@ function rtGracefullyCloseWebSocket() {
   }
 }
 
+// Send the {"type":"finalize"} control message. Tells the server to
+// finalize all currently pending non-final tokens and emit them as final.
+// The server signals completion by returning a "<fin>" marker token.
+//
+// This is the right primitive to use BEFORE closing a stream — it forces
+// Soniox to flush the recognizer's buffered tokens for the audio it has
+// already received, so the tail of the user's last utterance isn't lost
+// in the gap between "user clicked Stop" and "stream closed".
+//
+// Reference: https://soniox.com/docs/stt/rt/manual-finalization
+function rtRequestFinalize() {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  try {
+    serverFinalized = false; // arm for the next <fin>
+    ws.send(JSON.stringify({ type: 'finalize' }));
+    logInfo('Sent {"type":"finalize"} to Soniox.');
+  } catch (err) {
+    logDebug('rtRequestFinalize send failed', err);
+  }
+}
+
 // Hard-close: used on Abort and provider switches. We don't wait for finish.
 function rtHardCloseWebSocket(reason = 'closed') {
   if (!ws) return;
@@ -1141,6 +1191,58 @@ function rtWaitForWsCloseOrTimeout(timeoutMs) {
         resolve(false);
       }
     }, 50);
+  });
+}
+
+// Resolves true when the server has emitted {"finished": true} (meaning
+// all final tokens for the closed stream have been delivered), false on
+// timeout. Used after sending the empty-frame EOS so we know it's safe
+// to finalize the UI without losing the tail of the transcript.
+function rtWaitForServerFinishedOrTimeout(timeoutMs) {
+  return new Promise((resolve) => {
+    if (serverFinished) { resolve(true); return; }
+    const start = Date.now();
+    const interval = setInterval(() => {
+      if (serverFinished) {
+        clearInterval(interval);
+        resolve(true);
+      } else if (Date.now() - start >= timeoutMs) {
+        clearInterval(interval);
+        resolve(false);
+      } else if (!ws || ws.readyState === WebSocket.CLOSED) {
+        // The socket closed without us seeing finished:true. That's
+        // unexpected on a graceful EOS but possible on network errors.
+        // Treat as "done" so we don't hang the UI; the caller can decide
+        // what to do.
+        clearInterval(interval);
+        resolve(true);
+      }
+    }, 25);
+  });
+}
+
+// Resolves true when the server has emitted the "<fin>" marker (meaning
+// it has finished finalizing pending tokens in response to our
+// {"type":"finalize"} request). Resolves false on timeout. Used by the
+// Stop handler so we KNOW the tail tokens have arrived before we tear
+// down the stream.
+function rtWaitForServerFinalizedOrTimeout(timeoutMs) {
+  return new Promise((resolve) => {
+    if (serverFinalized) { resolve(true); return; }
+    const start = Date.now();
+    const interval = setInterval(() => {
+      if (serverFinalized) {
+        clearInterval(interval);
+        resolve(true);
+      } else if (Date.now() - start >= timeoutMs) {
+        clearInterval(interval);
+        resolve(false);
+      } else if (!ws || ws.readyState === WebSocket.CLOSED) {
+        // Socket died while we were waiting — give up.
+        clearInterval(interval);
+        resolve(false);
+      }
+    }, 25);
   });
 }
 
@@ -1210,6 +1312,24 @@ function rtTeardownAudioCapture() {
   }
 }
 
+// Halt the OS-level mic capture WITHOUT tearing down the AudioContext or
+// AudioWorklet. Used by the Stop handler to give any audio frames that
+// were captured just before the click but haven't yet been posted from
+// the worklet to the main thread (and from there to the WebSocket) a
+// chance to flush. Without this, the user's last ~100-300ms of speech is
+// dropped, because we'd kill the entire audio graph the instant Stop is
+// pressed.
+function rtStopMicInputOnly() {
+  try {
+    if (mediaStream) {
+      mediaStream.getTracks().forEach((t) => { try { t.stop(); } catch (_) {} });
+      mediaStream = null;
+    }
+  } catch (err) {
+    logDebug('rtStopMicInputOnly error', err);
+  }
+}
+
 function finalizeRealtimeTranscriptionUI() {
   if (transcriptFrozen) return;
   freezeCompletionTimer();
@@ -1252,6 +1372,8 @@ function beginFreshSession() {
   pendingAudioQueue = [];
   finalTranscriptRT = '';
   configSent = false;
+  serverFinished = false;
+  serverFinalized = false;
 
   // Shared
   transcriptionError = false;
@@ -1411,6 +1533,11 @@ function bindRealtimeHandlers({ startButton, stopButton, pauseResumeButton, abor
         manualStop = false;
         recordingActive = false;
         configSent = false;
+        // Reset the finished/finalized flags — they're true from the
+        // pause-triggered server response, but a subsequent Stop/Pause
+        // needs to track the NEW session's signals, not the old ones.
+        serverFinished = false;
+        serverFinalized = false;
         pendingAudioQueue = [];
 
         await rtOpenWebSocketSession();
@@ -1428,17 +1555,35 @@ function bindRealtimeHandlers({ startButton, stopButton, pauseResumeButton, abor
         setAbortButtonDisabled(false);
       }
     } else {
-      // PAUSE — graceful close so Soniox flushes any pending tokens.
+      // PAUSE — same finalize-first sequence as Stop, so the tail of the
+      // last sentence the user spoke before pausing is preserved.
       updateStatusMessage('Pausing recording…', 'orange');
+
+      // Halt OS-level mic, leave the worklet+WS alive long enough to
+      // drain the in-flight audio to Soniox.
+      rtStopMicInputOnly();
+      await new Promise(r => setTimeout(r, 150));
+
+      // Ask Soniox to finalize whatever it has, wait for <fin>.
+      rtRequestFinalize();
+      const finalizedSeen = await rtWaitForServerFinalizedOrTimeout(3000);
+      if (!finalizedSeen) {
+        logDebug('Pause: <fin> not seen within 3s; closing anyway.');
+      }
+
+      // Now mark paused so any straggler audio is dropped, and close.
       recordingActive = false;
       recordingPaused = true;
       try { rtGracefullyCloseWebSocket(); }
       catch (err) { logDebug('Pause: rtGracefullyCloseWebSocket failed', err); }
 
-      // Wait briefly for any final tokens, then hard-close. Soniox usually
-      // sends finished within ~500ms; cap at 1500ms so the UI stays
-      // responsive even if the server is slow.
-      const closedByServer = await rtWaitForWsCloseOrTimeout(1500);
+      const finishedSeen = await rtWaitForServerFinishedOrTimeout(2000);
+      if (!finishedSeen) {
+        logDebug('Pause: server did not send finished:true within 2s.');
+      }
+
+      // Wait briefly for the actual close, then force it if needed.
+      const closedByServer = await rtWaitForWsCloseOrTimeout(1000);
       if (!closedByServer) rtHardCloseWebSocket('pause-timeout');
       rtTeardownAudioCapture();
 
@@ -1477,6 +1622,35 @@ function bindRealtimeHandlers({ startButton, stopButton, pauseResumeButton, abor
   }
 
   // ── Stop ──────────────────────────────────────────────────────────────────
+  // Realtime Stop sequence — designed to preserve the tail of the user's
+  // speech, including the case where they click Stop mid-sentence or
+  // immediately after finishing speaking.
+  //
+  // The naive "send empty frame EOS, wait for close" pattern drops the
+  // tail because Soniox's recognizer holds tokens as non-final for a
+  // short window after each utterance, waiting for endpoint detection
+  // or more audio. Closing the stream doesn't reliably finalize those
+  // tokens.
+  //
+  // The right primitive is the {"type":"finalize"} control message
+  // (https://soniox.com/docs/stt/rt/manual-finalization), which forces
+  // the server to finalize all currently-pending non-final tokens and
+  // emit them as final. The server signals completion by emitting a
+  // "<fin>" marker token, after which we know the tail has arrived.
+  // Only THEN do we send the empty-frame EOS to close the stream.
+  //
+  // Sequence:
+  //   1. Stop OS-level mic capture (no new audio enters the pipeline).
+  //   2. Brief drain wait so the last ~100ms of captured audio reaches
+  //      Soniox's servers before we ask them to finalize.
+  //   3. Send {"type":"finalize"}. Server finalizes pending tokens and
+  //      emits them via the result stream, plus a "<fin>" marker.
+  //   4. Wait for serverFinalized=true (the "<fin>" marker arrives).
+  //      During this window, our message handler keeps appending finals
+  //      to the textarea so the user actually sees the tail.
+  //   5. Send the empty-frame EOS to close the stream.
+  //   6. Wait for serverFinished=true and socket close (cleanup).
+  //   7. Tear down the audio graph and finalize the UI.
   stopButton.addEventListener('click', async () => {
     if (stopButton.disabled) return;
     if (stopInProgress) {
@@ -1487,11 +1661,14 @@ function bindRealtimeHandlers({ startButton, stopButton, pauseResumeButton, abor
     setStopPauseDisabled(true);
     setAbortButtonDisabled(true);
 
-    manualStop = true;
-    recordingActive = false;
+    // Note: we deliberately do NOT set manualStop or recordingActive yet.
+    // rtSendAudioChunk gates on those flags, and we still want it to send
+    // the in-flight tail audio to Soniox before we tell Soniox to finalize.
 
-    // If we were paused, no live WS to close — just finalize.
+    // If we were paused, no live WS to drain — just finalize.
     if (recordingPaused) {
+      manualStop = true;
+      recordingActive = false;
       rtTeardownAudioCapture();
       finalizeRealtimeTranscriptionUI();
       logInfo('Stop while paused; finalized immediately.');
@@ -1501,22 +1678,68 @@ function bindRealtimeHandlers({ startButton, stopButton, pauseResumeButton, abor
     updateStatusMessage('Finishing transcription...', 'blue');
     if (!completionTimerRunning) startCompletionTimer();
 
-    rtTeardownAudioCapture();
-
+    // If the WS is already gone (rare race), finalize directly.
     if (!ws || ws.readyState === WebSocket.CLOSED) {
+      manualStop = true;
+      recordingActive = false;
+      rtTeardownAudioCapture();
       finalizeRealtimeTranscriptionUI();
       return;
     }
 
+    // Step 1: halt OS-level mic capture but keep the worklet+WS alive so
+    // any audio frames captured just before the click can still flow out
+    // to Soniox.
+    rtStopMicInputOnly();
+
+    // Step 2: brief drain. Lets the worklet flush its in-flight render
+    // quanta to the main thread, our send loop forward them to Soniox,
+    // and Soniox's network buffer accept them. Doesn't need to cover the
+    // recognizer's processing time — the finalize control message
+    // handles that next.
+    await new Promise(r => setTimeout(r, 150));
+
+    // Step 3: ask Soniox to finalize all currently-pending non-final
+    // tokens. The server will respond with the finals (via our normal
+    // result stream) plus a "<fin>" marker indicating completion.
+    rtRequestFinalize();
+
+    // Step 4: wait for "<fin>". This is the key step — when this
+    // resolves, we KNOW the tail of the user's last sentence has been
+    // delivered as final tokens and appended to the textarea.
+    //
+    // 4 seconds is generous; in practice <fin> arrives within ~350ms
+    // (Pipecat's ttfs_p99_latency benchmark) but we don't want to truncate
+    // long sentences on slow networks.
+    const finalizedSeen = await rtWaitForServerFinalizedOrTimeout(4000);
+    if (!finalizedSeen) {
+      logInfo('Soniox did not emit <fin> within 4s; proceeding to close anyway.');
+    }
+
+    // Step 5: now block any new audio sends and close the stream.
+    recordingActive = false;
     rtGracefullyCloseWebSocket();
 
-    // Safety net: if the server doesn't close within 5s, force-close.
-    const closed = await rtWaitForWsCloseOrTimeout(5000);
-    if (!closed) {
-      logInfo('Server did not close within 5s; force-closing WS.');
-      rtHardCloseWebSocket('stop-timeout');
-      finalizeRealtimeTranscriptionUI();
+    // Step 6: wait for {"finished": true} and the socket close. The
+    // message handler may still append a few more finals during this
+    // window — that's fine.
+    const finishedSeen = await rtWaitForServerFinishedOrTimeout(3000);
+    if (!finishedSeen) {
+      logInfo('Server did not send finished:true within 3s; finalizing anyway.');
     }
+    const closed = await rtWaitForWsCloseOrTimeout(1500);
+    if (!closed) {
+      logInfo('Server did not close socket within 1.5s; force-closing.');
+      rtHardCloseWebSocket('stop-timeout');
+    }
+
+    // Step 7: NOW it's safe to mark manualStop and finalize the UI. The
+    // close handler will also run when the socket actually closes; both
+    // paths funnel through finalizeRealtimeTranscriptionUI which is
+    // idempotent (returns early if transcriptFrozen is already set).
+    manualStop = true;
+    rtTeardownAudioCapture();
+    finalizeRealtimeTranscriptionUI();
   }, { signal: uiSignal });
 }
 
