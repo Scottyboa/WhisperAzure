@@ -34,8 +34,22 @@ const TRANSCRIBE_PROVIDER_REGISTRY = {
     id: 'soniox',
     label: 'Soniox',
     shortLabel: 'Soniox',
-    modulePath: './SONIOX_UPDATE.js',
-    diarizedModulePath: './SONIOX_UPDATE_dia.js',
+    // Both async-plain and async-diarized live in the merged module; it
+    // detects the speaker-labels setting at initRecording() time.
+    modulePath: './soniox.js',
+    activeApiKeyStorageKey: 'soniox_api_key',
+  },
+  soniox_rt: {
+    id: 'soniox_rt',
+    // Tagline displayed in dropdowns. The "(real-time)" suffix is intentional:
+    // it's how the user can distinguish this entry from the plain "Soniox"
+    // (async/batch) entry — same family, different transport.
+    label: 'Soniox (real-time)',
+    shortLabel: 'Soniox RT',
+    // Same merged module — the realtime branch is selected when the
+    // transcribe_provider session key is 'soniox_rt'.
+    modulePath: './soniox.js',
+    // Reuse the same API key as plain Soniox so the user only enters it once.
     activeApiKeyStorageKey: 'soniox_api_key',
   },
   lemonfox: {
@@ -300,11 +314,15 @@ export function getTranscribeProviderConfig(provider, options = {}) {
   const normalized = normalizeTranscribeProvider(provider);
   const config = TRANSCRIBE_PROVIDER_REGISTRY[normalized] || TRANSCRIBE_PROVIDER_REGISTRY[DEFAULTS.transcribeProvider];
 
+  // The plain "soniox" provider serves both the async-plain and
+  // async-diarized modes from the same module file. We still surface the
+  // resolved speakerLabels in the returned config so callers (e.g. the
+  // mini panel label "Soniox" vs "Soniox (dia)") can distinguish them
+  // without doing their own session lookup.
   if (normalized === 'soniox') {
     const speakerLabels = String(options.sonioxSpeakerLabels || DEFAULTS.sonioxSpeakerLabels).toLowerCase();
     return {
       ...config,
-      modulePath: speakerLabels === 'on' ? config.diarizedModulePath : config.modulePath,
       sonioxSpeakerLabels: speakerLabels,
     };
   }

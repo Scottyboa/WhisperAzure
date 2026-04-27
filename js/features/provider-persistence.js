@@ -119,6 +119,19 @@ import {
   }
 
   function isSoniox(providerValue) {
+    // Any Soniox variant — used to decide whether to show Soniox-shared
+    // selectors like the Region dropdown. Both the async (soniox) and the
+    // real-time (soniox_rt) provider talk to the same Soniox account, so
+    // they share region + API key UI.
+    const normalized = normalizeTranscribeProvider(providerValue);
+    return normalized === 'soniox' || normalized === 'soniox_rt';
+  }
+
+  function supportsSonioxSpeakerLabels(providerValue) {
+    // Speaker diarization is only meaningful for the async/batch flow
+    // (the 'async-diarized' mode inside soniox.js). The real-time
+    // WebSocket provider streams plain final tokens, so the speaker-labels
+    // selector must stay hidden when soniox_rt is active.
     return normalizeTranscribeProvider(providerValue) === 'soniox';
   }
 
@@ -160,14 +173,17 @@ import {
   }) {
     const provider = normalizeTranscribeProvider(providerValue);
     const showSoniox = isSoniox(provider);
+    const showSpeakerLabels = supportsSonioxSpeakerLabels(provider);
     const region = normalizeLower(regionSelect?.value, DEFAULTS.sonioxRegion);
 
     if (providerSelect && providerSelect.value !== provider) {
       providerSelect.value = provider;
     }
 
+    // Region container shows for both async and real-time Soniox.
     setDisplay(regionContainer, showSoniox, 'block');
-    setDisplay(speakerContainer, showSoniox, 'block');
+    // Speaker-labels container shows ONLY for async Soniox.
+    setDisplay(speakerContainer, showSpeakerLabels, 'block');
 
     if (regionNote) {
       regionNote.style.display = showSoniox && region === 'eu' ? 'block' : 'none';

@@ -1748,13 +1748,17 @@ document.addEventListener('DOMContentLoaded', () => {
     '__recordingUIAbort_lemonfox',
     '__recordingUIAbort_voxtral',
     '__recordingUIAbort_deepgram',
-    '__sonioxUIAbort_soniox',
-    '__sonioxUIAbort_soniox_dia',
+    // The merged Soniox module (js/soniox.js) handles all three modes
+    // (async-plain, async-diarized, realtime) and registers a single
+    // window-level UI abort controller.
+    '__sonioxUIAbort',
   ];
 
   const RECORDING_VAD_TEARDOWN_KEYS = [
-    '__sonioxTeardownVAD_soniox',
-    '__sonioxTeardownVAD_soniox_dia',
+    // Single teardown hook for all Soniox modes — closes the WebSocket,
+    // releases the mic, and tears down the Silero VAD if any of those
+    // are live, regardless of which Soniox mode was active.
+    '__sonioxTeardown',
   ];
 
   function teardownRecordingProviderRuntime(reason = 'provider-switch') {
