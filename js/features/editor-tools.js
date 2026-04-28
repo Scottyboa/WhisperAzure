@@ -105,7 +105,7 @@
       }
     };
 
-    const syncSupplementaryStickyDate = ({ focus = false } = {}) => {
+    const syncSupplementaryStickyDate = ({ focus = false, resetView = false } = {}) => {
       if (!supplementaryInfoEl) return;
       const nextValue = normalizeSupplementaryDateLine(supplementaryInfoEl.value, {
         enabled: getSupplementaryDateToggleState(),
@@ -114,10 +114,17 @@
         supplementaryInfoEl.value = nextValue;
         supplementaryInfoEl.dispatchEvent(new Event('input', { bubbles: true }));
       }
-      supplementaryInfoEl.scrollTop = 0;
-      const baseline = supplementaryInfoEl.dataset.defaultHeight;
-      if (baseline) supplementaryInfoEl.style.height = baseline;
-      else supplementaryInfoEl.style.height = '';
+      // Visual reset (scroll-to-top + height baseline) is only desired for
+      // explicit user actions like initial setup or toggling the Date
+      // checkbox — NOT on every blur. On blur, the user has just been
+      // interacting with the textarea (resizing, scrolling, editing) and
+      // resetting visual state would fight against what they just did.
+      if (resetView) {
+        supplementaryInfoEl.scrollTop = 0;
+        const baseline = supplementaryInfoEl.dataset.defaultHeight;
+        if (baseline) supplementaryInfoEl.style.height = baseline;
+        else supplementaryInfoEl.style.height = '';
+      }
       if (focus) supplementaryInfoEl.focus();
     };
 
@@ -1524,7 +1531,7 @@
       } catch (_) {}
 
       supplementaryDateToggle.checked = getSupplementaryDateToggleState();
-      syncSupplementaryStickyDate({ focus: false });
+      syncSupplementaryStickyDate({ focus: false, resetView: true });
 
       supplementaryDateToggle.addEventListener('change', () => {
         try {
@@ -1533,7 +1540,7 @@
             supplementaryDateToggle.checked ? '1' : '0'
           );
         } catch (_) {}
-        syncSupplementaryStickyDate({ focus: supplementaryDateToggle.checked });
+        syncSupplementaryStickyDate({ focus: supplementaryDateToggle.checked, resetView: true });
       });
     }
 
