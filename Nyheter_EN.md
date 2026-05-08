@@ -1,3 +1,23 @@
+## 8 May, 2026
+
+### Temporary loss of access to Claude Opus 4.7 in AWS Bedrock
+
+There are currently reports that **AWS Bedrock has removed or limited access to Claude Opus 4.7** for many accounts, without any clear explanation from AWS so far as to why this has happened.
+
+The issue appears to have started around **1 May, 2026**. Users who previously had access to Opus 4.7 may now receive error messages saying that the model **is not available for the account**, even directly inside AWS Bedrock Playground. This indicates that the issue is related to AWS Bedrock / model access, and not to the Transcribe Notes app itself or the CloudFormation stack.
+
+For now, we recommend using the other **Claude models via AWS Bedrock**, for example:
+
+- **Claude Haiku 4.5**
+- **Claude Sonnet 4.6**
+- **Claude Sonnet 4.5**
+- **Claude Opus 4.6**
+- **Claude Opus 4.5**
+
+We will have to wait for more information from AWS, and hopefully access to **Claude Opus 4.7** will be restored soon for affected users. If you receive an error when using Opus 4.7, choose one of the other Claude models from the model dropdown and try again.
+
+---
+
 ## 25 April, 2026
 
 ### GPT-5.5 added to OpenAI note generation
