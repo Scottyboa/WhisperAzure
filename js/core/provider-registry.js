@@ -225,6 +225,8 @@ const GEMINI_API_MODEL_OPTIONS = [
 
 const VERTEX_MODEL_OPTIONS = [
   { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+  { value: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash' },
+  { value: 'gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash-Lite' },
 ];
 
 const BEDROCK_MODEL_OPTIONS = [
@@ -561,4 +563,5 @@ export function getNoteUiVisibility({ provider, openaiModel } = {}) {
     showBedrock: uiProvider === 'aws-bedrock',
   };
 }
+
 
