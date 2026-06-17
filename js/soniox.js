@@ -60,7 +60,7 @@ const SONIOX_CONTEXT_TEXT =
 const DEFAULT_LANGUAGE_HINTS = ['no', 'en'];
 
 // ── Realtime constants ──────────────────────────────────────────────────────
-const SONIOX_RT_MODEL = 'stt-rt-v4';
+const SONIOX_RT_MODEL = 'stt-rt-v5';
 const SONIOX_RT_SAMPLE_RATE = 16000;
 const SONIOX_RT_NUM_CHANNELS = 1;
 
