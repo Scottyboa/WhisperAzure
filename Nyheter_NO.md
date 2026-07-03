@@ -1,3 +1,28 @@
+## 3. juli 2026
+
+### Nye Gemini-modeller i Google Vertex: Gemini 3.5 Flash og Gemini 3.1 Flash-Lite
+
+To nye Gemini-modeller er lagt til i **Google Vertex**-leverandøren for notatgenerering:
+
+- **Gemini 3.5 Flash** — Googles nyeste Flash-modell, som leverer nesten Pro-nivå intelligens med Flash-klassens hastighet og kostnad. Les mer på den offisielle siden: <a href="https://deepmind.google/models/gemini/flash/" target="_blank" rel="noopener">Gemini 3.5 Flash (Google DeepMind)</a>
+- **Gemini 3.1 Flash-Lite** — Googles raskeste og mest kostnadseffektive Gemini-modell, godt egnet for raske oppgaver i stort volum. Les mer her: <a href="https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-1-flash-lite/" target="_blank" rel="noopener">Gemini 3.1 Flash-Lite (Google)</a>
+
+**Viktig:** For å kunne bruke disse nye modellene via Google Vertex-leverandøren, må du **oppdatere Google Vertex-backenden din**. For å gjøre dette, følg oppdateringsinstruksjonene helt nederst i <a href="index.html#vertex-update-backend" target="_blank" rel="noopener">**Google Vertex-guiden**</a> (lenken åpner guiden direkte ved oppdateringsdelen).
+
+### Ny GDPR-vennlig leverandør for notatgenerering: Requesty
+
+En ny leverandør for notatgenerering er lagt til i appen: **Requesty**.
+
+Requesty er en LLM-gateway som gir deg tilgang til toppmodeller fra flere leverandører via én enkelt API-nøkkel. I denne appen brukes Requesty via sitt **EU-endepunkt** med EU-baserte modell-deployeringer — som betyr **zero data retention**, **ingen bruk av dine data til modelltrening**, og **all databehandling innenfor EU**.
+
+Med Requesty-leverandøren i denne appen kan du generere notater med **GPT-5.5**, **Claude Opus 4.8** og **Claude Sonnet 5** — noen av de sterkeste modellene som finnes i dag — på en GDPR-vennlig måte.
+
+Nye Requesty-kontoer får også **$10 USD i gratis kreditter**, slik at du kan prøve leverandøren med én gang før du eventuelt fyller på kreditter senere.
+
+<a href="index.html#requesty-api-key" target="_blank" rel="noopener">**Klikk her for veiledning i hvordan du skaffer en Requesty API-nøkkel**</a> — lenken åpner forsiden direkte ved Requesty-delen av «API key - How to Get»-guiden.
+
+---
+
 ## 8. mai 2026
 
 ### Midlertidig bortfall av tilgang til Claude Opus 4.7 i AWS Bedrock

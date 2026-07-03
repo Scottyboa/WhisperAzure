@@ -57,10 +57,18 @@ const REQUESTY_EU_CHAT_COMPLETIONS_URL =
 
 const VARIANTS = Object.freeze({
   "claude-opus-4-8": {
+    // AWS Bedrock, EU (Frankfurt region).
     requestyModelId: "bedrock/claude-opus-4-8@eu-west-3",
     pricingModelId: "claude-opus-4-8"
   },
+  "claude-sonnet-5": {
+    // Google Vertex AI, EU-resident deployment (GDPR). Confirmed model id
+    // on Requesty: vertex/claude-sonnet-5@eu.
+    requestyModelId: "vertex/claude-sonnet-5@eu",
+    pricingModelId: "claude-sonnet-5"
+  },
   "gpt-5.5": {
+    // Azure OpenAI, Sweden Central (EU).
     requestyModelId: "azure/gpt-5.5@swedencentral",
     pricingModelId: "gpt-5.5"
   }
@@ -83,14 +91,18 @@ function getSelectedVariantKey() {
 }
 
 function resolveEffectiveMode() {
-  // Mode-driven like the gpt-5.4 OpenAI variant: read the shared
-  // #noteProviderMode dropdown at run time.
+  // All Requesty models are mode-driven: they read the shared
+  // #noteProviderMode dropdown (streaming | non-streaming) at run time.
   return getSelectValue("noteProviderMode", "streaming").toLowerCase();
 }
 
 function resolveReasoningLevel() {
-  // Reuses the shared #gpt5Reasoning selector (none | low | medium | high),
-  // exactly like the native OpenAI implementation.
+  // All Requesty models reuse the shared #gpt5Reasoning selector
+  // (none | low | medium | high). For the Anthropic models (Opus 4.8,
+  // Sonnet 5) Requesty accepts reasoning_effort on its OpenAI-compatible
+  // endpoint and maps it to a thinking budget; "none" is handled in
+  // buildRequestBody by omitting the parameter (the model then uses its own
+  // adaptive default). For GPT-5.5 it is the native OpenAI effort string.
   return normalizeOpenAiReasoning(getSelectValue("gpt5Reasoning", "none"));
 }
 
@@ -265,9 +277,9 @@ async function generateNote() {
 // Public init functions
 // -----------------------------------------------------------------------------
 //
-// Both effective providers (requesty-claude / requesty-gpt55) bind the same
-// mode-driven generate function; the active model is read from the
-// #requestyModel select / requesty_model session key at click time. Two
+// All effective providers (requesty-claude / requesty-sonnet / requesty-gpt55)
+// bind the same generate function; the active model is read from the
+// #requestyModel select / requesty_model session key at click time. Separate
 // exports are kept so the provider-registry entries stay explicit and
 // symmetrical with the OpenAI module.
 
@@ -275,8 +287,12 @@ function initRequestyClaudeOpus48() {
   bindGenerateNoteButton(generateNote);
 }
 
+function initRequestyClaudeSonnet5() {
+  bindGenerateNoteButton(generateNote);
+}
+
 function initRequestyGpt55() {
   bindGenerateNoteButton(generateNote);
 }
 
-export { initRequestyClaudeOpus48, initRequestyGpt55 };
+export { initRequestyClaudeOpus48, initRequestyClaudeSonnet5, initRequestyGpt55 };

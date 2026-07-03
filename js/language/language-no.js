@@ -446,6 +446,17 @@ https://soniox.com<br><br>
 – På hovedsiden kan du velge mellom EU- og US-endepunkt i nedtrekksmenyen når du bruker Soniox<br>
 - Bruk av Soniox i denne webappen vil ha zero data retention. Dette sammen med API nøkkel med EU endepunkt, gjør Soniox optimal i forhold til GDPR-krav. Samtidig er Soniox også den klart beste og billigste av alle tale-til-tekst modellene som finnes per i dag, noe som gjør den til et klart førstevalg ved bruk av tale-til-tekst i denne appen.<br><br>
 
+<strong id="requesty-guide-section">Requesty (GPT-5.5, Claude Opus 4.8 og Claude Sonnet 5 – Zero data retention + EU-databehandling)</strong><br>
+– For notatgenerering.<br>
+– Requesty er en LLM-gateway som gir deg tilgang til toppmodellene fra flere leverandører via én enkelt API-nøkkel. I denne appen brukes Requesty via sitt <strong>EU-endepunkt</strong>, med EU-baserte modell-deployeringer, som betyr <strong>zero data retention</strong>, <strong>ingen bruk av dine data til modelltrening</strong>, og <strong>all databehandling innenfor EU</strong>.<br>
+– Via Requesty-leverandøren kan du bruke <strong>GPT-5.5</strong>, <strong>Claude Opus 4.8</strong> og <strong>Claude Sonnet 5</strong> til notatgenerering på en GDPR-vennlig måte.<br>
+– Slik skaffer du en Requesty API-nøkkel:<br>
+&nbsp;&nbsp;1. Gå til <a href="https://requesty.ai" target="_blank" rel="noopener">https://requesty.ai</a>, klikk <strong>«Get started»</strong> og opprett en bruker. Nye kontoer får <strong>$10 USD i gratis kreditter</strong>, slik at du kan begynne å bruke modellene med én gang (senere kan du fylle på kreditter for å fortsette å bruke leverandøren).<br>
+&nbsp;&nbsp;2. I menyen på venstre side, bla ned og klikk på <strong>«API Keys»</strong>, og klikk deretter <strong>«Create API Key»</strong>.<br>
+&nbsp;&nbsp;3. Velg <strong>«My API key for my account»</strong>, gi API-nøkkelen et navn, og under tilgangsliste velg <strong>«Approved models»</strong>. Klikk deretter <strong>«Create API Key»</strong>.<br>
+&nbsp;&nbsp;4. <strong>Viktig:</strong> når API-nøkkelen vises, kopier den og lagre den trygt med én gang — den vil ikke bli vist igjen etter at du lukker dialogen.<br>
+&nbsp;&nbsp;5. Lim nøkkelen inn i feltet <strong>«Requesty API key»</strong> på forsiden. Du kan nå velge <strong>Requesty</strong> som leverandør for notatgenerering på hovedsiden og velge mellom de tilgjengelige modellene.<br><br>
+
 <strong>AWS Bedrock (Claude modeller - Zero data retention + EU-endepunkt)</strong><br>
 – For notatgenerering.<br>
 – Dette er et noe mer avansert oppsett enn de fleste andre alternativene i appen, men kan konfigureres slik at det gir et fullt GDPR-tilpasset oppsett.<br>

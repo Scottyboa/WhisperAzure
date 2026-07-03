@@ -20,6 +20,7 @@ export const DEFAULTS = {
   geminiReasoning: 'high',
   vertexModel: 'gemini-2.5-pro',
   bedrockModel: 'opus-4-5',
+  requestyModel: 'claude-opus-4-8',
 };
 
 const TRANSCRIBE_PROVIDER_REGISTRY = {
@@ -169,6 +170,36 @@ const NOTE_PROVIDER_REGISTRY = {
     uiProvider: 'aws-bedrock',
     modulePath: './AWSBedrock.js',
   },
+  // Requesty (GDPR-compliant router; EU endpoint + EU-region models).
+  // Like gpt54, both Requesty variants are mode-driven: the module reads
+  // #noteProviderMode at run time, so one effective provider per model.
+  'requesty-claude': {
+    id: 'requesty-claude',
+    label: 'Requesty Claude Opus 4.8',
+    uiProvider: 'requesty',
+    requestyModel: 'claude-opus-4-8',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyClaudeOpus48',
+  },
+  'requesty-sonnet': {
+    id: 'requesty-sonnet',
+    label: 'Requesty Claude Sonnet 5',
+    uiProvider: 'requesty',
+    requestyModel: 'claude-sonnet-5',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyClaudeSonnet5',
+  },
+  'requesty-gpt55': {
+    id: 'requesty-gpt55',
+    label: 'Requesty GPT-5.5',
+    uiProvider: 'requesty',
+    requestyModel: 'gpt-5.5',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyGpt55',
+  },
 };
 
 const NOTE_UI_PROVIDER_OPTIONS = [
@@ -178,6 +209,13 @@ const NOTE_UI_PROVIDER_OPTIONS = [
   { value: 'gemini3', label: 'Google AI Studio' },
   { value: 'gemini3-vertex', label: 'Google Vertex' },
   { value: 'aws-bedrock', label: 'AWS Bedrock' },
+  { value: 'requesty', label: 'Requesty' },
+];
+
+const REQUESTY_MODEL_OPTIONS = [
+  { value: 'claude-opus-4-8', label: 'Claude Opus 4.8' },
+  { value: 'claude-sonnet-5', label: 'Claude Sonnet 5' },
+  { value: 'gpt-5.5', label: 'GPT-5.5' },
 ];
 
 const OPENAI_NOTE_MODEL_OPTIONS = [
@@ -298,6 +336,28 @@ export function listBedrockModelOptions() {
   return BEDROCK_MODEL_OPTIONS.map((item) => ({ ...item }));
 }
 
+export function listRequestyModelOptions() {
+  return REQUESTY_MODEL_OPTIONS.map((item) => ({ ...item }));
+}
+
+export function normalizeRequestyModel(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  return REQUESTY_MODEL_OPTIONS.some((item) => item.value === raw)
+    ? raw
+    : DEFAULTS.requestyModel;
+}
+
+// Maps a Requesty UI model value to its effective note provider by scanning
+// the registry (derived, not hard-coded), so adding a new Requesty model only
+// requires a registry entry + option — routing follows automatically.
+export function resolveRequestyEffectiveProvider(requestyModel) {
+  const normalizedModel = normalizeRequestyModel(requestyModel);
+  const match = Object.values(NOTE_PROVIDER_REGISTRY).find(
+    (config) => config.uiProvider === 'requesty' && config.requestyModel === normalizedModel
+  );
+  return match ? match.id : 'requesty-claude';
+}
+
 export function listSonioxRegionOptions() {
   return SONIOX_REGION_OPTIONS.map((item) => ({ ...item }));
 }
@@ -365,8 +425,13 @@ export function normalizeNoteUiProvider(value) {
     : inferNoteProviderUi(DEFAULTS.noteProvider);
 }
 
-export function resolveEffectiveNoteProvider({ provider, openaiModel, noteMode } = {}) {
+export function resolveEffectiveNoteProvider({ provider, openaiModel, noteMode, requestyModel } = {}) {
   const uiProvider = String(provider || DEFAULTS.noteProvider).trim().toLowerCase();
+
+  if (uiProvider === 'requesty') {
+    return resolveRequestyEffectiveProvider(requestyModel);
+  }
+
   if (uiProvider !== 'openai') {
     return normalizeNoteEffectiveProvider(uiProvider);
   }
@@ -387,10 +452,23 @@ export function deriveNoteUiStateFromEffectiveProvider(effectiveProvider, stored
   const normalized = normalizeNoteEffectiveProvider(effectiveProvider);
   const config = NOTE_PROVIDER_REGISTRY[normalized] || NOTE_PROVIDER_REGISTRY[DEFAULTS.noteProvider];
 
+  if (config.uiProvider === 'requesty') {
+    // Requesty variants are mode-driven (gpt54 style): respect the stored
+    // note mode instead of forcing the default.
+    return {
+      provider: 'requesty',
+      openaiModel: DEFAULTS.openaiModel,
+      requestyModel: config.requestyModel || DEFAULTS.requestyModel,
+      mode: normalizeNoteMode(storedMode),
+      effectiveProvider: normalized,
+    };
+  }
+
   if (config.uiProvider !== 'openai') {
     return {
       provider: config.uiProvider,
       openaiModel: DEFAULTS.openaiModel,
+      requestyModel: DEFAULTS.requestyModel,
       mode: DEFAULTS.noteMode,
       effectiveProvider: normalized,
     };
@@ -404,6 +482,7 @@ export function deriveNoteUiStateFromEffectiveProvider(effectiveProvider, stored
   return {
     provider: 'openai',
     openaiModel: config.openaiModel || DEFAULTS.openaiModel,
+    requestyModel: DEFAULTS.requestyModel,
     mode: resolvedMode,
     effectiveProvider: normalized,
   };
@@ -467,6 +546,10 @@ export function getNoteProviderLogLabel({
   bedrockModel,
 } = {}) {
   const normalized = normalizeNoteEffectiveProvider(effectiveProvider);
+  if (isRequestyEffectiveNoteProvider(normalized)) {
+    const config = getNoteProviderConfig(normalized);
+    return `requesty:${config.requestyModel || DEFAULTS.requestyModel}`;
+  }
   if (normalized === 'aws-bedrock' && bedrockModel) return String(bedrockModel).toLowerCase();
   if (normalized === 'gemini3' && geminiModel) return String(geminiModel).toLowerCase();
   if (normalized === 'gemini3-vertex' && vertexModel) return String(vertexModel).toLowerCase();
@@ -500,6 +583,10 @@ export function isBedrockEffectiveNoteProvider(effectiveProvider) {
   return normalizeNoteEffectiveProvider(effectiveProvider) === 'aws-bedrock';
 }
 
+export function isRequestyEffectiveNoteProvider(effectiveProvider) {
+  return getNoteProviderConfig(effectiveProvider).uiProvider === 'requesty';
+}
+
 export function getDefaultModelIdForEffectiveNoteProvider({
   effectiveProvider,
   openaiModel,
@@ -508,6 +595,11 @@ export function getDefaultModelIdForEffectiveNoteProvider({
   bedrockModel,
 } = {}) {
   const normalized = normalizeNoteEffectiveProvider(effectiveProvider);
+
+  if (isRequestyEffectiveNoteProvider(normalized)) {
+    const config = getNoteProviderConfig(normalized);
+    return String(config.requestyModel || DEFAULTS.requestyModel || '').trim() || null;
+  }
 
   if (isBedrockEffectiveNoteProvider(normalized)) {
     return String(bedrockModel || DEFAULTS.bedrockModel || '').trim() || null;
@@ -546,21 +638,35 @@ export function getDefaultModelIdForEffectiveNoteProvider({
   }
 }
 
-export function getNoteUiVisibility({ provider, openaiModel } = {}) {
+export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {}) {
   const uiProvider = String(provider || DEFAULTS.noteProvider).trim().toLowerCase();
   const model = String(openaiModel || DEFAULTS.openaiModel).trim().toLowerCase();
+  const reqModel = normalizeRequestyModel(requestyModel);
 
   const isOpenAi = uiProvider === 'openai';
   const isGpt5x = isOpenAi && (model === 'gpt5' || model === 'gpt52' || model === 'gpt54' || model === 'gpt55');
+  const isRequesty = uiProvider === 'requesty';
+  // reqModel is normalized so unknown/legacy stored values behave sanely.
+  void reqModel;
+  // All Requesty models share the same two selectors:
+  //   - streaming / non-streaming  (#noteProviderMode)
+  //   - reasoning effort None/Low/Medium/High  (#gpt5Reasoning)
+  // For the Anthropic models (Opus 4.8, Sonnet 5) Requesty accepts
+  // reasoning_effort and converts it to a thinking budget; "None" simply
+  // omits the override so the model uses its own adaptive default (adaptive
+  // thinking is always on for these models and can't be fully disabled).
+  // For GPT-5.5 it is the native OpenAI reasoning_effort. Keeping the UI
+  // uniform matches how Opus 4.8 already behaves in the app.
 
   return {
     showOpenAi: isOpenAi,
-    showOpenAiMode: isGpt5x,
-    showOpenAiReasoning: isGpt5x,
+    showOpenAiMode: isGpt5x || isRequesty,
+    showOpenAiReasoning: isGpt5x || isRequesty,
     showGeminiApi: uiProvider === 'gemini3',
     showGeminiReasoning: uiProvider === 'gemini3',
     showVertex: uiProvider === 'gemini3-vertex',
     showBedrock: uiProvider === 'aws-bedrock',
+    showRequesty: isRequesty,
   };
 }
 

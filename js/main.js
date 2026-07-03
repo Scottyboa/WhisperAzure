@@ -889,6 +889,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const geminiModelSelect = document.getElementById('geminiModel');
     const vertexModelSelect = document.getElementById('vertexModel');
     const bedrockModelSelect = document.getElementById('bedrockModel');
+    const requestyModelSelect = document.getElementById('requestyModel');
     const geminiReasoningSelect = document.getElementById('geminiReasoning');
     const openaiReasoningSelect = document.getElementById('gpt5Reasoning');
     const busy = !!getApp().noteGenerationInFlight;
@@ -910,6 +911,7 @@ document.addEventListener('DOMContentLoaded', () => {
       geminiModelSelect,
       vertexModelSelect,
       bedrockModelSelect,
+      requestyModelSelect,
       geminiReasoningSelect,
       openaiReasoningSelect,
     ].forEach((el) => {
@@ -1519,6 +1521,13 @@ document.addEventListener('DOMContentLoaded', () => {
     ).toLowerCase();
   }
 
+  function getSelectedRequestyModel() {
+    return String(
+      document.getElementById('requestyModel')?.value ||
+        readSession('requesty_model', DEFAULTS.requestyModel)
+    ).toLowerCase();
+  }
+
   function getSelectedNoteProviderMode() {
     const domValue = String(document.getElementById('noteProviderMode')?.value || '').toLowerCase();
     if (domValue) return domValue;
@@ -1543,6 +1552,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const geminiModel = getSelectedGeminiModel();
     const vertexModel = getSelectedVertexModel();
     const bedrockModel = getSelectedBedrockModel();
+    const requestyModel = getSelectedRequestyModel();
     const openaiModel = getSelectedOpenAiModel();
     const noteProviderMode = getSelectedNoteProviderMode();
 
@@ -1554,6 +1564,7 @@ document.addEventListener('DOMContentLoaded', () => {
       geminiModel,
       vertexModel,
       bedrockModel,
+      requestyModel,
       noteProviderLogLabel: getNoteProviderLogLabel({
         effectiveProvider: effective,
         openaiModel,
@@ -2304,6 +2315,7 @@ document.addEventListener('DOMContentLoaded', () => {
       geminiModel: getSelectedGeminiModel(),
       vertexModel: getSelectedVertexModel(),
       bedrockModel: getSelectedBedrockModel(),
+      requestyModel: getSelectedRequestyModel(),
     };
   }
 
@@ -2713,6 +2725,7 @@ document.addEventListener('DOMContentLoaded', () => {
           provider: normalizedNext,
           openaiModel: document.getElementById('openaiModel')?.value || DEFAULTS.openaiModel,
           noteMode: document.getElementById('noteProviderMode')?.value || DEFAULTS.noteMode,
+          requestyModel: document.getElementById('requestyModel')?.value || DEFAULTS.requestyModel,
         })
       : normalizedNext;
 
@@ -2845,6 +2858,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     writeSession('bedrock_model', normalizedNext);
     emitAppStateChanged('bedrock-model-set-programmatically', {
+      model: normalizedNext,
+    });
+    return true;
+  };
+
+  app.setRequestyModel = function setRequestyModel(next) {
+    const normalizedNext = String(next || '').trim().toLowerCase();
+    if (!normalizedNext) return false;
+
+    const el = document.getElementById('requestyModel');
+    if (el && el.value !== normalizedNext) {
+      el.value = normalizedNext;
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    }
+
+    writeSession('requesty_model', normalizedNext);
+    emitAppStateChanged('requesty-model-set-programmatically', {
       model: normalizedNext,
     });
     return true;

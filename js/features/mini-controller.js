@@ -7,6 +7,7 @@ import {
   listNoteModeOptions,
   listNoteUiProviderOptions,
   listOpenAiModelOptions,
+  listRequestyModelOptions,
   listVertexModelOptions,
 } from '../core/provider-registry.js';
 
@@ -1502,6 +1503,7 @@ function syncMiniNoteProviderOptions() {
   ensureSelectOptions('miniGeminiModelSelect', listGeminiApiModelOptions());
   ensureSelectOptions('miniVertexModelSelect', listVertexModelOptions());
   ensureSelectOptions('miniBedrockModelSelect', listBedrockModelOptions());
+  ensureSelectOptions('miniRequestyModelSelect', listRequestyModelOptions());
 }
 
 function formatMiniSttSummary(state) {
@@ -1568,6 +1570,7 @@ function syncMiniNoteProviderControls(state, snapshot) {
   const geminiModel = normalizeLower(state?.geminiModel, DEFAULTS.geminiModel);
   const vertexModel = normalizeLower(state?.vertexModel, DEFAULTS.vertexModel);
   const bedrockModel = normalizeLower(state?.bedrockModel, DEFAULTS.bedrockModel);
+  const requestyModel = normalizeLower(state?.requestyModel, DEFAULTS.requestyModel);
   const hasSnapshot = !!snapshot;
   const visibility = getNoteUiVisibility({
     provider: noteProvider,
@@ -1580,6 +1583,7 @@ function syncMiniNoteProviderControls(state, snapshot) {
   setValue('miniGeminiModelSelect', geminiModel);
   setValue('miniVertexModelSelect', vertexModel);
   setValue('miniBedrockModelSelect', bedrockModel);
+  setValue('miniRequestyModelSelect', requestyModel);
 
   const noteConfigControls = $('miniNoteConfigControls');
   if (noteConfigControls) {
@@ -1591,6 +1595,7 @@ function syncMiniNoteProviderControls(state, snapshot) {
   setHidden('miniGeminiModelSelect', !visibility.showGeminiApi);
   setHidden('miniVertexModelSelect', !visibility.showVertex);
   setHidden('miniBedrockModelSelect', !visibility.showBedrock);
+  setHidden('miniRequestyModelSelect', !visibility.showRequesty);
 
   setDisabled('miniNoteProviderSelect', !hasSnapshot);
   setDisabled('miniOpenAiModelSelect', !hasSnapshot || !visibility.showOpenAi);
@@ -1598,6 +1603,7 @@ function syncMiniNoteProviderControls(state, snapshot) {
   setDisabled('miniGeminiModelSelect', !hasSnapshot || !visibility.showGeminiApi);
   setDisabled('miniVertexModelSelect', !hasSnapshot || !visibility.showVertex);
   setDisabled('miniBedrockModelSelect', !hasSnapshot || !visibility.showBedrock);
+  setDisabled('miniRequestyModelSelect', !hasSnapshot || !visibility.showRequesty);
 }
 
 function setBadge(text, tone) {
@@ -2411,6 +2417,7 @@ function bindMiniPanelEvents() {
   const miniGeminiModelSelect = $('miniGeminiModelSelect');
   const miniVertexModelSelect = $('miniVertexModelSelect');
   const miniBedrockModelSelect = $('miniBedrockModelSelect');
+  const miniRequestyModelSelect = $('miniRequestyModelSelect');
   const miniSonioxSpeakerLabelsSelect = $('miniSonioxSpeakerLabels');
 
   if (startButton) {
@@ -2623,6 +2630,15 @@ function bindMiniPanelEvents() {
       const next = String(miniBedrockModelSelect.value || '').trim().toLowerCase();
       if (!next) return;
       dispatchHubAction('setBedrockModel', next);
+      requestUiRefresh();
+    });
+  }
+
+  if (miniRequestyModelSelect) {
+    miniRequestyModelSelect.addEventListener('change', () => {
+      const next = String(miniRequestyModelSelect.value || '').trim().toLowerCase();
+      if (!next) return;
+      dispatchHubAction('setRequestyModel', next);
       requestUiRefresh();
     });
   }
@@ -3739,6 +3755,7 @@ function renderMiniPanelDocument(targetWindow) {
           <select id="miniGeminiModelSelect" class="prompt-select note-config-select note-config-select--model" aria-label="Google AI Studio model" hidden></select>
           <select id="miniVertexModelSelect" class="prompt-select note-config-select note-config-select--model" aria-label="Vertex model" hidden></select>
           <select id="miniBedrockModelSelect" class="prompt-select note-config-select note-config-select--model" aria-label="Bedrock model" hidden></select>
+          <select id="miniRequestyModelSelect" class="prompt-select note-config-select note-config-select--model" aria-label="Requesty model" hidden></select>
         </div>
       </div>
     </div>

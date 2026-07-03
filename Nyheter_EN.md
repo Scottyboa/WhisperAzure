@@ -1,3 +1,28 @@
+## 3 July, 2026
+
+### New Gemini models in Google Vertex: Gemini 3.5 Flash and Gemini 3.1 Flash-Lite
+
+Two new Gemini models have been added to the **Google Vertex** provider for note generation:
+
+- **Gemini 3.5 Flash** — Google's newest Flash model, delivering near-Pro intelligence at Flash-tier speed and cost. Read more on the official page: <a href="https://deepmind.google/models/gemini/flash/" target="_blank" rel="noopener">Gemini 3.5 Flash (Google DeepMind)</a>
+- **Gemini 3.1 Flash-Lite** — Google's fastest and most cost-efficient Gemini model, well suited for quick, high-volume tasks. Read more here: <a href="https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-1-flash-lite/" target="_blank" rel="noopener">Gemini 3.1 Flash-Lite (Google)</a>
+
+**Important:** In order to use these new models via the Google Vertex provider, you are required to **update your Google Vertex backend**. To do this, simply follow the update instructions at the very end of the <a href="index.html#vertex-update-backend" target="_blank" rel="noopener">**Google Vertex guide**</a> (the link opens the guide directly at the update section).
+
+### New GDPR-friendly note-generation provider: Requesty
+
+A new note-generation provider has been added to the app: **Requesty**.
+
+Requesty is an LLM gateway that gives you access to top models from several providers through a single API key. In this app, Requesty is used via its **EU endpoint** with EU-hosted model deployments — meaning **zero data retention**, **no use of your data for model training**, and **all data processing within the EU**.
+
+Using the Requesty provider in this app, you can generate notes with **GPT-5.5**, **Claude Opus 4.8**, and **Claude Sonnet 5** — some of the strongest models available today — in a GDPR-friendly way.
+
+New Requesty accounts also receive **$10 USD in free credits**, so you can try the provider right away before topping up credits later.
+
+<a href="index.html#requesty-api-key" target="_blank" rel="noopener">**Click here for guidance on how to obtain a Requesty API key**</a> — the link opens the front page directly at the Requesty section of the "API key - How to Get" guide.
+
+---
+
 ## 8 May, 2026
 
 ### Temporary loss of access to Claude Opus 4.7 in AWS Bedrock

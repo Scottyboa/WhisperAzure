@@ -1976,6 +1976,7 @@
               <option value="gemini3">Google AI Studio</option> <!-- Gemini via public API -->
               <option value="gemini3-vertex">Google Vertex</option> <!-- Vertex-backed models (e.g. Gemini 2.5 Pro) -->
               <option value="aws-bedrock" selected>AWS Bedrock</option>
+              <option value="requesty">Requesty</option> <!-- GDPR: EU router + EU-region models -->
             </select>
             <!-- OpenAI model selector (shown only when Provider = OpenAI) -->
             <div id="openai-model-container"
@@ -2030,6 +2031,17 @@
                <option value="opus-4-7">Claude Opus 4.7</option>
                 
                
+              </select>
+            </div>
+
+            <!-- Requesty model selector (shown only when Note Provider = Requesty) -->
+            <div id="requesty-model-container"
+                 style="display:none; align-items:center; gap:6px; margin-left:8px;">
+              <label for="requestyModel" id="requestyModelLabel">Model:</label>
+              <select id="requestyModel">
+               <option value="claude-opus-4-8" selected>Claude Opus 4.8</option>
+               <option value="claude-sonnet-5">Claude Sonnet 5</option>
+               <option value="gpt-5.5">GPT-5.5</option>
               </select>
             </div>
 
