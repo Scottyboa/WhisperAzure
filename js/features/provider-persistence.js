@@ -22,6 +22,7 @@ import {
   listOpenAiModelOptions,
   listOpenAiReasoningOptions,
   listRequestyModelOptions,
+  listRequestyNanoReasoningOptions,
   listSonioxRegionOptions,
   listSonioxSpeakerLabelOptions,
   listTranscribeProviderOptions,
@@ -30,6 +31,7 @@ import {
   normalizeNoteMode,
   normalizeOpenAiReasoning,
   normalizeRequestyModel,
+  normalizeRequestyNanoReasoning,
   normalizeTranscribeProvider,
   resolveEffectiveNoteProvider,
 } from '../core/provider-registry.js';
@@ -50,6 +52,7 @@ import {
     vertexModel: 'vertex_model',
     bedrockModel: 'bedrock_model',
     requestyModel: 'requesty_model',
+    requestyNanoReasoning: 'requesty_nano_reasoning',
   };
 
   // Keep reasoning/thinking defaults local to provider persistence so the
@@ -250,6 +253,9 @@ import {
       requestyModel: normalizeRequestyModel(
         readSession(STORAGE_KEYS.requestyModel, DEFAULTS.requestyModel)
       ),
+      requestyNanoReasoning: normalizeRequestyNanoReasoning(
+        readSession(STORAGE_KEYS.requestyNanoReasoning, DEFAULTS.requestyNanoReasoning)
+      ),
     };
   }
 
@@ -263,6 +269,7 @@ import {
     vertexModel,
     bedrockModel,
     requestyModel,
+    requestyNanoReasoning,
   }) {
     const effectiveProvider = resolveEffectiveNoteProvider({
       provider,
@@ -282,6 +289,10 @@ import {
     writeSession(STORAGE_KEYS.vertexModel, normalizeLower(vertexModel, DEFAULTS.vertexModel));
     writeSession(STORAGE_KEYS.bedrockModel, normalizeLower(bedrockModel, DEFAULTS.bedrockModel));
     writeSession(STORAGE_KEYS.requestyModel, normalizeRequestyModel(requestyModel));
+    writeSession(
+      STORAGE_KEYS.requestyNanoReasoning,
+      normalizeRequestyNanoReasoning(requestyNanoReasoning)
+    );
 
     return effectiveProvider;
   }
@@ -304,19 +315,24 @@ import {
     bedrockModelSelect,
     requestyModelContainer,
     requestyModelSelect,
+    requestyNanoReasoningContainer,
+    requestyNanoReasoningSelect,
     providerValue,
   }) {
     const selectedProvider = normalizeLower(providerValue, DEFAULTS.noteProvider);
     const selectedOpenAiModel = normalizeLower(openaiModelSelect?.value, DEFAULTS.openaiModel);
     const selectedGeminiModel = normalizeLower(geminiModelSelect?.value, DEFAULTS.geminiModel);
+    const selectedRequestyModel = normalizeRequestyModel(requestyModelSelect?.value);
     const visibility = getNoteUiVisibility({
       provider: selectedProvider,
       openaiModel: selectedOpenAiModel,
+      requestyModel: selectedRequestyModel,
     });
 
     ensureSelectOptions(openaiReasoningSelect, listOpenAiReasoningOptions());
     ensureSelectOptions(geminiReasoningSelect, listGeminiReasoningOptions(selectedGeminiModel));
     ensureSelectOptions(requestyModelSelect, listRequestyModelOptions());
+    ensureSelectOptions(requestyNanoReasoningSelect, listRequestyNanoReasoningOptions());
 
     if (openaiReasoningSelect) {
       const normalizedOpenAiReasoning = normalizeOpenAiReasoning(openaiReasoningSelect.value);
@@ -347,6 +363,7 @@ import {
     setDisplay(vertexModelContainer, visibility.showVertex);
     setDisplay(bedrockModelContainer, visibility.showBedrock);
     setDisplay(requestyModelContainer, visibility.showRequesty);
+    setDisplay(requestyNanoReasoningContainer, visibility.showRequestyNanoReasoning);
 
     if (noteModeSelect && !visibility.showOpenAiMode && noteModeSelect.value !== DEFAULTS.noteMode) {
       noteModeSelect.value = DEFAULTS.noteMode;
@@ -553,6 +570,8 @@ import {
     const bedrockModelSelect = document.getElementById('bedrockModel');
     const requestyModelContainer = document.getElementById('requesty-model-container');
     const requestyModelSelect = document.getElementById('requestyModel');
+    const requestyNanoReasoningContainer = document.getElementById('requesty-nano-reasoning-container');
+    const requestyNanoReasoningSelect = document.getElementById('requestyNanoReasoning');
 
     ensureSelectOptions(providerSelect, listNoteUiProviderOptions());
     ensureSelectOptions(openaiModelSelect, listOpenAiModelOptions());
@@ -563,6 +582,7 @@ import {
     ensureSelectOptions(vertexModelSelect, listVertexModelOptions());
     ensureSelectOptions(bedrockModelSelect, listBedrockModelOptions());
     ensureSelectOptions(requestyModelSelect, listRequestyModelOptions());
+    ensureSelectOptions(requestyNanoReasoningSelect, listRequestyNanoReasoningOptions());
 
     const stored = readSelectedNoteState();
 
@@ -575,6 +595,7 @@ import {
     if (vertexModelSelect) vertexModelSelect.value = stored.vertexModel;
     if (bedrockModelSelect) bedrockModelSelect.value = stored.bedrockModel;
     if (requestyModelSelect) requestyModelSelect.value = stored.requestyModel;
+    if (requestyNanoReasoningSelect) requestyNanoReasoningSelect.value = stored.requestyNanoReasoning;
 
     applyNoteProviderUI({
       providerSelect,
@@ -594,6 +615,8 @@ import {
       bedrockModelSelect,
       requestyModelContainer,
       requestyModelSelect,
+      requestyNanoReasoningContainer,
+      requestyNanoReasoningSelect,
       providerValue: stored.provider,
     });
 
@@ -608,6 +631,8 @@ import {
         vertexModel: vertexModelSelect?.value || DEFAULTS.vertexModel,
         bedrockModel: bedrockModelSelect?.value || DEFAULTS.bedrockModel,
         requestyModel: requestyModelSelect?.value || DEFAULTS.requestyModel,
+        requestyNanoReasoning:
+          requestyNanoReasoningSelect?.value || DEFAULTS.requestyNanoReasoning,
       });
 
       applyNoteProviderUI({
@@ -628,6 +653,8 @@ import {
         bedrockModelSelect,
         requestyModelContainer,
         requestyModelSelect,
+        requestyNanoReasoningContainer,
+        requestyNanoReasoningSelect,
         providerValue: providerSelect.value,
       });
 
@@ -650,6 +677,14 @@ import {
     // (requesty-claude <-> requesty-gpt55), so run the full
     // persist-and-switch path — same as the OpenAI model selector.
     requestyModelSelect?.addEventListener('change', persistAndSwitchNoteProvider);
+    // Changing GPT-5 Nano reasoning effort does NOT change the effective
+    // provider, so just persist it (mirrors the shared reasoning selector).
+    requestyNanoReasoningSelect?.addEventListener('change', () => {
+      writeSession(
+        STORAGE_KEYS.requestyNanoReasoning,
+        normalizeRequestyNanoReasoning(requestyNanoReasoningSelect.value)
+      );
+    });
     openaiReasoningSelect?.addEventListener('change', () => {
       writeSession(
         STORAGE_KEYS.openaiReasoning,
@@ -678,6 +713,8 @@ import {
         bedrockModelSelect,
         requestyModelContainer,
         requestyModelSelect,
+        requestyNanoReasoningContainer,
+        requestyNanoReasoningSelect,
         providerValue: providerSelect.value,
       });
       if (geminiReasoningSelect) {
@@ -718,6 +755,8 @@ import {
         bedrockModelSelect,
         requestyModelContainer,
         requestyModelSelect,
+        requestyNanoReasoningContainer,
+        requestyNanoReasoningSelect,
         providerValue: providerSelect.value,
       });
     });
@@ -742,6 +781,8 @@ import {
         bedrockModelSelect,
         requestyModelContainer,
         requestyModelSelect,
+        requestyNanoReasoningContainer,
+        requestyNanoReasoningSelect,
         providerValue: providerSelect.value,
       });
     });
@@ -758,3 +799,4 @@ import {
     init();
   }
 })();
+

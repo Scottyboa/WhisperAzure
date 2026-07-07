@@ -176,10 +176,12 @@ import {
   // claude-opus-4-8: bedrock/claude-opus-4-8@eu-* rates
   // claude-sonnet-5: vertex/claude-sonnet-5@eu rates (EU regional pricing)
   // gpt-5.5:         azure/gpt-5.5@swedencentral rates
+  // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
   const REQUESTY_USD_PER_MTOK = {
     "claude-opus-4-8": { input: 5.5, output: 27.5 },
     "claude-sonnet-5": { input: 2.2, output: 11.0 },
     "gpt-5.5": { input: 5.0, output: 30.0 },
+    "gpt-5-nano": { input: 0.05, output: 0.4 },
   };
 
   // Requesty charges ~5% on top of the underlying model pricing. Applied

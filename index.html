@@ -1471,16 +1471,6 @@
           }
           if (!loaded) throw new Error("No guide file could be loaded.");
           vertexGuideLoadedLang = lang;
-
-          // Deep-link: #vertex-update-backend → the "update backend" info lives at
-          // the very end of the Vertex guide, so scroll the modal to the bottom.
-          if (location.hash === "#vertex-update-backend") {
-            requestAnimationFrame(() => {
-              if (vertexGuideView) {
-                vertexGuideView.scrollTop = vertexGuideView.scrollHeight;
-              }
-            });
-          }
         } catch (err) {
           console.error("Failed to load vertex guide text:", err);
           vertexGuideTextEl.textContent =
@@ -1520,50 +1510,6 @@
           closeVertexGuide();
         }
       });
-
-      // Deep-link: open the Vertex guide modal automatically when requested
-      // (used by news posts to point at the backend-update info at the end of the guide).
-      if (location.hash === "#vertex-update-backend") {
-        openVertexGuide();
-      }
-
-      // Deep-link: #requesty-api-key → open the "API key - How to Get" accordion
-      // and scroll to the Requesty section (id="requesty-guide-section" inside
-      // guideModalText in the language files). The guide content is injected
-      // asynchronously by the language loader, so poll briefly until it exists.
-      if (location.hash === "#requesty-api-key") {
-        (function openRequestyGuideSection() {
-          const maxAttempts = 80; // ~12s at 150ms
-          let attempts = 0;
-
-          const timer = setInterval(() => {
-            attempts += 1;
-
-            const header = document.querySelector('.accordion-header[data-content-id="guide-p1"]');
-            const hiddenSection = document.querySelector('#guide-p1 #requesty-guide-section');
-
-            // Wait until the language module has injected the guide content.
-            if (header && hiddenSection) {
-              // Activate the accordion tab if the rendered copy isn't there yet.
-              let rendered = document.querySelector('.accordion-content-container #requesty-guide-section');
-              if (!rendered && !header.classList.contains("active")) {
-                header.click();
-                rendered = document.querySelector('.accordion-content-container #requesty-guide-section');
-              }
-
-              if (rendered) {
-                clearInterval(timer);
-                rendered.scrollIntoView({ block: "start" });
-                return;
-              }
-            }
-
-            if (attempts >= maxAttempts) {
-              clearInterval(timer);
-            }
-          }, 150);
-        })();
-      }
 
 
       // If the user changes language while a guide modal is open, refresh the modal content

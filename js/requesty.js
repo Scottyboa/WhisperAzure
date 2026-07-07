@@ -38,7 +38,7 @@ import {
   startNoteTimer,
   streamChatCompletionsSse
 } from "./core/note-runner.js";
-import { normalizeOpenAiReasoning } from "./core/provider-registry.js";
+import { normalizeOpenAiReasoning, normalizeRequestyNanoReasoning } from "./core/provider-registry.js";
 
 // EU router: Requesty processing/storage stays in Frankfurt. Combined with
 // the EU-region model ids below, no request data leaves the EU.
@@ -71,6 +71,14 @@ const VARIANTS = Object.freeze({
     // Azure OpenAI, Sweden Central (EU).
     requestyModelId: "azure/gpt-5.5@swedencentral",
     pricingModelId: "gpt-5.5"
+  },
+  "gpt-5-nano": {
+    // Azure OpenAI, Sweden Central (EU). GPT-5 Nano is a reasoning model whose
+    // reasoning_effort values are minimal | low | medium | high (default
+    // medium) — read from the dedicated #requestyNanoReasoning selector.
+    requestyModelId: "azure/gpt-5-nano@swedencentral",
+    pricingModelId: "gpt-5-nano",
+    reasoningSelector: "nano"
   }
 });
 
@@ -96,8 +104,16 @@ function resolveEffectiveMode() {
   return getSelectValue("noteProviderMode", "streaming").toLowerCase();
 }
 
-function resolveReasoningLevel() {
-  // All Requesty models reuse the shared #gpt5Reasoning selector
+function resolveReasoningLevel(variantConfig) {
+  // GPT-5 Nano uses its own dedicated selector (Minimal/Low/Medium/High,
+  // default Medium). All values are valid effort levels, so buildRequestBody
+  // always forwards reasoning_effort for it.
+  if (variantConfig && variantConfig.reasoningSelector === "nano") {
+    return normalizeRequestyNanoReasoning(
+      getSelectValue("requestyNanoReasoning", "medium")
+    );
+  }
+  // All other Requesty models reuse the shared #gpt5Reasoning selector
   // (none | low | medium | high). For the Anthropic models (Opus 4.8,
   // Sonnet 5) Requesty accepts reasoning_effort on its OpenAI-compatible
   // endpoint and maps it to a thinking budget; "none" is handled in
@@ -208,7 +224,7 @@ async function generateNote() {
   }
 
   const finalPromptText = buildStandardNotePrompt(promptText);
-  const reasoningLevel = resolveReasoningLevel();
+  const reasoningLevel = resolveReasoningLevel(variantConfig);
   const requestBody = buildRequestBody({
     requestyModelId: variantConfig.requestyModelId,
     finalPromptText,
@@ -295,4 +311,8 @@ function initRequestyGpt55() {
   bindGenerateNoteButton(generateNote);
 }
 
-export { initRequestyClaudeOpus48, initRequestyClaudeSonnet5, initRequestyGpt55 };
+function initRequestyGpt5Nano() {
+  bindGenerateNoteButton(generateNote);
+}
+
+export { initRequestyClaudeOpus48, initRequestyClaudeSonnet5, initRequestyGpt55, initRequestyGpt5Nano };

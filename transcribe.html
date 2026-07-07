@@ -2042,6 +2042,7 @@
                <option value="claude-opus-4-8" selected>Claude Opus 4.8</option>
                <option value="claude-sonnet-5">Claude Sonnet 5</option>
                <option value="gpt-5.5">GPT-5.5</option>
+               <option value="gpt-5-nano">GPT-5 Nano</option>
               </select>
             </div>
 
@@ -2071,6 +2072,19 @@
               <option value="none">None</option>
               <option value="low" selected>Low</option>
               <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+
+          <!-- GPT-5 Nano reasoning effort selector (shown only for Requesty GPT-5 Nano).
+               Nano supports minimal | low | medium | high (default medium). -->
+          <div id="requesty-nano-reasoning-container"
+               style="display:none; align-items:center; gap:8px; margin: 0 0 10px;">
+            <label for="requestyNanoReasoning" id="requestyNanoReasoningLabel">Reasoning effort:</label>
+            <select id="requestyNanoReasoning">
+              <option value="minimal">Minimal</option>
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
               <option value="high">High</option>
             </select>
           </div>

@@ -21,6 +21,7 @@ export const DEFAULTS = {
   vertexModel: 'gemini-2.5-pro',
   bedrockModel: 'opus-4-5',
   requestyModel: 'claude-opus-4-8',
+  requestyNanoReasoning: 'medium',
 };
 
 const TRANSCRIBE_PROVIDER_REGISTRY = {
@@ -200,6 +201,15 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './requesty.js',
     initExportName: 'initRequestyGpt55',
   },
+  'requesty-nano': {
+    id: 'requesty-nano',
+    label: 'Requesty GPT-5 Nano',
+    uiProvider: 'requesty',
+    requestyModel: 'gpt-5-nano',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyGpt5Nano',
+  },
 };
 
 const NOTE_UI_PROVIDER_OPTIONS = [
@@ -216,6 +226,18 @@ const REQUESTY_MODEL_OPTIONS = [
   { value: 'claude-opus-4-8', label: 'Claude Opus 4.8' },
   { value: 'claude-sonnet-5', label: 'Claude Sonnet 5' },
   { value: 'gpt-5.5', label: 'GPT-5.5' },
+  { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
+];
+
+// GPT-5 Nano reasoning effort. The GPT-5 API family (gpt-5 / gpt-5-mini /
+// gpt-5-nano) supports reasoning_effort of minimal | low | medium | high
+// (default medium). Note this differs from the shared OpenAI selector, which
+// uses "none" instead of "minimal" — so GPT-5 Nano gets its own dropdown.
+const REQUESTY_NANO_REASONING_OPTIONS = [
+  { value: 'minimal', label: 'Minimal' },
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
 ];
 
 const OPENAI_NOTE_MODEL_OPTIONS = [
@@ -345,6 +367,17 @@ export function normalizeRequestyModel(value) {
   return REQUESTY_MODEL_OPTIONS.some((item) => item.value === raw)
     ? raw
     : DEFAULTS.requestyModel;
+}
+
+export function listRequestyNanoReasoningOptions() {
+  return REQUESTY_NANO_REASONING_OPTIONS.map((item) => ({ ...item }));
+}
+
+export function normalizeRequestyNanoReasoning(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  return REQUESTY_NANO_REASONING_OPTIONS.some((item) => item.value === raw)
+    ? raw
+    : DEFAULTS.requestyNanoReasoning;
 }
 
 // Maps a Requesty UI model value to its effective note provider by scanning
@@ -646,22 +679,21 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   const isOpenAi = uiProvider === 'openai';
   const isGpt5x = isOpenAi && (model === 'gpt5' || model === 'gpt52' || model === 'gpt54' || model === 'gpt55');
   const isRequesty = uiProvider === 'requesty';
-  // reqModel is normalized so unknown/legacy stored values behave sanely.
-  void reqModel;
-  // All Requesty models share the same two selectors:
-  //   - streaming / non-streaming  (#noteProviderMode)
-  //   - reasoning effort None/Low/Medium/High  (#gpt5Reasoning)
-  // For the Anthropic models (Opus 4.8, Sonnet 5) Requesty accepts
-  // reasoning_effort and converts it to a thinking budget; "None" simply
-  // omits the override so the model uses its own adaptive default (adaptive
-  // thinking is always on for these models and can't be fully disabled).
-  // For GPT-5.5 it is the native OpenAI reasoning_effort. Keeping the UI
-  // uniform matches how Opus 4.8 already behaves in the app.
+  const isRequestyNano = isRequesty && reqModel === 'gpt-5-nano';
+
+  // Streaming/non-streaming (#noteProviderMode) is available for all Requesty
+  // models. For reasoning, most Requesty models share the OpenAI selector
+  // (#gpt5Reasoning, None/Low/Medium/High): the Anthropic models (Opus 4.8,
+  // Sonnet 5) map reasoning_effort to a thinking budget ("None" omits it),
+  // and GPT-5.5 uses the native OpenAI effort string. GPT-5 Nano is the
+  // exception — its valid values are Minimal/Low/Medium/High (no "None"), so
+  // it gets its own dedicated selector (#requestyNanoReasoning) instead.
 
   return {
     showOpenAi: isOpenAi,
     showOpenAiMode: isGpt5x || isRequesty,
-    showOpenAiReasoning: isGpt5x || isRequesty,
+    showOpenAiReasoning: isGpt5x || (isRequesty && !isRequestyNano),
+    showRequestyNanoReasoning: isRequestyNano,
     showGeminiApi: uiProvider === 'gemini3',
     showGeminiReasoning: uiProvider === 'gemini3',
     showVertex: uiProvider === 'gemini3-vertex',
