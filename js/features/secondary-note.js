@@ -191,14 +191,17 @@ function el(id) {
 function setSelectOptions(selectEl, options) {
   if (!selectEl) return;
   const previous = String(selectEl.value || "").trim();
+  const safeOptions = Array.isArray(options) ? options : [];
+
   selectEl.innerHTML = "";
-  (Array.isArray(options) ? options : []).forEach((item) => {
+  safeOptions.forEach((item) => {
     const optionEl = document.createElement("option");
     optionEl.value = String(item.value ?? "");
     optionEl.textContent = String(item.label ?? item.value ?? "");
     selectEl.appendChild(optionEl);
   });
-  if (options.some((item) => String(item.value) === previous)) {
+
+  if (safeOptions.some((item) => String(item.value) === previous)) {
     selectEl.value = previous;
   }
 }
@@ -1158,16 +1161,30 @@ function bindPersistedSelect(id, storageKey, { normalize = (v) => v, onChange = 
 function initSecondaryNoteModule() {
   const pane = el("secondaryNotePane");
   const toggleButton = el("toggleSecondaryNoteButton");
-  if (!pane || !toggleButton) return;
+  if (!pane || !toggleButton) {
+    console.error("[secondary-note] Required toggle/pane elements were not found.");
+    return;
+  }
 
-  hydrateSelectors();
-  refreshToggleButtonLabel();
-  renderTimerText(0);
-  setBusy(false);
+  // Bind the visibility toggle first. Previously, any error while hydrating
+  // provider/prompt selectors prevented this listener from ever being added,
+  // which made the button appear completely dead.
+  if (toggleButton.dataset.secondaryNoteBound !== "1") {
+    toggleButton.dataset.secondaryNoteBound = "1";
+    toggleButton.addEventListener("click", () => {
+      setSecondaryOpen(!isSecondaryOpen());
+    });
+  }
 
-  toggleButton.addEventListener("click", () => {
-    setSecondaryOpen(!isSecondaryOpen());
-  });
+  try {
+    hydrateSelectors();
+    refreshToggleButtonLabel();
+    renderTimerText(0);
+    setBusy(false);
+  } catch (error) {
+    // Keep the pane toggle usable and expose the real initialization error.
+    console.error("[secondary-note] Initialization failed:", error);
+  }
 
   bindPersistedSelect("secondaryProvider", STORAGE_KEYS.provider, {
     normalize: normalizeNoteUiProvider,

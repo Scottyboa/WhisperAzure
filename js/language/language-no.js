@@ -883,8 +883,38 @@ Dette er eksempler som fungerer godt, men du står fritt til å tilpasse dem sli
   redactorStatusSaveCanceled: "Lagring avbrutt.",
   redactorStatusExportGeneralError: "Kunne ikke eksportere General.txt: {error}",
   redactorOneTerm: "begrep",
-  redactorManyTerms: "begreper"
+  redactorManyTerms: "begreper",
 
+
+  // Sekundær notatgenerator
+  secondaryNote: {
+    showButton: "Vis sekundær notatgenerator",
+    hideButton: "Skjul sekundær notatgenerator",
+    title: "Sekundær notatgenerator",
+    sourceLabel: "Kildetekst",
+    sourcePlaceholder: "Lim inn eller skriv kildetekst her...",
+    providerLabel: "Leverandør:",
+    modelLabel: "Modell:",
+    modeLabel: "Modus:",
+    reasoningLabel: "Resonneringsnivå:",
+    thinkingLabel: "Tenkenivå:",
+    promptLabel: "Prompt:",
+    generateButton: "Generer notat",
+    abortButton: "Avbryt",
+    copyButton: "Kopier",
+    copiedButton: "Kopiert",
+    autoTransferLabel: "Kopier resultatet automatisk til Tilleggsopplysninger",
+    outputPlaceholder: "Generert notat vises her...",
+    timerLabel: "Notatgenereringstid",
+    statusGenerating: "Genererer…",
+    statusCompleted: "Tekstgenerering fullført!",
+    statusFailed: "Generering mislyktes",
+    statusAborted: "Notatgenerering avbrutt.",
+    noSourceText: "Ingen kildetekst",
+    noPromptSelected: "Ingen prompt valgt",
+    transferred: "Resultatet ble kopiert til Tilleggsopplysninger."
+  },
 };
 
 export default { indexTranslations, transcribeTranslations };
+

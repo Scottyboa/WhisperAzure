@@ -265,4 +265,34 @@ La lettre doit avoir un ton professionnel et formel. Vous pouvez améliorer lég
 
 Ce sont des exemples efficaces, mais vous êtes libre de les adapter à votre style de documentation, votre spécialité ou votre type de consultation. Vous pouvez également créer vos propres prompts pour tout autre usage.
 `,
+
+  // Générateur de notes secondaire
+  secondaryNote: {
+    showButton: "Afficher le générateur de notes secondaire",
+    hideButton: "Masquer le générateur de notes secondaire",
+    title: "Générateur de notes secondaire",
+    sourceLabel: "Texte source",
+    sourcePlaceholder: "Collez ou saisissez le texte source ici...",
+    providerLabel: "Fournisseur :",
+    modelLabel: "Modèle :",
+    modeLabel: "Mode :",
+    reasoningLabel: "Effort de raisonnement :",
+    thinkingLabel: "Niveau de réflexion :",
+    promptLabel: "Prompt :",
+    generateButton: "Générer la note",
+    abortButton: "Annuler",
+    copyButton: "Copier",
+    copiedButton: "Copié",
+    autoTransferLabel: "Copier automatiquement le résultat dans les Informations complémentaires",
+    outputPlaceholder: "La note générée apparaîtra ici...",
+    timerLabel: "Minuteur de génération de note",
+    statusGenerating: "Génération en cours…",
+    statusCompleted: "Génération du texte terminée !",
+    statusFailed: "Échec de la génération",
+    statusAborted: "Génération de la note annulée.",
+    noSourceText: "Aucun texte source",
+    noPromptSelected: "Aucun prompt sélectionné",
+    transferred: "Résultat copié dans les Informations complémentaires."
+  },
 };
+

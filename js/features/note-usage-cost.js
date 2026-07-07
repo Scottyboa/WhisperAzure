@@ -532,15 +532,18 @@ import {
     if (el) el.textContent = "";
   };
 
-  app.setNoteUsageAndCost = function setNoteUsageAndCost(payloadOrArgs) {
+  // Computes the "Billable input … · Billable output … · Est cost …" line for
+  // a usage payload WITHOUT touching the primary #noteUsageCost element.
+  // Shared by setNoteUsageAndCost (primary generator) and the secondary note
+  // generator, so both use identical normalization, pricing, and formatting.
+  app.formatNoteUsageAndCost = function formatNoteUsageAndCost(payloadOrArgs) {
     let payload = payloadOrArgs;
 
     if (payload && typeof payload === "object" && "usage" in payload && !("inputTokens" in payload)) {
       payload = app.normalizeNoteUsage(payload);
     }
 
-    const el = costEl();
-    if (!el || !payload || typeof payload !== "object") return;
+    if (!payload || typeof payload !== "object") return "";
 
     try {
       const usd = estimateUsd(payload);
@@ -620,7 +623,17 @@ import {
       `Billable output: ${fmtTokens(billableOutputTokens)}${noteSuffix}`,
       `Est cost: ${payload.estimatedUsd == null ? "—" : fmtUsd(payload.estimatedUsd)}`,
     ];
-    el.textContent = parts.join("  ·  ");
+    return parts.join("  ·  ");
+  };
+
+  app.setNoteUsageAndCost = function setNoteUsageAndCost(payloadOrArgs) {
+    const el = costEl();
+    if (!el) return;
+
+    const text = app.formatNoteUsageAndCost(payloadOrArgs);
+    if (!text) return;
+
+    el.textContent = text;
   };
 
   function wireAutoClear() {
@@ -656,6 +669,7 @@ import {
     wireAutoClear();
   }
 })();
+
 
 
 

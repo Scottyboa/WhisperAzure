@@ -2564,6 +2564,11 @@ document.addEventListener('DOMContentLoaded', () => {
   app.noteGenerationAbortController = null;
   app.noteGenerationMeta = null;
   app.syncNoteActionButtons = syncNoteActionButtons;
+  // Shared supplementary date handling (used by e.g. the secondary note
+  // generator's auto-transfer so the app-managed date header is preserved
+  // with the exact same logic as the rest of the app).
+  app.normalizeSupplementaryDateLine = normalizeSupplementaryDateLine;
+  app.getSupplementaryDateEnabled = getSupplementaryDateEnabled;
   app.beginNoteGeneration = beginNoteGeneration;
   app.finishNoteGeneration = finishNoteGeneration;
   app.abortNoteGeneration = abortNoteGeneration;
@@ -3127,6 +3132,7 @@ document.addEventListener('DOMContentLoaded', () => {
   void initNoteProvider(getSelectedEffectiveNoteProvider());
   void initMiniControllerFeature();
 });
+
 
 
 

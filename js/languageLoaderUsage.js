@@ -325,6 +325,79 @@ function getRedactorI18n(trans) {
   };
 }
 
+function getSecondaryNoteI18n(trans) {
+  const fallback = {
+    showButton: "Show secondary note generator",
+    hideButton: "Hide secondary note generator",
+    title: "Secondary Note Generator",
+    sourceLabel: "Source text",
+    sourcePlaceholder: "Paste or type source text here...",
+    providerLabel: "Provider:",
+    modelLabel: "Model:",
+    modeLabel: "Mode:",
+    reasoningLabel: "Reasoning effort:",
+    thinkingLabel: "Thinking level:",
+    promptLabel: "Prompt:",
+    generateButton: "Generate Note",
+    abortButton: "Abort",
+    copyButton: "Copy",
+    copiedButton: "Copied",
+    autoTransferLabel: "Automatically copy result to Supplementary Information",
+    outputPlaceholder: "Generated note will appear here...",
+    timerLabel: "Note Generation Timer",
+    statusGenerating: "Generating…",
+    statusCompleted: "Text generation completed!",
+    statusFailed: "Generation failed",
+    statusAborted: "Note generation aborted.",
+    noSourceText: "No source text",
+    noPromptSelected: "No prompt selected",
+    transferred: "Result copied to Supplementary Information."
+  };
+
+  return {
+    ...fallback,
+    ...(trans.secondaryNote || {}),
+  };
+}
+
+function updateSecondaryNoteUI(trans) {
+  const s = getSecondaryNoteI18n(trans);
+
+  setTextIfPresent("secondaryNoteTitle", s.title);
+  setPlaceholderIfPresent("secondarySourceText", s.sourcePlaceholder);
+  setAttrIfPresent("secondarySourceText", "aria-label", s.sourceLabel);
+  setTextIfPresent("secondaryProviderLabel", s.providerLabel);
+  setTextIfPresent("secondaryOpenaiModelLabel", s.modelLabel);
+  setTextIfPresent("secondaryGeminiModelLabel", s.modelLabel);
+  setTextIfPresent("secondaryVertexModelLabel", s.modelLabel);
+  setTextIfPresent("secondaryBedrockModelLabel", s.modelLabel);
+  setTextIfPresent("secondaryRequestyModelLabel", s.modelLabel);
+  setTextIfPresent("secondaryModeLabel", s.modeLabel);
+  setTextIfPresent("secondaryOpenaiReasoningLabel", s.reasoningLabel);
+  setTextIfPresent("secondaryNanoReasoningLabel", s.reasoningLabel);
+  setTextIfPresent("secondaryGeminiReasoningLabel", s.thinkingLabel);
+  setTextIfPresent("secondaryPromptLabel", s.promptLabel);
+  setTextIfPresent("secondaryGenerateButton", s.generateButton);
+  setTextIfPresent("secondaryAbortButton", s.abortButton);
+  setTextIfPresent("secondaryCopyNoteButton", s.copyButton);
+  setTextIfPresent("secondaryAutoTransferLabel", s.autoTransferLabel);
+  setPlaceholderIfPresent("secondaryGeneratedNote", s.outputPlaceholder);
+
+  // Show/Hide label depends on the pane's current visibility.
+  const pane = document.getElementById("secondaryNotePane");
+  const toggleButton = document.getElementById("toggleSecondaryNoteButton");
+  if (toggleButton) {
+    const isOpen = !!pane && !pane.hidden;
+    toggleButton.textContent = isOpen ? s.hideButton : s.showButton;
+  }
+
+  // Publish for the feature module (dynamic labels: timer, statuses, toggle).
+  window.__secondaryNoteI18n = s;
+  try {
+    window.dispatchEvent(new CustomEvent("secondary-note-i18n-changed", { detail: s }));
+  } catch {}
+}
+
 function updateRedactorUI(trans) {
   const redactor = getRedactorI18n(trans);
   const pane = document.getElementById("redactorPane");
@@ -424,6 +497,7 @@ function updateTranscribeUI(trans) {
   document.getElementById("guideHeading").textContent = trans.guideHeading;
   document.getElementById("guideText").innerHTML = trans.guideText;
   updateRedactorUI(trans);
+  updateSecondaryNoteUI(trans);
   installTimerI18nGuards(trans);
 }
 
@@ -501,3 +575,4 @@ function normalizeTimerText(el, tpl) {
 }
 
 export default { initIndexLanguage, initTranscribeLanguage };
+

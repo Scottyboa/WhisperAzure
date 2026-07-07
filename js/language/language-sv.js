@@ -586,6 +586,36 @@ Lägg inte till information eller artighetsfraser som inte nämns. Du kan ändra
 
 Detta är exempel som fungerar bra, men du står fritt att anpassa dem så att de passar din dokumentationsstil, specialitet och typ av konsultation. Du kan också skapa helt egna prompts för vilket syfte du vill.  
 `,
+
+  // Sekundär anteckningsgenerator
+  secondaryNote: {
+    showButton: "Visa sekundär anteckningsgenerator",
+    hideButton: "Dölj sekundär anteckningsgenerator",
+    title: "Sekundär anteckningsgenerator",
+    sourceLabel: "Källtext",
+    sourcePlaceholder: "Klistra in eller skriv källtext här...",
+    providerLabel: "Leverantör:",
+    modelLabel: "Modell:",
+    modeLabel: "Läge:",
+    reasoningLabel: "Resonemangsnivå:",
+    thinkingLabel: "Tankenivå:",
+    promptLabel: "Prompt:",
+    generateButton: "Generera anteckning",
+    abortButton: "Avbryt",
+    copyButton: "Kopiera",
+    copiedButton: "Kopierat",
+    autoTransferLabel: "Kopiera resultatet automatiskt till Kompletterande information",
+    outputPlaceholder: "Den genererade anteckningen visas här...",
+    timerLabel: "Timer för anteckningsgenerering",
+    statusGenerating: "Genererar…",
+    statusCompleted: "Textgenerering klar!",
+    statusFailed: "Genereringen misslyckades",
+    statusAborted: "Anteckningsgenerering avbruten.",
+    noSourceText: "Ingen källtext",
+    noPromptSelected: "Ingen prompt vald",
+    transferred: "Resultatet kopierades till Kompletterande information."
+  },
 };
 
 export default { indexTranslations, transcribeTranslations };
+

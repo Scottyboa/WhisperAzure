@@ -265,6 +265,36 @@ La lettera deve avere un tono professionale e formale. Puoi migliorare leggermen
 
 Questi sono esempi efficaci, ma puoi adattarli liberamente al tuo stile documentale, alla tua specializzazione o al tipo di consultazione. Puoi anche creare prompt completamente personalizzati per ogni esigenza.
 `,
+
+  // Generatore di note secondario
+  secondaryNote: {
+    showButton: "Mostra generatore di note secondario",
+    hideButton: "Nascondi generatore di note secondario",
+    title: "Generatore di note secondario",
+    sourceLabel: "Testo sorgente",
+    sourcePlaceholder: "Incolla o digita qui il testo sorgente...",
+    providerLabel: "Fornitore:",
+    modelLabel: "Modello:",
+    modeLabel: "Modalità:",
+    reasoningLabel: "Livello di ragionamento:",
+    thinkingLabel: "Livello di riflessione:",
+    promptLabel: "Prompt:",
+    generateButton: "Genera nota",
+    abortButton: "Annulla",
+    copyButton: "Copia",
+    copiedButton: "Copiato",
+    autoTransferLabel: "Copia automaticamente il risultato nelle Informazioni supplementari",
+    outputPlaceholder: "La nota generata apparirà qui...",
+    timerLabel: "Timer di generazione della nota",
+    statusGenerating: "Generazione in corso…",
+    statusCompleted: "Generazione del testo completata!",
+    statusFailed: "Generazione non riuscita",
+    statusAborted: "Generazione della nota annullata.",
+    noSourceText: "Nessun testo sorgente",
+    noPromptSelected: "Nessun prompt selezionato",
+    transferred: "Risultato copiato nelle Informazioni supplementari."
+  },
 };
 
 export default { indexTranslations, transcribeTranslations };
+

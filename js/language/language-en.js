@@ -827,6 +827,36 @@ These are examples that work well, but feel free to adapt them to your documenta
   redactorStatusOcrRunning: "OCR running…",
   redactorStatusOcrLoading: "OCR is loading language data…",
   redactorStatusOcrStarting: "OCR is starting…",
+
+  // Secondary Note Generator
+  secondaryNote: {
+    showButton: "Show secondary note generator",
+    hideButton: "Hide secondary note generator",
+    title: "Secondary Note Generator",
+    sourceLabel: "Source text",
+    sourcePlaceholder: "Paste or type source text here...",
+    providerLabel: "Provider:",
+    modelLabel: "Model:",
+    modeLabel: "Mode:",
+    reasoningLabel: "Reasoning effort:",
+    thinkingLabel: "Thinking level:",
+    promptLabel: "Prompt:",
+    generateButton: "Generate Note",
+    abortButton: "Abort",
+    copyButton: "Copy",
+    copiedButton: "Copied",
+    autoTransferLabel: "Automatically copy result to Supplementary Information",
+    outputPlaceholder: "Generated note will appear here...",
+    timerLabel: "Note Generation Timer",
+    statusGenerating: "Generating…",
+    statusCompleted: "Text generation completed!",
+    statusFailed: "Generation failed",
+    statusAborted: "Note generation aborted.",
+    noSourceText: "No source text",
+    noPromptSelected: "No prompt selected",
+    transferred: "Result copied to Supplementary Information."
+  },
 };
 
 export default { indexTranslations, transcribeTranslations };
+

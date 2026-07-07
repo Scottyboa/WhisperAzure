@@ -780,6 +780,114 @@
       flex-wrap: wrap;
       justify-content: flex-end;
     }
+    /* Recording Transcript + Secondary Note Generator side-by-side layout
+       (mirrors the Supplementary/Redactor layout behaviour). */
+    .transcript-secondary-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+    .transcript-secondary-layout.secondary-open {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .transcript-pane,
+    .secondary-note-pane {
+      min-width: 0;
+    }
+    .secondary-note-pane {
+      display: none;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    .transcript-secondary-layout.secondary-open .secondary-note-pane {
+      display: block;
+    }
+    .secondary-note-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    .secondary-note-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .secondary-note-row label {
+      font-size: 13px;
+    }
+    .secondary-note-row select {
+      padding: 4px 8px;
+      font-size: 13px;
+      border-radius: 6px;
+      max-width: 100%;
+    }
+    .secondary-note-pane .secondary-inline-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #secondarySourceText,
+    #secondaryGeneratedNote {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 15px;
+      box-sizing: border-box;
+      font-family: 'Roboto', sans-serif;
+      resize: vertical;
+      min-height: 120px;
+      margin-bottom: 8px;
+    }
+    #secondaryNoteTimer {
+      font-size: 13px;
+      color: #333;
+    }
+    #secondaryNoteStatus {
+      font-size: 12px;
+      color: #555;
+      min-height: 16px;
+      margin: 2px 0 4px;
+    }
+    #secondaryNoteUsageCost {
+      font-size: 12px;
+      color: #555;
+      min-height: 16px;
+      margin-bottom: 4px;
+    }
+    #secondaryGenerateButton,
+    #secondaryAbortButton {
+      padding: 6px 12px;
+      font-size: 13px;
+      border-radius: 6px;
+    }
+    #secondaryCopyNoteButton {
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+      background-color: #5a9;
+    }
+    .secondary-auto-transfer {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 900px) {
+      /* Stack vertically on narrow screens to preserve usability. */
+      .transcript-secondary-layout.secondary-open {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
     .supplementary-redactor-layout {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
@@ -1706,6 +1814,20 @@
           <div id="transcribeTimer" class="timer" style="margin-bottom: 0;">Completion Timer: 0 sec</div>
           <div style="display:flex; align-items:center; gap: 6px;">
             <button
+              id="toggleSecondaryNoteButton"
+              type="button"
+              aria-expanded="false"
+              aria-controls="secondaryNotePane"
+              style="
+                padding: 4px 10px;
+                font-size: 12px;
+                border-radius: 6px;
+                background-color: #5a9;
+              "
+            >
+              Show secondary note generator
+            </button>
+            <button
               id="copyTranscriptionButton"
               type="button"
               aria-label="Copy transcript"
@@ -1732,15 +1854,126 @@
             </button>
           </div>
         </div>
-        <div id="transcriptionCounterWrap" class="field-counter-wrap field-counter-gap">
-          <div id="transcriptionLiveCounter" class="field-live-counter" aria-live="polite">0 words · 0 tokens</div>
-          <textarea
-            id="transcription"
-            placeholder="Transcription result will appear here."
-            style="margin-bottom: 6px;"
-            autocomplete="off"
-          ></textarea>
-        </div>        <!-- Supplementary / Redactor toolbar -->
+        <div id="transcriptSecondaryLayout" class="transcript-secondary-layout">
+          <div class="transcript-pane">
+            <div id="transcriptionCounterWrap" class="field-counter-wrap field-counter-gap">
+              <div id="transcriptionLiveCounter" class="field-live-counter" aria-live="polite">0 words · 0 tokens</div>
+              <textarea
+                id="transcription"
+                placeholder="Transcription result will appear here."
+                style="margin-bottom: 6px;"
+                autocomplete="off"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Secondary Note Generator (hidden by default; toggled by the
+               button next to the transcript Copy button). Hiding this pane
+               only hides it visually — no text/settings are cleared. -->
+          <aside
+            id="secondaryNotePane"
+            class="secondary-note-pane"
+            hidden
+            aria-hidden="true"
+          >
+            <div class="secondary-note-title" id="secondaryNoteTitle">Secondary Note Generator</div>
+
+            <textarea
+              id="secondarySourceText"
+              placeholder="Paste or type source text here..."
+              autocomplete="off"
+              aria-label="Secondary source text"
+            ></textarea>
+
+            <!-- Independent generation settings (selects populated by JS from
+                 the shared provider registry). -->
+            <div class="secondary-note-row">
+              <span class="secondary-inline-control">
+                <label for="secondaryProvider" id="secondaryProviderLabel">Provider:</label>
+                <select id="secondaryProvider"></select>
+              </span>
+              <span class="secondary-inline-control" id="secondaryOpenaiModelContainer" style="display:none;">
+                <label for="secondaryOpenaiModel" id="secondaryOpenaiModelLabel">Model:</label>
+                <select id="secondaryOpenaiModel"></select>
+              </span>
+              <span class="secondary-inline-control" id="secondaryGeminiModelContainer" style="display:none;">
+                <label for="secondaryGeminiModel" id="secondaryGeminiModelLabel">Model:</label>
+                <select id="secondaryGeminiModel"></select>
+              </span>
+              <span class="secondary-inline-control" id="secondaryVertexModelContainer" style="display:none;">
+                <label for="secondaryVertexModel" id="secondaryVertexModelLabel">Model:</label>
+                <select id="secondaryVertexModel"></select>
+              </span>
+              <span class="secondary-inline-control" id="secondaryBedrockModelContainer" style="display:none;">
+                <label for="secondaryBedrockModel" id="secondaryBedrockModelLabel">Model:</label>
+                <select id="secondaryBedrockModel"></select>
+              </span>
+              <span class="secondary-inline-control" id="secondaryRequestyModelContainer" style="display:none;">
+                <label for="secondaryRequestyModel" id="secondaryRequestyModelLabel">Model:</label>
+                <select id="secondaryRequestyModel"></select>
+              </span>
+              <span class="secondary-inline-control" id="secondaryModeContainer" style="display:none;">
+                <label for="secondaryMode" id="secondaryModeLabel">Mode:</label>
+                <select id="secondaryMode"></select>
+              </span>
+            </div>
+            <div class="secondary-note-row">
+              <span class="secondary-inline-control" id="secondaryOpenaiReasoningContainer" style="display:none;">
+                <label for="secondaryOpenaiReasoning" id="secondaryOpenaiReasoningLabel">Reasoning effort:</label>
+                <select id="secondaryOpenaiReasoning"></select>
+              </span>
+              <span class="secondary-inline-control" id="secondaryNanoReasoningContainer" style="display:none;">
+                <label for="secondaryNanoReasoning" id="secondaryNanoReasoningLabel">Reasoning effort:</label>
+                <select id="secondaryNanoReasoning"></select>
+              </span>
+              <span class="secondary-inline-control" id="secondaryGeminiReasoningContainer" style="display:none;">
+                <label for="secondaryGeminiReasoning" id="secondaryGeminiReasoningLabel">Thinking level:</label>
+                <select id="secondaryGeminiReasoning"></select>
+              </span>
+            </div>
+
+            <!-- Shared saved prompt slots — independent selection.
+                 Prompt texts are edited/saved only in the main Custom Prompt
+                 area; this dropdown always reads the latest saved content. -->
+            <div class="secondary-note-row">
+              <span class="secondary-inline-control">
+                <label for="secondaryPromptSelect" id="secondaryPromptLabel">Prompt:</label>
+                <select id="secondaryPromptSelect"></select>
+              </span>
+            </div>
+
+            <div class="secondary-note-row">
+              <button id="secondaryGenerateButton" type="button">Generate Note</button>
+              <button id="secondaryAbortButton" type="button" disabled aria-disabled="true">Abort</button>
+            </div>
+
+            <div class="secondary-note-row" style="justify-content: space-between;">
+              <div id="secondaryNoteTimer" class="timer" style="margin-bottom:0;">Note Generation Timer: 0 sec</div>
+              <button
+                id="secondaryCopyNoteButton"
+                type="button"
+                aria-label="Copy secondary generated note"
+              >
+                Copy
+              </button>
+            </div>
+            <div id="secondaryNoteStatus" aria-live="polite"></div>
+            <div id="secondaryNoteUsageCost"></div>
+
+            <textarea
+              id="secondaryGeneratedNote"
+              placeholder="Generated note will appear here..."
+              autocomplete="off"
+              aria-label="Secondary generated note"
+            ></textarea>
+
+            <label class="secondary-auto-transfer" for="secondaryAutoTransferToggle">
+              <input id="secondaryAutoTransferToggle" type="checkbox" />
+              <span id="secondaryAutoTransferLabel">Automatically copy result to Supplementary Information</span>
+            </label>
+          </aside>
+        </div>
+        <!-- Supplementary / Redactor toolbar -->
         <div class="supp-toolbar">
           <!-- Left side: Auto clear toggle + tooltip -->
           <div class="supp-row-left">
@@ -2347,6 +2580,11 @@
   <!-- Ensure main boot script runs after provider wiring -->
   <script type="module" src="./js/main.js"></script>
 
+  <!-- Secondary Note Generator (independent generation session beside the
+       Recording Transcript). Loads after main.js so window.__app helpers
+       (usage/cost formatting, supplementary date handling) are available. -->
+  <script type="module" src="./js/features/secondary-note.js"></script>
+
   <!-- Floating Mini Panel (multi-tab controller).
        Must load after main.js so window.__app exists by the time
        bootMiniController() runs. Registers window.__openMiniPanel,
@@ -2397,6 +2635,7 @@
 
 </body>
 </html>
+
 
 
 
