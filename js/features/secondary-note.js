@@ -65,7 +65,8 @@ const STORAGE_KEYS = {
   requestyModel: "secondary_requesty_model",
   requestyNanoReasoning: "secondary_requesty_nano_reasoning",
   promptSlot: "secondary_prompt_slot",
-  autoTransfer: "secondary_auto_transfer"
+  autoTransfer: "secondary_auto_transfer",
+  overwrite: "secondary_overwrite"
 };
 
 // Same allow-list as AWSBedrock.js so stale values never reach the backend.
@@ -142,6 +143,8 @@ const I18N_FALLBACK = {
   abortButton: "Abort",
   copyButton: "Copy",
   copiedButton: "Copied",
+  pushButton: "To Supplementary",
+  overwriteLabel: "Overwrite Supplementary Information (off = append below)",
   autoTransferLabel: "Automatically copy result to Supplementary Information",
   outputPlaceholder: "Generated note will appear here...",
   timerLabel: "Note Generation Timer",
@@ -151,6 +154,7 @@ const I18N_FALLBACK = {
   statusAborted: "Note generation aborted.",
   noSourceText: "No source text",
   noPromptSelected: "No prompt selected",
+  noOutputToPush: "No note to copy over yet",
   transferred: "Result copied to Supplementary Information."
 };
 
@@ -191,17 +195,14 @@ function el(id) {
 function setSelectOptions(selectEl, options) {
   if (!selectEl) return;
   const previous = String(selectEl.value || "").trim();
-  const safeOptions = Array.isArray(options) ? options : [];
-
   selectEl.innerHTML = "";
-  safeOptions.forEach((item) => {
+  (Array.isArray(options) ? options : []).forEach((item) => {
     const optionEl = document.createElement("option");
     optionEl.value = String(item.value ?? "");
     optionEl.textContent = String(item.label ?? item.value ?? "");
     selectEl.appendChild(optionEl);
   });
-
-  if (safeOptions.some((item) => String(item.value) === previous)) {
+  if (options.some((item) => String(item.value) === previous)) {
     selectEl.value = previous;
   }
 }
@@ -326,7 +327,8 @@ function getSelections() {
         ? String(raw)
         : "1";
     })(),
-    autoTransfer: readSession(STORAGE_KEYS.autoTransfer, "0") === "1"
+    autoTransfer: readSession(STORAGE_KEYS.autoTransfer, "0") === "1",
+    overwrite: readSession(STORAGE_KEYS.overwrite, "1") === "1"
   };
 }
 
@@ -385,6 +387,9 @@ function hydrateSelectors() {
   const autoTransfer = el("secondaryAutoTransferToggle");
   if (autoTransfer) autoTransfer.checked = selections.autoTransfer;
 
+  const overwriteToggle = el("secondaryOverwriteToggle");
+  if (overwriteToggle) overwriteToggle.checked = selections.overwrite;
+
   hydratePromptOptions(selections.promptSlot);
   syncVisibility();
 }
@@ -420,36 +425,83 @@ function hydratePromptOptions(preferredSlot = null) {
 }
 
 // -----------------------------------------------------------------------------
-// Auto-transfer to Supplementary Information
+// Transfer to Supplementary Information
 // -----------------------------------------------------------------------------
 //
-// Uses the application's existing date handling (exposed by main.js) so the
-// managed "Dagens dato er DD.MM.YYYY" header is preserved exactly like the
-// rest of the app manages it. Only runs after a SUCCESSFUL generation.
+// The generated note is always wrapped in a single pair of quotation marks
+// ("...") — this applies to BOTH the automatic transfer (on successful
+// generation) and the manual "To Supplementary" button.
+//
+// The secondary "Overwrite" toggle (default ON) decides how the quoted note
+// is written into the Supplementary Information field:
+//
+//   ON  — overwrite the field's contents, but preserve the app-managed
+//         "Dagens dato er DD.MM.YYYY" header exactly like the app manages it.
+//   OFF — leave existing content untouched and append the quoted note as a
+//         new paragraph at the bottom.
+
+function isOverwriteEnabled() {
+  const toggle = el("secondaryOverwriteToggle");
+  // Default ON when the control is missing for any reason.
+  return toggle ? !!toggle.checked : true;
+}
 
 function transferToSupplementary(noteText) {
   const supplementaryEl = el("supplementaryInfo");
   if (!supplementaryEl) return false;
 
   const app = getApp();
-  let nextValue = String(noteText || "");
+  const quotedNote = `"${String(noteText || "")}"`;
 
-  try {
-    const dateEnabled =
-      typeof app.getSupplementaryDateEnabled === "function"
-        ? !!app.getSupplementaryDateEnabled()
-        : false;
+  if (isOverwriteEnabled()) {
+    // Overwrite mode — replace contents, preserving the managed date header.
+    let nextValue = quotedNote;
+    try {
+      const dateEnabled =
+        typeof app.getSupplementaryDateEnabled === "function"
+          ? !!app.getSupplementaryDateEnabled()
+          : false;
 
-    if (typeof app.normalizeSupplementaryDateLine === "function") {
-      nextValue = app.normalizeSupplementaryDateLine(nextValue, { enabled: dateEnabled });
+      if (typeof app.normalizeSupplementaryDateLine === "function") {
+        nextValue = app.normalizeSupplementaryDateLine(quotedNote, { enabled: dateEnabled });
+      }
+    } catch (_) {}
+
+    supplementaryEl.value = nextValue;
+  } else {
+    // Append mode — keep existing content untouched, add the quoted note as a
+    // new paragraph at the bottom.
+    const existing = String(supplementaryEl.value || "");
+    if (existing.trim()) {
+      supplementaryEl.value = `${existing.replace(/\s+$/, "")}\n\n${quotedNote}`;
+    } else {
+      supplementaryEl.value = quotedNote;
     }
-  } catch (_) {}
+  }
 
-  supplementaryEl.value = nextValue;
   try {
     supplementaryEl.dispatchEvent(new Event("input", { bubbles: true }));
   } catch (_) {}
   return true;
+}
+
+// Manual push — user-initiated copy of the current secondary output into the
+// Supplementary Information field (uses the same quoting + overwrite/append
+// rules as the automatic transfer).
+function pushToSupplementary() {
+  const strings = i18n();
+  const outputField = el("secondaryGeneratedNote");
+  if (!outputField) return;
+
+  const text = String(outputField.value || "");
+  if (!text.trim()) {
+    setStatus(strings.noOutputToPush, { isError: true });
+    return;
+  }
+
+  if (transferToSupplementary(text)) {
+    setStatus(strings.transferred);
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -1161,30 +1213,16 @@ function bindPersistedSelect(id, storageKey, { normalize = (v) => v, onChange = 
 function initSecondaryNoteModule() {
   const pane = el("secondaryNotePane");
   const toggleButton = el("toggleSecondaryNoteButton");
-  if (!pane || !toggleButton) {
-    console.error("[secondary-note] Required toggle/pane elements were not found.");
-    return;
-  }
+  if (!pane || !toggleButton) return;
 
-  // Bind the visibility toggle first. Previously, any error while hydrating
-  // provider/prompt selectors prevented this listener from ever being added,
-  // which made the button appear completely dead.
-  if (toggleButton.dataset.secondaryNoteBound !== "1") {
-    toggleButton.dataset.secondaryNoteBound = "1";
-    toggleButton.addEventListener("click", () => {
-      setSecondaryOpen(!isSecondaryOpen());
-    });
-  }
+  hydrateSelectors();
+  refreshToggleButtonLabel();
+  renderTimerText(0);
+  setBusy(false);
 
-  try {
-    hydrateSelectors();
-    refreshToggleButtonLabel();
-    renderTimerText(0);
-    setBusy(false);
-  } catch (error) {
-    // Keep the pane toggle usable and expose the real initialization error.
-    console.error("[secondary-note] Initialization failed:", error);
-  }
+  toggleButton.addEventListener("click", () => {
+    setSecondaryOpen(!isSecondaryOpen());
+  });
 
   bindPersistedSelect("secondaryProvider", STORAGE_KEYS.provider, {
     normalize: normalizeNoteUiProvider,
@@ -1250,6 +1288,13 @@ function initSecondaryNoteModule() {
     });
   }
 
+  const overwriteToggle = el("secondaryOverwriteToggle");
+  if (overwriteToggle) {
+    overwriteToggle.addEventListener("change", () => {
+      writeSession(STORAGE_KEYS.overwrite, overwriteToggle.checked ? "1" : "0");
+    });
+  }
+
   const generateButton = el("secondaryGenerateButton");
   if (generateButton) generateButton.addEventListener("click", generateSecondaryNote);
 
@@ -1258,6 +1303,9 @@ function initSecondaryNoteModule() {
 
   const copyButton = el("secondaryCopyNoteButton");
   if (copyButton) copyButton.addEventListener("click", copySecondaryNote);
+
+  const pushButton = el("secondaryPushToSupplementaryButton");
+  if (pushButton) pushButton.addEventListener("click", pushToSupplementary);
 
   // Shared prompt storage: refresh slot labels when names change; the prompt
   // TEXT is always read live at generation time, so value changes need no

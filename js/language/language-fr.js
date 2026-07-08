@@ -283,6 +283,8 @@ Ce sont des exemples efficaces, mais vous êtes libre de les adapter à votre st
     abortButton: "Annuler",
     copyButton: "Copier",
     copiedButton: "Copié",
+    pushButton: "Vers Informations compl.",
+    overwriteLabel: "Écraser les Informations complémentaires (désactivé = ajouter en dessous)",
     autoTransferLabel: "Copier automatiquement le résultat dans les Informations complémentaires",
     outputPlaceholder: "La note générée apparaîtra ici...",
     timerLabel: "Minuteur de génération de note",
@@ -292,6 +294,7 @@ Ce sont des exemples efficaces, mais vous êtes libre de les adapter à votre st
     statusAborted: "Génération de la note annulée.",
     noSourceText: "Aucun texte source",
     noPromptSelected: "Aucun prompt sélectionné",
+    noOutputToPush: "Aucune note à copier pour l’instant",
     transferred: "Résultat copié dans les Informations complémentaires."
   },
 };

@@ -282,6 +282,8 @@ Diese Beispiele funktionieren gut, aber du kannst sie gern an deinen Dokumentati
     abortButton: "Abbrechen",
     copyButton: "Kopieren",
     copiedButton: "Kopiert",
+    pushButton: "In Zusatzinformationen",
+    overwriteLabel: "Zusatzinformationen überschreiben (aus = unten anhängen)",
     autoTransferLabel: "Ergebnis automatisch in Zusatzinformationen kopieren",
     outputPlaceholder: "Die generierte Notiz erscheint hier...",
     timerLabel: "Notizgenerierungs-Timer",
@@ -291,6 +293,7 @@ Diese Beispiele funktionieren gut, aber du kannst sie gern an deinen Dokumentati
     statusAborted: "Notizgenerierung abgebrochen.",
     noSourceText: "Kein Quelltext",
     noPromptSelected: "Kein Prompt ausgewählt",
+    noOutputToPush: "Noch keine Notiz zum Übertragen",
     transferred: "Ergebnis wurde in die Zusatzinformationen kopiert."
   },
 };

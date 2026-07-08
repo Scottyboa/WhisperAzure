@@ -283,6 +283,8 @@ Questi sono esempi efficaci, ma puoi adattarli liberamente al tuo stile document
     abortButton: "Annulla",
     copyButton: "Copia",
     copiedButton: "Copiato",
+    pushButton: "In Info supplementari",
+    overwriteLabel: "Sovrascrivi Informazioni supplementari (off = aggiungi sotto)",
     autoTransferLabel: "Copia automaticamente il risultato nelle Informazioni supplementari",
     outputPlaceholder: "La nota generata apparirà qui...",
     timerLabel: "Timer di generazione della nota",
@@ -292,6 +294,7 @@ Questi sono esempi efficaci, ma puoi adattarli liberamente al tuo stile document
     statusAborted: "Generazione della nota annullata.",
     noSourceText: "Nessun testo sorgente",
     noPromptSelected: "Nessun prompt selezionato",
+    noOutputToPush: "Nessuna nota da copiare ancora",
     transferred: "Risultato copiato nelle Informazioni supplementari."
   },
 };

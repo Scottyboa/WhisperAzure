@@ -604,6 +604,8 @@ Detta är exempel som fungerar bra, men du står fritt att anpassa dem så att d
     abortButton: "Avbryt",
     copyButton: "Kopiera",
     copiedButton: "Kopierat",
+    pushButton: "Till Kompletterande info",
+    overwriteLabel: "Skriv över Kompletterande information (av = lägg till nedan)",
     autoTransferLabel: "Kopiera resultatet automatiskt till Kompletterande information",
     outputPlaceholder: "Den genererade anteckningen visas här...",
     timerLabel: "Timer för anteckningsgenerering",
@@ -613,6 +615,7 @@ Detta är exempel som fungerar bra, men du står fritt att anpassa dem så att d
     statusAborted: "Anteckningsgenerering avbruten.",
     noSourceText: "Ingen källtext",
     noPromptSelected: "Ingen prompt vald",
+    noOutputToPush: "Ingen anteckning att kopiera ännu",
     transferred: "Resultatet kopierades till Kompletterande information."
   },
 };

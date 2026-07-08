@@ -237,6 +237,7 @@
     { inputId: "transcription", counterId: "transcriptionLiveCounter" },
     { inputId: "supplementaryInfo", counterId: "supplementaryInfoLiveCounter" },
     { inputId: "customPrompt", counterId: "customPromptLiveCounter" },
+    { inputId: "secondarySourceText", counterId: "secondarySourceTextLiveCounter" },
   ];
 
   const wordRegex = /\S+/g;
@@ -334,3 +335,4 @@
     initCounters();
   }
 })();
+

@@ -903,6 +903,8 @@ Dette er eksempler som fungerer godt, men du står fritt til å tilpasse dem sli
     abortButton: "Avbryt",
     copyButton: "Kopier",
     copiedButton: "Kopiert",
+    pushButton: "Til Tilleggsopplysninger",
+    overwriteLabel: "Overskriv Tilleggsopplysninger (av = legg til under)",
     autoTransferLabel: "Kopier resultatet automatisk til Tilleggsopplysninger",
     outputPlaceholder: "Generert notat vises her...",
     timerLabel: "Notatgenereringstid",
@@ -912,6 +914,7 @@ Dette er eksempler som fungerer godt, men du står fritt til å tilpasse dem sli
     statusAborted: "Notatgenerering avbrutt.",
     noSourceText: "Ingen kildetekst",
     noPromptSelected: "Ingen prompt valgt",
+    noOutputToPush: "Ingen notat å kopiere over ennå",
     transferred: "Resultatet ble kopiert til Tilleggsopplysninger."
   },
 };

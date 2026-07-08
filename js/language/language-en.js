@@ -845,6 +845,8 @@ These are examples that work well, but feel free to adapt them to your documenta
     abortButton: "Abort",
     copyButton: "Copy",
     copiedButton: "Copied",
+    pushButton: "To Supplementary",
+    overwriteLabel: "Overwrite Supplementary Information (off = append below)",
     autoTransferLabel: "Automatically copy result to Supplementary Information",
     outputPlaceholder: "Generated note will appear here...",
     timerLabel: "Note Generation Timer",
@@ -854,6 +856,7 @@ These are examples that work well, but feel free to adapt them to your documenta
     statusAborted: "Note generation aborted.",
     noSourceText: "No source text",
     noPromptSelected: "No prompt selected",
+    noOutputToPush: "No note to copy over yet",
     transferred: "Result copied to Supplementary Information."
   },
 };

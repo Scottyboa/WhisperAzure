@@ -868,7 +868,8 @@
       font-size: 13px;
       border-radius: 6px;
     }
-    #secondaryCopyNoteButton {
+    #secondaryCopyNoteButton,
+    #secondaryPushToSupplementaryButton {
       padding: 4px 10px;
       font-size: 12px;
       border-radius: 6px;
@@ -1663,7 +1664,8 @@
       top: 0;
     }
     #transcriptionCounterWrap .field-live-counter,
-    #supplementaryInfoCounterWrap .field-live-counter {
+    #supplementaryInfoCounterWrap .field-live-counter,
+    #secondarySourceTextCounterWrap .field-live-counter {
       top: -4px;
       right: 2px;
     }
@@ -1878,12 +1880,15 @@
           >
             <div class="secondary-note-title" id="secondaryNoteTitle">Secondary Note Generator</div>
 
-            <textarea
-              id="secondarySourceText"
-              placeholder="Paste or type source text here..."
-              autocomplete="off"
-              aria-label="Secondary source text"
-            ></textarea>
+            <div id="secondarySourceTextCounterWrap" class="field-counter-wrap field-counter-gap">
+              <div id="secondarySourceTextLiveCounter" class="field-live-counter" aria-live="polite">0 words · 0 tokens</div>
+              <textarea
+                id="secondarySourceText"
+                placeholder="Paste or type source text here..."
+                autocomplete="off"
+                aria-label="Secondary source text"
+              ></textarea>
+            </div>
 
             <!-- Independent generation settings (selects populated by JS from
                  the shared provider registry). -->
@@ -1949,13 +1954,22 @@
 
             <div class="secondary-note-row" style="justify-content: space-between;">
               <div id="secondaryNoteTimer" class="timer" style="margin-bottom:0;">Note Generation Timer: 0 sec</div>
-              <button
-                id="secondaryCopyNoteButton"
-                type="button"
-                aria-label="Copy secondary generated note"
-              >
-                Copy
-              </button>
+              <span class="secondary-inline-control" style="gap: 6px;">
+                <button
+                  id="secondaryCopyNoteButton"
+                  type="button"
+                  aria-label="Copy secondary generated note"
+                >
+                  Copy
+                </button>
+                <button
+                  id="secondaryPushToSupplementaryButton"
+                  type="button"
+                  aria-label="Copy secondary generated note to Supplementary Information"
+                >
+                  Insert
+                </button>
+              </span>
             </div>
             <div id="secondaryNoteStatus" aria-live="polite"></div>
             <div id="secondaryNoteUsageCost"></div>
@@ -1967,10 +1981,16 @@
               aria-label="Secondary generated note"
             ></textarea>
 
-            <label class="secondary-auto-transfer" for="secondaryAutoTransferToggle">
-              <input id="secondaryAutoTransferToggle" type="checkbox" />
-              <span id="secondaryAutoTransferLabel">Automatically copy result to Supplementary Information</span>
-            </label>
+            <div style="display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+              <label class="secondary-auto-transfer" for="secondaryAutoTransferToggle">
+                <input id="secondaryAutoTransferToggle" type="checkbox" />
+                <span id="secondaryAutoTransferLabel">Automatically copy result to Supplementary Information</span>
+              </label>
+              <label class="secondary-auto-transfer" for="secondaryOverwriteToggle">
+                <input id="secondaryOverwriteToggle" type="checkbox" checked />
+                <span id="secondaryOverwriteLabel">Overwrite Supplementary Information (off = append below)</span>
+              </label>
+            </div>
           </aside>
         </div>
         <!-- Supplementary / Redactor toolbar -->
