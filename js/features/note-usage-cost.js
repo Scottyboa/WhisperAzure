@@ -184,9 +184,9 @@ import {
     "gpt-5-nano": { input: 0.05, output: 0.4 },
   };
 
-  // Requesty charges ~5% on top of the underlying model pricing. Applied
-  // ONLY to Requesty requests; token counting itself is unchanged.
-  const REQUESTY_COST_MULTIPLIER = 1.05;
+  // Requesty's ~5% premium is a one-time top-up fee applied when funding
+  // credits, NOT a per-request charge, so it is intentionally not applied to
+  // the per-generation cost estimates below (raw underlying rates are used).
 
   // Gemini API (AI Studio): USD per 1M billable tokens.
   const GEMINI_API_USD_PER_MTOK = {
@@ -259,8 +259,12 @@ import {
       });
       if (baseUsd == null) return null;
 
-      // Underlying model cost x 1.05 (Requesty markup).
-      return baseUsd * REQUESTY_COST_MULTIPLIER;
+      // Requesty balance is charged at the underlying model's list price at
+      // request time; the ~5% premium is a one-time top-up fee applied when
+      // credits are funded, not per request. So the per-generation estimate
+      // uses the raw underlying rates (like every other provider) to reflect
+      // the actual balance drawdown for this note.
+      return baseUsd;
     }
 
     if (isMistralEffectiveNoteProvider(pk)) {
