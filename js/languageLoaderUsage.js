@@ -342,8 +342,8 @@ function getSecondaryNoteI18n(trans) {
     abortButton: "Abort",
     copyButton: "Copy",
     copiedButton: "Copied",
-    pushButton: "To Supplementary",
-    overwriteLabel: "Overwrite Supplementary Information (off = append below)",
+    pushButton: "Insert",
+    clearOnGenerateLabel: "Clear Supplementary Information on Generate",
     autoTransferLabel: "Automatically copy result to Supplementary Information",
     outputPlaceholder: "Generated note will appear here...",
     timerLabel: "Note Generation Timer",
@@ -385,7 +385,7 @@ function updateSecondaryNoteUI(trans) {
   setTextIfPresent("secondaryCopyNoteButton", s.copyButton);
   setTextIfPresent("secondaryPushToSupplementaryButton", s.pushButton);
   setTextIfPresent("secondaryAutoTransferLabel", s.autoTransferLabel);
-  setTextIfPresent("secondaryOverwriteLabel", s.overwriteLabel);
+  setTextIfPresent("secondaryClearOnGenerateLabel", s.clearOnGenerateLabel);
   setPlaceholderIfPresent("secondaryGeneratedNote", s.outputPlaceholder);
 
   // Show/Hide label depends on the pane's current visibility.

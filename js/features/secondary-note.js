@@ -66,7 +66,7 @@ const STORAGE_KEYS = {
   requestyNanoReasoning: "secondary_requesty_nano_reasoning",
   promptSlot: "secondary_prompt_slot",
   autoTransfer: "secondary_auto_transfer",
-  overwrite: "secondary_overwrite"
+  clearOnGenerate: "secondary_clear_on_generate"
 };
 
 // Same allow-list as AWSBedrock.js so stale values never reach the backend.
@@ -143,8 +143,8 @@ const I18N_FALLBACK = {
   abortButton: "Abort",
   copyButton: "Copy",
   copiedButton: "Copied",
-  pushButton: "To Supplementary",
-  overwriteLabel: "Overwrite Supplementary Information (off = append below)",
+  pushButton: "Insert",
+  clearOnGenerateLabel: "Clear Supplementary Information on Generate",
   autoTransferLabel: "Automatically copy result to Supplementary Information",
   outputPlaceholder: "Generated note will appear here...",
   timerLabel: "Note Generation Timer",
@@ -328,7 +328,7 @@ function getSelections() {
         : "1";
     })(),
     autoTransfer: readSession(STORAGE_KEYS.autoTransfer, "0") === "1",
-    overwrite: readSession(STORAGE_KEYS.overwrite, "1") === "1"
+    clearOnGenerate: readSession(STORAGE_KEYS.clearOnGenerate, "0") === "1"
   };
 }
 
@@ -387,8 +387,8 @@ function hydrateSelectors() {
   const autoTransfer = el("secondaryAutoTransferToggle");
   if (autoTransfer) autoTransfer.checked = selections.autoTransfer;
 
-  const overwriteToggle = el("secondaryOverwriteToggle");
-  if (overwriteToggle) overwriteToggle.checked = selections.overwrite;
+  const clearOnGenerateToggle = el("secondaryClearOnGenerateToggle");
+  if (clearOnGenerateToggle) clearOnGenerateToggle.checked = selections.clearOnGenerate;
 
   hydratePromptOptions(selections.promptSlot);
   syncVisibility();
@@ -430,53 +430,24 @@ function hydratePromptOptions(preferredSlot = null) {
 //
 // The generated note is always wrapped in a single pair of quotation marks
 // ("...") — this applies to BOTH the automatic transfer (on successful
-// generation) and the manual "To Supplementary" button.
+// generation) and the manual "Insert" button.
 //
-// The secondary "Overwrite" toggle (default ON) decides how the quoted note
-// is written into the Supplementary Information field:
-//
-//   ON  — overwrite the field's contents, but preserve the app-managed
-//         "Dagens dato er DD.MM.YYYY" header exactly like the app manages it.
-//   OFF — leave existing content untouched and append the quoted note as a
-//         new paragraph at the bottom.
-
-function isOverwriteEnabled() {
-  const toggle = el("secondaryOverwriteToggle");
-  // Default ON when the control is missing for any reason.
-  return toggle ? !!toggle.checked : true;
-}
+// The note is appended as a new paragraph at the bottom of the Supplementary
+// Information field, leaving any existing content untouched. (Whether the
+// field is emptied first is governed separately by the "Clear Supplementary
+// Information on Generate" toggle, which acts when Generate is clicked.)
 
 function transferToSupplementary(noteText) {
   const supplementaryEl = el("supplementaryInfo");
   if (!supplementaryEl) return false;
 
-  const app = getApp();
   const quotedNote = `"${String(noteText || "")}"`;
 
-  if (isOverwriteEnabled()) {
-    // Overwrite mode — replace contents, preserving the managed date header.
-    let nextValue = quotedNote;
-    try {
-      const dateEnabled =
-        typeof app.getSupplementaryDateEnabled === "function"
-          ? !!app.getSupplementaryDateEnabled()
-          : false;
-
-      if (typeof app.normalizeSupplementaryDateLine === "function") {
-        nextValue = app.normalizeSupplementaryDateLine(quotedNote, { enabled: dateEnabled });
-      }
-    } catch (_) {}
-
-    supplementaryEl.value = nextValue;
+  const existing = String(supplementaryEl.value || "");
+  if (existing.trim()) {
+    supplementaryEl.value = `${existing.replace(/\s+$/, "")}\n\n${quotedNote}`;
   } else {
-    // Append mode — keep existing content untouched, add the quoted note as a
-    // new paragraph at the bottom.
-    const existing = String(supplementaryEl.value || "");
-    if (existing.trim()) {
-      supplementaryEl.value = `${existing.replace(/\s+$/, "")}\n\n${quotedNote}`;
-    } else {
-      supplementaryEl.value = quotedNote;
-    }
+    supplementaryEl.value = quotedNote;
   }
 
   try {
@@ -485,9 +456,62 @@ function transferToSupplementary(noteText) {
   return true;
 }
 
+// Clear-on-Generate — when the "Clear Supplementary Information on Generate"
+// toggle is checked, clicking Generate empties the Supplementary Information
+// field before generation. If the app's date toggle is on, the managed
+// "Dagens dato er DD.MM.YYYY" header line is preserved (only the body below
+// it is removed); if the date toggle is off, the field is fully emptied.
+
+function isClearOnGenerateEnabled() {
+  const toggle = el("secondaryClearOnGenerateToggle");
+  return toggle ? !!toggle.checked : false;
+}
+
+function clearSupplementaryForGenerate() {
+  const supplementaryEl = el("supplementaryInfo");
+  if (!supplementaryEl) return;
+
+  const app = getApp();
+  const current = String(supplementaryEl.value || "");
+
+  let dateEnabled = false;
+  try {
+    dateEnabled =
+      typeof app.getSupplementaryDateEnabled === "function"
+        ? !!app.getSupplementaryDateEnabled()
+        : false;
+  } catch (_) {}
+
+  let nextValue = "";
+  if (dateEnabled) {
+    // Preserve the existing managed date header line exactly if present...
+    const dateLineRegex = /^Dagens dato er \d{2}\.\d{2}\.\d{4}\s*$/im;
+    const existingDateLine = current
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .find((line) => dateLineRegex.test(line));
+
+    if (existingDateLine) {
+      nextValue = existingDateLine;
+    } else if (typeof app.normalizeSupplementaryDateLine === "function") {
+      // ...otherwise generate today's header, consistent with the app.
+      try {
+        nextValue = app.normalizeSupplementaryDateLine("", { enabled: true });
+      } catch (_) {
+        nextValue = "";
+      }
+    }
+  }
+
+  supplementaryEl.value = nextValue;
+  try {
+    supplementaryEl.dispatchEvent(new Event("input", { bubbles: true }));
+  } catch (_) {}
+}
+
 // Manual push — user-initiated copy of the current secondary output into the
-// Supplementary Information field (uses the same quoting + overwrite/append
-// rules as the automatic transfer).
+// Supplementary Information field (uses the same quoting + append rules as the
+// automatic transfer).
 function pushToSupplementary() {
   const strings = i18n();
   const outputField = el("secondaryGeneratedNote");
@@ -1036,6 +1060,13 @@ async function generateSecondaryNote() {
   const controller = new AbortController();
   state.abortController = controller;
 
+  // If enabled, clear the Supplementary Information field now that a valid
+  // generation is starting (the managed date header is preserved when the
+  // app's date toggle is on).
+  if (isClearOnGenerateEnabled()) {
+    clearSupplementaryForGenerate();
+  }
+
   outputField.value = "";
   clearSecondaryUsageAndCost();
   setStatus(strings.statusGenerating);
@@ -1288,10 +1319,10 @@ function initSecondaryNoteModule() {
     });
   }
 
-  const overwriteToggle = el("secondaryOverwriteToggle");
-  if (overwriteToggle) {
-    overwriteToggle.addEventListener("change", () => {
-      writeSession(STORAGE_KEYS.overwrite, overwriteToggle.checked ? "1" : "0");
+  const clearOnGenerateToggle = el("secondaryClearOnGenerateToggle");
+  if (clearOnGenerateToggle) {
+    clearOnGenerateToggle.addEventListener("change", () => {
+      writeSession(STORAGE_KEYS.clearOnGenerate, clearOnGenerateToggle.checked ? "1" : "0");
     });
   }
 
