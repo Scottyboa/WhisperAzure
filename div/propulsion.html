@@ -1,280 +1,1281 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Zero-G Syringe / Venting Gas Simulation</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#080d18">
+<title>Zero-G Propulsion Lab</title>
 <style>
-  :root{
-    --bg:#0f1320;
-    --panel:#171d2f;
-    --panel2:#1f2740;
-    --text:#e8edf7;
-    --muted:#a9b4cb;
-    --accent:#79b8ff;
-    --accent2:#ffd166;
-    --inside:#7ee787;
-    --escaped:#ff9b73;
+  :root {
+    color-scheme: dark;
+    --bg: #070b13;
+    --bg-soft: #0b1220;
+    --surface: rgba(16, 25, 43, 0.82);
+    --surface-strong: #111b2d;
+    --surface-hover: #182640;
+    --line: rgba(167, 192, 232, 0.14);
+    --line-strong: rgba(167, 192, 232, 0.26);
+    --text: #f4f7fc;
+    --muted: #95a5bf;
+    --muted-strong: #bdc8da;
+    --blue: #6fb7ff;
+    --blue-strong: #3b95f2;
+    --cyan: #6de2e8;
+    --green: #75e6a4;
+    --orange: #ffb25f;
+    --orange-strong: #ff8a45;
+    --danger: #ff6f78;
+    --shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+    --radius-xl: 24px;
+    --radius-lg: 18px;
+    --radius-md: 13px;
+    --panel-width: 330px;
   }
 
-  html, body {
+  * { box-sizing: border-box; }
+
+  html,
+  body {
     margin: 0;
+    width: 100%;
     height: 100%;
+    min-height: 100%;
     background: var(--bg);
-    color: var(--text);
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  }
+
+  body {
     overflow: hidden;
+    color: var(--text);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
-  #app {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
-
-  #controls {
-    display: grid;
-    grid-template-columns: auto auto auto auto auto auto 1fr;
-    gap: 10px 16px;
-    align-items: center;
-    padding: 12px 14px;
-    background: linear-gradient(180deg, var(--panel), var(--panel2));
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-  }
-
-  .group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    white-space: nowrap;
+  button,
+  input {
+    font: inherit;
   }
 
   button {
-    background: #25314f;
-    color: var(--text);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 8px;
-    padding: 8px 12px;
-    cursor: pointer;
-    font-weight: 600;
+    color: inherit;
   }
 
-  button:hover { background: #2a3960; }
-  button:disabled { opacity: 0.55; cursor: default; }
+  button:focus-visible,
+  input:focus-visible {
+    outline: 3px solid rgba(111, 183, 255, 0.35);
+    outline-offset: 3px;
+  }
+
+  .app {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    width: 100%;
+    height: 100%;
+    isolation: isolate;
+    background:
+      radial-gradient(circle at 72% 16%, rgba(48, 116, 196, 0.12), transparent 32%),
+      radial-gradient(circle at 10% 92%, rgba(64, 194, 194, 0.08), transparent 26%),
+      linear-gradient(145deg, #080d18 0%, #060911 100%);
+  }
+
+  .topbar {
+    position: relative;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    min-height: 76px;
+    padding: 14px 18px 14px 22px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(8, 13, 24, 0.78);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 13px;
+  }
+
+  .brand-mark {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 43px;
+    height: 43px;
+    flex: 0 0 auto;
+    overflow: hidden;
+    border: 1px solid rgba(111, 183, 255, 0.3);
+    border-radius: 14px;
+    background:
+      radial-gradient(circle at 34% 30%, rgba(255,255,255,.35) 0 2px, transparent 3px),
+      linear-gradient(145deg, rgba(111, 183, 255, 0.24), rgba(109, 226, 232, 0.06));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 10px 26px rgba(25, 105, 190, 0.2);
+  }
+
+  .brand-mark::before {
+    content: "";
+    width: 19px;
+    height: 10px;
+    border: 2px solid #cfe7ff;
+    border-right: 0;
+    border-radius: 3px 0 0 3px;
+    transform: translateX(-1px);
+  }
+
+  .brand-mark::after {
+    content: "";
+    position: absolute;
+    width: 7px;
+    height: 2px;
+    right: 7px;
+    border-radius: 999px;
+    background: var(--orange);
+    box-shadow: 5px 0 10px rgba(255, 178, 95, .8);
+  }
+
+  .brand-copy { min-width: 0; }
+
+  .eyebrow {
+    margin: 0 0 2px;
+    color: var(--blue);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin: 0;
+    overflow: hidden;
+    font-size: clamp(17px, 2vw, 21px);
+    line-height: 1.15;
+    letter-spacing: -.025em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .topbar-spacer { flex: 1; }
+
+  .run-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: max-content;
+    padding: 8px 11px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--muted-strong);
+    background: rgba(255,255,255,.035);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .run-state-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 0 4px rgba(117, 230, 164, .1), 0 0 14px rgba(117, 230, 164, .7);
+  }
+
+  .run-state.paused .run-state-dot {
+    background: var(--orange);
+    box-shadow: 0 0 0 4px rgba(255, 178, 95, .1), 0 0 14px rgba(255, 178, 95, .55);
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid var(--line-strong);
+    border-radius: 12px;
+    background: rgba(255,255,255,.045);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 760;
+    transition: transform .16s ease, border-color .16s ease, background .16s ease, opacity .16s ease;
+  }
+
+  .button:hover:not(:disabled) {
+    border-color: rgba(167, 192, 232, .4);
+    background: rgba(255,255,255,.085);
+    transform: translateY(-1px);
+  }
+
+  .button:active:not(:disabled) { transform: translateY(0); }
+
+  .button:disabled {
+    opacity: .58;
+    cursor: not-allowed;
+  }
+
+  .button-primary {
+    border-color: rgba(255, 178, 95, .48);
+    color: #fff7ec;
+    background: linear-gradient(180deg, rgba(255, 151, 74, .95), rgba(224, 101, 46, .95));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 9px 28px rgba(232, 104, 47, .2);
+  }
+
+  .button-primary:hover:not(:disabled) {
+    border-color: rgba(255, 201, 139, .75);
+    background: linear-gradient(180deg, #ffa25e, #ed7039);
+  }
+
+  .button-primary.is-open {
+    border-color: rgba(117, 230, 164, .28);
+    color: #baf4d0;
+    background: rgba(117, 230, 164, .09);
+    box-shadow: none;
+  }
+
+  .button-icon {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+  }
+
+  .workspace {
+    display: grid;
+    grid-template-columns: var(--panel-width) minmax(0, 1fr);
+    min-height: 0;
+    gap: 14px;
+    padding: 14px;
+  }
+
+  .control-panel,
+  .stage {
+    min-height: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-xl);
+    background: var(--surface);
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.035);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .control-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-scroll {
+    min-height: 0;
+    overflow: auto;
+    padding: 20px 18px 18px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(149, 165, 191, .35) transparent;
+  }
+
+  .panel-scroll::-webkit-scrollbar { width: 6px; }
+  .panel-scroll::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(149, 165, 191, .32);
+  }
+
+  .panel-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 19px;
+  }
+
+  .panel-heading h2 {
+    margin: 0;
+    font-size: 16px;
+    letter-spacing: -.015em;
+  }
+
+  .panel-heading p {
+    margin: 5px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .panel-badge {
+    padding: 5px 8px;
+    border: 1px solid rgba(111, 183, 255, .2);
+    border-radius: 999px;
+    color: #add5ff;
+    background: rgba(111, 183, 255, .08);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .section {
+    padding: 17px 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .section:first-of-type {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .section-title {
+    margin: 0 0 14px;
+    color: var(--muted-strong);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+  }
+
+  .range-control + .range-control { margin-top: 18px; }
+
+  .range-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .range-label label {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .range-output {
+    min-width: 58px;
+    padding: 4px 7px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--blue);
+    background: rgba(111, 183, 255, .07);
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
 
   input[type="range"] {
-    width: 150px;
+    width: 100%;
+    height: 20px;
+    margin: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
     cursor: pointer;
   }
 
-  label {
-    color: var(--muted);
-    font-size: 14px;
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 5px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--blue) 0 var(--fill, 50%), rgba(255,255,255,.09) var(--fill, 50%) 100%);
   }
 
-  #stats {
+  input[type="range"]::-moz-range-track {
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.09);
+  }
+
+  input[type="range"]::-moz-range-progress {
+    height: 5px;
+    border-radius: 999px;
+    background: var(--blue);
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    width: 17px;
+    height: 17px;
+    margin-top: -6px;
+    appearance: none;
+    -webkit-appearance: none;
+    border: 3px solid #0f1a2d;
+    border-radius: 50%;
+    background: #d8ecff;
+    box-shadow: 0 0 0 1px rgba(111, 183, 255, .55), 0 4px 12px rgba(0,0,0,.35);
+    transition: transform .15s ease;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border: 3px solid #0f1a2d;
+    border-radius: 50%;
+    background: #d8ecff;
+    box-shadow: 0 0 0 1px rgba(111, 183, 255, .55), 0 4px 12px rgba(0,0,0,.35);
+  }
+
+  input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.12); }
+
+  .range-hint {
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px 16px;
-    justify-content: flex-end;
-    align-items: center;
-    color: var(--muted);
-    font-size: 14px;
-  }
-
-  .stat {
-    padding: 6px 10px;
-    border-radius: 8px;
-    background: rgba(255,255,255,0.05);
+    justify-content: space-between;
+    margin-top: 2px;
+    color: #65758f;
+    font-size: 10px;
     font-variant-numeric: tabular-nums;
   }
 
-  #canvasWrap {
-    position: relative;
-    flex: 1;
-    min-height: 0;
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    min-height: 49px;
+    padding: 8px 0;
+    cursor: pointer;
   }
 
-  canvas {
+  .toggle-row + .toggle-row { border-top: 1px solid rgba(167, 192, 232, .08); }
+
+  .toggle-copy strong {
     display: block;
-    width: 100%;
-    height: 100%;
-    background:
-      linear-gradient(transparent 0, transparent calc(100% - 1px), rgba(255,255,255,0.03) 100%),
-      linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), rgba(255,255,255,0.03) 100%);
-    background-size: 80px 80px, 80px 80px;
+    margin-bottom: 3px;
+    font-size: 13px;
   }
 
-  #caption {
-    position: absolute;
-    left: 14px;
-    bottom: 12px;
-    padding: 8px 10px;
-    font-size: 13px;
+  .toggle-copy span {
     color: var(--muted);
-    background: rgba(10,12,18,0.5);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 8px;
-    pointer-events: none;
+    font-size: 11px;
     line-height: 1.35;
   }
 
-  .value {
-    min-width: 34px;
-    display: inline-block;
-    text-align: right;
-    color: var(--text);
+  .switch {
+    position: relative;
+    width: 42px;
+    height: 24px;
+    flex: 0 0 auto;
+  }
+
+  .switch input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
+  .switch-track {
+    position: absolute;
+    inset: 0;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 999px;
+    background: rgba(255,255,255,.09);
+    transition: background .18s ease, border-color .18s ease;
+  }
+
+  .switch-track::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #c6d1e1;
+    box-shadow: 0 3px 9px rgba(0,0,0,.35);
+    transition: transform .18s ease, background .18s ease;
+  }
+
+  .switch input:checked + .switch-track {
+    border-color: rgba(111, 183, 255, .38);
+    background: rgba(59, 149, 242, .65);
+  }
+
+  .switch input:checked + .switch-track::after {
+    transform: translateX(18px);
+    background: #fff;
+  }
+
+  .switch input:focus-visible + .switch-track {
+    outline: 3px solid rgba(111, 183, 255, .3);
+    outline-offset: 3px;
+  }
+
+  .pending {
+    display: none;
+    align-items: flex-start;
+    gap: 9px;
+    margin-top: 15px;
+    padding: 11px;
+    border: 1px solid rgba(255, 178, 95, .23);
+    border-radius: 12px;
+    color: #f5d7b7;
+    background: rgba(255, 178, 95, .07);
+    font-size: 11px;
+    line-height: 1.42;
+  }
+
+  .pending.visible { display: flex; }
+
+  .pending-dot {
+    width: 7px;
+    height: 7px;
+    margin-top: 4px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--orange);
+    box-shadow: 0 0 10px rgba(255, 178, 95, .6);
+  }
+
+  .legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 9px 10px;
+    border: 1px solid rgba(167, 192, 232, .1);
+    border-radius: 11px;
+    color: var(--muted-strong);
+    background: rgba(255,255,255,.025);
+    font-size: 11px;
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    box-shadow: 0 0 9px currentColor;
+  }
+
+  .legend-dot.inside { color: var(--green); background: var(--green); }
+  .legend-dot.escaped { color: var(--orange-strong); background: var(--orange-strong); }
+  .legend-line {
+    width: 12px;
+    height: 2px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: var(--blue);
+    box-shadow: 0 0 9px rgba(111,183,255,.6);
+  }
+  .legend-line.thrust { background: var(--orange); }
+
+  .shortcut-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px 12px;
+    color: var(--muted);
+    font-size: 10px;
+  }
+
+  .shortcut-row span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  kbd {
+    min-width: 21px;
+    padding: 3px 5px;
+    border: 1px solid var(--line-strong);
+    border-bottom-color: rgba(167, 192, 232, .4);
+    border-radius: 6px;
+    color: var(--muted-strong);
+    background: rgba(255,255,255,.04);
+    font: 700 9px/1 "SFMono-Regular", Consolas, monospace;
+    text-align: center;
+  }
+
+  .stage {
+    position: relative;
+    overflow: hidden;
+    background: #070c15;
+  }
+
+  .stage::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 65% 48%, rgba(51, 111, 180, .11), transparent 34%),
+      linear-gradient(180deg, rgba(255,255,255,.014), transparent 22%);
+  }
+
+  .telemetry {
+    position: absolute;
+    z-index: 5;
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(105px, 1fr));
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  .metric {
+    min-width: 0;
+    padding: 10px 11px;
+    border: 1px solid rgba(167, 192, 232, .12);
+    border-radius: 13px;
+    background: rgba(8, 14, 25, .68);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .metric-label {
+    display: block;
+    margin-bottom: 4px;
+    overflow: hidden;
+    color: #74849d;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .metric-value {
+    display: block;
+    overflow: hidden;
+    color: #e9f2ff;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
     font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .metric-value.accent { color: #9dceff; }
+  .metric-value.warm { color: #ffc486; }
+
+  #canvas {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+  }
+
+  .stage-footer {
+    position: absolute;
+    z-index: 6;
+    right: 14px;
+    bottom: 14px;
+    left: 14px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+    pointer-events: none;
+  }
+
+  .explanation {
+    max-width: 560px;
+    padding: 11px 13px;
+    border: 1px solid rgba(167, 192, 232, .12);
+    border-radius: 13px;
+    color: var(--muted);
+    background: rgba(8, 14, 25, .68);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    font-size: 11px;
+    line-height: 1.48;
+  }
+
+  .explanation strong { color: var(--muted-strong); }
+
+  .sim-time {
+    min-width: max-content;
+    padding: 8px 10px;
+    border: 1px solid rgba(167, 192, 232, .1);
+    border-radius: 10px;
+    color: #73839b;
+    background: rgba(8, 14, 25, .58);
+    font: 700 10px/1 "SFMono-Regular", Consolas, monospace;
+  }
+
+  .mobile-controls-button { display: none; }
+
+  .sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+
+  @media (max-width: 1050px) {
+    :root { --panel-width: 292px; }
+    .telemetry { grid-template-columns: repeat(3, minmax(100px, 1fr)); }
+    .metric:nth-child(4),
+    .metric:nth-child(5) { display: none; }
+  }
+
+  @media (max-width: 760px) {
+    .app { grid-template-rows: auto minmax(0, 1fr); }
+
+    .topbar {
+      min-height: 66px;
+      gap: 10px;
+      padding: 11px 12px;
+    }
+
+    .brand-mark { width: 39px; height: 39px; border-radius: 12px; }
+    .eyebrow { display: none; }
+    h1 { font-size: 16px; }
+    .run-state { display: none; }
+    .header-actions .button-label { display: none; }
+    .header-actions .button {
+      width: 40px;
+      padding: 0;
+    }
+    .header-actions .button-primary {
+      width: auto;
+      padding: 0 12px;
+    }
+    .header-actions .button-primary .button-label { display: inline; }
+
+    .workspace {
+      display: block;
+      padding: 9px;
+    }
+
+    .stage {
+      width: 100%;
+      height: 100%;
+      border-radius: 19px;
+    }
+
+    .control-panel {
+      position: absolute;
+      z-index: 30;
+      right: 9px;
+      bottom: 9px;
+      left: 9px;
+      max-height: calc(100% - 84px);
+      border-radius: 20px;
+      transform: translateY(calc(100% + 18px));
+      transition: transform .24s cubic-bezier(.2,.8,.2,1);
+    }
+
+    .control-panel.open { transform: translateY(0); }
+
+    .panel-scroll { padding-top: 17px; }
+
+    .mobile-controls-button {
+      position: absolute;
+      z-index: 12;
+      right: 14px;
+      bottom: 14px;
+      display: inline-flex;
+      pointer-events: auto;
+    }
+
+    .stage-footer {
+      right: 66px;
+      bottom: 14px;
+    }
+
+    .explanation { display: none; }
+
+    .telemetry {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      top: 10px;
+      right: 10px;
+      left: 10px;
+    }
+
+    .metric { padding: 8px 9px; }
+    .metric:nth-child(3) { display: none; }
+  }
+
+  @media (max-width: 430px) {
+    .brand-copy { max-width: 122px; }
+    .header-actions { gap: 6px; }
+    .header-actions .button-primary .button-label { display: none; }
+    .header-actions .button-primary { width: 40px; padding: 0; }
+    .metric-value { font-size: 11px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      transition-duration: .001ms !important;
+      animation-duration: .001ms !important;
+      animation-iteration-count: 1 !important;
+    }
   }
 </style>
 </head>
 <body>
-<div id="app">
-  <div id="controls">
-    <div class="group">
-      <button id="openBtn">Open nozzle</button>
-      <button id="resetBtn">Reset</button>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div class="brand-copy">
+        <p class="eyebrow">Interactive physics</p>
+        <h1>Zero-G Propulsion Lab</h1>
+      </div>
     </div>
 
-    <div class="group">
-      <label for="countSlider">Particles</label>
-      <input id="countSlider" type="range" min="20" max="1500" step="1" value="400">
-      <span class="value" id="countValue">400</span>
+    <div class="topbar-spacer"></div>
+
+    <div class="run-state" id="runState" aria-live="polite">
+      <span class="run-state-dot" aria-hidden="true"></span>
+      <span id="runStateText">Simulation running</span>
     </div>
 
-    <div class="group">
-      <label for="speedSlider">Initial speed</label>
-      <input id="speedSlider" type="range" min="80" max="1000" step="1" value="400">
-      <span class="value" id="speedValue">400</span>
-    </div>
+    <div class="header-actions">
+      <button class="button" id="pauseBtn" type="button" aria-pressed="false" title="Pause or resume (Space)">
+        <svg class="button-icon" id="pauseIcon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M8 5.5v13M16 5.5v13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+        <span class="button-label" id="pauseLabel">Pause</span>
+      </button>
 
-    <div class="group">
-      <label for="massSlider">Particle mass</label>
-      <input id="massSlider" type="range" min="1" max="10" step="1" value="4">
-      <span class="value" id="massValue">4</span>
-    </div>
+      <button class="button" id="resetBtn" type="button" title="Reset experiment (R)">
+        <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20 11a8 8 0 1 0-2.35 5.65M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="button-label">Reset</span>
+      </button>
 
-    <div class="group">
-      <label><input id="vectorsCheck" type="checkbox"> Show velocity vectors</label>
+      <button class="button button-primary" id="openBtn" type="button" title="Open nozzle (N)">
+        <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 8h10v8H4zM14 10h3l3-2v8l-3-2h-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
+        <span class="button-label" id="openLabel">Open nozzle</span>
+      </button>
     </div>
+  </header>
 
-    <div class="group">
-      <label><input id="ppCollisionsCheck" type="checkbox" checked> Particle collisions</label>
-    </div>
+  <main class="workspace">
+    <aside class="control-panel" id="controlPanel" aria-label="Simulation controls">
+      <div class="panel-scroll">
+        <div class="panel-heading">
+          <div>
+            <h2>Experiment setup</h2>
+            <p>Configure the gas before resetting the chamber.</p>
+          </div>
+          <span class="panel-badge">Zero-G</span>
+        </div>
 
-    <div id="stats">
-      <div class="stat" id="speedStat">|v| = 0.00</div>
-      <div class="stat" id="posStat">pos = (0.0, 0.0)</div>
-      <div class="stat" id="angStat">ω = 0.000</div>
-      <div class="stat" id="countStat">inside = 0, escaped = 0</div>
-    </div>
-  </div>
+        <section class="section" aria-labelledby="gasSettingsTitle">
+          <h3 class="section-title" id="gasSettingsTitle">Gas properties</h3>
 
-  <div id="canvasWrap">
-    <canvas id="canvas"></canvas>
-    <div id="caption">
-      Smaller particles, larger particle-count range, and particle-particle collisions added.<br>
-      Closed container: impacts mostly average out. Open nozzle: escaping particles carry momentum away and push the container opposite the opening.
-    </div>
-  </div>
+          <div class="range-control">
+            <div class="range-label">
+              <label for="countSlider">Particle count</label>
+              <output class="range-output" id="countValue" for="countSlider">400</output>
+            </div>
+            <input id="countSlider" type="range" min="20" max="1500" step="1" value="400">
+            <div class="range-hint"><span>20</span><span>1,500</span></div>
+          </div>
+
+          <div class="range-control">
+            <div class="range-label">
+              <label for="speedSlider">Initial speed</label>
+              <output class="range-output" id="speedValue" for="speedSlider">400</output>
+            </div>
+            <input id="speedSlider" type="range" min="80" max="1000" step="1" value="400">
+            <div class="range-hint"><span>80</span><span>1,000 px/s</span></div>
+          </div>
+
+          <div class="range-control">
+            <div class="range-label">
+              <label for="massSlider">Particle mass</label>
+              <output class="range-output" id="massValue" for="massSlider">4</output>
+            </div>
+            <input id="massSlider" type="range" min="1" max="10" step="1" value="4">
+            <div class="range-hint"><span>1</span><span>10 units</span></div>
+          </div>
+
+          <div class="pending" id="pendingNotice" role="status">
+            <span class="pending-dot" aria-hidden="true"></span>
+            <span>Settings changed. Press <strong>Reset</strong> to apply them to a new chamber.</span>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="displaySettingsTitle">
+          <h3 class="section-title" id="displaySettingsTitle">Model &amp; display</h3>
+
+          <label class="toggle-row" for="vectorsCheck">
+            <span class="toggle-copy">
+              <strong>Velocity vectors</strong>
+              <span>Show particle and chamber motion.</span>
+            </span>
+            <span class="switch">
+              <input id="vectorsCheck" type="checkbox">
+              <span class="switch-track" aria-hidden="true"></span>
+            </span>
+          </label>
+
+          <label class="toggle-row" for="ppCollisionsCheck">
+            <span class="toggle-copy">
+              <strong>Particle collisions</strong>
+              <span>Enable elastic gas-particle impacts.</span>
+            </span>
+            <span class="switch">
+              <input id="ppCollisionsCheck" type="checkbox" checked>
+              <span class="switch-track" aria-hidden="true"></span>
+            </span>
+          </label>
+        </section>
+
+        <section class="section" aria-labelledby="legendTitle">
+          <h3 class="section-title" id="legendTitle">Visual key</h3>
+          <div class="legend">
+            <div class="legend-item"><span class="legend-dot inside"></span><span>Contained</span></div>
+            <div class="legend-item"><span class="legend-dot escaped"></span><span>Escaped</span></div>
+            <div class="legend-item"><span class="legend-line"></span><span>Velocity</span></div>
+            <div class="legend-item"><span class="legend-line thrust"></span><span>Thrust</span></div>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="shortcutsTitle">
+          <h3 class="section-title" id="shortcutsTitle">Shortcuts</h3>
+          <div class="shortcut-row">
+            <span><kbd>Space</kbd> Pause</span>
+            <span><kbd>N</kbd> Nozzle</span>
+            <span><kbd>R</kbd> Reset</span>
+          </div>
+        </section>
+      </div>
+    </aside>
+
+    <section class="stage" id="stage" aria-label="Zero-gravity syringe simulation">
+      <div class="telemetry" aria-live="polite">
+        <div class="metric">
+          <span class="metric-label">Chamber speed</span>
+          <span class="metric-value accent" id="speedStat">0.00 px/s</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Position</span>
+          <span class="metric-value" id="posStat">(0.0, 0.0)</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Angular rate</span>
+          <span class="metric-value" id="angStat">0.000 rad/s</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Inside</span>
+          <span class="metric-value" id="insideStat">0</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Escaped</span>
+          <span class="metric-value warm" id="escapedStat">0</span>
+        </div>
+      </div>
+
+      <canvas id="canvas">
+        Your browser does not support the canvas element required by this simulation.
+      </canvas>
+
+      <div class="stage-footer">
+        <div class="explanation">
+          <strong>What to observe:</strong> With the chamber closed, internal impacts largely cancel. Open the nozzle and escaping particles carry momentum to the right, accelerating the chamber in the opposite direction.
+        </div>
+        <div class="sim-time" id="timeStat">T+ 0.00 s</div>
+      </div>
+
+      <button class="button mobile-controls-button" id="mobileControlsBtn" type="button" aria-expanded="false" aria-controls="controlPanel">
+        Controls
+      </button>
+    </section>
+  </main>
+
+  <div class="sr-only" id="announcement" aria-live="assertive"></div>
 </div>
 
 <script>
 (() => {
   "use strict";
 
-  const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d");
+  const $ = (id) => document.getElementById(id);
+  const canvas = $("canvas");
+  const ctx = canvas.getContext("2d", { alpha: false });
 
-  const openBtn = document.getElementById("openBtn");
-  const resetBtn = document.getElementById("resetBtn");
-  const countSlider = document.getElementById("countSlider");
-  const speedSlider = document.getElementById("speedSlider");
-  const massSlider = document.getElementById("massSlider");
-  const vectorsCheck = document.getElementById("vectorsCheck");
-  const ppCollisionsCheck = document.getElementById("ppCollisionsCheck");
+  const ui = {
+    stage: $("stage"),
+    controlPanel: $("controlPanel"),
+    openBtn: $("openBtn"),
+    openLabel: $("openLabel"),
+    resetBtn: $("resetBtn"),
+    pauseBtn: $("pauseBtn"),
+    pauseLabel: $("pauseLabel"),
+    pauseIcon: $("pauseIcon"),
+    runState: $("runState"),
+    runStateText: $("runStateText"),
+    mobileControlsBtn: $("mobileControlsBtn"),
+    countSlider: $("countSlider"),
+    speedSlider: $("speedSlider"),
+    massSlider: $("massSlider"),
+    vectorsCheck: $("vectorsCheck"),
+    ppCollisionsCheck: $("ppCollisionsCheck"),
+    countValue: $("countValue"),
+    speedValue: $("speedValue"),
+    massValue: $("massValue"),
+    pendingNotice: $("pendingNotice"),
+    speedStat: $("speedStat"),
+    posStat: $("posStat"),
+    angStat: $("angStat"),
+    insideStat: $("insideStat"),
+    escapedStat: $("escapedStat"),
+    timeStat: $("timeStat"),
+    announcement: $("announcement")
+  };
 
-  const countValue = document.getElementById("countValue");
-  const speedValue = document.getElementById("speedValue");
-  const massValue = document.getElementById("massValue");
+  const TAU = Math.PI * 2;
+  const FIXED_DT = 1 / 180;
+  const PARTICLE_RADIUS = 1.35;
+  const MAX_BODY_SPEED = 500;
+  const MAX_PARTICLE_SPEED = 1100;
+  const CONTAINER_MASS = 140;
 
-  const speedStat = document.getElementById("speedStat");
-  const posStat = document.getElementById("posStat");
-  const angStat = document.getElementById("angStat");
-  const countStat = document.getElementById("countStat");
-
-  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-  function rand(min, max) { return min + Math.random() * (max - min); }
-  function dot(ax, ay, bx, by) { return ax * bx + ay * by; }
-  function cross2(ax, ay, bx, by) { return ax * by - ay * bx; }
-  function hypot(x, y) { return Math.hypot(x, y); }
-
-  function rotateLocalToWorld(x, y, angle) {
-    const c = Math.cos(angle), s = Math.sin(angle);
-    return { x: x * c - y * s, y: x * s + y * c };
-  }
-
-  function worldToLocal(wx, wy, body) {
-    const dx = wx - body.x;
-    const dy = wy - body.y;
-    const c = Math.cos(-body.angle), s = Math.sin(-body.angle);
-    return { x: dx * c - dy * s, y: dx * s + dy * c };
-  }
-
-  function localToWorld(lx, ly, body) {
-    const c = Math.cos(body.angle), s = Math.sin(body.angle);
-    return {
-      x: body.x + lx * c - ly * s,
-      y: body.y + lx * s + ly * c
-    };
-  }
+  let accumulator = 0;
+  let lastTime = performance.now();
+  let statsClock = 0;
+  let stars = [];
 
   const sim = {
     container: null,
     particles: [],
     nozzleOpen: false,
     escapedCount: 0,
-    time: 0
+    time: 0,
+    paused: false,
+    applied: { count: 400, speed: 400, mass: 4 }
   };
 
-  const FIXED_DT = 1 / 240;
-  let accumulator = 0;
-  let lastTime = performance.now();
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
 
-  // Smaller dots than before
-  const PARTICLE_RADIUS = 1.2;
+  function rand(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
+  function dot(ax, ay, bx, by) {
+    return ax * bx + ay * by;
+  }
+
+  function cross2(ax, ay, bx, by) {
+    return ax * by - ay * bx;
+  }
+
+  function rotateLocalToWorld(x, y, angle) {
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    return { x: x * c - y * s, y: x * s + y * c };
+  }
+
+  function worldToLocal(wx, wy, body) {
+    const dx = wx - body.x;
+    const dy = wy - body.y;
+    const c = Math.cos(body.angle);
+    const s = Math.sin(body.angle);
+    return { x: dx * c + dy * s, y: -dx * s + dy * c };
+  }
+
+  function localToWorld(lx, ly, body) {
+    const c = Math.cos(body.angle);
+    const s = Math.sin(body.angle);
+    return {
+      x: body.x + lx * c - ly * s,
+      y: body.y + lx * s + ly * c
+    };
+  }
+
+  function roundedRectPath(context, x, y, width, height, radius) {
+    const r = Math.min(radius, width / 2, height / 2);
+    context.beginPath();
+    context.moveTo(x + r, y);
+    context.arcTo(x + width, y, x + width, y + height, r);
+    context.arcTo(x + width, y + height, x, y + height, r);
+    context.arcTo(x, y + height, x, y, r);
+    context.arcTo(x, y, x + width, y, r);
+    context.closePath();
+  }
+
+  function announce(message) {
+    ui.announcement.textContent = "";
+    requestAnimationFrame(() => { ui.announcement.textContent = message; });
+  }
+
+  function currentSettings() {
+    return {
+      count: Number(ui.countSlider.value),
+      speed: Number(ui.speedSlider.value),
+      mass: Number(ui.massSlider.value)
+    };
+  }
+
+  function setRangeFill(input) {
+    const min = Number(input.min);
+    const max = Number(input.max);
+    const value = Number(input.value);
+    const percentage = ((value - min) / (max - min)) * 100;
+    input.style.setProperty("--fill", `${percentage}%`);
+  }
+
+  function updateControlValues(markDirty = true) {
+    ui.countValue.textContent = Number(ui.countSlider.value).toLocaleString();
+    ui.speedValue.textContent = `${ui.speedSlider.value}`;
+    ui.massValue.textContent = `${ui.massSlider.value}`;
+
+    setRangeFill(ui.countSlider);
+    setRangeFill(ui.speedSlider);
+    setRangeFill(ui.massSlider);
+
+    if (markDirty && sim.container) {
+      const next = currentSettings();
+      const dirty =
+        next.count !== sim.applied.count ||
+        next.speed !== sim.applied.speed ||
+        next.mass !== sim.applied.mass;
+      ui.pendingNotice.classList.toggle("visible", dirty);
+    }
+  }
+
+  function rebuildStars(width, height) {
+    const count = Math.max(35, Math.floor((width * height) / 15000));
+    const next = [];
+    let seed = 9173;
+
+    function seededRandom() {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    }
+
+    for (let i = 0; i < count; i++) {
+      next.push({
+        x: seededRandom() * width,
+        y: seededRandom() * height,
+        size: seededRandom() < 0.9 ? 0.55 : 1,
+        alpha: 0.12 + seededRandom() * 0.26
+      });
+    }
+    stars = next;
+  }
 
   function resizeCanvas() {
-    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
     const rect = canvas.getBoundingClientRect();
-    canvas.width = Math.round(rect.width * dpr);
-    canvas.height = Math.round(rect.height * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-  window.addEventListener("resize", resizeCanvas);
-  resizeCanvas();
+    const dpr = clamp(window.devicePixelRatio || 1, 1, 2);
+    const width = Math.max(1, Math.round(rect.width * dpr));
+    const height = Math.max(1, Math.round(rect.height * dpr));
 
-  function updateDisplayedValues() {
-    countValue.textContent = countSlider.value;
-    speedValue.textContent = speedSlider.value;
-    massValue.textContent = massSlider.value;
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      rebuildStars(rect.width, rect.height);
+    }
+  }
+
+  function placeParticles(count, width, height, radius) {
+    const positions = [];
+    const spacing = radius * 2.35;
+    const cellSize = spacing;
+    const grid = new Map();
+    const marginX = Math.max(10, width * 0.035);
+    const marginY = Math.max(8, height * 0.08);
+    const minX = -width / 2 + radius + marginX;
+    const maxX = width / 2 - radius - marginX - Math.max(10, width * 0.035);
+    const minY = -height / 2 + radius + marginY;
+    const maxY = height / 2 - radius - marginY;
+
+    const key = (x, y) => `${x},${y}`;
+    const insert = (point, index) => {
+      const gx = Math.floor(point.x / cellSize);
+      const gy = Math.floor(point.y / cellSize);
+      const k = key(gx, gy);
+      if (!grid.has(k)) grid.set(k, []);
+      grid.get(k).push(index);
+    };
+
+    const canPlace = (x, y) => {
+      const gx = Math.floor(x / cellSize);
+      const gy = Math.floor(y / cellSize);
+      for (let ox = -1; ox <= 1; ox++) {
+        for (let oy = -1; oy <= 1; oy++) {
+          const bucket = grid.get(key(gx + ox, gy + oy));
+          if (!bucket) continue;
+          for (const index of bucket) {
+            const other = positions[index];
+            const dx = x - other.x;
+            const dy = y - other.y;
+            if (dx * dx + dy * dy < spacing * spacing) return false;
+          }
+        }
+      }
+      return true;
+    };
+
+    const maxAttempts = Math.max(18000, count * 45);
+    let attempts = 0;
+    while (positions.length < count && attempts < maxAttempts) {
+      attempts++;
+      const x = rand(minX, maxX);
+      const y = rand(minY, maxY);
+      if (!canPlace(x, y)) continue;
+      const point = { x, y };
+      positions.push(point);
+      insert(point, positions.length - 1);
+    }
+
+    // At extreme density, finish with a lightly jittered lattice.
+    if (positions.length < count) {
+      const latticeStep = spacing * 1.02;
+      for (let y = minY; y <= maxY && positions.length < count; y += latticeStep) {
+        for (let x = minX; x <= maxX && positions.length < count; x += latticeStep) {
+          const px = x + rand(-0.08, 0.08) * radius;
+          const py = y + rand(-0.08, 0.08) * radius;
+          if (!canPlace(px, py)) continue;
+          const point = { x: px, y: py };
+          positions.push(point);
+          insert(point, positions.length - 1);
+        }
+      }
+    }
+
+    return positions;
   }
 
   function resetSimulation() {
+    resizeCanvas();
     const rect = canvas.getBoundingClientRect();
-    const startX = rect.width * 0.62;
-    const startY = rect.height * 0.56;
+    const settings = currentSettings();
+    sim.applied = settings;
 
-    const w = 320;
-    const h = 120;
-    const particleCount = +countSlider.value;
-    const baseSpeed = +speedSlider.value;
-
-    // Particle mass from slider (1..10)
-    const particleMass = +massSlider.value;
-
-    const containerMass = 140;
-    const apertureHalf = h * 0.27;
+    const width = clamp(rect.width * (rect.width < 560 ? 0.66 : 0.46), 245, 360);
+    const height = clamp(width * 0.36, 92, 130);
+    const startX = clamp(rect.width * 0.60, width * 0.55 + 30, rect.width - width * 0.55 - 30);
+    const startY = clamp(rect.height * 0.56, height * 0.55 + 88, rect.height - height * 0.55 - 55);
 
     sim.container = {
       x: startX,
@@ -283,110 +1284,80 @@
       vy: 0,
       angle: 0,
       angVel: 0,
-      w,
-      h,
-      mass: containerMass,
-      inertia: containerMass * (w * w + h * h) / 12,
-      apertureHalf
+      w: width,
+      h: height,
+      mass: CONTAINER_MASS,
+      inertia: CONTAINER_MASS * (width * width + height * height) / 12,
+      apertureHalf: height * 0.27
     };
 
     sim.particles = [];
     sim.nozzleOpen = false;
     sim.escapedCount = 0;
     sim.time = 0;
+    accumulator = 0;
 
-    const locals = [];
-    const maxTries = 10000;
-    const marginX = 12;
-    const marginY = 10;
-    const r = PARTICLE_RADIUS;
+    const locals = placeParticles(settings.count, width, height, PARTICLE_RADIUS);
+    const velocities = locals.map(() => {
+      const angle = rand(0, TAU);
+      const speed = settings.speed * rand(0.8, 1.2);
+      return { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed };
+    });
 
-    // Place particles without overlaps.
-    for (let i = 0; i < particleCount; i++) {
-      let placed = false;
-      for (let t = 0; t < maxTries && !placed; t++) {
-        const lx = rand(-w * 0.5 + r + marginX, w * 0.5 - r - marginX - 14);
-        const ly = rand(-h * 0.5 + r + marginY, h * 0.5 - r - marginY);
-
-        let ok = true;
-        for (let j = 0; j < locals.length; j++) {
-          const dx = lx - locals[j].x;
-          const dy = ly - locals[j].y;
-          const minDist = r * 2.2;
-          if (dx * dx + dy * dy < minDist * minDist) {
-            ok = false;
-            break;
-          }
-        }
-        if (ok) {
-          locals.push({ x: lx, y: ly });
-          placed = true;
-        }
-      }
-    }
-
-    // Random initial velocities
-    const velocities = [];
-    for (let i = 0; i < locals.length; i++) {
-      const a = rand(0, Math.PI * 2);
-      const s = baseSpeed * rand(0.8, 1.2);
-      velocities.push({ x: Math.cos(a) * s, y: Math.sin(a) * s });
-    }
-
-    // Remove net linear momentum
-    let meanVx = 0, meanVy = 0;
-    for (let i = 0; i < velocities.length; i++) {
-      meanVx += velocities[i].x;
-      meanVy += velocities[i].y;
+    let meanVx = 0;
+    let meanVy = 0;
+    for (const velocity of velocities) {
+      meanVx += velocity.x;
+      meanVy += velocity.y;
     }
     meanVx /= velocities.length || 1;
     meanVy /= velocities.length || 1;
-    for (let i = 0; i < velocities.length; i++) {
-      velocities[i].x -= meanVx;
-      velocities[i].y -= meanVy;
+    for (const velocity of velocities) {
+      velocity.x -= meanVx;
+      velocity.y -= meanVy;
     }
 
-    // Remove net angular momentum relative to particle COM
-    let cmx = 0, cmy = 0;
-    for (let i = 0; i < locals.length; i++) {
-      cmx += locals[i].x;
-      cmy += locals[i].y;
+    let cmx = 0;
+    let cmy = 0;
+    for (const point of locals) {
+      cmx += point.x;
+      cmy += point.y;
     }
     cmx /= locals.length || 1;
     cmy /= locals.length || 1;
 
-    let L = 0;
-    let I = 0;
+    let angularMomentum = 0;
+    let rotationalInertia = 0;
     for (let i = 0; i < locals.length; i++) {
       const rx = locals[i].x - cmx;
       const ry = locals[i].y - cmy;
-      L += particleMass * cross2(rx, ry, velocities[i].x, velocities[i].y);
-      I += particleMass * (rx * rx + ry * ry);
+      angularMomentum += settings.mass * cross2(rx, ry, velocities[i].x, velocities[i].y);
+      rotationalInertia += settings.mass * (rx * rx + ry * ry);
     }
-    const omegaCorr = I > 1e-9 ? L / I : 0;
+
+    const angularCorrection = rotationalInertia > 1e-9
+      ? angularMomentum / rotationalInertia
+      : 0;
 
     for (let i = 0; i < locals.length; i++) {
       const rx = locals[i].x - cmx;
       const ry = locals[i].y - cmy;
-      velocities[i].x -= -omegaCorr * ry;
-      velocities[i].y -=  omegaCorr * rx;
+      velocities[i].x += angularCorrection * ry;
+      velocities[i].y -= angularCorrection * rx;
     }
 
-    // Re-remove any tiny net linear momentum introduced by the angular correction
     meanVx = 0;
     meanVy = 0;
-    for (let i = 0; i < velocities.length; i++) {
-      meanVx += velocities[i].x;
-      meanVy += velocities[i].y;
+    for (const velocity of velocities) {
+      meanVx += velocity.x;
+      meanVy += velocity.y;
     }
     meanVx /= velocities.length || 1;
     meanVy /= velocities.length || 1;
-    for (let i = 0; i < velocities.length; i++) {
-      velocities[i].x -= meanVx;
-      velocities[i].y -= meanVy;
-    }
 
     for (let i = 0; i < locals.length; i++) {
+      velocities[i].x -= meanVx;
+      velocities[i].y -= meanVy;
       const world = localToWorld(locals[i].x, locals[i].y, sim.container);
       sim.particles.push({
         x: world.x,
@@ -394,99 +1365,106 @@
         vx: velocities[i].x,
         vy: velocities[i].y,
         radius: PARTICLE_RADIUS,
-        mass: particleMass,
+        mass: settings.mass,
         escaped: false
       });
     }
 
-    openBtn.disabled = false;
-    updateDisplayedValues();
-    updateStats();
+    ui.openBtn.disabled = false;
+    ui.openBtn.classList.remove("is-open");
+    ui.openLabel.textContent = "Open nozzle";
+    ui.pendingNotice.classList.remove("visible");
+    announce(`Experiment reset with ${sim.particles.length} particles.`);
+    updateStats(true);
   }
 
-  function getContainerCollisionCandidate(p, body) {
-    const q = worldToLocal(p.x, p.y, body);
-    const r = p.radius;
-    const halfW = body.w * 0.5;
-    const halfH = body.h * 0.5;
+  function getContainerCollisionCandidate(particle, body) {
+    const local = worldToLocal(particle.x, particle.y, body);
+    const r = particle.radius;
+    const halfW = body.w / 2;
+    const halfH = body.h / 2;
     const apertureHalf = body.apertureHalf;
 
-    if (sim.nozzleOpen && q.x > halfW + r * 1.1 && Math.abs(q.y) < apertureHalf - r * 0.15) {
-      p.escaped = true;
+    if (
+      sim.nozzleOpen &&
+      local.x > halfW + r * 1.1 &&
+      Math.abs(local.y) < apertureHalf - r * 0.15
+    ) {
+      particle.escaped = true;
       sim.escapedCount++;
       return null;
     }
 
     let best = null;
-    function consider(candidate) {
+    const consider = (candidate) => {
       if (!candidate || candidate.penetration <= 0) return;
       if (!best || candidate.penetration > best.penetration) best = candidate;
-    }
+    };
 
-    const penLeft = (-halfW + r) - q.x;
+    const penLeft = (-halfW + r) - local.x;
     if (penLeft > 0) {
       consider({
         penetration: penLeft,
         normalLocal: { x: 1, y: 0 },
-        contactLocal: { x: -halfW, y: clamp(q.y, -halfH, halfH) }
+        contactLocal: { x: -halfW, y: clamp(local.y, -halfH, halfH) }
       });
     }
 
-    const penTop = q.y - (halfH - r);
+    const penTop = local.y - (halfH - r);
     if (penTop > 0) {
       consider({
         penetration: penTop,
         normalLocal: { x: 0, y: -1 },
-        contactLocal: { x: clamp(q.x, -halfW, halfW), y: halfH }
+        contactLocal: { x: clamp(local.x, -halfW, halfW), y: halfH }
       });
     }
 
-    const penBottom = (-halfH + r) - q.y;
+    const penBottom = (-halfH + r) - local.y;
     if (penBottom > 0) {
       consider({
         penetration: penBottom,
         normalLocal: { x: 0, y: 1 },
-        contactLocal: { x: clamp(q.x, -halfW, halfW), y: -halfH }
+        contactLocal: { x: clamp(local.x, -halfW, halfW), y: -halfH }
       });
     }
 
-    const penRight = q.x - (halfW - r);
+    const penRight = local.x - (halfW - r);
     if (penRight > 0) {
       if (!sim.nozzleOpen) {
         consider({
           penetration: penRight,
           normalLocal: { x: -1, y: 0 },
-          contactLocal: { x: halfW, y: clamp(q.y, -halfH, halfH) }
+          contactLocal: { x: halfW, y: clamp(local.y, -halfH, halfH) }
         });
       } else {
-        const inAperture = Math.abs(q.y) < apertureHalf - r * 0.15;
+        const insideAperture = Math.abs(local.y) < apertureHalf - r * 0.15;
 
-        if (!inAperture) {
-          const yContact = q.y >= 0
-            ? clamp(q.y, apertureHalf, halfH)
-            : clamp(q.y, -halfH, -apertureHalf);
+        if (!insideAperture) {
+          const contactY = local.y >= 0
+            ? clamp(local.y, apertureHalf, halfH)
+            : clamp(local.y, -halfH, -apertureHalf);
 
           consider({
             penetration: penRight,
             normalLocal: { x: -1, y: 0 },
-            contactLocal: { x: halfW, y: yContact }
+            contactLocal: { x: halfW, y: contactY }
           });
         }
 
         const corners = [
-          { x: halfW, y:  apertureHalf },
+          { x: halfW, y: apertureHalf },
           { x: halfW, y: -apertureHalf }
         ];
 
-        for (let i = 0; i < corners.length; i++) {
-          const dx = q.x - corners[i].x;
-          const dy = q.y - corners[i].y;
-          const dist = Math.hypot(dx, dy);
-          if (dist < r && dist > 1e-8) {
+        for (const corner of corners) {
+          const dx = local.x - corner.x;
+          const dy = local.y - corner.y;
+          const distance = Math.hypot(dx, dy);
+          if (distance < r && distance > 1e-8) {
             consider({
-              penetration: r - dist,
-              normalLocal: { x: dx / dist, y: dy / dist },
-              contactLocal: { x: corners[i].x, y: corners[i].y }
+              penetration: r - distance,
+              normalLocal: { x: dx / distance, y: dy / distance },
+              contactLocal: corner
             });
           }
         }
@@ -496,365 +1474,633 @@
     return best;
   }
 
-  function resolveParticleContainerCollision(p, body, candidate) {
+  function resolveParticleContainerCollision(particle, body, candidate) {
     if (!candidate) return;
 
-    const nWorld = rotateLocalToWorld(candidate.normalLocal.x, candidate.normalLocal.y, body.angle);
-    const contactWorld = localToWorld(candidate.contactLocal.x, candidate.contactLocal.y, body);
+    const normal = rotateLocalToWorld(
+      candidate.normalLocal.x,
+      candidate.normalLocal.y,
+      body.angle
+    );
+    const contact = localToWorld(
+      candidate.contactLocal.x,
+      candidate.contactLocal.y,
+      body
+    );
 
-    // Push particle out of penetration
-    const slop = 0.02;
-    p.x += nWorld.x * (candidate.penetration + slop);
-    p.y += nWorld.y * (candidate.penetration + slop);
+    particle.x += normal.x * (candidate.penetration + 0.02);
+    particle.y += normal.y * (candidate.penetration + 0.02);
 
-    // Velocity of body surface point at contact
-    const rx = contactWorld.x - body.x;
-    const ry = contactWorld.y - body.y;
-    const vcx = body.vx - body.angVel * ry;
-    const vcy = body.vy + body.angVel * rx;
+    const rx = contact.x - body.x;
+    const ry = contact.y - body.y;
+    const contactVx = body.vx - body.angVel * ry;
+    const contactVy = body.vy + body.angVel * rx;
+    const relativeVx = particle.vx - contactVx;
+    const relativeVy = particle.vy - contactVy;
+    const relativeNormalSpeed = dot(relativeVx, relativeVy, normal.x, normal.y);
 
-    const rvx = p.vx - vcx;
-    const rvy = p.vy - vcy;
-    const relN = dot(rvx, rvy, nWorld.x, nWorld.y);
+    if (relativeNormalSpeed >= 0) return;
 
-    if (relN >= 0) return;
+    const restitution = 1;
+    const rCrossN = cross2(rx, ry, normal.x, normal.y);
+    const inverseMass =
+      1 / particle.mass +
+      1 / body.mass +
+      (rCrossN * rCrossN) / body.inertia;
 
-    const e = 1.0;
-    const rCrossN = cross2(rx, ry, nWorld.x, nWorld.y);
-    const invMassTerm = (1 / p.mass) + (1 / body.mass) + (rCrossN * rCrossN) / body.inertia;
+    const impulse = clamp(
+      -(1 + restitution) * relativeNormalSpeed / inverseMass,
+      0,
+      5000
+    );
+    const impulseX = impulse * normal.x;
+    const impulseY = impulse * normal.y;
 
-    let j = -(1 + e) * relN / invMassTerm;
-    j = clamp(j, 0, 5000);
-
-    const jx = j * nWorld.x;
-    const jy = j * nWorld.y;
-
-    // Particle
-    p.vx += jx / p.mass;
-    p.vy += jy / p.mass;
-
-    // Equal and opposite impulse on container
-    body.vx -= jx / body.mass;
-    body.vy -= jy / body.mass;
-    body.angVel -= cross2(rx, ry, jx, jy) / body.inertia;
+    particle.vx += impulseX / particle.mass;
+    particle.vy += impulseY / particle.mass;
+    body.vx -= impulseX / body.mass;
+    body.vy -= impulseY / body.mass;
+    body.angVel -= cross2(rx, ry, impulseX, impulseY) / body.inertia;
   }
 
-  // Elastic particle-particle collision with positional correction.
-  function resolveParticleParticleCollision(a, b) {
+  function resolveParticlePair(a, b) {
     const dx = b.x - a.x;
     const dy = b.y - a.y;
-    let dist2 = dx * dx + dy * dy;
-    const minDist = a.radius + b.radius;
+    const minDistance = a.radius + b.radius;
+    const distanceSquared = dx * dx + dy * dy;
 
-    if (dist2 >= minDist * minDist) return;
+    if (distanceSquared >= minDistance * minDistance) return;
 
-    let dist = Math.sqrt(dist2);
-    let nx, ny;
+    let distance = Math.sqrt(distanceSquared);
+    let nx;
+    let ny;
 
-    if (dist < 1e-8) {
-      // Rare exact overlap fallback
-      const angle = Math.random() * Math.PI * 2;
+    if (distance < 1e-8) {
+      const angle = rand(0, TAU);
       nx = Math.cos(angle);
       ny = Math.sin(angle);
-      dist = 0;
+      distance = 0;
     } else {
-      nx = dx / dist;
-      ny = dy / dist;
+      nx = dx / distance;
+      ny = dy / distance;
     }
 
-    const penetration = minDist - dist;
+    const penetration = minDistance - distance;
+    const inverseMassA = 1 / a.mass;
+    const inverseMassB = 1 / b.mass;
+    const inverseMassTotal = inverseMassA + inverseMassB;
 
-    // Symmetric positional correction
-    const totalInvMass = (1 / a.mass) + (1 / b.mass);
-    const moveA = penetration * (1 / a.mass) / totalInvMass;
-    const moveB = penetration * (1 / b.mass) / totalInvMass;
-
+    const moveA = penetration * inverseMassA / inverseMassTotal;
+    const moveB = penetration * inverseMassB / inverseMassTotal;
     a.x -= nx * moveA;
     a.y -= ny * moveA;
     b.x += nx * moveB;
     b.y += ny * moveB;
 
-    // Relative velocity
-    const rvx = b.vx - a.vx;
-    const rvy = b.vy - a.vy;
-    const velAlongNormal = rvx * nx + rvy * ny;
+    const relativeVx = b.vx - a.vx;
+    const relativeVy = b.vy - a.vy;
+    const normalSpeed = relativeVx * nx + relativeVy * ny;
+    if (normalSpeed > 0) return;
 
-    // If separating, only positional correction is needed
-    if (velAlongNormal > 0) return;
-
-    const e = 1.0;
-    let j = -(1 + e) * velAlongNormal / totalInvMass;
-    j = clamp(j, 0, 5000);
-
-    const jx = j * nx;
-    const jy = j * ny;
-
-    a.vx -= jx / a.mass;
-    a.vy -= jy / a.mass;
-    b.vx += jx / b.mass;
-    b.vy += jy / b.mass;
+    const impulse = clamp(-(1 + 1) * normalSpeed / inverseMassTotal, 0, 5000);
+    const impulseX = impulse * nx;
+    const impulseY = impulse * ny;
+    a.vx -= impulseX * inverseMassA;
+    a.vy -= impulseY * inverseMassA;
+    b.vx += impulseX * inverseMassB;
+    b.vy += impulseY * inverseMassB;
   }
 
-  function step(dt) {
-    const body = sim.container;
+  function resolveParticleCollisions() {
+    const cellSize = PARTICLE_RADIUS * 2.25;
+    const offsets = [
+      [0, 0],
+      [1, 0],
+      [0, 1],
+      [1, 1],
+      [-1, 1]
+    ];
 
-    // Integrate container
-    body.x += body.vx * dt;
-    body.y += body.vy * dt;
-    body.angle += body.angVel * dt;
+    for (let pass = 0; pass < 2; pass++) {
+      const grid = new Map();
 
-    if (body.angle > Math.PI) body.angle -= Math.PI * 2;
-    if (body.angle < -Math.PI) body.angle += Math.PI * 2;
+      for (let i = 0; i < sim.particles.length; i++) {
+        const particle = sim.particles[i];
+        const gx = Math.floor(particle.x / cellSize);
+        const gy = Math.floor(particle.y / cellSize);
+        const key = `${gx},${gy}`;
+        if (!grid.has(key)) grid.set(key, []);
+        grid.get(key).push(i);
+      }
 
-    // Integrate particles
-    for (let i = 0; i < sim.particles.length; i++) {
-      const p = sim.particles[i];
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-    }
+      for (const [key, indices] of grid) {
+        const comma = key.indexOf(",");
+        const gx = Number(key.slice(0, comma));
+        const gy = Number(key.slice(comma + 1));
 
-    // Resolve particle-particle collisions (optional).
-    // NOTE: This is the expensive O(n^2) part. Uncheck "Particle collisions" for gas-like behavior + speed.
-    if (ppCollisionsCheck.checked) {
-      // Multiple passes improve stability when several particles bunch together.
-      for (let pass = 0; pass < 2; pass++) {
-        for (let i = 0; i < sim.particles.length; i++) {
-          const a = sim.particles[i];
-          for (let j = i + 1; j < sim.particles.length; j++) {
-            const b = sim.particles[j];
-            resolveParticleParticleCollision(a, b);
+        for (const [ox, oy] of offsets) {
+          const neighbor = grid.get(`${gx + ox},${gy + oy}`);
+          if (!neighbor) continue;
+
+          if (ox === 0 && oy === 0) {
+            for (let aIndex = 0; aIndex < indices.length; aIndex++) {
+              for (let bIndex = aIndex + 1; bIndex < indices.length; bIndex++) {
+                resolveParticlePair(
+                  sim.particles[indices[aIndex]],
+                  sim.particles[indices[bIndex]]
+                );
+              }
+            }
+          } else {
+            for (const aIndex of indices) {
+              for (const bIndex of neighbor) {
+                resolveParticlePair(sim.particles[aIndex], sim.particles[bIndex]);
+              }
+            }
           }
         }
       }
     }
+  }
 
-    // Resolve particle-container collisions.
+  function step(dt) {
+    const body = sim.container;
+    if (!body) return;
+
+    body.x += body.vx * dt;
+    body.y += body.vy * dt;
+    body.angle += body.angVel * dt;
+
+    if (body.angle > Math.PI) body.angle -= TAU;
+    if (body.angle < -Math.PI) body.angle += TAU;
+
+    for (const particle of sim.particles) {
+      particle.x += particle.vx * dt;
+      particle.y += particle.vy * dt;
+    }
+
+    if (ui.ppCollisionsCheck.checked) {
+      resolveParticleCollisions();
+    }
+
     for (let pass = 0; pass < 3; pass++) {
-      for (let i = 0; i < sim.particles.length; i++) {
-        const p = sim.particles[i];
-        if (p.escaped) continue;
-        const candidate = getContainerCollisionCandidate(p, body);
-        if (candidate) resolveParticleContainerCollision(p, body, candidate);
+      for (const particle of sim.particles) {
+        if (particle.escaped) continue;
+        const candidate = getContainerCollisionCandidate(particle, body);
+        if (candidate) {
+          resolveParticleContainerCollision(particle, body, candidate);
+        }
       }
     }
 
-    // Safety clamps
-    const bodySpeed = hypot(body.vx, body.vy);
-    if (bodySpeed > 500) {
-      const s = 500 / bodySpeed;
-      body.vx *= s;
-      body.vy *= s;
+    const bodySpeed = Math.hypot(body.vx, body.vy);
+    if (bodySpeed > MAX_BODY_SPEED) {
+      const scale = MAX_BODY_SPEED / bodySpeed;
+      body.vx *= scale;
+      body.vy *= scale;
     }
     body.angVel = clamp(body.angVel, -8, 8);
 
-    for (let i = 0; i < sim.particles.length; i++) {
-      const p = sim.particles[i];
-      const sp = hypot(p.vx, p.vy);
-      if (sp > 550) {
-        const s = 550 / sp;
-        p.vx *= s;
-        p.vy *= s;
+    for (const particle of sim.particles) {
+      const speed = Math.hypot(particle.vx, particle.vy);
+      if (speed > MAX_PARTICLE_SPEED) {
+        const scale = MAX_PARTICLE_SPEED / speed;
+        particle.vx *= scale;
+        particle.vy *= scale;
       }
     }
 
     sim.time += dt;
   }
 
-  function drawArrow(x1, y1, x2, y2, color, width = 2, head = 8) {
+  function drawArrow(x1, y1, x2, y2, color, width = 2, head = 8, dashed = false) {
     const dx = x2 - x1;
     const dy = y2 - y1;
-    const len = Math.hypot(dx, dy);
-    if (len < 1e-6) return;
+    const length = Math.hypot(dx, dy);
+    if (length < 1e-6) return;
 
-    const ux = dx / len;
-    const uy = dy / len;
+    const ux = dx / length;
+    const uy = dy / length;
     const px = -uy;
     const py = ux;
 
+    ctx.save();
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
     ctx.lineWidth = width;
+    ctx.lineCap = "round";
+    if (dashed) ctx.setLineDash([7, 7]);
 
     ctx.beginPath();
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
     ctx.stroke();
 
+    ctx.setLineDash([]);
     ctx.beginPath();
     ctx.moveTo(x2, y2);
-    ctx.lineTo(x2 - ux * head + px * (head * 0.55), y2 - uy * head + py * (head * 0.55));
-    ctx.lineTo(x2 - ux * head - px * (head * 0.55), y2 - uy * head - py * (head * 0.55));
+    ctx.lineTo(x2 - ux * head + px * head * 0.52, y2 - uy * head + py * head * 0.52);
+    ctx.lineTo(x2 - ux * head - px * head * 0.52, y2 - uy * head - py * head * 0.52);
     ctx.closePath();
     ctx.fill();
+    ctx.restore();
+  }
+
+  function drawBackground(width, height) {
+    const gradient = ctx.createRadialGradient(
+      width * 0.62,
+      height * 0.48,
+      0,
+      width * 0.62,
+      height * 0.48,
+      Math.max(width, height) * 0.72
+    );
+    gradient.addColorStop(0, "#0c1728");
+    gradient.addColorStop(0.55, "#08101c");
+    gradient.addColorStop(1, "#060a12");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(135, 166, 207, 0.045)";
+    ctx.lineWidth = 1;
+    const gridSize = 64;
+    const offsetX = (sim.container ? sim.container.x * -0.02 : 0) % gridSize;
+    const offsetY = (sim.container ? sim.container.y * -0.02 : 0) % gridSize;
+
+    for (let x = offsetX; x <= width; x += gridSize) {
+      ctx.beginPath();
+      ctx.moveTo(Math.round(x) + 0.5, 0);
+      ctx.lineTo(Math.round(x) + 0.5, height);
+      ctx.stroke();
+    }
+    for (let y = offsetY; y <= height; y += gridSize) {
+      ctx.beginPath();
+      ctx.moveTo(0, Math.round(y) + 0.5);
+      ctx.lineTo(width, Math.round(y) + 0.5);
+      ctx.stroke();
+    }
+
+    for (const star of stars) {
+      ctx.globalAlpha = star.alpha;
+      ctx.fillStyle = "#dcecff";
+      ctx.beginPath();
+      ctx.arc(star.x, star.y, star.size, 0, TAU);
+      ctx.fill();
+    }
+    ctx.restore();
   }
 
   function drawContainer(body) {
-    const halfW = body.w * 0.5;
-    const halfH = body.h * 0.5;
-    const ap = body.apertureHalf;
+    const halfW = body.w / 2;
+    const halfH = body.h / 2;
+    const aperture = body.apertureHalf;
 
     ctx.save();
     ctx.translate(body.x, body.y);
     ctx.rotate(body.angle);
 
-    ctx.fillStyle = "rgba(120, 170, 255, 0.08)";
-    ctx.fillRect(-halfW, -halfH, body.w, body.h);
+    ctx.shadowColor = "rgba(0, 0, 0, .45)";
+    ctx.shadowBlur = 28;
+    ctx.shadowOffsetY = 10;
+    roundedRectPath(ctx, -halfW, -halfH, body.w, body.h, 10);
+    ctx.fillStyle = "rgba(0, 0, 0, .18)";
+    ctx.fill();
+    ctx.shadowColor = "transparent";
 
-    ctx.strokeStyle = "#dce6ff";
+    const chamberGradient = ctx.createLinearGradient(0, -halfH, 0, halfH);
+    chamberGradient.addColorStop(0, "rgba(111, 183, 255, .13)");
+    chamberGradient.addColorStop(0.5, "rgba(58, 107, 170, .055)");
+    chamberGradient.addColorStop(1, "rgba(14, 27, 48, .16)");
+    roundedRectPath(ctx, -halfW, -halfH, body.w, body.h, 9);
+    ctx.fillStyle = chamberGradient;
+    ctx.fill();
+
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "rgba(210, 229, 250, .9)";
     ctx.lineWidth = 2;
 
     if (!sim.nozzleOpen) {
-      ctx.strokeRect(-halfW, -halfH, body.w, body.h);
+      roundedRectPath(ctx, -halfW, -halfH, body.w, body.h, 9);
+      ctx.stroke();
     } else {
       ctx.beginPath();
-      ctx.moveTo(-halfW, -halfH);
-      ctx.lineTo(halfW, -halfH);
-      ctx.lineTo(halfW, -ap);
-      ctx.moveTo(halfW, ap);
-      ctx.lineTo(halfW, halfH);
-      ctx.lineTo(-halfW, halfH);
-      ctx.lineTo(-halfW, -halfH);
+      ctx.moveTo(halfW, -aperture);
+      ctx.lineTo(halfW, -halfH + 9);
+      ctx.quadraticCurveTo(halfW, -halfH, halfW - 9, -halfH);
+      ctx.lineTo(-halfW + 9, -halfH);
+      ctx.quadraticCurveTo(-halfW, -halfH, -halfW, -halfH + 9);
+      ctx.lineTo(-halfW, halfH - 9);
+      ctx.quadraticCurveTo(-halfW, halfH, -halfW + 9, halfH);
+      ctx.lineTo(halfW - 9, halfH);
+      ctx.quadraticCurveTo(halfW, halfH, halfW, halfH - 9);
+      ctx.lineTo(halfW, aperture);
       ctx.stroke();
 
-      ctx.strokeStyle = "#ffd166";
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(255, 178, 95, .75)";
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.moveTo(halfW, -ap);
-      ctx.lineTo(halfW, ap);
+      ctx.moveTo(halfW, -aperture);
+      ctx.lineTo(halfW + 10, -aperture);
+      ctx.moveTo(halfW, aperture);
+      ctx.lineTo(halfW + 10, aperture);
       ctx.stroke();
 
-      ctx.fillStyle = "#ffd166";
+      const nozzleGradient = ctx.createLinearGradient(halfW, 0, halfW + 24, 0);
+      nozzleGradient.addColorStop(0, "rgba(255, 178, 95, .28)");
+      nozzleGradient.addColorStop(1, "rgba(255, 138, 69, .04)");
+      ctx.fillStyle = nozzleGradient;
       ctx.beginPath();
-      ctx.arc(halfW, -ap, 2.6, 0, Math.PI * 2);
-      ctx.arc(halfW, ap, 2.6, 0, Math.PI * 2);
+      ctx.moveTo(halfW + 1, -aperture + 3);
+      ctx.lineTo(halfW + 20, -aperture * .72);
+      ctx.lineTo(halfW + 20, aperture * .72);
+      ctx.lineTo(halfW + 1, aperture - 3);
+      ctx.closePath();
       ctx.fill();
     }
 
-    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.strokeStyle = "rgba(255,255,255,.08)";
     ctx.lineWidth = 1;
+    for (let x = -halfW + 22; x < halfW - 18; x += 34) {
+      ctx.beginPath();
+      ctx.moveTo(x, -halfH + 5);
+      ctx.lineTo(x + 11, -halfH + 5);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = "rgba(111, 183, 255, .28)";
     ctx.beginPath();
-    ctx.moveTo(-16, 0); ctx.lineTo(16, 0);
-    ctx.moveTo(0, -16); ctx.lineTo(0, 16);
+    ctx.arc(0, 0, 9, 0, TAU);
     ctx.stroke();
+    ctx.fillStyle = "rgba(111, 183, 255, .85)";
+    ctx.beginPath();
+    ctx.arc(0, 0, 2, 0, TAU);
+    ctx.fill();
 
     ctx.restore();
   }
 
-  function drawParticles() {
-    const rect = canvas.getBoundingClientRect();
-    for (let i = 0; i < sim.particles.length; i++) {
-      const p = sim.particles[i];
+  function drawParticles(width, height) {
+    ctx.save();
+    ctx.shadowBlur = 5;
 
-      if (p.x < -120 || p.x > rect.width + 120 || p.y < -120 || p.y > rect.height + 120) {
+    for (const particle of sim.particles) {
+      if (
+        particle.x < -140 ||
+        particle.x > width + 140 ||
+        particle.y < -140 ||
+        particle.y > height + 140
+      ) {
         continue;
       }
 
+      const color = particle.escaped ? "#ff9b62" : "#79e8aa";
+      ctx.shadowColor = particle.escaped
+        ? "rgba(255, 138, 69, .6)"
+        : "rgba(117, 230, 164, .45)";
+      ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      ctx.fillStyle = p.escaped ? "#ff9b73" : "#7ee787";
+      ctx.arc(particle.x, particle.y, particle.radius, 0, TAU);
       ctx.fill();
+    }
+    ctx.restore();
 
-      if (vectorsCheck.checked) {
-        const scale = 0.10;
-        drawArrow(
-          p.x, p.y,
-          p.x + p.vx * scale,
-          p.y + p.vy * scale,
-          p.escaped ? "rgba(255,155,115,0.9)" : "rgba(126,231,135,0.9)",
-          1.0, 4
-        );
+    if (!ui.vectorsCheck.checked) return;
+
+    const vectorScale = 0.075;
+    for (const particle of sim.particles) {
+      if (
+        particle.x < -80 ||
+        particle.x > width + 80 ||
+        particle.y < -80 ||
+        particle.y > height + 80
+      ) {
+        continue;
       }
+
+      drawArrow(
+        particle.x,
+        particle.y,
+        particle.x + particle.vx * vectorScale,
+        particle.y + particle.vy * vectorScale,
+        particle.escaped ? "rgba(255, 155, 98, .66)" : "rgba(121, 232, 170, .58)",
+        0.8,
+        3
+      );
     }
   }
 
-  function drawContainerVelocity(body) {
-    if (!vectorsCheck.checked) return;
-    const scale = 0.55;
-    drawArrow(body.x, body.y, body.x + body.vx * scale, body.y + body.vy * scale, "#79b8ff", 2.2, 9);
-  }
+  function drawReference(body) {
+    const originX = 42;
+    const originY = 116;
 
-  function drawThrustArrow(body) {
-    if (!sim.nozzleOpen) return;
-    const dir = rotateLocalToWorld(-1, 0, body.angle);
-    const endX = body.x + dir.x * 90;
-    const endY = body.y + dir.y * 90;
-    drawArrow(body.x, body.y, endX, endY, "#ffd166", 3, 11);
-    ctx.fillStyle = "#ffd166";
-    ctx.font = "12px system-ui, sans-serif";
-    ctx.fillText("thrust", endX + 8, endY - 8);
-  }
-
-  function drawInfoOverlay(body) {
-    ctx.strokeStyle = "rgba(255,255,255,0.15)";
+    ctx.save();
+    ctx.strokeStyle = "rgba(162, 186, 218, .22)";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(40, 24);
-    ctx.lineTo(70, 24);
-    ctx.moveTo(55, 9);
-    ctx.lineTo(55, 39);
+    ctx.moveTo(originX - 13, originY);
+    ctx.lineTo(originX + 13, originY);
+    ctx.moveTo(originX, originY - 13);
+    ctx.lineTo(originX, originY + 13);
     ctx.stroke();
 
-    ctx.fillStyle = "rgba(255,255,255,0.55)";
-    ctx.font = "12px system-ui, sans-serif";
-    ctx.fillText("world reference", 80, 28);
+    ctx.fillStyle = "rgba(162, 186, 218, .52)";
+    ctx.font = "600 10px ui-sans-serif, system-ui, sans-serif";
+    ctx.fillText("WORLD ORIGIN", originX + 20, originY + 3);
 
-    ctx.strokeStyle = "rgba(121,184,255,0.12)";
+    ctx.setLineDash([3, 6]);
+    ctx.strokeStyle = "rgba(111, 183, 255, .09)";
     ctx.beginPath();
-    ctx.moveTo(55, 24);
+    ctx.moveTo(originX, originY);
     ctx.lineTo(body.x, body.y);
     ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawMotion(body) {
+    if (ui.vectorsCheck.checked) {
+      drawArrow(
+        body.x,
+        body.y,
+        body.x + body.vx * 0.65,
+        body.y + body.vy * 0.65,
+        "rgba(111, 183, 255, .95)",
+        2.2,
+        9
+      );
+    }
+
+    if (!sim.nozzleOpen) return;
+    const thrustDirection = rotateLocalToWorld(-1, 0, body.angle);
+    const startX = body.x + thrustDirection.x * body.w * 0.14;
+    const startY = body.y + thrustDirection.y * body.w * 0.14;
+    const endX = body.x + thrustDirection.x * (body.w * 0.34 + 42);
+    const endY = body.y + thrustDirection.y * (body.w * 0.34 + 42);
+
+    drawArrow(
+      startX,
+      startY,
+      endX,
+      endY,
+      "rgba(255, 178, 95, .9)",
+      2.5,
+      10,
+      true
+    );
+
+    ctx.save();
+    ctx.translate(endX, endY);
+    ctx.fillStyle = "rgba(255, 198, 137, .8)";
+    ctx.font = "800 9px ui-sans-serif, system-ui, sans-serif";
+    ctx.letterSpacing = "0.08em";
+    ctx.fillText("THRUST", 9, -7);
+    ctx.restore();
+  }
+
+  function drawPausedOverlay(width, height) {
+    if (!sim.paused) return;
+    ctx.save();
+    ctx.fillStyle = "rgba(4, 7, 13, .18)";
+    ctx.fillRect(0, 0, width, height);
+
+    const boxWidth = 124;
+    const boxHeight = 42;
+    roundedRectPath(ctx, width / 2 - boxWidth / 2, height / 2 - boxHeight / 2, boxWidth, boxHeight, 12);
+    ctx.fillStyle = "rgba(10, 17, 29, .84)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(167, 192, 232, .18)";
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(226, 237, 250, .88)";
+    ctx.font = "800 11px ui-sans-serif, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("SIMULATION PAUSED", width / 2, height / 2 + 1);
+    ctx.restore();
   }
 
   function draw() {
+    if (!sim.container) return;
     const rect = canvas.getBoundingClientRect();
-    ctx.clearRect(0, 0, rect.width, rect.height);
-    drawInfoOverlay(sim.container);
+    drawBackground(rect.width, rect.height);
+    drawReference(sim.container);
     drawContainer(sim.container);
-    drawParticles();
-    drawContainerVelocity(sim.container);
-    drawThrustArrow(sim.container);
+    drawParticles(rect.width, rect.height);
+    drawMotion(sim.container);
+    drawPausedOverlay(rect.width, rect.height);
   }
 
-  function updateStats() {
+  function updateStats(force = false) {
+    if (!sim.container || (!force && statsClock < 1 / 20)) return;
+    statsClock = 0;
+
     const body = sim.container;
+    const speed = Math.hypot(body.vx, body.vy);
     const inside = sim.particles.length - sim.escapedCount;
-    const speed = hypot(body.vx, body.vy);
 
-    speedStat.textContent = `|v| = ${speed.toFixed(2)}`;
-    posStat.textContent = `pos = (${body.x.toFixed(1)}, ${body.y.toFixed(1)})`;
-    angStat.textContent = `ω = ${body.angVel.toFixed(3)}`;
-    countStat.textContent = `inside = ${inside}, escaped = ${sim.escapedCount}`;
+    ui.speedStat.textContent = `${speed.toFixed(2)} px/s`;
+    ui.posStat.textContent = `(${body.x.toFixed(1)}, ${body.y.toFixed(1)})`;
+    ui.angStat.textContent = `${body.angVel.toFixed(3)} rad/s`;
+    ui.insideStat.textContent = inside.toLocaleString();
+    ui.escapedStat.textContent = sim.escapedCount.toLocaleString();
+    ui.timeStat.textContent = `T+ ${sim.time.toFixed(2)} s`;
   }
 
-  countSlider.addEventListener("input", updateDisplayedValues);
-  speedSlider.addEventListener("input", updateDisplayedValues);
-  massSlider.addEventListener("input", updateDisplayedValues);
+  function setPaused(paused) {
+    sim.paused = paused;
+    ui.pauseBtn.setAttribute("aria-pressed", String(paused));
+    ui.pauseLabel.textContent = paused ? "Resume" : "Pause";
+    ui.runState.classList.toggle("paused", paused);
+    ui.runStateText.textContent = paused ? "Simulation paused" : "Simulation running";
+    ui.pauseIcon.innerHTML = paused
+      ? '<path d="m8 5 11 7-11 7z" fill="currentColor"/>'
+      : '<path d="M8 5.5v13M16 5.5v13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>';
+    lastTime = performance.now();
+    accumulator = 0;
+    announce(paused ? "Simulation paused." : "Simulation resumed.");
+  }
 
-  openBtn.addEventListener("click", () => {
+  function openNozzle() {
+    if (sim.nozzleOpen) return;
     sim.nozzleOpen = true;
-    openBtn.disabled = true;
+    ui.openBtn.disabled = true;
+    ui.openBtn.classList.add("is-open");
+    ui.openLabel.textContent = "Nozzle open";
+    announce("Nozzle opened. Gas can now escape.");
+  }
+
+  function toggleMobileControls() {
+    const open = !ui.controlPanel.classList.contains("open");
+    ui.controlPanel.classList.toggle("open", open);
+    ui.mobileControlsBtn.setAttribute("aria-expanded", String(open));
+    ui.mobileControlsBtn.textContent = open ? "Close" : "Controls";
+  }
+
+  [ui.countSlider, ui.speedSlider, ui.massSlider].forEach((input) => {
+    input.addEventListener("input", () => updateControlValues(true));
   });
 
-  resetBtn.addEventListener("click", () => {
-    resetSimulation();
-  });
+  ui.openBtn.addEventListener("click", openNozzle);
+  ui.resetBtn.addEventListener("click", resetSimulation);
+  ui.pauseBtn.addEventListener("click", () => setPaused(!sim.paused));
+  ui.mobileControlsBtn.addEventListener("click", toggleMobileControls);
 
-  function frame(now) {
-    const dt = Math.min(0.05, (now - lastTime) / 1000);
-    lastTime = now;
-    accumulator += dt;
-
-    while (accumulator >= FIXED_DT) {
-      step(FIXED_DT);
-      accumulator -= FIXED_DT;
+  document.addEventListener("keydown", (event) => {
+    const tag = event.target && event.target.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || event.metaKey || event.ctrlKey || event.altKey) {
+      return;
     }
 
+    if (event.code === "Space") {
+      event.preventDefault();
+      setPaused(!sim.paused);
+    } else if (event.key.toLowerCase() === "n") {
+      openNozzle();
+    } else if (event.key.toLowerCase() === "r") {
+      resetSimulation();
+    }
+  });
+
+  document.addEventListener("pointerdown", (event) => {
+    if (
+      window.innerWidth <= 760 &&
+      ui.controlPanel.classList.contains("open") &&
+      !ui.controlPanel.contains(event.target) &&
+      event.target !== ui.mobileControlsBtn
+    ) {
+      toggleMobileControls();
+    }
+  });
+
+  const resizeObserver = new ResizeObserver(() => {
+    resizeCanvas();
+  });
+  resizeObserver.observe(ui.stage);
+
+  function frame(now) {
+    const frameDt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000));
+    lastTime = now;
+
+    if (!sim.paused) {
+      accumulator += frameDt;
+      let steps = 0;
+      while (accumulator >= FIXED_DT && steps < 12) {
+        step(FIXED_DT);
+        accumulator -= FIXED_DT;
+        steps++;
+      }
+      if (steps === 12) accumulator = 0;
+    }
+
+    statsClock += frameDt;
     draw();
     updateStats();
     requestAnimationFrame(frame);
   }
 
-  updateDisplayedValues();
+  updateControlValues(false);
+  resizeCanvas();
   resetSimulation();
   requestAnimationFrame(frame);
 })();
