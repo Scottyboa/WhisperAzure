@@ -1,10 +1,24 @@
 ## 25 July, 2026
 
-### Claude Opus 5 replaces Claude Opus 4.8 in Requesty
+### New secondary note-generation module
 
-**Claude Opus 5** is now available for note generation through the **Requesty** provider. It replaces the previous Claude Opus option and is routed through **AWS Bedrock in Stockholm (`eu-north-1`)** using Requesty's EU endpoint. The full request path therefore remains within the EU.
+The app now includes a dedicated module for secondary note generation. It can be used to summarize larger amounts of text, such as excerpts from a patient record. The summary can then be transferred to the supplementary information field and used as background when generating the final note.
 
-The published Bedrock token prices are unchanged: **$5.50 per 1 million input tokens** and **$27.50 per 1 million output tokens**.
+Processing large amounts of text can require many tokens. It may therefore be useful to use an inexpensive model, such as **GPT-5 Nano**, for the initial summary and then a more powerful model, such as **Claude Opus 5**, for the primary note generation.
+
+### New and updated Requesty models
+
+The Requesty provider, introduced in the 3 July update, has received the following changes:
+
+- **GPT-5 Nano** has been added as a new and highly affordable option.
+- **Claude Opus 4.8** has been replaced by **Claude Opus 5**, running through AWS Bedrock in Stockholm (`eu-north-1`).
+- **GPT-5.5** and **Claude Sonnet 5** remain available.
+
+Claude Opus 5 has the same token price as the previous Opus 4.8 model: **$5.50 per 1 million input tokens** and **$27.50 per 1 million output tokens**.
+
+All Requesty models in the app use EU-based model endpoints and Requesty's EU router. The properties described in the previous update—zero data retention, no use of data for model training, and processing within the EU—continue to apply.
+
+<a href="index.html#requesty-api-key" target="_blank" rel="noopener">**Click here for guidance on how to create a Requesty account, top up credits, and obtain an API key**</a> — the link opens the front page directly at the Requesty section of the "API key - How to Get" guide.
 
 ---
 
@@ -25,7 +39,7 @@ A new note-generation provider has been added to the app: **Requesty**.
 
 Requesty is an LLM gateway that gives you access to top models from several providers through a single API key. In this app, Requesty is used via its **EU endpoint** with EU-hosted model deployments — meaning **zero data retention**, **no use of your data for model training**, and **all data processing within the EU**.
 
-Using the Requesty provider in this app, you can generate notes with **GPT-5.5**, **Claude Sonnet 5**, and the currently available **Claude Opus** model — some of the strongest models available today — in a GDPR-friendly way.
+Using the Requesty provider in this app, you can generate notes with **GPT-5.5**, **Claude Opus 4.8**, and **Claude Sonnet 5** — some of the strongest models available today — in a GDPR-friendly way.
 
 New Requesty accounts also receive **$10 USD in free credits**, so you can try the provider right away before topping up credits later.
 
