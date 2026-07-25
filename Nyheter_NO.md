@@ -18,7 +18,7 @@ Claude Opus 5 har samme tokenpris som den tidligere Opus 4.8-modellen: **$5,50 p
 
 Alle Requesty-modellene i appen benytter EU-baserte modellendepunkter og Requestys EU-ruter. Egenskapene som ble beskrevet i den tidligere oppdateringen – zero data retention, ingen bruk av data til modelltrening og behandling innenfor EU – gjelder fortsatt.
 
-<a href="index.html#requesty-api-key" target="_blank" rel="noopener">**Klikk her for veiledning i hvordan du oppretter en Requesty-konto, fyller på kreditter og skaffer en API-nøkkel**</a> — lenken åpner forsiden direkte ved Requesty-delen av «API key - How to Get»-guiden.
+<a href="index.html#requesty-api-key" target="_blank" rel="noopener">**Klikk her for veiledning i hvordan du oppretter en Requesty-konto, fyller på kreditter og skaffer en API-nøkkel**</a> 
 
 ---
 
