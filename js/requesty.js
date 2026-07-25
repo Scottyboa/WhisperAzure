@@ -6,12 +6,12 @@
 // models, so both Requesty's processing AND the model inference stay in
 // the EU (GDPR compliant):
 //
-//   - Claude Opus 4.8  -> bedrock/claude-opus-4-8@eu-west-3  (AWS Bedrock, EU)
+//   - Claude Opus 5    -> bedrock/claude-opus-5@eu-north-1   (AWS Bedrock, Stockholm)
 //   - GPT-5.5          -> azure/gpt-5.5@swedencentral        (Azure, Sweden Central)
 //
 // sessionStorage keys used:
 //   requesty_api_key   (set on the start page, index.html)
-//   requesty_model     (claude-opus-4-8 | gpt-5.5)
+//   requesty_model     (claude-opus-5 | claude-sonnet-5 | gpt-5.5 | gpt-5-nano)
 //
 // API notes (see https://docs.requesty.ai/quickstart and
 // https://docs.requesty.ai/features/eu-routing):
@@ -56,10 +56,10 @@ const REQUESTY_EU_CHAT_COMPLETIONS_URL =
 //                     and pushed as `modelId` in usage payloads
 
 const VARIANTS = Object.freeze({
-  "claude-opus-4-8": {
-    // AWS Bedrock, EU (Frankfurt region).
-    requestyModelId: "bedrock/claude-opus-4-8@eu-west-3",
-    pricingModelId: "claude-opus-4-8"
+  "claude-opus-5": {
+    // AWS Bedrock, EU (Stockholm region).
+    requestyModelId: "bedrock/claude-opus-5@eu-north-1",
+    pricingModelId: "claude-opus-5"
   },
   "claude-sonnet-5": {
     // Google Vertex AI, EU-resident deployment (GDPR). Confirmed model id
@@ -82,7 +82,7 @@ const VARIANTS = Object.freeze({
   }
 });
 
-const DEFAULT_VARIANT_KEY = "claude-opus-4-8";
+const DEFAULT_VARIANT_KEY = "claude-opus-5";
 
 // -----------------------------------------------------------------------------
 // Shared helpers
@@ -114,7 +114,7 @@ function resolveReasoningLevel(variantConfig) {
     );
   }
   // All other Requesty models reuse the shared #gpt5Reasoning selector
-  // (none | low | medium | high). For the Anthropic models (Opus 4.8,
+  // (none | low | medium | high). For the Anthropic models (Opus 5,
   // Sonnet 5) Requesty accepts reasoning_effort on its OpenAI-compatible
   // endpoint and maps it to a thinking budget; "none" is handled in
   // buildRequestBody by omitting the parameter (the model then uses its own
@@ -293,13 +293,14 @@ async function generateNote() {
 // Public init functions
 // -----------------------------------------------------------------------------
 //
-// All effective providers (requesty-claude / requesty-sonnet / requesty-gpt55)
+// All effective providers (requesty-claude / requesty-sonnet /
+// requesty-gpt55 / requesty-nano)
 // bind the same generate function; the active model is read from the
 // #requestyModel select / requesty_model session key at click time. Separate
 // exports are kept so the provider-registry entries stay explicit and
 // symmetrical with the OpenAI module.
 
-function initRequestyClaudeOpus48() {
+function initRequestyClaudeOpus5() {
   bindGenerateNoteButton(generateNote);
 }
 
@@ -315,4 +316,4 @@ function initRequestyGpt5Nano() {
   bindGenerateNoteButton(generateNote);
 }
 
-export { initRequestyClaudeOpus48, initRequestyClaudeSonnet5, initRequestyGpt55, initRequestyGpt5Nano };
+export { initRequestyClaudeOpus5, initRequestyClaudeSonnet5, initRequestyGpt55, initRequestyGpt5Nano };

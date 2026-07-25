@@ -452,10 +452,10 @@ https://soniox.com<br><br>
 – On the main page, you can choose between EU(GDPR compliant) and US endpoints in the dropdown when using Soniox. To use the the model with EU endpoint, simply paste your new EU API key in the Soniox API key infput field on the front page, before entering the main page.<br><br>
 
 
-<strong id="requesty-guide-section">Requesty (GPT-5.5, Claude Opus 4.8 and Claude Sonnet 5 – full GDPR compliance)</strong><br>
+<strong id="requesty-guide-section">Requesty (GPT-5.5, Claude Opus 5 and Claude Sonnet 5 – full GDPR compliance)</strong><br>
 – For note generation.<br>
 – Requesty is an LLM gateway that gives you access to the top models from several providers through a single API key. In this app, Requesty is used via its <strong>EU endpoint</strong>, with EU-hosted model deployments, meaning <strong>zero data retention</strong>, <strong>no use of your data for model training</strong>, and <strong>all data processing within the EU</strong>.<br>
-– Through the Requesty provider you can use <strong>GPT-5.5</strong>, <strong>Claude Opus 4.8</strong> and <strong>Claude Sonnet 5</strong> for note generation in a GDPR-friendly way.<br>
+– Through the Requesty provider you can use <strong>GPT-5.5</strong>, <strong>Claude Opus 5</strong> and <strong>Claude Sonnet 5</strong> for note generation in a GDPR-friendly way.<br>
 – How to get a Requesty API key:<br>
 &nbsp;&nbsp;1. Go to <a href="https://requesty.ai" target="_blank" rel="noopener">https://requesty.ai</a>, click <strong>"Get started"</strong> and create a user. New accounts receive <strong>$10 USD in free credits</strong>, so you can start using the models right away (later you can top up credits to continue using the provider).<br>
 &nbsp;&nbsp;2. In the left-hand menu, scroll down and click <strong>"API Keys"</strong>, then click <strong>"Create API Key"</strong>.<br>
@@ -862,4 +862,3 @@ These are examples that work well, but feel free to adapt them to your documenta
 };
 
 export default { indexTranslations, transcribeTranslations };
-

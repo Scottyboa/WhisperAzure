@@ -20,7 +20,7 @@ export const DEFAULTS = {
   geminiReasoning: 'high',
   vertexModel: 'gemini-2.5-pro',
   bedrockModel: 'opus-4-5',
-  requestyModel: 'claude-opus-4-8',
+  requestyModel: 'claude-opus-5',
   requestyNanoReasoning: 'medium',
 };
 
@@ -172,16 +172,16 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './AWSBedrock.js',
   },
   // Requesty (GDPR-compliant router; EU endpoint + EU-region models).
-  // Like gpt54, both Requesty variants are mode-driven: the module reads
+  // Like gpt54, Requesty variants are mode-driven: the module reads
   // #noteProviderMode at run time, so one effective provider per model.
   'requesty-claude': {
     id: 'requesty-claude',
-    label: 'Requesty Claude Opus 4.8',
+    label: 'Requesty Claude Opus 5',
     uiProvider: 'requesty',
-    requestyModel: 'claude-opus-4-8',
+    requestyModel: 'claude-opus-5',
     mode: DEFAULTS.noteMode,
     modulePath: './requesty.js',
-    initExportName: 'initRequestyClaudeOpus48',
+    initExportName: 'initRequestyClaudeOpus5',
   },
   'requesty-sonnet': {
     id: 'requesty-sonnet',
@@ -223,7 +223,7 @@ const NOTE_UI_PROVIDER_OPTIONS = [
 ];
 
 const REQUESTY_MODEL_OPTIONS = [
-  { value: 'claude-opus-4-8', label: 'Claude Opus 4.8' },
+  { value: 'claude-opus-5', label: 'Claude Opus 5' },
   { value: 'claude-sonnet-5', label: 'Claude Sonnet 5' },
   { value: 'gpt-5.5', label: 'GPT-5.5' },
   { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
@@ -683,7 +683,7 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
 
   // Streaming/non-streaming (#noteProviderMode) is available for all Requesty
   // models. For reasoning, most Requesty models share the OpenAI selector
-  // (#gpt5Reasoning, None/Low/Medium/High): the Anthropic models (Opus 4.8,
+  // (#gpt5Reasoning, None/Low/Medium/High): the Anthropic models (Opus 5,
   // Sonnet 5) map reasoning_effort to a thinking budget ("None" omits it),
   // and GPT-5.5 uses the native OpenAI effort string. GPT-5 Nano is the
   // exception — its valid values are Minimal/Low/Medium/High (no "None"), so
@@ -701,5 +701,3 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
     showRequesty: isRequesty,
   };
 }
-
-

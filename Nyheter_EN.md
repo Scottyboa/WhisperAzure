@@ -1,3 +1,13 @@
+## 25 July, 2026
+
+### Claude Opus 5 replaces Claude Opus 4.8 in Requesty
+
+**Claude Opus 5** is now available for note generation through the **Requesty** provider. It replaces the previous Claude Opus option and is routed through **AWS Bedrock in Stockholm (`eu-north-1`)** using Requesty's EU endpoint. The full request path therefore remains within the EU.
+
+The published Bedrock token prices are unchanged: **$5.50 per 1 million input tokens** and **$27.50 per 1 million output tokens**.
+
+---
+
 ## 3 July, 2026
 
 ### New Gemini models in Google Vertex: Gemini 3.5 Flash and Gemini 3.1 Flash-Lite
@@ -15,7 +25,7 @@ A new note-generation provider has been added to the app: **Requesty**.
 
 Requesty is an LLM gateway that gives you access to top models from several providers through a single API key. In this app, Requesty is used via its **EU endpoint** with EU-hosted model deployments — meaning **zero data retention**, **no use of your data for model training**, and **all data processing within the EU**.
 
-Using the Requesty provider in this app, you can generate notes with **GPT-5.5**, **Claude Opus 4.8**, and **Claude Sonnet 5** — some of the strongest models available today — in a GDPR-friendly way.
+Using the Requesty provider in this app, you can generate notes with **GPT-5.5**, **Claude Sonnet 5**, and the currently available **Claude Opus** model — some of the strongest models available today — in a GDPR-friendly way.
 
 New Requesty accounts also receive **$10 USD in free credits**, so you can try the provider right away before topping up credits later.
 
