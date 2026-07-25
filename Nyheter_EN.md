@@ -18,8 +18,7 @@ Claude Opus 5 has the same token price as the previous Opus 4.8 model: **$5.50 p
 
 All Requesty models in the app use EU-based model endpoints and Requesty's EU router. The properties described in the previous update—zero data retention, no use of data for model training, and processing within the EU—continue to apply.
 
-<a href="index.html#requesty-api-key" target="_blank" rel="noopener">**Click here for guidance on how to create a Requesty account, top up credits, and obtain an API key**</a> — the link opens the front page directly at the Requesty section of the "API key - How to Get" guide.
-
+<a href="index.html#requesty-api-key" target="_blank" rel="noopener">**Click here for guidance on how to create a Requesty account, top up credits, and obtain an API key**</a> 
 ---
 
 ## 3 July, 2026
