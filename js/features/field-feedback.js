@@ -238,6 +238,7 @@
     { inputId: "supplementaryInfo", counterId: "supplementaryInfoLiveCounter" },
     { inputId: "customPrompt", counterId: "customPromptLiveCounter" },
     { inputId: "secondarySourceText", counterId: "secondarySourceTextLiveCounter" },
+    { inputId: "generatedNote", counterId: "generatedNoteLiveCounter" },
   ];
 
   const wordRegex = /\S+/g;
@@ -327,6 +328,24 @@
         syncCounterByInputId("transcription");
       });
     }
+
+    if (!app.__fieldCounterNoteBound) {
+      app.__fieldCounterNoteBound = true;
+      window.addEventListener("note:finished", () => {
+        syncCounterByInputId("generatedNote");
+      });
+    }
+
+    const generateNoteButton = document.getElementById("generateNoteButton");
+    if (
+      generateNoteButton &&
+      generateNoteButton.dataset.generatedNoteCounterBound !== "1"
+    ) {
+      generateNoteButton.dataset.generatedNoteCounterBound = "1";
+      generateNoteButton.addEventListener("click", () => {
+        setTimeout(() => syncCounterByInputId("generatedNote"), 0);
+      });
+    }
   }
 
   if (document.readyState === "loading") {
@@ -335,4 +354,3 @@
     initCounters();
   }
 })();
-

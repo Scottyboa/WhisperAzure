@@ -1647,7 +1647,7 @@
 }
 
 
-    /* Live word/token counters for transcript, supplementary info, and prompt */
+    /* Live word/token counters for text fields */
     .field-counter-wrap {
       position: relative;
     }
@@ -1672,7 +1672,8 @@
     }
     #transcriptionCounterWrap .field-live-counter,
     #supplementaryInfoCounterWrap .field-live-counter,
-    #secondarySourceTextCounterWrap .field-live-counter {
+    #secondarySourceTextCounterWrap .field-live-counter,
+    #generatedNoteCounterWrap .field-live-counter {
       top: -4px;
       right: 2px;
     }
@@ -2455,7 +2456,10 @@
         <div id="noteTimerStatusBelow" class="timer-status-below"></div>
         <!-- Separate (non-timer) UI line for tokens/cost so it never gets overwritten by #noteTimer.innerText -->
         <div id="noteUsageCost" class="note-usage-cost"></div>
-          <textarea id="generatedNote" placeholder="Generated note will appear here..." autocomplete="off"></textarea>
+          <div id="generatedNoteCounterWrap" class="field-counter-wrap field-counter-gap">
+            <div id="generatedNoteLiveCounter" class="field-live-counter" aria-live="polite">0 words · 0 tokens</div>
+            <textarea id="generatedNote" placeholder="Generated note will appear here..." autocomplete="off"></textarea>
+          </div>
         </div>
         <div class="column">
           <div class="bottom-section-header custom-prompt-header">
@@ -2688,5 +2692,4 @@
 
 </body>
 </html>
-
 
