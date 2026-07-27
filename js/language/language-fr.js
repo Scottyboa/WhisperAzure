@@ -286,6 +286,9 @@ Ce sont des exemples efficaces, mais vous êtes libre de les adapter à votre st
     pushButton: "Insérer",
     clearOnGenerateLabel: "Vider les Informations complémentaires lors de la génération",
     autoTransferLabel: "Copier automatiquement le résultat dans les Informations complémentaires",
+    sourceDateLabel: "Date",
+    sourceDateToggleAriaLabel: "Conserver la date du jour dans le texte source",
+    sourceDateHelp: 'Lorsque cette option est activée : conserve la ligne "Dagens dato er DD.MM.YYYY" en haut du texte source et la restaure après l’actualisation de la page. Lorsqu’elle est désactivée : supprime cette ligne de date du texte source.',
     outputPlaceholder: "La note générée apparaîtra ici...",
     timerLabel: "Minuteur de génération de note",
     statusGenerating: "Génération en cours…",
@@ -298,4 +301,3 @@ Ce sont des exemples efficaces, mais vous êtes libre de les adapter à votre st
     transferred: "Résultat copié dans les Informations complémentaires."
   },
 };
-

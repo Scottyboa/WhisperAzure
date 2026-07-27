@@ -66,7 +66,8 @@ const STORAGE_KEYS = {
   requestyNanoReasoning: "secondary_requesty_nano_reasoning",
   promptSlot: "secondary_prompt_slot",
   autoTransfer: "secondary_auto_transfer",
-  clearOnGenerate: "secondary_clear_on_generate"
+  clearOnGenerate: "secondary_clear_on_generate",
+  sourceDateEnabled: "secondary_source_date_enabled"
 };
 
 // Same allow-list as AWSBedrock.js so stale values never reach the backend.
@@ -146,6 +147,10 @@ const I18N_FALLBACK = {
   pushButton: "Insert",
   clearOnGenerateLabel: "Clear Supplementary Information on Generate",
   autoTransferLabel: "Automatically copy result to Supplementary Information",
+  sourceDateLabel: "Date",
+  sourceDateToggleAriaLabel: "Keep today's date in source text",
+  sourceDateHelp:
+    'When ON: Keeps the line "Dagens dato er DD.MM.YYYY" at the top of the source text and restores it after refresh. When OFF: Removes that date line from the source text.',
   outputPlaceholder: "Generated note will appear here...",
   timerLabel: "Note Generation Timer",
   statusGenerating: "Generating…",
@@ -190,6 +195,84 @@ function writeSession(key, value) {
 
 function el(id) {
   return document.getElementById(id);
+}
+
+function getTodaySecondarySourceDateLine() {
+  const today = new Date();
+  const day = String(today.getDate()).padStart(2, "0");
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const year = today.getFullYear();
+  return `Dagens dato er ${day}.${month}.${year}`;
+}
+
+function stripSecondarySourceDateLines(text) {
+  return String(text || "")
+    .replace(/^Dagens dato er \d{2}\.\d{2}\.\d{4}\s*$/gim, "")
+    .replace(/^\s*\n/, "")
+    .trim();
+}
+
+function normalizeSecondarySourceDateLine(text, { enabled } = {}) {
+  const body = stripSecondarySourceDateLines(text);
+  if (!enabled) return body;
+
+  const todayLine = getTodaySecondarySourceDateLine();
+  return body ? `${todayLine}\n${body}` : todayLine;
+}
+
+function getSecondarySourceDateEnabled() {
+  return readSession(STORAGE_KEYS.sourceDateEnabled, "1") === "1";
+}
+
+function syncSecondarySourceDate({ focus = false } = {}) {
+  const sourceField = el("secondarySourceText");
+  if (!sourceField) return false;
+
+  const nextValue = normalizeSecondarySourceDateLine(sourceField.value, {
+    enabled: getSecondarySourceDateEnabled()
+  });
+  const changed = sourceField.value !== nextValue;
+
+  if (changed) {
+    sourceField.value = nextValue;
+    try {
+      sourceField.dispatchEvent(new Event("input", { bubbles: true }));
+    } catch (_) {}
+  }
+
+  if (focus) {
+    sourceField.focus();
+    const position = getSecondarySourceDateEnabled()
+      ? getTodaySecondarySourceDateLine().length
+      : 0;
+    try {
+      sourceField.setSelectionRange(position, position);
+    } catch (_) {}
+  }
+
+  return changed;
+}
+
+function initSecondarySourceDateToggle() {
+  const toggle = el("secondarySourceDateToggle");
+  const sourceField = el("secondarySourceText");
+  if (!toggle || !sourceField) return;
+
+  if (readSession(STORAGE_KEYS.sourceDateEnabled, null) == null) {
+    writeSession(STORAGE_KEYS.sourceDateEnabled, "1");
+  }
+
+  toggle.checked = getSecondarySourceDateEnabled();
+  syncSecondarySourceDate();
+
+  toggle.addEventListener("change", () => {
+    writeSession(STORAGE_KEYS.sourceDateEnabled, toggle.checked ? "1" : "0");
+    syncSecondarySourceDate({ focus: toggle.checked });
+  });
+
+  sourceField.addEventListener("blur", () => {
+    if (getSecondarySourceDateEnabled()) syncSecondarySourceDate();
+  });
 }
 
 function setSelectOptions(selectEl, options) {
@@ -1039,8 +1122,9 @@ async function generateSecondaryNote() {
   const outputField = el("secondaryGeneratedNote");
   if (!sourceField || !outputField) return;
 
+  syncSecondarySourceDate();
   const sourceText = String(sourceField.value || "").trim();
-  if (!sourceText) {
+  if (!stripSecondarySourceDateLines(sourceText)) {
     setStatus(strings.noSourceText, { isError: true });
     return;
   }
@@ -1247,6 +1331,7 @@ function initSecondaryNoteModule() {
   if (!pane || !toggleButton) return;
 
   hydrateSelectors();
+  initSecondarySourceDateToggle();
   refreshToggleButtonLabel();
   renderTimerText(0);
   setBusy(false);

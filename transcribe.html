@@ -833,6 +833,13 @@
       align-items: center;
       gap: 6px;
     }
+    .secondary-source-date-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 6px;
+      margin: -2px 0 8px;
+    }
     #secondarySourceText,
     #secondaryGeneratedNote {
       width: 100%;
@@ -1890,6 +1897,32 @@
               ></textarea>
             </div>
 
+            <div class="secondary-source-date-actions">
+              <div
+                id="secondarySourceDateToggleWrap"
+                class="auto-clear-toggle"
+                aria-label="Keep today's date in source text"
+              >
+                <label class="switch" title="Keep date">
+                  <input id="secondarySourceDateToggle" type="checkbox" checked />
+                  <span class="slider"></span>
+                </label>
+                <span class="auto-clear-label" id="secondarySourceDateToggleLabel">Date</span>
+              </div>
+              <span
+                id="secondarySourceDateTooltipContainer"
+                class="help-tip help-tip-left"
+                style="margin-left:0; margin-right:2px;"
+                tabindex="0"
+                aria-label="Source text date help"
+              >
+                ?
+                <span id="secondarySourceDateTooltipText" class="help-tip-content" role="tooltip">
+                  When ON: Keeps the line "Dagens dato er DD.MM.YYYY" at the top of the source text and restores it after refresh. When OFF: Removes that date line from the source text.
+                </span>
+              </span>
+            </div>
+
             <!-- Independent generation settings (selects populated by JS from
                  the shared provider registry). -->
             <div class="secondary-note-row">
@@ -2655,6 +2688,5 @@
 
 </body>
 </html>
-
 
 

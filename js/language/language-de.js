@@ -285,6 +285,9 @@ Diese Beispiele funktionieren gut, aber du kannst sie gern an deinen Dokumentati
     pushButton: "Einfügen",
     clearOnGenerateLabel: "Zusatzinformationen beim Generieren leeren",
     autoTransferLabel: "Ergebnis automatisch in Zusatzinformationen kopieren",
+    sourceDateLabel: "Datum",
+    sourceDateToggleAriaLabel: "Heutiges Datum im Quelltext beibehalten",
+    sourceDateHelp: 'Wenn EIN: Hält die Zeile "Dagens dato er DD.MM.YYYY" am Anfang des Quelltexts und stellt sie nach dem Aktualisieren der Seite wieder her. Wenn AUS: Entfernt diese Datumszeile aus dem Quelltext.',
     outputPlaceholder: "Die generierte Notiz erscheint hier...",
     timerLabel: "Notizgenerierungs-Timer",
     statusGenerating: "Wird generiert…",
@@ -297,4 +300,3 @@ Diese Beispiele funktionieren gut, aber du kannst sie gern an deinen Dokumentati
     transferred: "Ergebnis wurde in die Zusatzinformationen kopiert."
   },
 };
-

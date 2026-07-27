@@ -345,6 +345,10 @@ function getSecondaryNoteI18n(trans) {
     pushButton: "Insert",
     clearOnGenerateLabel: "Clear Supplementary Information on Generate",
     autoTransferLabel: "Automatically copy result to Supplementary Information",
+    sourceDateLabel: "Date",
+    sourceDateToggleAriaLabel: "Keep today's date in source text",
+    sourceDateHelp:
+      'When ON: Keeps the line "Dagens dato er DD.MM.YYYY" at the top of the source text and restores it after refresh. When OFF: Removes that date line from the source text.',
     outputPlaceholder: "Generated note will appear here...",
     timerLabel: "Note Generation Timer",
     statusGenerating: "Generating…",
@@ -386,6 +390,18 @@ function updateSecondaryNoteUI(trans) {
   setTextIfPresent("secondaryPushToSupplementaryButton", s.pushButton);
   setTextIfPresent("secondaryAutoTransferLabel", s.autoTransferLabel);
   setTextIfPresent("secondaryClearOnGenerateLabel", s.clearOnGenerateLabel);
+  setTextIfPresent("secondarySourceDateToggleLabel", s.sourceDateLabel);
+  setTextIfPresent("secondarySourceDateTooltipText", s.sourceDateHelp);
+  setAttrIfPresent(
+    "secondarySourceDateToggleWrap",
+    "aria-label",
+    s.sourceDateToggleAriaLabel
+  );
+  setAttrIfPresent(
+    "secondarySourceDateTooltipContainer",
+    "aria-label",
+    s.sourceDateToggleAriaLabel
+  );
   setPlaceholderIfPresent("secondaryGeneratedNote", s.outputPlaceholder);
 
   // Show/Hide label depends on the pane's current visibility.
@@ -580,4 +596,3 @@ function normalizeTimerText(el, tpl) {
 }
 
 export default { initIndexLanguage, initTranscribeLanguage };
-

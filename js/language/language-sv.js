@@ -607,6 +607,9 @@ Detta är exempel som fungerar bra, men du står fritt att anpassa dem så att d
     pushButton: "Infoga",
     clearOnGenerateLabel: "Töm Kompletterande information vid generering",
     autoTransferLabel: "Kopiera resultatet automatiskt till Kompletterande information",
+    sourceDateLabel: "Datum",
+    sourceDateToggleAriaLabel: "Behåll dagens datum i källtexten",
+    sourceDateHelp: 'När PÅ: Behåller raden "Dagens dato er DD.MM.YYYY" överst i källtexten och återställer den efter att sidan har uppdaterats. När AV: Tar bort denna datumrad från källtexten.',
     outputPlaceholder: "Den genererade anteckningen visas här...",
     timerLabel: "Timer för anteckningsgenerering",
     statusGenerating: "Genererar…",
@@ -621,4 +624,3 @@ Detta är exempel som fungerar bra, men du står fritt att anpassa dem så att d
 };
 
 export default { indexTranslations, transcribeTranslations };
-

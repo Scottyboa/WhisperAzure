@@ -286,6 +286,9 @@ Questi sono esempi efficaci, ma puoi adattarli liberamente al tuo stile document
     pushButton: "Inserisci",
     clearOnGenerateLabel: "Svuota Informazioni supplementari alla generazione",
     autoTransferLabel: "Copia automaticamente il risultato nelle Informazioni supplementari",
+    sourceDateLabel: "Data",
+    sourceDateToggleAriaLabel: "Mantieni la data odierna nel testo sorgente",
+    sourceDateHelp: 'Quando è attiva: mantiene la riga "Dagens dato er DD.MM.YYYY" all’inizio del testo sorgente e la ripristina dopo l’aggiornamento della pagina. Quando è disattivata: rimuove questa riga della data dal testo sorgente.',
     outputPlaceholder: "La nota generata apparirà qui...",
     timerLabel: "Timer di generazione della nota",
     statusGenerating: "Generazione in corso…",
@@ -300,4 +303,3 @@ Questi sono esempi efficaci, ma puoi adattarli liberamente al tuo stile document
 };
 
 export default { indexTranslations, transcribeTranslations };
-
