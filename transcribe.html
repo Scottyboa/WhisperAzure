@@ -155,28 +155,252 @@
       font-family: inherit;
       font-weight: 400;
     }
-    /* Grid Layout: Single Row, 3 Columns */
+    /* Grid Layout: history rail, optional left ad, main content, optional right ad */
     .grid-container {
       display: grid;
-      grid-template-columns: 300px 1fr 300px; /* Left sidebar, main content, right sidebar */
+      grid-template-columns: clamp(172px, 13vw, 190px) 300px minmax(0, 1fr) 300px;
       grid-template-rows: auto; /* Allow rows to size based on content */
       min-height: 1200px;       /* Ensure the grid is always at least 1200px tall */
     }
-   /* When ad columns are disabled, main content uses full width */
+   /* When ad columns are disabled, keep the compact history rail beside the app */
     .grid-container.ads-disabled {
-      grid-template-columns: 1fr;
+      grid-template-columns: clamp(172px, 13vw, 190px) minmax(0, 1fr);
     }
     .grid-container.ads-disabled .sidebar,
     .grid-container.ads-disabled .ad-sidebar {
       display: none;
     }
-    /* When ads are off, let main content span the single column */
-    .grid-container.ads-disabled .main-content {
+    .grid-container.ads-disabled .note-history-sidebar {
       grid-column: 1 / 2;
+    }
+    /* When ads are off, main content occupies the column beside history */
+    .grid-container.ads-disabled .main-content {
+      grid-column: 2 / 3;
+    }
+    /* Per-tab note history */
+    .note-history-sidebar {
+      grid-column: 1 / 2;
+      grid-row: 1 / 2;
+      min-width: 0;
+      min-height: 0;
+      background: #eef1f2;
+      border-right: 1px solid #d5dadd;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 3;
+    }
+    .note-history-header {
+      flex: 0 0 auto;
+      padding: 10px 8px 8px;
+      background: #e7ebec;
+      border-bottom: 1px solid #d5dadd;
+      position: relative;
+      z-index: 4;
+    }
+    .note-history-header-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+    }
+    .note-history-title {
+      margin: 0;
+      min-width: 0;
+      font-size: 15px;
+      line-height: 1.2;
+      font-weight: 600;
+      color: #333;
+    }
+    .note-history-help {
+      flex: 0 0 auto;
+      margin-left: 0;
+    }
+    .note-history-clear {
+      flex: 0 0 auto;
+      margin: 0 0 0 auto;
+      padding: 4px 7px;
+      border: 1px solid #c96666;
+      border-radius: 6px;
+      background: #fff;
+      color: #a52222;
+      font-size: 11px;
+      line-height: 1.2;
+      cursor: pointer;
+    }
+    .note-history-clear:hover,
+    .note-history-clear:focus-visible {
+      background: #fff0f0;
+      border-color: #a52222;
+    }
+    .note-history-scroll {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 8px;
+      scrollbar-gutter: stable;
+    }
+    .note-history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .note-history-card {
+      width: 100%;
+      min-width: 0;
+      margin: 0;
+      padding: 8px 9px;
+      border: 1px solid #cfd6d8;
+      border-radius: 8px;
+      background: #fff;
+      color: #333;
+      text-align: left;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      box-sizing: border-box;
+    }
+    .note-history-card:hover,
+    .note-history-card:focus-visible {
+      border-color: #5a9;
+      box-shadow: 0 2px 7px rgba(37, 113, 83, 0.16);
+      outline: none;
+    }
+    .note-history-card-title,
+    .note-history-card-meta {
+      display: block;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .note-history-card-title {
+      font-size: 13px;
+      line-height: 1.25;
+      font-weight: 600;
+    }
+    .note-history-card-meta {
+      margin-top: 3px;
+      font-size: 11px;
+      line-height: 1.25;
+      color: #667075;
+    }
+    .note-history-empty {
+      margin: 8px 2px 0;
+      color: #70787c;
+      font-size: 12px;
+      line-height: 1.4;
+      text-align: center;
+    }
+    .note-history-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 5000;
+      padding: 4vh 4vw;
+      background: rgba(20, 25, 28, 0.58);
+      box-sizing: border-box;
+    }
+    .note-history-modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .note-history-modal-panel {
+      width: min(92vw, 1500px);
+      height: 92vh;
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      border: 1px solid #c7cccf;
+      border-radius: 12px;
+      box-shadow: 0 18px 55px rgba(0, 0, 0, 0.28);
+      overflow: hidden;
+    }
+    .note-history-modal-header {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      padding: 10px 14px;
+      border-bottom: 1px solid #dde1e3;
+      background: #f6f7f7;
+    }
+    .note-history-modal-title {
+      min-width: 0;
+      margin: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 16px;
+      line-height: 1.3;
+      font-weight: 600;
+    }
+    .note-history-modal-close {
+      flex: 0 0 auto;
+      margin: 0 0 0 auto;
+      padding: 0 6px;
+      border: 0;
+      background: transparent;
+      color: #d11f1f;
+      font-size: 30px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .note-history-modal-close:hover,
+    .note-history-modal-close:focus-visible {
+      color: #a60000;
+      outline: 2px solid rgba(209, 31, 31, 0.25);
+      outline-offset: 2px;
+    }
+    .note-history-modal-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 12px;
+      padding: 12px 14px 14px;
+      box-sizing: border-box;
+    }
+    .note-history-modal-section {
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .note-history-modal-section-title {
+      flex: 0 0 auto;
+      margin: 0 0 5px;
+      font-size: 14px;
+      line-height: 1.25;
+      font-weight: 600;
+      color: #333;
+    }
+    .note-history-modal-text {
+      flex: 1 1 auto;
+      min-width: 0;
+      min-height: 0;
+      width: 100%;
+      margin: 0;
+      padding: 11px 12px;
+      overflow: auto;
+      resize: none;
+      border: 1px solid #d7dcde;
+      border-radius: 8px;
+      background: #fbfbfb;
+      color: #222;
+      font: 14px/1.45 'Roboto', sans-serif;
+      box-sizing: border-box;
+    }
+    body.note-history-modal-open {
+      overflow: hidden;
     }
     /* Left Sidebar - Updated: No padding and no gap so ads fill the space */
     .sidebar {
-      grid-column: 1 / 2;
+      grid-column: 2 / 3;
       grid-row: 1 / 2;
       background-color: #e0e0e0;
       padding: 0;
@@ -187,7 +411,7 @@
     }
     /* Right Sidebar (Ad Area) */
     .ad-sidebar {
-      grid-column: 3 / 4;
+      grid-column: 4 / 5;
       grid-row: 1 / 2;
       background-color: #e0e0e0;
       /* Remove top padding so the ad is pushed up */
@@ -198,7 +422,7 @@
     }
     /* Main Content */
     .main-content {
-      grid-column: 2 / 3;
+      grid-column: 3 / 4;
       grid-row: 1 / 2;
       display: flex;
       flex-direction: column;
@@ -1687,6 +1911,35 @@
 </head>
 <body>
   <div class="grid-container">
+    <aside
+      id="noteHistorySidebar"
+      class="note-history-sidebar"
+      aria-labelledby="noteHistoryTitle"
+    >
+      <div class="note-history-header">
+        <div class="note-history-header-row">
+          <h2 id="noteHistoryTitle" class="note-history-title">History</h2>
+          <span
+            id="noteHistoryHelp"
+            class="help-tip note-history-help"
+            tabindex="0"
+            aria-label="Note history help"
+          >
+            ?
+            <span id="noteHistoryTooltip" class="help-tip-content" role="tooltip">
+              Shows the 10 most recent generated notes in this tab. Select an item to view its transcript and note. History remains after refresh and is removed when the tab session ends.
+            </span>
+          </span>
+          <button id="noteHistoryClearButton" class="note-history-clear" type="button">
+            Clear
+          </button>
+        </div>
+      </div>
+      <div class="note-history-scroll">
+        <div id="noteHistoryList" class="note-history-list" aria-live="polite"></div>
+        <p id="noteHistoryEmpty" class="note-history-empty">No generated notes yet.</p>
+      </div>
+    </aside>
     <!-- Left Sidebar (reserved for ads) with two new ad units -->
     <aside class="sidebar">
 <!-- /23295908256/Big-top-left -->
@@ -2623,6 +2876,50 @@
 </div>
     </aside>
   </div>
+  <div
+    id="noteHistoryModal"
+    class="note-history-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="noteHistoryModalTitle"
+  >
+    <div class="note-history-modal-panel">
+      <div class="note-history-modal-header">
+        <h2 id="noteHistoryModalTitle" class="note-history-modal-title">Note</h2>
+        <button
+          id="noteHistoryModalClose"
+          class="note-history-modal-close"
+          type="button"
+          aria-label="Close"
+        >
+          ×
+        </button>
+      </div>
+      <div class="note-history-modal-body">
+        <section class="note-history-modal-section">
+          <h3 id="noteHistoryTranscriptTitle" class="note-history-modal-section-title">
+            Transcript
+          </h3>
+          <textarea
+            id="noteHistoryTranscript"
+            class="note-history-modal-text"
+            readonly
+            aria-labelledby="noteHistoryTranscriptTitle"
+          ></textarea>
+        </section>
+        <section class="note-history-modal-section">
+          <h3 id="noteHistoryNoteTitle" class="note-history-modal-section-title">Note</h3>
+          <textarea
+            id="noteHistoryNote"
+            class="note-history-modal-text"
+            readonly
+            aria-labelledby="noteHistoryNoteTitle"
+          ></textarea>
+        </section>
+      </div>
+    </div>
+  </div>
   <!-- Provider persistence + provider UI wiring -->
   <script type="module" src="./js/features/provider-persistence.js"></script>
   <script type="module" src="./js/features/page-ui.js"></script>
@@ -2682,6 +2979,9 @@
   <!-- Prompt slot control extracted from inline transcribe.html logic -->
   <script type="module" src="./js/features/prompt-slots-ui.js"></script>
 
+  <!-- Per-tab history of the 10 most recent successfully generated primary notes -->
+  <script type="module" src="./js/features/note-history.js"></script>
+
   <script type="module" src="./js/features/ad-refresh.js"></script>
 
 
@@ -2692,4 +2992,3 @@
 
 </body>
 </html>
-
