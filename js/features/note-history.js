@@ -1,5 +1,5 @@
 const STORAGE_KEY = "note_history_v1";
-const MAX_ENTRIES = 10;
+const MAX_ENTRIES = 30;
 
 const STRINGS = {
   en: {
@@ -7,7 +7,7 @@ const STRINGS = {
     clear: "Clear",
     helpLabel: "Note history help",
     tooltip:
-      "Shows the 10 most recent generated notes in this tab. Select an item to view its transcript and note. History remains after refresh and is removed when the tab session ends.",
+      "Shows the 30 most recent generated notes in this tab. Select an item to view its transcript and note. History remains after refresh and is removed when the tab session ends.",
     empty: "No generated notes yet.",
     note: "Note",
     transcript: "Transcript",
@@ -21,7 +21,7 @@ const STRINGS = {
     clear: "Clear",
     helpLabel: "Hjelp for notathistorikk",
     tooltip:
-      "Viser de 10 siste genererte notatene i denne fanen. Klikk på et element for å vise transkripsjonen og notatet. Historikken beholdes ved oppdatering av siden og slettes når faneøkten avsluttes.",
+      "Viser de 30 siste genererte notatene i denne fanen. Klikk på et element for å vise transkripsjonen og notatet. Historikken beholdes ved oppdatering av siden og slettes når faneøkten avsluttes.",
     empty: "Ingen genererte notater ennå.",
     note: "Notat",
     transcript: "Transkripsjon",
@@ -35,7 +35,7 @@ const STRINGS = {
     clear: "Rensa",
     helpLabel: "Hjälp för anteckningshistorik",
     tooltip:
-      "Visar de 10 senast genererade anteckningarna i den här fliken. Välj ett objekt för att visa transkriptionen och anteckningen. Historiken finns kvar efter uppdatering och tas bort när fliksessionen avslutas.",
+      "Visar de 30 senast genererade anteckningarna i den här fliken. Välj ett objekt för att visa transkriptionen och anteckningen. Historiken finns kvar efter uppdatering och tas bort när fliksessionen avslutas.",
     empty: "Inga genererade anteckningar ännu.",
     note: "Anteckning",
     transcript: "Transkription",
@@ -49,7 +49,7 @@ const STRINGS = {
     clear: "Leeren",
     helpLabel: "Hilfe zum Notizverlauf",
     tooltip:
-      "Zeigt die 10 zuletzt erstellten Notizen in diesem Tab. Wählen Sie einen Eintrag, um Transkript und Notiz anzuzeigen. Der Verlauf bleibt nach dem Aktualisieren erhalten und wird am Ende der Tabsitzung entfernt.",
+      "Zeigt die 30 zuletzt erstellten Notizen in diesem Tab. Wählen Sie einen Eintrag, um Transkript und Notiz anzuzeigen. Der Verlauf bleibt nach dem Aktualisieren erhalten und wird am Ende der Tabsitzung entfernt.",
     empty: "Noch keine Notizen erstellt.",
     note: "Notiz",
     transcript: "Transkript",
@@ -63,7 +63,7 @@ const STRINGS = {
     clear: "Effacer",
     helpLabel: "Aide sur l’historique des notes",
     tooltip:
-      "Affiche les 10 dernières notes générées dans cet onglet. Sélectionnez un élément pour afficher la transcription et la note. L’historique persiste après actualisation et disparaît à la fin de la session de l’onglet.",
+      "Affiche les 30 dernières notes générées dans cet onglet. Sélectionnez un élément pour afficher la transcription et la note. L’historique persiste après actualisation et disparaît à la fin de la session de l’onglet.",
     empty: "Aucune note générée.",
     note: "Note",
     transcript: "Transcription",
@@ -77,7 +77,7 @@ const STRINGS = {
     clear: "Cancella",
     helpLabel: "Guida alla cronologia delle note",
     tooltip:
-      "Mostra le 10 note generate più di recente in questa scheda. Seleziona un elemento per visualizzare trascrizione e nota. La cronologia rimane dopo l’aggiornamento e viene rimossa al termine della sessione della scheda.",
+      "Mostra le 30 note generate più di recente in questa scheda. Seleziona un elemento per visualizzare trascrizione e nota. La cronologia rimane dopo l’aggiornamento e viene rimossa al termine della sessione della scheda.",
     empty: "Nessuna nota generata.",
     note: "Nota",
     transcript: "Trascrizione",
