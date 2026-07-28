@@ -590,6 +590,12 @@ function clearSupplementaryForGenerate() {
   try {
     supplementaryEl.dispatchEvent(new Event("input", { bubbles: true }));
   } catch (_) {}
+
+  // Match the app's normal Supplementary Information clear behavior:
+  // return the textarea to its captured default height and top position.
+  supplementaryEl.scrollTop = 0;
+  const defaultHeight = supplementaryEl.dataset.defaultHeight;
+  supplementaryEl.style.height = defaultHeight || "";
 }
 
 // Manual push — user-initiated copy of the current secondary output into the
