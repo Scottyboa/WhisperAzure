@@ -1,3 +1,11 @@
+## 28. juli 2026
+
+### Ny historikk for genererte notater
+
+En ny historikkolonne er lagt til på venstre side av appen. Her finner du de 30 siste genererte notatene sammen med transkripsjonene som ble brukt. Klikk på et element for å åpne transkripsjonen og notatet. Historikken beholdes ved oppdatering av siden, men slettes når fanen lukkes eller når du trykker **Clear**.
+
+---
+
 ## 25. juli 2026
 
 ### Ny modul for sekundær notatgenerering

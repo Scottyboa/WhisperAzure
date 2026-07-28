@@ -1,3 +1,11 @@
+## 28 July, 2026
+
+### New history for generated notes
+
+A new history column has been added to the left side of the app. It contains the 30 most recent generated notes together with the transcripts used to create them. Select an item to open its transcript and note. The history remains after refreshing the page, but is removed when the tab is closed or when you select **Clear**.
+
+---
+
 ## 25 July, 2026
 
 ### New secondary note-generation module
