@@ -274,7 +274,8 @@ const REQUESTY_MODEL_OPTIONS = [
 // Requesty's Chat Completions gateway preserves four distinct GPT-5.6 effort
 // levels: low | medium | high | xhigh. Requesty currently normalizes `none`
 // to `low` and `max` to `high`, so those aliases are intentionally omitted.
-// Kimi K3 always reasons and accepts low | high | max (default max).
+// Kimi K3 always reasons and accepts low | high | max. The upstream model
+// defaults to max when omitted, but the app intentionally defaults to low.
 const REQUESTY_NANO_REASONING_OPTIONS = [
   { value: 'minimal', label: 'Minimal' },
   { value: 'low', label: 'Low' },
@@ -453,7 +454,7 @@ export function normalizeRequestyNanoReasoning(
   return options.some((item) => item.value === raw)
     ? raw
     : normalizedModel === 'kimi-k3'
-      ? 'max'
+      ? 'low'
       : DEFAULTS.requestyNanoReasoning;
 }
 

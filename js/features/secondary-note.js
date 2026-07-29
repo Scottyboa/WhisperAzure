@@ -127,7 +127,7 @@ const REQUESTY_VARIANTS = {
     reasoningSelector: "dedicated"
   },
   "kimi-k3": {
-    requestyModelId: "tensorx/kimi-k3",
+    requestyModelId: "nebius/kimi-k3",
     pricingModelId: "kimi-k3",
     reasoningSelector: "dedicated"
   }

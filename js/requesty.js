@@ -11,7 +11,7 @@
 //   - GPT-5.6 Luna     -> azure/gpt-5.6-luna@swedencentral   (Azure, Sweden Central)
 //   - GPT-5.6 Terra    -> azure/gpt-5.6-terra@swedencentral  (Azure, Sweden Central)
 //   - GPT-5.6 Sol      -> azure/gpt-5.6-sol@swedencentral    (Azure, Sweden Central)
-//   - Kimi K3          -> tensorx/kimi-k3                     (TensorX, EU)
+//   - Kimi K3          -> nebius/kimi-k3                      (Nebius, EU)
 //
 // sessionStorage keys used:
 //   requesty_api_key   (set on the start page, index.html)
@@ -101,9 +101,9 @@ const VARIANTS = Object.freeze({
     reasoningSelector: "dedicated"
   },
   "kimi-k3": {
-    // TensorX's EU-hosted endpoint. Kimi K3 always reasons and supports
-    // reasoning_effort low | high | max (default max).
-    requestyModelId: "tensorx/kimi-k3",
+    // Nebius's EU-hosted endpoint. Kimi K3 always reasons and supports
+    // reasoning_effort low | high | max. The app defaults to low.
+    requestyModelId: "nebius/kimi-k3",
     pricingModelId: "kimi-k3",
     reasoningSelector: "dedicated"
   }
