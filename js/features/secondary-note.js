@@ -125,6 +125,11 @@ const REQUESTY_VARIANTS = {
     requestyModelId: "azure/gpt-5.6-sol@swedencentral",
     pricingModelId: "gpt-5.6-sol",
     reasoningSelector: "dedicated"
+  },
+  "kimi-k3": {
+    requestyModelId: "tensorx/kimi-k3",
+    pricingModelId: "kimi-k3",
+    reasoningSelector: "dedicated"
   }
 };
 

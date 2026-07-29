@@ -237,6 +237,15 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './requesty.js',
     initExportName: 'initRequestyGpt56Sol',
   },
+  'requesty-kimi-k3': {
+    id: 'requesty-kimi-k3',
+    label: 'Requesty Kimi K3',
+    uiProvider: 'requesty',
+    requestyModel: 'kimi-k3',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyKimiK3',
+  },
 };
 
 const NOTE_UI_PROVIDER_OPTIONS = [
@@ -257,6 +266,7 @@ const REQUESTY_MODEL_OPTIONS = [
   { value: 'gpt-5.6-luna', label: 'GPT-5.6 Luna' },
   { value: 'gpt-5.5', label: 'GPT-5.5' },
   { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
+  { value: 'kimi-k3', label: 'Kimi K3' },
 ];
 
 // Models with model-specific Requesty reasoning controls use the existing
@@ -264,6 +274,7 @@ const REQUESTY_MODEL_OPTIONS = [
 // Requesty's Chat Completions gateway preserves four distinct GPT-5.6 effort
 // levels: low | medium | high | xhigh. Requesty currently normalizes `none`
 // to `low` and `max` to `high`, so those aliases are intentionally omitted.
+// Kimi K3 always reasons and accepts low | high | max (default max).
 const REQUESTY_NANO_REASONING_OPTIONS = [
   { value: 'minimal', label: 'Minimal' },
   { value: 'low', label: 'Low' },
@@ -276,6 +287,12 @@ const REQUESTY_GPT56_REASONING_OPTIONS = [
   { value: 'medium', label: 'Medium' },
   { value: 'high', label: 'High' },
   { value: 'xhigh', label: 'X-high' },
+];
+
+const REQUESTY_KIMI_K3_REASONING_OPTIONS = [
+  { value: 'low', label: 'Low' },
+  { value: 'high', label: 'High' },
+  { value: 'max', label: 'Max' },
 ];
 
 const REQUESTY_GPT56_MODELS = new Set([
@@ -417,9 +434,12 @@ export function listRequestyNanoReasoningOptions(
   modelId = 'gpt-5-nano'
 ) {
   const normalizedModel = normalizeRequestyModel(modelId);
-  const options = REQUESTY_GPT56_MODELS.has(normalizedModel)
-    ? REQUESTY_GPT56_REASONING_OPTIONS
-    : REQUESTY_NANO_REASONING_OPTIONS;
+  const options =
+    normalizedModel === 'kimi-k3'
+      ? REQUESTY_KIMI_K3_REASONING_OPTIONS
+      : REQUESTY_GPT56_MODELS.has(normalizedModel)
+        ? REQUESTY_GPT56_REASONING_OPTIONS
+        : REQUESTY_NANO_REASONING_OPTIONS;
   return options.map((item) => ({ ...item }));
 }
 
@@ -428,10 +448,13 @@ export function normalizeRequestyNanoReasoning(
   modelId = 'gpt-5-nano'
 ) {
   const raw = String(value || '').trim().toLowerCase();
+  const normalizedModel = normalizeRequestyModel(modelId);
   const options = listRequestyNanoReasoningOptions(modelId);
   return options.some((item) => item.value === raw)
     ? raw
-    : DEFAULTS.requestyNanoReasoning;
+    : normalizedModel === 'kimi-k3'
+      ? 'max'
+      : DEFAULTS.requestyNanoReasoning;
 }
 
 // Maps a Requesty UI model value to its effective note provider by scanning
@@ -734,15 +757,18 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   const isGpt5x = isOpenAi && (model === 'gpt5' || model === 'gpt52' || model === 'gpt54' || model === 'gpt55');
   const isRequesty = uiProvider === 'requesty';
   const usesDedicatedRequestyReasoning =
-    isRequesty && (reqModel === 'gpt-5-nano' || REQUESTY_GPT56_MODELS.has(reqModel));
+    isRequesty &&
+    (reqModel === 'gpt-5-nano' ||
+      reqModel === 'kimi-k3' ||
+      REQUESTY_GPT56_MODELS.has(reqModel));
 
   // Streaming/non-streaming (#noteProviderMode) is available for all Requesty
   // models. For reasoning, most Requesty models share the OpenAI selector
   // (#gpt5Reasoning, None/Low/Medium/High): the Anthropic models (Opus 5,
   // Sonnet 5) map reasoning_effort to a thinking budget ("None" omits it),
-  // and GPT-5.5 uses the native OpenAI effort string. GPT-5 Nano and GPT-5.6
-  // use the dedicated Requesty selector because their valid option sets differ
-  // from the shared selector.
+  // and GPT-5.5 uses the native OpenAI effort string. GPT-5 Nano, GPT-5.6,
+  // and Kimi K3 use the dedicated Requesty selector because their valid option
+  // sets differ from the shared selector.
 
   return {
     showOpenAi: isOpenAi,

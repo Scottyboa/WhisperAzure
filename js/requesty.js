@@ -11,6 +11,7 @@
 //   - GPT-5.6 Luna     -> azure/gpt-5.6-luna@swedencentral   (Azure, Sweden Central)
 //   - GPT-5.6 Terra    -> azure/gpt-5.6-terra@swedencentral  (Azure, Sweden Central)
 //   - GPT-5.6 Sol      -> azure/gpt-5.6-sol@swedencentral    (Azure, Sweden Central)
+//   - Kimi K3          -> tensorx/kimi-k3                     (TensorX, EU)
 //
 // sessionStorage keys used:
 //   requesty_api_key   (set on the start page, index.html)
@@ -98,6 +99,13 @@ const VARIANTS = Object.freeze({
     requestyModelId: "azure/gpt-5.6-sol@swedencentral",
     pricingModelId: "gpt-5.6-sol",
     reasoningSelector: "dedicated"
+  },
+  "kimi-k3": {
+    // TensorX's EU-hosted endpoint. Kimi K3 always reasons and supports
+    // reasoning_effort low | high | max (default max).
+    requestyModelId: "tensorx/kimi-k3",
+    pricingModelId: "kimi-k3",
+    reasoningSelector: "dedicated"
   }
 });
 
@@ -124,8 +132,8 @@ function resolveEffectiveMode() {
 }
 
 function resolveReasoningLevel(variantKey, variantConfig) {
-  // GPT-5 Nano and GPT-5.6 use the dedicated Requesty selector. Its options
-  // are hydrated for the selected model by provider-persistence.js.
+  // GPT-5 Nano, GPT-5.6, and Kimi K3 use the dedicated Requesty selector.
+  // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
     return normalizeRequestyNanoReasoning(
       getSelectValue("requestyNanoReasoning", "medium"),
@@ -181,7 +189,7 @@ function pushRequestyUsage(variantConfig, usage) {
       reasoningTokens: usage?.completion_tokens_details?.reasoning_tokens ?? 0,
       // Requesty reports its own USD cost per request; kept in meta for
       // console diagnostics only. The displayed estimate is computed in
-      // note-usage-cost.js (underlying model price x 1.05 markup).
+      // note-usage-cost.js from the underlying model's list price.
       requestyReportedCost: typeof usage?.cost === "number" ? usage.cost : null
     }
   });
@@ -313,7 +321,7 @@ async function generateNote() {
 // -----------------------------------------------------------------------------
 //
 // All effective providers (requesty-claude / requesty-sonnet /
-// requesty-gpt55 / requesty-nano / requesty-gpt56-*)
+// requesty-gpt55 / requesty-nano / requesty-gpt56-* / requesty-kimi-k3)
 // bind the same generate function; the active model is read from the
 // #requestyModel select / requesty_model session key at click time. Separate
 // exports are kept so the provider-registry entries stay explicit and
@@ -347,6 +355,10 @@ function initRequestyGpt56Sol() {
   bindGenerateNoteButton(generateNote);
 }
 
+function initRequestyKimiK3() {
+  bindGenerateNoteButton(generateNote);
+}
+
 export {
   initRequestyClaudeOpus5,
   initRequestyClaudeSonnet5,
@@ -354,5 +366,6 @@ export {
   initRequestyGpt5Nano,
   initRequestyGpt56Luna,
   initRequestyGpt56Terra,
-  initRequestyGpt56Sol
+  initRequestyGpt56Sol,
+  initRequestyKimiK3
 };

@@ -183,6 +183,7 @@ import {
   // gpt-5.5:         azure/gpt-5.5@swedencentral rates
   // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
   // gpt-5.6-*:       Azure Sweden Central rates from Requesty's model cards
+  // kimi-k3:          tensorx/kimi-k3 rates
   const REQUESTY_USD_PER_MTOK = {
     "claude-opus-5": { input: 5.5, output: 27.5 },
     "claude-sonnet-5": { input: 2.2, output: 11.0 },
@@ -191,6 +192,7 @@ import {
     "gpt-5.6-luna": { input: 1.1, output: 6.6 },
     "gpt-5.6-terra": { input: 2.75, output: 16.5 },
     "gpt-5.6-sol": { input: 5.5, output: 33.0 },
+    "kimi-k3": { input: 3.0, output: 15.0 },
   };
 
   // Requesty's ~5% premium is a one-time top-up fee applied when funding
