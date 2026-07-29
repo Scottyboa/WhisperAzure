@@ -177,11 +177,15 @@ import {
   // claude-sonnet-5: vertex/claude-sonnet-5@eu rates (EU regional pricing)
   // gpt-5.5:         azure/gpt-5.5@swedencentral rates
   // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
+  // gpt-5.6-*:       Azure Sweden Central rates from Requesty's model cards
   const REQUESTY_USD_PER_MTOK = {
     "claude-opus-5": { input: 5.5, output: 27.5 },
     "claude-sonnet-5": { input: 2.2, output: 11.0 },
     "gpt-5.5": { input: 5.0, output: 30.0 },
     "gpt-5-nano": { input: 0.05, output: 0.4 },
+    "gpt-5.6-luna": { input: 1.1, output: 6.6 },
+    "gpt-5.6-terra": { input: 2.75, output: 16.5 },
+    "gpt-5.6-sol": { input: 5.5, output: 33.0 },
   };
 
   // Requesty's ~5% premium is a one-time top-up fee applied when funding
@@ -673,6 +677,5 @@ import {
     wireAutoClear();
   }
 })();
-
 
 

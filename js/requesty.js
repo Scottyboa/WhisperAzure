@@ -8,10 +8,13 @@
 //
 //   - Claude Opus 5    -> bedrock/claude-opus-5@eu-north-1   (AWS Bedrock, Stockholm)
 //   - GPT-5.5          -> azure/gpt-5.5@swedencentral        (Azure, Sweden Central)
+//   - GPT-5.6 Luna     -> azure/gpt-5.6-luna@swedencentral   (Azure, Sweden Central)
+//   - GPT-5.6 Terra    -> azure/gpt-5.6-terra@swedencentral  (Azure, Sweden Central)
+//   - GPT-5.6 Sol      -> azure/gpt-5.6-sol@swedencentral    (Azure, Sweden Central)
 //
 // sessionStorage keys used:
 //   requesty_api_key   (set on the start page, index.html)
-//   requesty_model     (claude-opus-5 | claude-sonnet-5 | gpt-5.5 | gpt-5-nano)
+//   requesty_model     (one of the Requesty model values registered below)
 //
 // API notes (see https://docs.requesty.ai/quickstart and
 // https://docs.requesty.ai/features/eu-routing):
@@ -20,9 +23,10 @@
 //   - Format:     OpenAI Chat Completions (messages / stream / usage)
 //   - Streaming:  SSE; usage arrives in a final chunk when
 //                 stream_options.include_usage is set
-//   - Reasoning:  `reasoning_effort` ("low"|"medium"|"high") works for both
-//                 OpenAI models (forwarded as-is) and Anthropic models
-//                 (converted by Requesty to a thinking-token budget).
+//   - Reasoning:  `reasoning_effort` works for both OpenAI models and
+//                 Anthropic models. Requesty forwards the standard OpenAI
+//                 efforts, including model-supported "xhigh", and converts
+//                 Anthropic efforts to a thinking-token budget.
 //                 "none" is handled here by omitting the parameter, matching
 //                 the native OpenAI note module's behaviour.
 
@@ -78,7 +82,22 @@ const VARIANTS = Object.freeze({
     // medium) — read from the dedicated #requestyNanoReasoning selector.
     requestyModelId: "azure/gpt-5-nano@swedencentral",
     pricingModelId: "gpt-5-nano",
-    reasoningSelector: "nano"
+    reasoningSelector: "dedicated"
+  },
+  "gpt-5.6-luna": {
+    requestyModelId: "azure/gpt-5.6-luna@swedencentral",
+    pricingModelId: "gpt-5.6-luna",
+    reasoningSelector: "dedicated"
+  },
+  "gpt-5.6-terra": {
+    requestyModelId: "azure/gpt-5.6-terra@swedencentral",
+    pricingModelId: "gpt-5.6-terra",
+    reasoningSelector: "dedicated"
+  },
+  "gpt-5.6-sol": {
+    requestyModelId: "azure/gpt-5.6-sol@swedencentral",
+    pricingModelId: "gpt-5.6-sol",
+    reasoningSelector: "dedicated"
   }
 });
 
@@ -104,13 +123,13 @@ function resolveEffectiveMode() {
   return getSelectValue("noteProviderMode", "streaming").toLowerCase();
 }
 
-function resolveReasoningLevel(variantConfig) {
-  // GPT-5 Nano uses its own dedicated selector (Minimal/Low/Medium/High,
-  // default Medium). All values are valid effort levels, so buildRequestBody
-  // always forwards reasoning_effort for it.
-  if (variantConfig && variantConfig.reasoningSelector === "nano") {
+function resolveReasoningLevel(variantKey, variantConfig) {
+  // GPT-5 Nano and GPT-5.6 use the dedicated Requesty selector. Its options
+  // are hydrated for the selected model by provider-persistence.js.
+  if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
     return normalizeRequestyNanoReasoning(
-      getSelectValue("requestyNanoReasoning", "medium")
+      getSelectValue("requestyNanoReasoning", "medium"),
+      variantKey
     );
   }
   // All other Requesty models reuse the shared #gpt5Reasoning selector
@@ -224,7 +243,7 @@ async function generateNote() {
   }
 
   const finalPromptText = buildStandardNotePrompt(promptText);
-  const reasoningLevel = resolveReasoningLevel(variantConfig);
+  const reasoningLevel = resolveReasoningLevel(variantKey, variantConfig);
   const requestBody = buildRequestBody({
     requestyModelId: variantConfig.requestyModelId,
     finalPromptText,
@@ -294,7 +313,7 @@ async function generateNote() {
 // -----------------------------------------------------------------------------
 //
 // All effective providers (requesty-claude / requesty-sonnet /
-// requesty-gpt55 / requesty-nano)
+// requesty-gpt55 / requesty-nano / requesty-gpt56-*)
 // bind the same generate function; the active model is read from the
 // #requestyModel select / requesty_model session key at click time. Separate
 // exports are kept so the provider-registry entries stay explicit and
@@ -316,4 +335,24 @@ function initRequestyGpt5Nano() {
   bindGenerateNoteButton(generateNote);
 }
 
-export { initRequestyClaudeOpus5, initRequestyClaudeSonnet5, initRequestyGpt55, initRequestyGpt5Nano };
+function initRequestyGpt56Luna() {
+  bindGenerateNoteButton(generateNote);
+}
+
+function initRequestyGpt56Terra() {
+  bindGenerateNoteButton(generateNote);
+}
+
+function initRequestyGpt56Sol() {
+  bindGenerateNoteButton(generateNote);
+}
+
+export {
+  initRequestyClaudeOpus5,
+  initRequestyClaudeSonnet5,
+  initRequestyGpt55,
+  initRequestyGpt5Nano,
+  initRequestyGpt56Luna,
+  initRequestyGpt56Terra,
+  initRequestyGpt56Sol
+};

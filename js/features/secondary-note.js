@@ -109,7 +109,22 @@ const REQUESTY_VARIANTS = {
   "gpt-5-nano": {
     requestyModelId: "azure/gpt-5-nano@swedencentral",
     pricingModelId: "gpt-5-nano",
-    reasoningSelector: "nano"
+    reasoningSelector: "dedicated"
+  },
+  "gpt-5.6-luna": {
+    requestyModelId: "azure/gpt-5.6-luna@swedencentral",
+    pricingModelId: "gpt-5.6-luna",
+    reasoningSelector: "dedicated"
+  },
+  "gpt-5.6-terra": {
+    requestyModelId: "azure/gpt-5.6-terra@swedencentral",
+    pricingModelId: "gpt-5.6-terra",
+    reasoningSelector: "dedicated"
+  },
+  "gpt-5.6-sol": {
+    requestyModelId: "azure/gpt-5.6-sol@swedencentral",
+    pricingModelId: "gpt-5.6-sol",
+    reasoningSelector: "dedicated"
   }
 };
 
@@ -385,6 +400,9 @@ function getSelections() {
     const raw = String(readSession(STORAGE_KEYS.bedrockModel, DEFAULTS.bedrockModel)).trim();
     return ALLOWED_BEDROCK_MODEL_KEYS.has(raw) ? raw : DEFAULTS.bedrockModel;
   })();
+  const requestyModel = normalizeRequestyModel(
+    readSession(STORAGE_KEYS.requestyModel, DEFAULTS.requestyModel)
+  );
 
   return {
     provider,
@@ -400,9 +418,10 @@ function getSelections() {
     ),
     vertexModel,
     bedrockModel,
-    requestyModel: normalizeRequestyModel(readSession(STORAGE_KEYS.requestyModel, DEFAULTS.requestyModel)),
+    requestyModel,
     requestyNanoReasoning: normalizeRequestyNanoReasoning(
-      readSession(STORAGE_KEYS.requestyNanoReasoning, DEFAULTS.requestyNanoReasoning)
+      readSession(STORAGE_KEYS.requestyNanoReasoning, DEFAULTS.requestyNanoReasoning),
+      requestyModel
     ),
     promptSlot: (() => {
       const raw = parseInt(readSession(STORAGE_KEYS.promptSlot, "1"), 10);
@@ -441,7 +460,10 @@ function hydrateSelectors() {
   setSelectOptions(el("secondaryOpenaiModel"), listOpenAiModelOptions());
   setSelectOptions(el("secondaryMode"), listNoteModeOptions());
   setSelectOptions(el("secondaryOpenaiReasoning"), listOpenAiReasoningOptions());
-  setSelectOptions(el("secondaryNanoReasoning"), listRequestyNanoReasoningOptions());
+  setSelectOptions(
+    el("secondaryNanoReasoning"),
+    listRequestyNanoReasoningOptions(selections.requestyModel)
+  );
   setSelectOptions(el("secondaryGeminiModel"), listGeminiApiModelOptions());
   setSelectOptions(
     el("secondaryGeminiReasoning"),
@@ -1047,7 +1069,7 @@ async function generateRequesty({ selections, sourceText, promptText, outputFiel
   const streaming = selections.mode !== "non-streaming";
 
   const reasoningLevel =
-    variantConfig.reasoningSelector === "nano"
+    variantConfig.reasoningSelector === "dedicated"
       ? selections.requestyNanoReasoning
       : selections.openaiReasoning;
 
@@ -1368,7 +1390,8 @@ function initSecondaryNoteModule() {
     normalize: normalizeOpenAiReasoning
   });
   bindPersistedSelect("secondaryNanoReasoning", STORAGE_KEYS.requestyNanoReasoning, {
-    normalize: normalizeRequestyNanoReasoning
+    normalize: (value) =>
+      normalizeRequestyNanoReasoning(value, getSelections().requestyModel)
   });
   bindPersistedSelect("secondaryGeminiModel", STORAGE_KEYS.geminiModel, {
     onChange: (modelId) => {
@@ -1396,8 +1419,17 @@ function initSecondaryNoteModule() {
   });
   bindPersistedSelect("secondaryRequestyModel", STORAGE_KEYS.requestyModel, {
     normalize: normalizeRequestyModel,
-    onChange: () => {
+    onChange: (modelId) => {
       clearSecondaryUsageAndCost();
+      const reasoningSelect = el("secondaryNanoReasoning");
+      const previous = String(reasoningSelect?.value || "");
+      setSelectOptions(
+        reasoningSelect,
+        listRequestyNanoReasoningOptions(modelId)
+      );
+      const normalized = normalizeRequestyNanoReasoning(previous, modelId);
+      if (reasoningSelect) reasoningSelect.value = normalized;
+      writeSession(STORAGE_KEYS.requestyNanoReasoning, normalized);
       syncVisibility();
     }
   });

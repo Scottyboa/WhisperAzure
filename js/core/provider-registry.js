@@ -210,6 +210,33 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './requesty.js',
     initExportName: 'initRequestyGpt5Nano',
   },
+  'requesty-gpt56-luna': {
+    id: 'requesty-gpt56-luna',
+    label: 'Requesty GPT-5.6 Luna',
+    uiProvider: 'requesty',
+    requestyModel: 'gpt-5.6-luna',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyGpt56Luna',
+  },
+  'requesty-gpt56-terra': {
+    id: 'requesty-gpt56-terra',
+    label: 'Requesty GPT-5.6 Terra',
+    uiProvider: 'requesty',
+    requestyModel: 'gpt-5.6-terra',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyGpt56Terra',
+  },
+  'requesty-gpt56-sol': {
+    id: 'requesty-gpt56-sol',
+    label: 'Requesty GPT-5.6 Sol',
+    uiProvider: 'requesty',
+    requestyModel: 'gpt-5.6-sol',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyGpt56Sol',
+  },
 };
 
 const NOTE_UI_PROVIDER_OPTIONS = [
@@ -227,18 +254,35 @@ const REQUESTY_MODEL_OPTIONS = [
   { value: 'claude-sonnet-5', label: 'Claude Sonnet 5' },
   { value: 'gpt-5.5', label: 'GPT-5.5' },
   { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
+  { value: 'gpt-5.6-luna', label: 'GPT-5.6 Luna' },
+  { value: 'gpt-5.6-terra', label: 'GPT-5.6 Terra' },
+  { value: 'gpt-5.6-sol', label: 'GPT-5.6 Sol' },
 ];
 
-// GPT-5 Nano reasoning effort. The GPT-5 API family (gpt-5 / gpt-5-mini /
-// gpt-5-nano) supports reasoning_effort of minimal | low | medium | high
-// (default medium). Note this differs from the shared OpenAI selector, which
-// uses "none" instead of "minimal" — so GPT-5 Nano gets its own dropdown.
+// Models with model-specific Requesty reasoning controls use the existing
+// dedicated selector. GPT-5 Nano accepts minimal | low | medium | high.
+// Requesty's Chat Completions gateway preserves four distinct GPT-5.6 effort
+// levels: low | medium | high | xhigh. Requesty currently normalizes `none`
+// to `low` and `max` to `high`, so those aliases are intentionally omitted.
 const REQUESTY_NANO_REASONING_OPTIONS = [
   { value: 'minimal', label: 'Minimal' },
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
   { value: 'high', label: 'High' },
 ];
+
+const REQUESTY_GPT56_REASONING_OPTIONS = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+  { value: 'xhigh', label: 'X-high' },
+];
+
+const REQUESTY_GPT56_MODELS = new Set([
+  'gpt-5.6-luna',
+  'gpt-5.6-terra',
+  'gpt-5.6-sol',
+]);
 
 const OPENAI_NOTE_MODEL_OPTIONS = [
   { value: 'gpt5', label: 'GPT-5.1' },
@@ -369,13 +413,23 @@ export function normalizeRequestyModel(value) {
     : DEFAULTS.requestyModel;
 }
 
-export function listRequestyNanoReasoningOptions() {
-  return REQUESTY_NANO_REASONING_OPTIONS.map((item) => ({ ...item }));
+export function listRequestyNanoReasoningOptions(
+  modelId = 'gpt-5-nano'
+) {
+  const normalizedModel = normalizeRequestyModel(modelId);
+  const options = REQUESTY_GPT56_MODELS.has(normalizedModel)
+    ? REQUESTY_GPT56_REASONING_OPTIONS
+    : REQUESTY_NANO_REASONING_OPTIONS;
+  return options.map((item) => ({ ...item }));
 }
 
-export function normalizeRequestyNanoReasoning(value) {
+export function normalizeRequestyNanoReasoning(
+  value,
+  modelId = 'gpt-5-nano'
+) {
   const raw = String(value || '').trim().toLowerCase();
-  return REQUESTY_NANO_REASONING_OPTIONS.some((item) => item.value === raw)
+  const options = listRequestyNanoReasoningOptions(modelId);
+  return options.some((item) => item.value === raw)
     ? raw
     : DEFAULTS.requestyNanoReasoning;
 }
@@ -679,21 +733,22 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   const isOpenAi = uiProvider === 'openai';
   const isGpt5x = isOpenAi && (model === 'gpt5' || model === 'gpt52' || model === 'gpt54' || model === 'gpt55');
   const isRequesty = uiProvider === 'requesty';
-  const isRequestyNano = isRequesty && reqModel === 'gpt-5-nano';
+  const usesDedicatedRequestyReasoning =
+    isRequesty && (reqModel === 'gpt-5-nano' || REQUESTY_GPT56_MODELS.has(reqModel));
 
   // Streaming/non-streaming (#noteProviderMode) is available for all Requesty
   // models. For reasoning, most Requesty models share the OpenAI selector
   // (#gpt5Reasoning, None/Low/Medium/High): the Anthropic models (Opus 5,
   // Sonnet 5) map reasoning_effort to a thinking budget ("None" omits it),
-  // and GPT-5.5 uses the native OpenAI effort string. GPT-5 Nano is the
-  // exception — its valid values are Minimal/Low/Medium/High (no "None"), so
-  // it gets its own dedicated selector (#requestyNanoReasoning) instead.
+  // and GPT-5.5 uses the native OpenAI effort string. GPT-5 Nano and GPT-5.6
+  // use the dedicated Requesty selector because their valid option sets differ
+  // from the shared selector.
 
   return {
     showOpenAi: isOpenAi,
     showOpenAiMode: isGpt5x || isRequesty,
-    showOpenAiReasoning: isGpt5x || (isRequesty && !isRequestyNano),
-    showRequestyNanoReasoning: isRequestyNano,
+    showOpenAiReasoning: isGpt5x || (isRequesty && !usesDedicatedRequestyReasoning),
+    showRequestyNanoReasoning: usesDedicatedRequestyReasoning,
     showGeminiApi: uiProvider === 'gemini3',
     showGeminiReasoning: uiProvider === 'gemini3',
     showVertex: uiProvider === 'gemini3-vertex',
