@@ -497,6 +497,9 @@ function hydrateSelectors() {
 
   hydratePromptOptions(selections.promptSlot);
   syncVisibility();
+  try {
+    getApp().renderNoteModelPrices?.();
+  } catch (_) {}
 }
 
 // -----------------------------------------------------------------------------

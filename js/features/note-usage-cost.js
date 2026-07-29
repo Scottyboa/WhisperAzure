@@ -172,6 +172,11 @@ import {
     "mistral-large-latest": { input: 0.5, output: 1.5 },
   };
 
+  // Lemonfox Llama 3.3 70B uses one flat per-token rate for both directions.
+  const LEMONFOX_USD_PER_MTOK = {
+    "llama-70b-chat": { input: 1.25, output: 1.25 },
+  };
+
   // Requesty (EU router) — underlying model list prices, USD per 1M tokens.
   // claude-opus-5: bedrock/claude-opus-5@eu-north-1 rates
   // claude-sonnet-5: vertex/claude-sonnet-5@eu rates (EU regional pricing)
@@ -222,6 +227,189 @@ import {
     "gemini-3.5-flash": { rates: { input: 1.5, output: 9.0 } },
     "gemini-3.1-flash-lite": { rates: { input: 0.3, output: 2.5 } },
   };
+
+  const OPENAI_UI_MODEL_IDS = {
+    gpt5: "gpt-5.1",
+    gpt52: "gpt-5.2",
+    gpt54: "gpt-5.4",
+    gpt55: "gpt-5.5",
+  };
+
+  function getModelPricing({
+    provider,
+    openaiModel,
+    geminiModel,
+    vertexModel,
+    bedrockModel,
+    requestyModel,
+  } = {}) {
+    const providerKey = String(provider || "").trim().toLowerCase();
+
+    if (providerKey === "openai") {
+      const rawModel = String(openaiModel || DEFAULTS.openaiModel).trim().toLowerCase();
+      const modelId = OPENAI_UI_MODEL_IDS[rawModel] || rawModel;
+      const rates = OPENAI_USD_PER_MTOK[modelId];
+      return rates ? { rates } : null;
+    }
+
+    if (providerKey === "lemonfox") {
+      return { rates: LEMONFOX_USD_PER_MTOK["llama-70b-chat"] };
+    }
+
+    if (providerKey === "mistral") {
+      return { rates: MISTRAL_USD_PER_MTOK["mistral-large-latest"] };
+    }
+
+    if (providerKey === "gemini3") {
+      const modelId = String(geminiModel || DEFAULTS.geminiModel).trim().toLowerCase();
+      return GEMINI_API_USD_PER_MTOK[modelId] || null;
+    }
+
+    if (providerKey === "gemini3-vertex") {
+      const modelId = String(vertexModel || DEFAULTS.vertexModel).trim().toLowerCase();
+      return VERTEX_USD_PER_MTOK[modelId] || null;
+    }
+
+    if (providerKey === "aws-bedrock") {
+      const modelId = String(bedrockModel || DEFAULTS.bedrockModel).trim().toLowerCase();
+      const rates = BEDROCK_CLAUDE_USD_PER_MTOK[modelId];
+      return rates ? { rates } : null;
+    }
+
+    if (providerKey === "requesty") {
+      const modelId = String(requestyModel || DEFAULTS.requestyModel).trim().toLowerCase();
+      const rates = REQUESTY_USD_PER_MTOK[modelId];
+      return rates ? { rates } : null;
+    }
+
+    return null;
+  }
+
+  function fmtRate(value) {
+    const amount = Number(value);
+    return Number.isFinite(amount) ? `$${amount.toFixed(2)}` : "—";
+  }
+
+  function fmtRateRange(first, second) {
+    const firstAmount = Number(first);
+    const secondAmount = Number(second);
+    if (!Number.isFinite(firstAmount) || !Number.isFinite(secondAmount)) return "—";
+    if (firstAmount === secondAmount) return fmtRate(firstAmount);
+    return `${fmtRate(firstAmount)}–${fmtRate(secondAmount)}`;
+  }
+
+  function formatModelPricing(pricing) {
+    if (!pricing || typeof pricing !== "object") return "";
+
+    if (pricing.rates) {
+      return `Input: ${fmtRate(pricing.rates.input)}/1M · Output: ${fmtRate(pricing.rates.output)}/1M`;
+    }
+
+    if (pricing.short && pricing.long) {
+      return (
+        `Input: ${fmtRateRange(pricing.short.input, pricing.long.input)}/1M · ` +
+        `Output: ${fmtRateRange(pricing.short.output, pricing.long.output)}/1M`
+      );
+    }
+
+    return "";
+  }
+
+  function readSelectValue(id, fallback = "") {
+    const value = document.getElementById(id)?.value;
+    return String(value || fallback || "").trim();
+  }
+
+  function setModelPriceLabel(id, text, { hidden = false } = {}) {
+    const label = document.getElementById(id);
+    if (!label) return;
+    label.textContent = String(text || "");
+    label.hidden = hidden || !text;
+  }
+
+  function renderNoteModelPrices() {
+    const mainProvider = readSelectValue(
+      "noteProvider",
+      readSession("note_provider", DEFAULTS.noteProvider)
+    ).toLowerCase();
+    const mainSelections = {
+      openaiModel: readSelectValue("openaiModel", DEFAULTS.openaiModel),
+      geminiModel: readSelectValue("geminiModel", DEFAULTS.geminiModel),
+      vertexModel: readSelectValue("vertexModel", DEFAULTS.vertexModel),
+      bedrockModel: readSelectValue("bedrockModel", DEFAULTS.bedrockModel),
+      requestyModel: readSelectValue("requestyModel", DEFAULTS.requestyModel),
+    };
+
+    setModelPriceLabel(
+      "openaiModelPrice",
+      formatModelPricing(getModelPricing({ provider: "openai", ...mainSelections }))
+    );
+    setModelPriceLabel(
+      "geminiModelPrice",
+      formatModelPricing(getModelPricing({ provider: "gemini3", ...mainSelections }))
+    );
+    setModelPriceLabel(
+      "vertexModelPrice",
+      formatModelPricing(getModelPricing({ provider: "gemini3-vertex", ...mainSelections }))
+    );
+    setModelPriceLabel(
+      "bedrockModelPrice",
+      formatModelPricing(getModelPricing({ provider: "aws-bedrock", ...mainSelections }))
+    );
+    setModelPriceLabel(
+      "requestyModelPrice",
+      formatModelPricing(getModelPricing({ provider: "requesty", ...mainSelections }))
+    );
+
+    const mainFixedPrice =
+      mainProvider === "lemonfox" || mainProvider === "mistral"
+        ? formatModelPricing(getModelPricing({ provider: mainProvider }))
+        : "";
+    setModelPriceLabel("fixedNoteModelPrice", mainFixedPrice, {
+      hidden: !mainFixedPrice,
+    });
+
+    const secondaryProvider = readSelectValue(
+      "secondaryProvider",
+      readSession("secondary_note_provider", DEFAULTS.noteProvider)
+    ).toLowerCase();
+    const secondarySelections = {
+      openaiModel: readSelectValue("secondaryOpenaiModel", DEFAULTS.openaiModel),
+      geminiModel: readSelectValue("secondaryGeminiModel", DEFAULTS.geminiModel),
+      vertexModel: readSelectValue("secondaryVertexModel", DEFAULTS.vertexModel),
+      bedrockModel: readSelectValue("secondaryBedrockModel", DEFAULTS.bedrockModel),
+      requestyModel: readSelectValue("secondaryRequestyModel", DEFAULTS.requestyModel),
+    };
+
+    setModelPriceLabel(
+      "secondaryOpenaiModelPrice",
+      formatModelPricing(getModelPricing({ provider: "openai", ...secondarySelections }))
+    );
+    setModelPriceLabel(
+      "secondaryGeminiModelPrice",
+      formatModelPricing(getModelPricing({ provider: "gemini3", ...secondarySelections }))
+    );
+    setModelPriceLabel(
+      "secondaryVertexModelPrice",
+      formatModelPricing(getModelPricing({ provider: "gemini3-vertex", ...secondarySelections }))
+    );
+    setModelPriceLabel(
+      "secondaryBedrockModelPrice",
+      formatModelPricing(getModelPricing({ provider: "aws-bedrock", ...secondarySelections }))
+    );
+    setModelPriceLabel(
+      "secondaryRequestyModelPrice",
+      formatModelPricing(getModelPricing({ provider: "requesty", ...secondarySelections }))
+    );
+
+    const secondaryFixedPrice =
+      secondaryProvider === "lemonfox" || secondaryProvider === "mistral"
+        ? formatModelPricing(getModelPricing({ provider: secondaryProvider }))
+        : "";
+    setModelPriceLabel("secondaryFixedModelPrice", secondaryFixedPrice, {
+      hidden: !secondaryFixedPrice,
+    });
+  }
 
   function estimateUsdFromRates({ rates, inputTokens, outputTokens }) {
     const inTok = Number(inputTokens);
@@ -279,6 +467,15 @@ import {
           ? MISTRAL_USD_PER_MTOK["mistral-large-latest"]
           : null);
       if (!rates) return null;
+      return estimateUsdFromRates({
+        rates,
+        inputTokens: payload.inputTokens,
+        outputTokens: payload.outputTokens,
+      });
+    }
+
+    if (pk === "lemonfox") {
+      const rates = LEMONFOX_USD_PER_MTOK["llama-70b-chat"];
       return estimateUsdFromRates({
         rates,
         inputTokens: payload.inputTokens,
@@ -458,6 +655,12 @@ import {
   }
 
   const app = getApp();
+
+  app.formatNoteModelPrice = function formatNoteModelPrice(selection) {
+    return formatModelPricing(getModelPricing(selection));
+  };
+
+  app.renderNoteModelPrices = renderNoteModelPrices;
 
   app.normalizeNoteUsage = function normalizeNoteUsage({
     providerKey = null,
@@ -669,6 +872,26 @@ import {
       const el = document.getElementById(id);
       if (el) el.addEventListener("change", clear, true);
     });
+
+    [
+      "noteProvider",
+      "openaiModel",
+      "geminiModel",
+      "vertexModel",
+      "bedrockModel",
+      "requestyModel",
+      "secondaryProvider",
+      "secondaryOpenaiModel",
+      "secondaryGeminiModel",
+      "secondaryVertexModel",
+      "secondaryBedrockModel",
+      "secondaryRequestyModel",
+    ].forEach((id) => {
+      const select = document.getElementById(id);
+      if (select) select.addEventListener("change", renderNoteModelPrices);
+    });
+
+    renderNoteModelPrices();
   }
 
   if (document.readyState === "loading") {
@@ -677,5 +900,3 @@ import {
     wireAutoClear();
   }
 })();
-
-
