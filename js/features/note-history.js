@@ -1,4 +1,5 @@
 const STORAGE_KEY = "note_history_v1";
+const COLLAPSED_STORAGE_KEY = "note_history_collapsed_v1";
 const MAX_ENTRIES = 30;
 
 const STRINGS = {
@@ -15,6 +16,8 @@ const STRINGS = {
     withoutPrompt: "No prompt",
     close: "Close",
     openEntry: "Open",
+    collapse: "Collapse history column",
+    expand: "Expand history column",
   },
   no: {
     history: "Historikk",
@@ -29,6 +32,8 @@ const STRINGS = {
     withoutPrompt: "Uten prompt",
     close: "Lukk",
     openEntry: "Åpne",
+    collapse: "Minimer historikkolonnen",
+    expand: "Åpne historikkolonnen",
   },
   sv: {
     history: "Historik",
@@ -43,6 +48,8 @@ const STRINGS = {
     withoutPrompt: "Utan prompt",
     close: "Stäng",
     openEntry: "Öppna",
+    collapse: "Minimera historikkolumnen",
+    expand: "Öppna historikkolumnen",
   },
   de: {
     history: "Verlauf",
@@ -57,6 +64,8 @@ const STRINGS = {
     withoutPrompt: "Ohne Prompt",
     close: "Schließen",
     openEntry: "Öffnen",
+    collapse: "Verlaufsspalte minimieren",
+    expand: "Verlaufsspalte öffnen",
   },
   fr: {
     history: "Historique",
@@ -71,6 +80,8 @@ const STRINGS = {
     withoutPrompt: "Sans prompt",
     close: "Fermer",
     openEntry: "Ouvrir",
+    collapse: "Réduire la colonne d’historique",
+    expand: "Ouvrir la colonne d’historique",
   },
   it: {
     history: "Cronologia",
@@ -85,6 +96,8 @@ const STRINGS = {
     withoutPrompt: "Senza prompt",
     close: "Chiudi",
     openEntry: "Apri",
+    collapse: "Riduci la colonna della cronologia",
+    expand: "Apri la colonna della cronologia",
   },
 };
 
@@ -95,6 +108,7 @@ const state = {
   activeEntryId: "",
   previousFocus: null,
   language: "en",
+  collapsed: false,
 };
 
 function byId(id) {
@@ -173,6 +187,44 @@ function loadHistory() {
     Number.isInteger(storedNext) && storedNext > highestSequence
       ? storedNext
       : highestSequence + 1;
+}
+
+function loadCollapsedState() {
+  try {
+    state.collapsed = sessionStorage.getItem(COLLAPSED_STORAGE_KEY) === "1";
+  } catch (_) {
+    state.collapsed = false;
+  }
+}
+
+function persistCollapsedState() {
+  try {
+    sessionStorage.setItem(COLLAPSED_STORAGE_KEY, state.collapsed ? "1" : "0");
+  } catch (_) {}
+}
+
+function syncCollapsedState() {
+  const grid = document.querySelector(".grid-container");
+  const sidebar = byId("noteHistorySidebar");
+  const button = byId("noteHistoryCollapseButton");
+  const copy = strings();
+
+  grid?.classList.toggle("history-collapsed", state.collapsed);
+  sidebar?.classList.toggle("is-collapsed", state.collapsed);
+
+  if (button) {
+    const label = state.collapsed ? copy.expand : copy.collapse;
+    button.textContent = state.collapsed ? "›" : "‹";
+    button.setAttribute("aria-expanded", state.collapsed ? "false" : "true");
+    button.setAttribute("aria-label", label);
+    button.title = label;
+  }
+}
+
+function toggleCollapsedState() {
+  state.collapsed = !state.collapsed;
+  persistCollapsedState();
+  syncCollapsedState();
 }
 
 function buildStoragePayload() {
@@ -428,9 +480,11 @@ function updateLanguage(language) {
 
   renderHistory();
   syncModalContent();
+  syncCollapsedState();
 }
 
 function bindEvents() {
+  byId("noteHistoryCollapseButton")?.addEventListener("click", toggleCollapsedState);
   byId("noteHistoryClearButton")?.addEventListener("click", clearHistory);
   byId("noteHistoryModalClose")?.addEventListener("click", closeModal);
 
@@ -467,6 +521,7 @@ function bindEvents() {
 
 function init() {
   loadHistory();
+  loadCollapsedState();
   bindEvents();
   updateLanguage(
     byId("lang-select-transcribe")?.value ||

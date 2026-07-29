@@ -157,14 +157,19 @@
     }
     /* Grid Layout: history rail, optional left ad, main content, optional right ad */
     .grid-container {
+      --history-rail-width: clamp(172px, 13vw, 190px);
       display: grid;
-      grid-template-columns: clamp(172px, 13vw, 190px) 300px minmax(0, 1fr) 300px;
+      grid-template-columns: var(--history-rail-width) 300px minmax(0, 1fr) 300px;
       grid-template-rows: auto; /* Allow rows to size based on content */
       min-height: 1200px;       /* Ensure the grid is always at least 1200px tall */
+      transition: grid-template-columns 160ms ease;
+    }
+    .grid-container.history-collapsed {
+      --history-rail-width: 42px;
     }
    /* When ad columns are disabled, keep the compact history rail beside the app */
     .grid-container.ads-disabled {
-      grid-template-columns: clamp(172px, 13vw, 190px) minmax(0, 1fr);
+      grid-template-columns: var(--history-rail-width) minmax(0, 1fr);
     }
     .grid-container.ads-disabled .sidebar,
     .grid-container.ads-disabled .ad-sidebar {
@@ -215,6 +220,30 @@
     .note-history-help {
       flex: 0 0 auto;
       margin-left: 0;
+    }
+    .note-history-collapse {
+      flex: 0 0 auto;
+      width: 27px;
+      height: 27px;
+      margin: 0;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #aeb8bc;
+      border-radius: 6px;
+      background: #fff;
+      color: #3f4c51;
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .note-history-collapse:hover,
+    .note-history-collapse:focus-visible {
+      border-color: #5a9;
+      background: #f3faf7;
+      color: #287158;
+      outline: none;
     }
     .note-history-clear {
       flex: 0 0 auto;
@@ -397,6 +426,24 @@
     }
     body.note-history-modal-open {
       overflow: hidden;
+    }
+    .note-history-sidebar.is-collapsed .note-history-header {
+      padding: 8px 0;
+      border-bottom: 0;
+    }
+    .note-history-sidebar.is-collapsed .note-history-header-row {
+      justify-content: center;
+    }
+    .note-history-sidebar.is-collapsed .note-history-title,
+    .note-history-sidebar.is-collapsed .note-history-help,
+    .note-history-sidebar.is-collapsed .note-history-clear,
+    .note-history-sidebar.is-collapsed .note-history-scroll {
+      display: none;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .grid-container {
+        transition: none;
+      }
     }
     /* Left Sidebar - Updated: No padding and no gap so ads fill the space */
     .sidebar {
@@ -1918,6 +1965,17 @@
     >
       <div class="note-history-header">
         <div class="note-history-header-row">
+          <button
+            id="noteHistoryCollapseButton"
+            class="note-history-collapse"
+            type="button"
+            aria-controls="noteHistoryContent"
+            aria-expanded="true"
+            aria-label="Collapse history column"
+            title="Collapse history column"
+          >
+            ‹
+          </button>
           <h2 id="noteHistoryTitle" class="note-history-title">History</h2>
           <span
             id="noteHistoryHelp"
@@ -1935,7 +1993,7 @@
           </button>
         </div>
       </div>
-      <div class="note-history-scroll">
+      <div id="noteHistoryContent" class="note-history-scroll">
         <div id="noteHistoryList" class="note-history-list" aria-live="polite"></div>
         <p id="noteHistoryEmpty" class="note-history-empty">No generated notes yet.</p>
       </div>
