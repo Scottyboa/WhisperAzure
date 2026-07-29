@@ -2254,6 +2254,10 @@
                 <select id="secondaryProvider"></select>
                 <span id="secondaryFixedModelPrice" class="model-price-label" hidden></span>
               </span>
+              <span class="secondary-inline-control" id="secondaryModeContainer" style="display:none;">
+                <label for="secondaryMode" id="secondaryModeLabel">Mode:</label>
+                <select id="secondaryMode"></select>
+              </span>
               <span class="secondary-inline-control" id="secondaryOpenaiModelContainer" style="display:none;">
                 <label for="secondaryOpenaiModel" id="secondaryOpenaiModelLabel">Model:</label>
                 <select id="secondaryOpenaiModel"></select>
@@ -2278,10 +2282,6 @@
                 <label for="secondaryRequestyModel" id="secondaryRequestyModelLabel">Model:</label>
                 <select id="secondaryRequestyModel"></select>
                 <span id="secondaryRequestyModelPrice" class="model-price-label"></span>
-              </span>
-              <span class="secondary-inline-control" id="secondaryModeContainer" style="display:none;">
-                <label for="secondaryMode" id="secondaryModeLabel">Mode:</label>
-                <select id="secondaryMode"></select>
               </span>
             </div>
             <div class="secondary-note-row">
@@ -2594,6 +2594,13 @@
               <option value="requesty">Requesty</option> <!-- GDPR: EU router + EU-region models -->
             </select>
             <span id="fixedNoteModelPrice" class="model-price-label" hidden></span>
+            <div id="note-provider-mode-container" style="display:none; align-items:center; gap:8px;">
+              <label for="noteProviderMode" id="noteProviderModeLabel">Mode:</label>
+              <select id="noteProviderMode">
+                <option value="streaming" selected>streaming</option>
+                <option value="non-streaming">non-streaming</option>
+              </select>
+            </div>
             <!-- OpenAI model selector (shown only when Provider = OpenAI) -->
             <div id="openai-model-container"
                  style="display:none; align-items:center; gap:6px; margin-left:8px;">
@@ -2605,13 +2612,6 @@
                 <option value="gpt55">GPT-5.5</option>
               </select>
               <span id="openaiModelPrice" class="model-price-label"></span>
-            </div>
-            <div id="note-provider-mode-container" style="display:none; align-items:center; gap:8px;">
-              <label for="noteProviderMode" id="noteProviderModeLabel">Mode:</label>
-              <select id="noteProviderMode">
-                <option value="streaming" selected>streaming</option>
-                <option value="non-streaming">non-streaming</option>
-              </select>
             </div>
 
             <div id="gemini-model-container"
