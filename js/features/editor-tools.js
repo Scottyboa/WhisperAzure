@@ -1567,6 +1567,27 @@
       return copied;
     };
 
+    const requestRedactorAutocopyExtension = (text) => {
+      const value = String(text || '');
+      if (!value.trim()) return false;
+
+      try {
+        // The extension reads the finished text directly from #transcription.
+        // Only non-sensitive metadata is included in the event detail.
+        window.dispatchEvent(
+          new CustomEvent('redactor:autocopy', {
+            detail: {
+              textLength: value.length,
+              requestedAt: Date.now(),
+            },
+          })
+        );
+        return true;
+      } catch (_) {
+        return false;
+      }
+    };
+
     if (applyRedactionButton) {
       applyRedactionButton.addEventListener('click', async () => {
         const terms = getRedactorTerms();
@@ -1599,7 +1620,9 @@
         }
 
         if (redactorAutocopyToggle?.checked && (transcriptionEl?.value || '').trim()) {
-          const copied = await copyRedactedTranscriptToClipboard(transcriptionEl.value || '');
+          const redactedTranscript = transcriptionEl.value || '';
+          const copied = await copyRedactedTranscriptToClipboard(redactedTranscript);
+          requestRedactorAutocopyExtension(redactedTranscript);
           if (!copied) {
             setRedactorStatusByKey('redactedTranscriptCopyFailed', {}, true);
           }
