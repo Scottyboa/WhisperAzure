@@ -178,6 +178,48 @@
     const clearRedactorRawOutputButton = document.getElementById('clearRedactorRawOutputButton');
     const downloadTranscriptButton = document.getElementById('downloadTranscriptButton');
 
+    // Keep this control in the Redactor runtime so the update remains
+    // self-contained in editor-tools.js. It is inserted immediately after
+    // the Redact button and starts enabled on every page load.
+    const redactorAutocopyUi = (() => {
+      let toggle = document.getElementById('redactorAutocopyToggle');
+      let labelText = document.getElementById('redactorAutocopyLabel');
+      let container = toggle?.closest?.('label') || null;
+
+      if (!toggle && applyRedactionButton) {
+        container = document.createElement('label');
+        container.className = 'redactor-autocopy-toggle';
+        container.htmlFor = 'redactorAutocopyToggle';
+        container.style.display = 'inline-flex';
+        container.style.alignItems = 'center';
+        container.style.gap = '5px';
+        container.style.margin = '0';
+        container.style.fontSize = '12px';
+        container.style.color = '#444';
+        container.style.whiteSpace = 'nowrap';
+        container.style.cursor = 'pointer';
+
+        toggle = document.createElement('input');
+        toggle.id = 'redactorAutocopyToggle';
+        toggle.type = 'checkbox';
+        toggle.checked = true;
+        toggle.style.margin = '0';
+        toggle.style.accentColor = '#5a9';
+
+        labelText = document.createElement('span');
+        labelText.id = 'redactorAutocopyLabel';
+        labelText.textContent = 'Autocopy';
+
+        container.append(toggle, labelText);
+        applyRedactionButton.insertAdjacentElement('afterend', container);
+      }
+
+      return { toggle, labelText, container };
+    })();
+    const redactorAutocopyToggle = redactorAutocopyUi.toggle;
+    const redactorAutocopyLabelEl = redactorAutocopyUi.labelText;
+    const redactorAutocopyContainer = redactorAutocopyUi.container;
+
     const REDACTOR_STRINGS = {
       en: {
         showRedactor: 'Show redactor',
@@ -204,6 +246,8 @@
         specificTermsPlaceholder: 'Specific terms (one per line)\nOla Nordmann\n12345678',
         clearSpecific: 'Clear specific',
         redact: 'Redact',
+        autocopy: 'Autocopy',
+        autocopyTitle: 'Automatically copy the redacted transcript to the clipboard',
         rawOutputLabel: 'OCR raw text',
         rawOutputPlaceholder: 'Raw OCR text appears here without formatting or cleanup. Useful when you just want to copy the transcription.',
         copyRaw: 'Copy raw',
@@ -228,6 +272,7 @@
           ocrCompleteAddedSpecificBirthdate: ({ usedLanguage, addedCount, detectedBirthdate }) => `OCR complete (${usedLanguage}) → added ${addedCount} term${addedCount === 1 ? '' : 's'} to Specific. Birthdate field auto-filled with ${detectedBirthdate}.`,
           redactedTerms: ({ termCount }) => `Redacted ${termCount} term${termCount === 1 ? '' : 's'} in Transcript and Supplementary information.`,
           noMatchingText: 'No matching text was found in Transcript or Supplementary information.',
+          redactedTranscriptCopyFailed: 'Redaction completed, but the transcript could not be copied to the clipboard.',
           clipboardReadImageFailed: ({ errorMessage }) => errorMessage || 'Could not read an image from the clipboard.',
           generalTermsCleared: 'General terms cleared.',
           specificTermsCleared: 'Specific terms and birthdate cleared.',
@@ -276,6 +321,8 @@
         specificTermsPlaceholder: 'Spesifikke begreper (ett per linje)\nOla Nordmann\n12345678',
         clearSpecific: 'Tøm spesifikke',
         redact: 'Sladd',
+        autocopy: 'Autocopy',
+        autocopyTitle: 'Kopier den ferdig sladdede transkripsjonen automatisk til utklippstavlen',
         rawOutputLabel: 'OCR-råtekst',
         rawOutputPlaceholder: 'Rå OCR-tekst vises her uten formatering eller opprydding. Nyttig når du bare vil kopiere transkripsjonen.',
         copyRaw: 'Kopier råtekst',
@@ -300,6 +347,7 @@
           ocrCompleteAddedSpecificBirthdate: ({ usedLanguage, addedCount, detectedBirthdate }) => `OCR fullført (${usedLanguage}) → la til ${addedCount} begrep${addedCount === 1 ? '' : 'er'} i Spesifikke begreper. Fødselsdatofeltet ble fylt ut automatisk med ${detectedBirthdate}.`,
           redactedTerms: ({ termCount }) => `Sladdet ${termCount} begrep${termCount === 1 ? '' : 'er'} i Transkripsjon og Tilleggsinformasjon.`,
           noMatchingText: 'Fant ingen treff i Transkripsjon eller Tilleggsinformasjon.',
+          redactedTranscriptCopyFailed: 'Sladdingen ble fullført, men transkripsjonen kunne ikke kopieres til utklippstavlen.',
           clipboardReadImageFailed: ({ errorMessage }) => errorMessage || 'Kunne ikke lese et bilde fra utklippstavlen.',
           generalTermsCleared: 'Generelle begreper tømt.',
           specificTermsCleared: 'Spesifikke begreper og fødselsdato tømt.',
@@ -408,6 +456,15 @@
       }
       if (applyRedactionButton) {
         applyRedactionButton.textContent = strings.redact;
+      }
+      if (redactorAutocopyLabelEl) {
+        redactorAutocopyLabelEl.textContent = strings.autocopy;
+      }
+      if (redactorAutocopyToggle) {
+        redactorAutocopyToggle.setAttribute('aria-label', strings.autocopyTitle);
+      }
+      if (redactorAutocopyContainer) {
+        redactorAutocopyContainer.title = strings.autocopyTitle;
       }
       if (document.getElementById('redactorOcrRawOutputLabel')) {
         document.getElementById('redactorOcrRawOutputLabel').textContent = strings.rawOutputLabel;
@@ -1466,8 +1523,52 @@
       });
     }
 
+    const copyRedactedTranscriptToClipboard = async (text) => {
+      const value = String(text || '');
+      if (!value.trim()) return false;
+
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        try {
+          await navigator.clipboard.writeText(value);
+          return true;
+        } catch (_) {}
+      }
+
+      // Fallback for browsers or contexts where the Clipboard API is
+      // unavailable. Use a temporary field so the user's current selection
+      // in the app is not changed.
+      const activeElement = document.activeElement;
+      const temporaryField = document.createElement('textarea');
+      temporaryField.value = value;
+      temporaryField.setAttribute('readonly', '');
+      temporaryField.style.position = 'fixed';
+      temporaryField.style.left = '-9999px';
+      temporaryField.style.top = '0';
+      temporaryField.style.opacity = '0';
+      document.body.appendChild(temporaryField);
+      temporaryField.focus();
+      temporaryField.select();
+      temporaryField.setSelectionRange(0, value.length);
+
+      let copied = false;
+      try {
+        copied = document.execCommand('copy');
+      } catch (_) {
+        copied = false;
+      } finally {
+        temporaryField.remove();
+        try {
+          activeElement?.focus?.({ preventScroll: true });
+        } catch (_) {
+          activeElement?.focus?.();
+        }
+      }
+
+      return copied;
+    };
+
     if (applyRedactionButton) {
-      applyRedactionButton.addEventListener('click', () => {
+      applyRedactionButton.addEventListener('click', async () => {
         const terms = getRedactorTerms();
         let replacedAny = false;
 
@@ -1490,13 +1591,19 @@
         if (!replacedAny && !terms.length) {
           setRedactorStatusByKey('addAtLeastOneTerm', {}, true);
           (redactorTermsEl || generalTermsEl)?.focus();
-          return;
+        } else {
+          setRedactorStatusByKey(
+            replacedAny ? 'redactedTerms' : 'noMatchingText',
+            replacedAny ? { termCount: terms.length } : {}
+          );
         }
 
-        setRedactorStatusByKey(
-          replacedAny ? 'redactedTerms' : 'noMatchingText',
-          replacedAny ? { termCount: terms.length } : {}
-        );
+        if (redactorAutocopyToggle?.checked && (transcriptionEl?.value || '').trim()) {
+          const copied = await copyRedactedTranscriptToClipboard(transcriptionEl.value || '');
+          if (!copied) {
+            setRedactorStatusByKey('redactedTranscriptCopyFailed', {}, true);
+          }
+        }
       });
     }
 
