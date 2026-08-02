@@ -617,6 +617,14 @@
       while (i < lines.length) {
         const s = lines[i];
 
+        // Discard OCR/paste noise that consists of only one standalone
+        // letter or digit. Existing cleanup rules below (including the
+        // two-digit numeric-line filter) continue to apply unchanged.
+        if (/^(?:\p{L}|\d)$/u.test(s)) {
+          i += 1;
+          continue;
+        }
+
         if (/^\d{1,3}\s*(?:år|ar)$/i.test(s)) {
           i += 1;
           continue;
@@ -928,11 +936,28 @@
     //     spaced form — only a single literal space.
     const ELEVEN_DIGIT_PATTERN = /(?<![\w])(?:\d{6} \d{5}|\d{11})(?![\w])/g;
 
+    // Built-in numeric ID rules:
+    //   - redact every contiguous run of at least five digits
+    //   - redact a space-separated numeric run when its first group has at
+    //     least two digits and at least one further numeric group follows
+    // Internal horizontal whitespace is accepted, but punctuation, letters,
+    // and line breaks stop the match. The terminating character is preserved.
+    const GENERIC_NUMERIC_ID_PATTERN = /(?<!\d)(?:\d{2,}(?:[ \t]+\d+)+|\d{5,})(?!\d)/g;
+
     const redactInText = (text, terms) => {
       let output = text || '';
       let replacedAny = false;
 
-      // Apply built-in 11-digit rule first.
+      // Apply the generic numeric rules first so a full spaced ID is replaced
+      // as one unit, including when its first groups form a fødselsnummer.
+      const updatedNumericIds = output.replace(GENERIC_NUMERIC_ID_PATTERN, '[REDACTED]');
+      if (updatedNumericIds !== output) {
+        replacedAny = true;
+        output = updatedNumericIds;
+      }
+
+      // Preserve the pre-existing dedicated fødselsnummer rule as a separate
+      // safeguard before applying user-entered terms.
       const updatedDigits = output.replace(ELEVEN_DIGIT_PATTERN, '[REDACTED]');
       if (updatedDigits !== output) {
         replacedAny = true;
