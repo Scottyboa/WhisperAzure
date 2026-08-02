@@ -769,6 +769,20 @@
         .trim();
     };
 
+    // Keep every source that enters the Specific terms field on the same
+    // normalization path. OCR already uses these token-splitting options;
+    // manual paste must do the same before the shared filtering, phone
+    // variants, and deduplication steps run.
+    const normalizeIncomingSpecificText = (text) => cleanSpecificBlock(
+      ocrPostprocess(text || '', {
+        convertAt: false,
+        dropCommasStack: true,
+        splitTokensNewlines: true,
+        splitFnr65: true,
+        merge323Numbers: true,
+      })
+    );
+
     const persistRedactorTextState = () => {
       if (generalTermsEl) writeSessionValue(REDACTOR_SESSION_KEYS.general, normalizeNewlines(generalTermsEl.value));
       if (redactorTermsEl) writeSessionValue(REDACTOR_SESSION_KEYS.specific, normalizeNewlines(redactorTermsEl.value));
@@ -813,12 +827,67 @@
         }
       });
 
-      redactorTermsEl.addEventListener('paste', () => {
+      redactorTermsEl.addEventListener('paste', (event) => {
         clearTimeout(cleanSpecificTimer);
-        cleanSpecificTimer = setTimeout(() => {
+
+        const pastedText = event.clipboardData?.getData('text/plain');
+        if (typeof pastedText === 'string') {
+          event.preventDefault();
+
+          const normalizedPaste = normalizeIncomingSpecificText(pastedText);
+          if (!normalizedPaste) return;
+          const detectedBirthdate = extractBirthdateFromFnrText(pastedText);
+
+          const currentValue = redactorTermsEl.value || '';
+          const selectionStart = Number.isInteger(redactorTermsEl.selectionStart)
+            ? redactorTermsEl.selectionStart
+            : currentValue.length;
+          const selectionEnd = Number.isInteger(redactorTermsEl.selectionEnd)
+            ? redactorTermsEl.selectionEnd
+            : selectionStart;
+          const textBeforeSelection = currentValue.slice(0, selectionStart);
+          const textAfterSelection = currentValue.slice(selectionEnd);
+          const leadingSeparator = textBeforeSelection && !textBeforeSelection.endsWith('\n')
+            ? '\n'
+            : '';
+          const trailingSeparator = textAfterSelection && !textAfterSelection.startsWith('\n')
+            ? '\n'
+            : '';
+
+          redactorTermsEl.setRangeText(
+            `${leadingSeparator}${normalizedPaste}${trailingSeparator}`,
+            selectionStart,
+            selectionEnd,
+            'end'
+          );
+
           const cleaned = cleanSpecificBlock(redactorTermsEl.value || '');
           if (cleaned !== (redactorTermsEl.value || '')) {
             redactorTermsEl.value = cleaned;
+          }
+          if (detectedBirthdate && birthdateInputEl) {
+            birthdateInputEl.value = detectedBirthdate;
+          }
+          persistRedactorTextState();
+          return;
+        }
+
+        // Fallback for browsers that do not expose clipboardData on the paste
+        // event: let the native paste finish, then normalize the full field.
+        cleanSpecificTimer = setTimeout(() => {
+          const currentValue = redactorTermsEl.value || '';
+          const detectedBirthdate = extractBirthdateFromFnrText(currentValue);
+          const cleaned = normalizeIncomingSpecificText(currentValue);
+          let changed = false;
+          if (cleaned !== (redactorTermsEl.value || '')) {
+            redactorTermsEl.value = cleaned;
+            changed = true;
+          }
+          if (detectedBirthdate && birthdateInputEl && birthdateInputEl.value !== detectedBirthdate) {
+            birthdateInputEl.value = detectedBirthdate;
+            changed = true;
+          }
+          if (changed) {
             persistRedactorTextState();
           }
         }, 50);
@@ -1216,13 +1285,7 @@
           return;
         }
 
-        const finalText = ocrPostprocess(recognizedText, {
-          convertAt: false,
-          dropCommasStack: true,
-          splitTokensNewlines: true,
-          splitFnr65: true,
-          merge323Numbers: true,
-        });
+        const finalText = normalizeIncomingSpecificText(recognizedText);
 
         if (!finalText.trim()) {
           setRedactorStatusByKey('noSpecificTermsProduced', {}, true);
@@ -1639,4 +1702,3 @@
     });
   }
   });
-
