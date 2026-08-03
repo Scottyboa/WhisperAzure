@@ -194,10 +194,30 @@
       border-radius: 10px;
       background: #f7fbf9;
     }
+    .report-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
     .report-box h3 {
-      margin: 0 0 12px;
+      margin: 0;
       font-size: 17px;
       font-weight: 700;
+    }
+    .report-copy-btn {
+      margin: 0;
+      padding: 8px 14px;
+      font-size: 14px;
+    }
+    .report-copy-status {
+      min-height: 18px;
+      margin: -4px 0 8px;
+      color: #2e7d32;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: right;
     }
     .report-result-grid {
       display: grid;
@@ -394,7 +414,11 @@
           </div>
 
           <section id="reportBox" class="report-box" hidden aria-live="polite">
-            <h3>Rapport</h3>
+            <div class="report-heading">
+              <h3>Rapport</h3>
+              <button id="copyReportBtn" class="report-copy-btn" type="button">Kopier</button>
+            </div>
+            <div id="copyReportStatus" class="report-copy-status" role="status" aria-live="polite"></div>
             <div class="report-result-grid">
               <div class="report-result-item">
                 <span>10-års risiko</span>
@@ -640,6 +664,32 @@
       });
     }
 
+    function reportAsText(report) {
+      return [
+        "NORRISK 2",
+        "10-års risiko: " + report.risk,
+        "Risikosone: " + report.zone,
+        "",
+        ...report.inputs.map(([label, value]) => label + ": " + value)
+      ].join("\n");
+    }
+
+    async function copyReport(report) {
+      const text = reportAsText(report);
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch (_) {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        textarea.remove();
+      }
+    }
+
     function renderResult({ riskPercent, zoneInfo, issues }) {
       const riskValue = $("riskValue");
       const zonePill = $("zonePill");
@@ -694,6 +744,7 @@
       $("reportBtn").textContent = "Vis rapport";
       $("reportBox").hidden = true;
       $("reportInputs").innerHTML = "";
+      $("copyReportStatus").textContent = "";
     }
 
     let lastReport = null;
@@ -737,12 +788,26 @@
       $("reportBtn").textContent = willShow ? "Skjul rapport" : "Vis rapport";
     });
 
+    $("copyReportBtn").addEventListener("click", async () => {
+      if (!lastReport) return;
+      const button = $("copyReportBtn");
+      const status = $("copyReportStatus");
+      await copyReport(lastReport);
+      button.textContent = "Kopiert";
+      status.textContent = "Rapporten er kopiert til utklippstavlen.";
+      setTimeout(() => {
+        button.textContent = "Kopier";
+        status.textContent = "";
+      }, 1600);
+    });
+
     $("norriskForm").addEventListener("input", () => {
       if (!lastReport) return;
       lastReport = null;
       $("reportBtn").disabled = true;
       $("reportBtn").textContent = "Vis rapport";
       $("reportBox").hidden = true;
+      $("copyReportStatus").textContent = "";
     });
 
     // Reset
