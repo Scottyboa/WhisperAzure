@@ -180,13 +180,73 @@
     .zone-yellow { background: #f9a825; color: #111; }
     .zone-red { background: #c62828; }
 
-    .result-message {
-      margin-top: 12px;
-      padding-top: 12px;
+    .report-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 14px;
+      padding-top: 14px;
       border-top: 1px solid #eee;
+    }
+    .report-box {
+      margin-top: 14px;
+      padding: 16px;
+      border: 1px solid #d8e5df;
+      border-radius: 10px;
+      background: #f7fbf9;
+    }
+    .report-box h3 {
+      margin: 0 0 12px;
+      font-size: 17px;
+      font-weight: 700;
+    }
+    .report-result-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .report-result-item {
+      padding: 12px;
+      border: 1px solid #e1e9e5;
+      border-radius: 9px;
+      background: #fff;
+    }
+    .report-result-item span {
+      display: block;
+      margin-bottom: 4px;
+      color: #666;
+      font-size: 12px;
+    }
+    .report-result-item strong {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .report-input-title {
+      margin: 0 0 8px;
       font-size: 14px;
-      color: #333;
-      line-height: 1.35;
+      font-weight: 700;
+    }
+    .report-input-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 16px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .report-input-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid #e5ebe8;
+      font-size: 13px;
+    }
+    .report-input-list .report-label { color: #555; }
+    .report-input-list .report-value { font-weight: 600; text-align: right; }
+    @media (max-width: 680px) {
+      .report-result-grid,
+      .report-input-list { grid-template-columns: 1fr; }
     }
 
     .warn {
@@ -327,10 +387,27 @@
             </div>
           </div>
 
-          <!-- ✅ New: explicit output text -->
-          <div id="resultMessage" class="result-message" style="display:none;"></div>
-
           <div id="ageWarn" class="warn" style="display:none;"></div>
+
+          <div class="report-actions">
+            <button id="reportBtn" type="button" disabled>Vis rapport</button>
+          </div>
+
+          <section id="reportBox" class="report-box" hidden aria-live="polite">
+            <h3>Rapport</h3>
+            <div class="report-result-grid">
+              <div class="report-result-item">
+                <span>10-års risiko</span>
+                <strong id="reportRisk">–</strong>
+              </div>
+              <div class="report-result-item">
+                <span>Risikosone</span>
+                <strong id="reportZone">–</strong>
+              </div>
+            </div>
+            <p class="report-input-title">Registrerte opplysninger</p>
+            <ul id="reportInputs" class="report-input-list"></ul>
+          </section>
         </div>
       </div>
 
@@ -516,11 +593,51 @@
       return { sex, age, sbp, tcMmol, hdlMmol, smoker, bpmed, famCount };
     }
 
-    function zoneNameNo(zone) {
-      if (zone === "green") return "grønn";
-      if (zone === "yellow") return "gul";
-      if (zone === "red") return "rød";
-      return "";
+    function selectedText(id) {
+      const select = $(id);
+      const option = select.options[select.selectedIndex];
+      return option ? option.textContent.trim() : "–";
+    }
+
+    function buildReportData(riskPercent, zoneInfo) {
+      const tcUnit = $("tcUnit").value === "mgdl" ? "mg/dL" : "mmol/L";
+      const hdlUnit = $("hdlUnit").value === "mgdl" ? "mg/dL" : "mmol/L";
+
+      return {
+        risk: formatPercentNo(riskPercent),
+        zone: zoneInfo.zone
+          ? zoneInfo.label + " (" + zoneInfo.detail.toLowerCase() + ")"
+          : zoneInfo.label,
+        inputs: [
+          ["Kjønn", selectedText("sex")],
+          ["Alder", $("age").value + " år"],
+          ["Røyker daglig", selectedText("smoker")],
+          ["Blodtrykksmedisin", selectedText("bpmed")],
+          ["Systolisk blodtrykk", $("sbp").value + " mmHg"],
+          ["Hjerteinfarkt i familien før 60 år", selectedText("family")],
+          ["Total-kolesterol", $("tc").value + " " + tcUnit],
+          ["HDL-kolesterol", $("hdl").value + " " + hdlUnit]
+        ]
+      };
+    }
+
+    function renderReport(report) {
+      $("reportRisk").textContent = report.risk;
+      $("reportZone").textContent = report.zone;
+
+      const list = $("reportInputs");
+      list.innerHTML = "";
+      report.inputs.forEach(([label, value]) => {
+        const item = document.createElement("li");
+        const labelEl = document.createElement("span");
+        const valueEl = document.createElement("span");
+        labelEl.className = "report-label";
+        valueEl.className = "report-value";
+        labelEl.textContent = label;
+        valueEl.textContent = value;
+        item.append(labelEl, valueEl);
+        list.appendChild(item);
+      });
     }
 
     function renderResult({ riskPercent, zoneInfo, issues }) {
@@ -528,15 +645,12 @@
       const zonePill = $("zonePill");
       const zoneText = $("zoneText");
       const ageWarn = $("ageWarn");
-      const resultMessage = $("resultMessage");
 
       // risk + zone UI
       if (!Number.isFinite(riskPercent)) {
         riskValue.textContent = "–";
         zonePill.style.display = "none";
         zoneText.textContent = "";
-        resultMessage.style.display = "none";
-        resultMessage.textContent = "";
       } else {
         const riskStr = formatPercentNo(riskPercent);
         riskValue.textContent = riskStr;
@@ -550,20 +664,9 @@
           );
           zonePill.textContent = zoneInfo.label;
           zoneText.textContent = zoneInfo.detail + (zoneInfo.thresholdsText ? " • " + zoneInfo.thresholdsText : "");
-
-          const z = zoneNameNo(zoneInfo.zone);
-          resultMessage.style.display = "block";
-          resultMessage.textContent =
-            "NORRISK2-verdien (10-års risiko) er " + riskStr +
-            " – dette tilsvarer " + z + " sone (" + zoneInfo.detail.toLowerCase() + ").";
         } else {
           zonePill.style.display = "none";
           zoneText.textContent = zoneInfo.label ? (zoneInfo.label + (zoneInfo.detail ? " • " + zoneInfo.detail : "")) : "";
-
-          resultMessage.style.display = "block";
-          resultMessage.textContent =
-            "NORRISK2-verdien (10-års risiko) er " + riskStr +
-            (zoneInfo.label ? ". " + zoneInfo.label + (zoneInfo.detail ? " – " + zoneInfo.detail + "." : ".") : ".");
         }
       }
 
@@ -587,7 +690,13 @@
         zoneInfo: { zone: null, label: "–", detail: "", thresholdsText: "" },
         issues: []
       });
+      $("reportBtn").disabled = true;
+      $("reportBtn").textContent = "Vis rapport";
+      $("reportBox").hidden = true;
+      $("reportInputs").innerHTML = "";
     }
+
+    let lastReport = null;
 
     // Wire up form submit
     $("norriskForm").addEventListener("submit", (e) => {
@@ -598,11 +707,14 @@
 
       const fatal = issues.filter((x) => x.includes("må være et tall") || x.includes("må velges"));
       if (fatal.length) {
+        lastReport = null;
         renderResult({
           riskPercent: NaN,
           zoneInfo: { zone: null, label: "–", detail: "", thresholdsText: "" },
           issues
         });
+        $("reportBtn").disabled = true;
+        $("reportBox").hidden = true;
         return;
       }
 
@@ -610,11 +722,33 @@
       const zoneInfo = classifyZone(vals.age, riskPercent);
 
       renderResult({ riskPercent, zoneInfo, issues });
+      lastReport = buildReportData(riskPercent, zoneInfo);
+      $("reportBtn").disabled = false;
+      $("reportBtn").textContent = "Vis rapport";
+      $("reportBox").hidden = true;
+    });
+
+    $("reportBtn").addEventListener("click", () => {
+      if (!lastReport) return;
+      const reportBox = $("reportBox");
+      const willShow = reportBox.hidden;
+      if (willShow) renderReport(lastReport);
+      reportBox.hidden = !willShow;
+      $("reportBtn").textContent = willShow ? "Skjul rapport" : "Vis rapport";
+    });
+
+    $("norriskForm").addEventListener("input", () => {
+      if (!lastReport) return;
+      lastReport = null;
+      $("reportBtn").disabled = true;
+      $("reportBtn").textContent = "Vis rapport";
+      $("reportBox").hidden = true;
     });
 
     // Reset
     $("resetBtn").addEventListener("click", () => {
       $("norriskForm").reset();
+      lastReport = null;
       clearResult();
     });
 
