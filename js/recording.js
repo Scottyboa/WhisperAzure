@@ -347,7 +347,7 @@ async function transcribeChunkDirectly(wavBlob, chunkNum, { signal, sessionId } 
   
   const formData = new FormData();
   formData.append("file", wavBlob, `chunk_${chunkNum}.wav`);
-  formData.append("model", "gpt-4o-transcribe");
+  formData.append("model", "gpt-transcribe");
   formData.append("temperature", "0.1");
   formData.append(
   "prompt",
