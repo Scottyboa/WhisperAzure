@@ -439,6 +439,32 @@ async function createSonioxTranscription(fileId, context, { signal, diarized } =
 async function pollSonioxTranscription(transcriptionId, timeoutMs = 300000, intervalMs = 1500, { signal } = {}) {
   const apiKey = getAPIKey();
   const start = Date.now();
+  const maxTransientRetries = 5;
+  let transientFailures = 0;
+
+  const retryTransientFailure = async (reason) => {
+    transientFailures += 1;
+    if (transientFailures > maxTransientRetries) {
+      throw new Error(
+        `Soniox polling failed after ${maxTransientRetries + 1} consecutive attempts: ${reason}`
+      );
+    }
+
+    const retryDelayMs = Math.min(
+      intervalMs * Math.pow(2, transientFailures - 1),
+      10000
+    );
+    if (Date.now() - start + retryDelayMs > timeoutMs) {
+      throw new Error('Transcription timed out');
+    }
+
+    logInfo(
+      `Temporary Soniox polling failure (${transientFailures}/${maxTransientRetries} retries): ` +
+      `${reason}. Retrying in ${formatTime(retryDelayMs)}…`
+    );
+    await new Promise(r => setTimeout(r, retryDelayMs));
+  };
+
   while (true) {
     let rsp;
     try {
@@ -455,9 +481,31 @@ async function pollSonioxTranscription(transcriptionId, timeoutMs = 300000, inte
         if (Date.now() - start > timeoutMs) throw new Error('Transcription timed out');
         continue;
       }
+      if (err instanceof TypeError || err?.name === 'TypeError' || err?.name === 'NetworkError') {
+        await retryTransientFailure(err?.message || 'Network request failed');
+        continue;
+      }
       throw err;
     }
-    if (!rsp.ok) throw new Error(`Poll failed: ${await rsp.text()}`);
+    if (!rsp.ok) {
+      const body = await rsp.text().catch(() => '');
+      const reason = `HTTP ${rsp.status}${body ? ` — ${body}` : ''}`;
+      const isTransientStatus =
+        rsp.status === 408 ||
+        rsp.status === 425 ||
+        rsp.status === 429 ||
+        rsp.status >= 500;
+
+      if (isTransientStatus) {
+        await retryTransientFailure(reason);
+        continue;
+      }
+      throw new Error(`Poll failed: ${reason}`);
+    }
+
+    // A successful status response proves the connection recovered. Future
+    // transient failures should therefore get a fresh retry allowance.
+    transientFailures = 0;
     const j = await rsp.json();
     if (j.status === 'completed') return;
     if (j.status === 'error') throw new Error(j.error_message || 'Transcription error');
