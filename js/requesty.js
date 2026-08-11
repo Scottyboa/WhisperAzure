@@ -187,9 +187,8 @@ function pushRequestyUsage(variantConfig, usage) {
     usage,
     meta: {
       reasoningTokens: usage?.completion_tokens_details?.reasoning_tokens ?? 0,
-      // Requesty reports its own USD cost per request; kept in meta for
-      // console diagnostics only. The displayed estimate is computed in
-      // note-usage-cost.js from the underlying model's list price.
+      // Requesty reports its exact USD cost per request. The cost display
+      // prefers this value and falls back to the static model price table.
       requestyReportedCost: typeof usage?.cost === "number" ? usage.cost : null
     }
   });

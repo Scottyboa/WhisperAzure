@@ -189,8 +189,8 @@ import {
     "claude-sonnet-5": { input: 2.2, output: 11.0 },
     "gpt-5.5": { input: 5.0, output: 30.0 },
     "gpt-5-nano": { input: 0.05, output: 0.4 },
-    "gpt-5.6-luna": { input: 1.1, output: 6.6 },
-    "gpt-5.6-terra": { input: 2.75, output: 16.5 },
+    "gpt-5.6-luna": { input: 0.22, output: 1.32 },
+    "gpt-5.6-terra": { input: 2.2, output: 13.2 },
     "gpt-5.6-sol": { input: 5.5, output: 33.0 },
     "kimi-k3": { input: 3.0, output: 15.0 },
   };
@@ -425,10 +425,21 @@ import {
 
   function estimateUsd(payload) {
     if (!payload || typeof payload !== "object") return null;
+    const pk = resolveUsageProviderKey(payload.providerKey, payload.modelId);
+
+    // Requesty returns the exact USD charge for each completion. Prefer that
+    // value over a local estimate so caching, regional rates, long-context
+    // multipliers, and future price changes are reflected automatically.
+    if (isRequestyEffectiveNoteProvider(pk)) {
+      const rawReportedCost = payload.meta?.requestyReportedCost;
+      if (rawReportedCost !== null && rawReportedCost !== undefined && rawReportedCost !== "") {
+        const reportedCost = Number(rawReportedCost);
+        if (Number.isFinite(reportedCost) && reportedCost >= 0) return reportedCost;
+      }
+    }
+
     if (payload.estimatedUsd != null) return payload.estimatedUsd;
     if (payload.inputTokens == null || payload.outputTokens == null) return null;
-
-    const pk = resolveUsageProviderKey(payload.providerKey, payload.modelId);
 
     if (isOpenAiEffectiveNoteProvider(pk)) {
       const modelId = payload.modelId;
@@ -724,6 +735,19 @@ import {
     const effectiveProviderKey = providerKey
       ? resolveUsageProviderKey(providerKey, modelId)
       : getEffectiveProviderKey();
+
+    // Requesty includes the exact per-request USD charge in usage.cost. Copy
+    // it into normalized metadata here so this works for both the primary and
+    // secondary note generators, even when a caller does not pass it itself.
+    if (isRequestyEffectiveNoteProvider(effectiveProviderKey)) {
+      const rawReportedCost = usage?.cost ?? outMeta.requestyReportedCost;
+      if (rawReportedCost !== null && rawReportedCost !== undefined && rawReportedCost !== "") {
+        const reportedCost = Number(rawReportedCost);
+        if (Number.isFinite(reportedCost) && reportedCost >= 0) {
+          outMeta.requestyReportedCost = reportedCost;
+        }
+      }
+    }
 
     const effectiveModelId = modelId
       ? String(modelId)

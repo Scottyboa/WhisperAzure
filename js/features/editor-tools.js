@@ -271,6 +271,7 @@
           ocrCompleteAddedSpecific: ({ usedLanguage, addedCount }) => `OCR complete (${usedLanguage}) → added ${addedCount} term${addedCount === 1 ? '' : 's'} to Specific.`,
           ocrCompleteAddedSpecificBirthdate: ({ usedLanguage, addedCount, detectedBirthdate }) => `OCR complete (${usedLanguage}) → added ${addedCount} term${addedCount === 1 ? '' : 's'} to Specific. Birthdate field auto-filled with ${detectedBirthdate}.`,
           redactedTerms: ({ termCount }) => `Redacted ${termCount} term${termCount === 1 ? '' : 's'} in Transcript and Supplementary information.`,
+          redactionComplete: 'Built-in identifiers were redacted in Transcript and Supplementary information.',
           noMatchingText: 'No matching text was found in Transcript or Supplementary information.',
           redactedTranscriptCopyFailed: 'Redaction completed, but the transcript could not be copied to the clipboard.',
           clipboardReadImageFailed: ({ errorMessage }) => errorMessage || 'Could not read an image from the clipboard.',
@@ -346,6 +347,7 @@
           ocrCompleteAddedSpecific: ({ usedLanguage, addedCount }) => `OCR fullført (${usedLanguage}) → la til ${addedCount} begrep${addedCount === 1 ? '' : 'er'} i Spesifikke begreper.`,
           ocrCompleteAddedSpecificBirthdate: ({ usedLanguage, addedCount, detectedBirthdate }) => `OCR fullført (${usedLanguage}) → la til ${addedCount} begrep${addedCount === 1 ? '' : 'er'} i Spesifikke begreper. Fødselsdatofeltet ble fylt ut automatisk med ${detectedBirthdate}.`,
           redactedTerms: ({ termCount }) => `Sladdet ${termCount} begrep${termCount === 1 ? '' : 'er'} i Transkripsjon og Tilleggsinformasjon.`,
+          redactionComplete: 'Innebygde identifikatorer ble sladdet i Transkripsjon og Tilleggsinformasjon.',
           noMatchingText: 'Fant ingen treff i Transkripsjon eller Tilleggsinformasjon.',
           redactedTranscriptCopyFailed: 'Sladdingen ble fullført, men transkripsjonen kunne ikke kopieres til utklippstavlen.',
           clipboardReadImageFailed: ({ errorMessage }) => errorMessage || 'Kunne ikke lese et bilde fra utklippstavlen.',
@@ -1001,12 +1003,71 @@
     // and line breaks stop the match. The terminating character is preserved.
     const GENERIC_NUMERIC_ID_PATTERN = /(?<!\d)(?:\d{2,}(?:[ \t]+\d+)+|\d{5,})(?!\d)/g;
 
+    // Built-in UUID/document-ID rule. Each segment accepts either its normal
+    // hexadecimal length or an existing [REDACTED] marker inside the segment.
+    // This both prevents the numeric rule below from partially redacting a
+    // fresh UUID and repairs UUIDs produced by older redactor versions.
+    const UUID_REDACTED_MARKER_SOURCE = '\\[REDACTED\\]';
+    const uuidSegmentSource = (length) =>
+      `(?:[0-9a-f]{${length}}|[0-9a-f]*${UUID_REDACTED_MARKER_SOURCE}[0-9a-f]*)`;
+    const UUID_DOCUMENT_ID_PATTERN = new RegExp(
+      `(?<![\\p{L}\\p{N}_])` +
+      `${uuidSegmentSource(8)}-${uuidSegmentSource(4)}-${uuidSegmentSource(4)}-` +
+      `${uuidSegmentSource(4)}-${uuidSegmentSource(12)}` +
+      `(?![\\p{L}\\p{N}_])`,
+      'giu'
+    );
+
+    // Conservative address rules. A street name is automatically redacted
+    // when it has a house number, or when it follows an explicit Address /
+    // Bostedsadresse label. Requiring that context avoids false positives in
+    // clinical phrases such as "på vei hjem" and "fri luftvei".
+    const ROAD_SUFFIX_SOURCE =
+      '(?:[Vv][Ee][Ii](?:[Ee][Nn])?|[Vv][Ee][Gg](?:[Ee][Nn])?|' +
+      '[Gg][Aa][Tt](?:[Ee](?:[Nn])?|[Aa]))';
+    const PROPER_NAME_WORD_SOURCE = "\\p{Lu}[\\p{L}'’.-]*";
+    const COMPOUND_STREET_SOURCE =
+      `\\p{Lu}[\\p{L}'’.-]{1,}${ROAD_SUFFIX_SOURCE}`;
+    const SEPARATE_STREET_SOURCE =
+      `(?:${PROPER_NAME_WORD_SOURCE}[ \\t]+){1,3}${ROAD_SUFFIX_SOURCE}`;
+    const HOUSE_NUMBER_SOURCE = '\\d{1,4}(?:[ \\t]*[A-Za-zÆØÅæøå])?';
+    const STREET_ADDRESS_PATTERN = new RegExp(
+      `(?<![\\p{L}\\p{N}_])(?:${COMPOUND_STREET_SOURCE}|${SEPARATE_STREET_SOURCE})` +
+      `[ \\t]+${HOUSE_NUMBER_SOURCE}(?![\\p{L}\\p{N}_])(?![ \\t]+\\p{Ll})`,
+      'gu'
+    );
+    const LABELED_ADDRESS_PATTERN =
+      /(\b(?:bostedsadresse|adresse)[ \t]*:[ \t]*)[^\r\n;]+/giu;
+
     const redactInText = (text, terms) => {
       let output = text || '';
       let replacedAny = false;
 
-      // Apply the generic numeric rules first so a full spaced ID is replaced
-      // as one unit, including when its first groups form a fødselsnummer.
+      // Structured identifiers must be handled before generic digit runs;
+      // otherwise only a numeric fragment inside a UUID may be redacted.
+      const updatedDocumentIds = output.replace(UUID_DOCUMENT_ID_PATTERN, '[REDACTED]');
+      if (updatedDocumentIds !== output) {
+        replacedAny = true;
+        output = updatedDocumentIds;
+      }
+
+      const updatedLabeledAddresses = output.replace(
+        LABELED_ADDRESS_PATTERN,
+        (_match, label) => `${label}[REDACTED]`
+      );
+      if (updatedLabeledAddresses !== output) {
+        replacedAny = true;
+        output = updatedLabeledAddresses;
+      }
+
+      const updatedStreetAddresses = output.replace(STREET_ADDRESS_PATTERN, '[REDACTED]');
+      if (updatedStreetAddresses !== output) {
+        replacedAny = true;
+        output = updatedStreetAddresses;
+      }
+
+      // Apply generic numeric rules after structured IDs so a full spaced ID
+      // is replaced as one unit without damaging UUID/address recognition.
       const updatedNumericIds = output.replace(GENERIC_NUMERIC_ID_PATTERN, '[REDACTED]');
       if (updatedNumericIds !== output) {
         replacedAny = true;
@@ -1612,6 +1673,8 @@
         if (!replacedAny && !terms.length) {
           setRedactorStatusByKey('addAtLeastOneTerm', {}, true);
           (redactorTermsEl || generalTermsEl)?.focus();
+        } else if (replacedAny && !terms.length) {
+          setRedactorStatusByKey('redactionComplete');
         } else {
           setRedactorStatusByKey(
             replacedAny ? 'redactedTerms' : 'noMatchingText',
