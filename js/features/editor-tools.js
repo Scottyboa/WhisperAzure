@@ -225,7 +225,7 @@
         showRedactor: 'Show redactor',
         hideRedactor: 'Hide redactor',
         title: 'Redactor',
-        help: 'Add one term per line. General and specific terms are both used when you click Redact. General terms stay while this tab remains open, but clear when the tab is closed.',
+        help: 'Add one term per line. General and specific terms are both used when you click Redact. General terms stay while this tab remains open, but clear when the tab is closed. Generic address words in General are only redacted in address context.',
         ocrSectionTitle: 'Screenshot → OCR',
         ocrMiniHelpHtml: 'Use Windows + Shift + S, then click <strong>Paste image</strong>. You can also press <strong>Ctrl + V</strong> while the image frame is focused, or upload an image file.',
         pasteImage: 'Paste image',
@@ -301,7 +301,7 @@
         showRedactor: 'Vis redactor',
         hideRedactor: 'Skjul redactor',
         title: 'Redactor',
-        help: 'Legg til ett begrep per linje. Både generelle og spesifikke begreper brukes når du klikker Sladd. Generelle begreper beholdes så lenge denne fanen er åpen, men tømmes når fanen lukkes.',
+        help: 'Legg til ett begrep per linje. Både generelle og spesifikke begreper brukes når du klikker Sladd. Generelle begreper beholdes så lenge denne fanen er åpen, men tømmes når fanen lukkes. Generiske adresseord i Generelle begreper sladdes bare i adressekontekst.',
         ocrSectionTitle: 'Skjermbilde → OCR',
         ocrMiniHelpHtml: 'Bruk Windows + Shift + S, og klikk deretter <strong>Lim inn bilde</strong>. Du kan også trykke <strong>Ctrl + V</strong> mens bildefeltet er fokusert, eller laste opp en bildefil.',
         pasteImage: 'Lim inn bilde',
@@ -1019,25 +1019,102 @@
     );
 
     // Conservative address rules. A street name is automatically redacted
-    // when it has a house number, or when it follows an explicit Address /
-    // Bostedsadresse label. Requiring that context avoids false positives in
-    // clinical phrases such as "på vei hjem" and "fri luftvei".
+    // only when it has a house number, appears in a complete postal-address
+    // line, or follows an explicit address label. This lets us support common
+    // Norwegian road-name endings without redacting clinical phrases such as
+    // "på vei hjem", "fri luftvei", or "alle prøvene var normale".
+    const toCaseInsensitiveLiteralSource = (value) =>
+      Array.from(value).map((character) => {
+        const lower = character.toLocaleLowerCase('nb-NO');
+        const upper = character.toLocaleUpperCase('nb-NO');
+        if (lower === upper) return escapeRegex(character);
+        return `[${escapeRegex(lower)}${escapeRegex(upper)}]`;
+      }).join('');
+
+    const ROAD_SUFFIXES = [
+      'promenaden', 'promenade', 'terrassen', 'terrasse',
+      'alléen', 'allé', 'alleen', 'alle', 'plassen', 'plass',
+      'stranden', 'stranda', 'strand', 'bryggen', 'brygga',
+      'brygge', 'svingen', 'sving', 'stubben', 'stredet',
+      'skrenten', 'bakken', 'bakke', 'kroken', 'krok', 'toppen',
+      'holtet', 'veien', 'vei', 'vegen', 'veg', 'gaten', 'gate',
+      'gata', 'stien', 'sti', 'torget', 'torg', 'tunet', 'tun',
+      'grenda', 'jordet', 'løkka', 'sletta', 'berget', 'hagen',
+      'gangen', 'lunden', 'skogen', 'linna', 'åsen', 'faret',
+      'myra', 'lien', 'lia', 'kleiva', 'enga', 'kaien', 'kaia',
+      'kai'
+    ];
     const ROAD_SUFFIX_SOURCE =
-      '(?:[Vv][Ee][Ii](?:[Ee][Nn])?|[Vv][Ee][Gg](?:[Ee][Nn])?|' +
-      '[Gg][Aa][Tt](?:[Ee](?:[Nn])?|[Aa]))';
+      `(?:${[...new Set(ROAD_SUFFIXES)]
+        .sort((a, b) => b.length - a.length)
+        .map(toCaseInsensitiveLiteralSource)
+        .join('|')})`;
     const PROPER_NAME_WORD_SOURCE = "\\p{Lu}[\\p{L}'’.-]*";
-    const COMPOUND_STREET_SOURCE =
+    const BASE_COMPOUND_STREET_SOURCE =
       `\\p{Lu}[\\p{L}'’.-]{1,}${ROAD_SUFFIX_SOURCE}`;
+    const STREET_MODIFIER_SOURCE =
+      '(?:[Gg][Aa][Mm][Ll][Ee]|[Nn][Yy][Ee]|[Nn][Ee][Dd][Rr][Ee]|' +
+      '[Øø][Vv][Rr][Ee]|[Nn][Oo][Rr][Dd][Rr][Ee]|' +
+      '[Ss][Øø][Nn][Dd][Rr][Ee]|[Øø][Ss][Tt][Rr][Ee]|' +
+      '[Vv][Ee][Ss][Tt][Rr][Ee]|[Ss][Tt][Oo][Rr][Ee]|' +
+      '[Ll][Ii][Ll][Ll][Ee]|[Ii][Nn][Dd][Rr][Ee]|[Yy][Tt][Rr][Ee])';
+    const COMPOUND_STREET_SOURCE =
+      `(?:${STREET_MODIFIER_SOURCE}[ \\t]+){0,2}${BASE_COMPOUND_STREET_SOURCE}`;
     const SEPARATE_STREET_SOURCE =
-      `(?:${PROPER_NAME_WORD_SOURCE}[ \\t]+){1,3}${ROAD_SUFFIX_SOURCE}`;
-    const HOUSE_NUMBER_SOURCE = '\\d{1,4}(?:[ \\t]*[A-Za-zÆØÅæøå])?';
+      `(?:${PROPER_NAME_WORD_SOURCE}[ \\t]+){1,4}${ROAD_SUFFIX_SOURCE}`;
+    const HOUSE_NUMBER_PART_SOURCE =
+      '\\d{1,4}(?:[ \\t-]*[A-Za-zÆØÅæøå])?';
+    const HOUSE_NUMBER_SOURCE =
+      `${HOUSE_NUMBER_PART_SOURCE}(?:[ \\t]*[-–][ \\t]*${HOUSE_NUMBER_PART_SOURCE})?`;
     const STREET_ADDRESS_PATTERN = new RegExp(
       `(?<![\\p{L}\\p{N}_])(?:${COMPOUND_STREET_SOURCE}|${SEPARATE_STREET_SOURCE})` +
       `[ \\t]+${HOUSE_NUMBER_SOURCE}(?![\\p{L}\\p{N}_])(?![ \\t]+\\p{Ll})`,
       'gu'
     );
-    const LABELED_ADDRESS_PATTERN =
-      /(\b(?:bostedsadresse|adresse)[ \t]*:[ \t]*)[^\r\n;]+/giu;
+    const ADDRESS_LABEL_SOURCE =
+      '(?:folkeregistrert[ \\t]+adresse|registrert[ \\t]+adresse|' +
+      'tidligere[ \\t]+adresse|bostedsadresse|gateadresse|besøksadresse|' +
+      'postadresse|oppholdsadresse|adresse(?:[ \\t]+[12])?|bosted|adr\\.?)';
+    const LABELED_ADDRESS_PATTERN = new RegExp(
+      `(\\b${ADDRESS_LABEL_SOURCE}[ \\t]*(?::|[-–])[ \\t]*)[^\\r\\n;]+`,
+      'giu'
+    );
+    const ADDRESS_LABEL_NEXT_LINE_PATTERN = new RegExp(
+      `(^[ \\t]*${ADDRESS_LABEL_SOURCE}[ \\t]*:?[ \\t]*\\r?\\n[ \\t]*)` +
+      `(?=[^\\r\\n]*(?:\\d|postboks|postboksnr\\.?|pb\\.?|p\\.b\\.))[^\\r\\n;]+`,
+      'gimu'
+    );
+
+    // A four-digit Norwegian postcode and place name provide enough context
+    // to recognise road names that do not have a conventional suffix, such
+    // as "Utsikten 12, 1850 Mysen". Requiring a complete standalone line
+    // keeps ordinary prose and clinical measurements outside the match.
+    const POSTAL_ADDRESS_WORD_SOURCE = "\\p{Lu}[\\p{L}'’.-]*";
+    const POSTAL_ADDRESS_LAST_STREET_WORD_SOURCE =
+      "\\p{Lu}[\\p{L}'’.-]{2,}";
+    const POSTAL_ADDRESS_LINE_PATTERN = new RegExp(
+      `(^[ \\t]*(?:[-•][ \\t]*)?)` +
+      `(?:${POSTAL_ADDRESS_WORD_SOURCE}[ \\t]+){0,4}` +
+      `${POSTAL_ADDRESS_LAST_STREET_WORD_SOURCE}[ \\t]+${HOUSE_NUMBER_SOURCE}` +
+      `[ \\t]*(?:,[ \\t]*|[ \\t]+|\\r?\\n[ \\t]*)` +
+      `\\d{4}[ \\t]+${POSTAL_ADDRESS_WORD_SOURCE}` +
+      `(?:[ \\t]+${POSTAL_ADDRESS_WORD_SOURCE}){0,3}[ \\t]*(?=$|\\r?$)`,
+      'gmu'
+    );
+    const POST_BOX_PATTERN =
+      /\b(?:postboks|postboksnr\.?|pb\.?|p\.b\.)[ \t]*(?:nr\.?[ \t]*)?\d{1,6}\b/giu;
+
+    // These generic address words occur in the user's General list, but are
+    // not identifiers by themselves. General terms are therefore ignored for
+    // these exact values and handled by the contextual rules above. Adding one
+    // explicitly under Specific terms still preserves the user's override.
+    const CONTEXTUAL_ONLY_GENERAL_TERMS = new Set([
+      'adresse', 'bostedsadresse', 'gateadresse', 'besøksadresse',
+      'postadresse', 'oppholdsadresse', 'bosted', 'postboks',
+      'gate', 'gaten', 'gata', 'vei', 'veien', 'veg', 'vegen',
+      'alle', 'allé', 'alleen', 'alléen', 'plass', 'plassen',
+      'terrasse', 'terrassen'
+    ]);
 
     const redactInText = (text, terms) => {
       let output = text || '';
@@ -1051,6 +1128,15 @@
         output = updatedDocumentIds;
       }
 
+      const updatedNextLineAddresses = output.replace(
+        ADDRESS_LABEL_NEXT_LINE_PATTERN,
+        (_match, label) => `${label}[REDACTED]`
+      );
+      if (updatedNextLineAddresses !== output) {
+        replacedAny = true;
+        output = updatedNextLineAddresses;
+      }
+
       const updatedLabeledAddresses = output.replace(
         LABELED_ADDRESS_PATTERN,
         (_match, label) => `${label}[REDACTED]`
@@ -1058,6 +1144,21 @@
       if (updatedLabeledAddresses !== output) {
         replacedAny = true;
         output = updatedLabeledAddresses;
+      }
+
+      const updatedPostalAddresses = output.replace(
+        POSTAL_ADDRESS_LINE_PATTERN,
+        (_match, prefix) => `${prefix}[REDACTED]`
+      );
+      if (updatedPostalAddresses !== output) {
+        replacedAny = true;
+        output = updatedPostalAddresses;
+      }
+
+      const updatedPostBoxes = output.replace(POST_BOX_PATTERN, '[REDACTED]');
+      if (updatedPostBoxes !== output) {
+        replacedAny = true;
+        output = updatedPostBoxes;
       }
 
       const updatedStreetAddresses = output.replace(STREET_ADDRESS_PATTERN, '[REDACTED]');
@@ -1099,7 +1200,12 @@
 
     const getRedactorTerms = () => {
       const unique = new Set();
-      return [...getLines(generalTermsEl?.value || ''), ...getLines(redactorTermsEl?.value || '')]
+      const generalTerms = getLines(generalTermsEl?.value || '').filter((term) =>
+        !CONTEXTUAL_ONLY_GENERAL_TERMS.has(term.toLocaleLowerCase('nb-NO'))
+      );
+      const specificTerms = getLines(redactorTermsEl?.value || '');
+
+      return [...generalTerms, ...specificTerms]
         .sort((a, b) => b.length - a.length)
         .filter((term) => {
           const normalizedTerm = term.toLocaleLowerCase();
