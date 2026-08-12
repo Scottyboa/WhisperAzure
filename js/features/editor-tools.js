@@ -253,7 +253,7 @@
         copyRaw: 'Copy raw',
         clearRaw: 'Clear raw',
         birthdateLabel: 'Birthdate helper',
-        birthdatePlaceholder: 'DDMMYY, e.g. 180289',
+        birthdatePlaceholder: 'DDMMYY, DDMMYYYY, YYYY-MM-DD or national ID number',
         addDates: 'Add dates',
         messages: {
           specificTermsNormalized: 'Specific terms cleaned and normalized.',
@@ -284,7 +284,7 @@
           saveCanceled: 'Save canceled.',
           couldNotExportGeneral: ({ errorMessage }) => `Could not export General.txt: ${errorMessage}`,
           addAtLeastOneTerm: 'Add at least one General or Specific term to redact.',
-          invalidBirthdate: 'Enter a valid 6-digit birthdate in DDMMYY format, for example 180289.',
+          invalidBirthdate: 'Enter a valid birthdate as DDMMYY, DDMMYYYY, YYYY-MM-DD, or an 11-digit Norwegian identity number.',
           birthdateAlreadyPresent: 'Those birthdate formats are already in Specific terms.',
           addedBirthdateFormats: ({ addedCount }) => `Added ${addedCount} birthdate format${addedCount === 1 ? '' : 's'} to Specific.`,
           clipboardNoImage: 'No image was found in the clipboard. Use Windows + Shift + S first, then try again.',
@@ -329,7 +329,7 @@
         copyRaw: 'Kopier råtekst',
         clearRaw: 'Tøm råtekst',
         birthdateLabel: 'Fødselsdatohjelper',
-        birthdatePlaceholder: 'DDMMYY, f.eks. 180289',
+        birthdatePlaceholder: 'DDMMÅÅ, DDMMÅÅÅÅ, ÅÅÅÅ-MM-DD eller identitetsnummer',
         addDates: 'Legg til datoer',
         messages: {
           specificTermsNormalized: 'Spesifikke begreper ble renset og normalisert.',
@@ -360,7 +360,7 @@
           saveCanceled: 'Lagring avbrutt.',
           couldNotExportGeneral: ({ errorMessage }) => `Kunne ikke eksportere General.txt: ${errorMessage}`,
           addAtLeastOneTerm: 'Legg til minst ett generelt eller spesifikt begrep som skal sladdes.',
-          invalidBirthdate: 'Skriv inn en gyldig 6-sifret fødselsdato i DDMMYY-format, for eksempel 180289.',
+          invalidBirthdate: 'Skriv inn en gyldig fødselsdato som DDMMÅÅ, DDMMÅÅÅÅ, ÅÅÅÅ-MM-DD eller et 11-sifret norsk identitetsnummer.',
           birthdateAlreadyPresent: 'Disse fødselsdatoformatene finnes allerede i Spesifikke begreper.',
           addedBirthdateFormats: ({ addedCount }) => `La til ${addedCount} fødselsdatoformat${addedCount === 1 ? '' : 'er'} i Spesifikke begreper.`,
           clipboardNoImage: 'Fant ikke noe bilde i utklippstavlen. Bruk Windows + Shift + S først, og prøv igjen.',
@@ -874,6 +874,9 @@
     }
     if (birthdateInputEl) {
       birthdateInputEl.value = '';
+      // Older markup limited the helper to six/eight digits. The expanded
+      // parser also accepts ISO dates and complete Norwegian identity numbers.
+      birthdateInputEl.removeAttribute('maxlength');
       clearSessionValue(REDACTOR_SESSION_KEYS.birthdate);
     }
 
@@ -1167,6 +1170,15 @@
         output = updatedStreetAddresses;
       }
 
+      const updatedBirthdates = redactBirthdateFormatsInText(
+        output,
+        birthdateInputEl?.value || ''
+      );
+      if (updatedBirthdates.replacedAny) {
+        replacedAny = true;
+        output = updatedBirthdates.text;
+      }
+
       // Apply generic numeric rules after structured IDs so a full spaced ID
       // is replaced as one unit without damaging UUID/address recognition.
       const updatedNumericIds = output.replace(GENERIC_NUMERIC_ID_PATTERN, '[REDACTED]');
@@ -1303,90 +1315,347 @@
       return file.text();
     };
 
-    const expandBirthdateFormats = (value) => {
-      const digits = (value || '').replace(/\D/g, '');
-      if (digits.length !== 6 && digits.length !== 8) return [];
+    const BIRTHDATE_MAX_AGE = 130;
+    const BIRTHDATE_MONTHS_NO = [
+      ['januar', 'jan'],
+      ['februar', 'feb', 'febr'],
+      ['mars', 'mar'],
+      ['april', 'apr'],
+      ['mai'],
+      ['juni', 'jun'],
+      ['juli', 'jul'],
+      ['august', 'aug'],
+      ['september', 'sep', 'sept'],
+      ['oktober', 'okt'],
+      ['november', 'nov'],
+      ['desember', 'des'],
+    ];
+    const BIRTHDATE_MONTHS_EN = [
+      ['january', 'jan'],
+      ['february', 'feb'],
+      ['march', 'mar'],
+      ['april', 'apr'],
+      ['may'],
+      ['june', 'jun'],
+      ['july', 'jul'],
+      ['august', 'aug'],
+      ['september', 'sep', 'sept'],
+      ['october', 'oct'],
+      ['november', 'nov'],
+      ['december', 'dec'],
+    ];
+    const BIRTHDATE_WEEKDAYS_NO = [
+      'søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag',
+    ];
+    const BIRTHDATE_WEEKDAYS_EN = [
+      'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday',
+    ];
 
-      const dd = digits.slice(0, 2);
-      const mm = digits.slice(2, 4);
-      const yyOrYyyy = digits.slice(4);
+    const isValidCalendarDate = (day, month, year) => {
+      const date = new Date(year, month - 1, day);
+      return !Number.isNaN(date.getTime())
+        && date.getFullYear() === year
+        && date.getMonth() === month - 1
+        && date.getDate() === day;
+    };
 
-      const ddNum = Number(dd);
-      const mmNum = Number(mm);
-      if (!ddNum || ddNum > 31 || !mmNum || mmNum > 12) return [];
+    const normalizeNorwegianIdentityDateParts = (day, month) => {
+      let normalizedDay = day;
+      let normalizedMonth = month;
 
-      let yyyy = '';
-      let yy = '';
+      // D-numbers encode the day with +40. H-numbers encode the month
+      // with +40. Normal dates are left unchanged.
+      if (normalizedDay >= 41 && normalizedDay <= 71) normalizedDay -= 40;
+      if (normalizedMonth >= 41 && normalizedMonth <= 52) normalizedMonth -= 40;
 
-      if (digits.length === 6) {
-        yy = yyOrYyyy;
-        const currentTwoDigitYear = new Date().getFullYear() % 100;
-        const fullYear = Number(yy) > currentTwoDigitYear ? 1900 + Number(yy) : 2000 + Number(yy);
-        yyyy = String(fullYear);
-      } else {
-        yyyy = yyOrYyyy;
-        yy = yyyy.slice(-2);
+      return { day: normalizedDay, month: normalizedMonth };
+    };
+
+    const getPlausibleTwoDigitBirthYears = (twoDigitYear, day, month) => {
+      const now = new Date();
+      const earliest = new Date(
+        now.getFullYear() - BIRTHDATE_MAX_AGE,
+        now.getMonth(),
+        now.getDate()
+      );
+      const firstCentury = Math.floor(earliest.getFullYear() / 100) * 100;
+      const lastCentury = Math.floor(now.getFullYear() / 100) * 100;
+      const years = [];
+
+      for (let century = firstCentury; century <= lastCentury; century += 100) {
+        const year = century + twoDigitYear;
+        if (!isValidCalendarDate(day, month, year)) continue;
+        const candidate = new Date(year, month - 1, day);
+        if (candidate < earliest || candidate > now) continue;
+        years.push(year);
       }
 
-      const d = String(ddNum);
-      const m = String(mmNum);
+      return years;
+    };
 
-      const monthNamesNo = [
-        'januar', 'februar', 'mars', 'april', 'mai', 'juni',
-        'juli', 'august', 'september', 'oktober', 'november', 'desember',
-      ];
-      const weekdayNamesNo = [
-        'søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag',
-      ];
-      const monthName = monthNamesNo[mmNum - 1];
+    const parseBirthdateCandidates = (value) => {
+      const raw = String(value || '').normalize('NFKC').trim();
+      const digits = raw.replace(/\D/g, '');
+      if (![6, 8, 11].includes(digits.length)) return [];
 
-      const variants = [
-        `${dd}${mm}${yy}`,
-        `${dd}${mm}${yyyy}`,
-        `${dd}.${mm}.${yy}`,
-        `${dd}-${mm}-${yy}`,
-        `${dd}/${mm}/${yy}`,
-        `${dd} ${mm} ${yy}`,
-        `${d}.${m}.${yy}`,
-        `${d}-${m}-${yy}`,
-        `${d}/${m}/${yy}`,
-        `${d} ${m} ${yy}`,
-        `${dd}.${mm}.${yyyy}`,
-        `${dd}-${mm}-${yyyy}`,
-        `${dd}/${mm}/${yyyy}`,
-        `${dd} ${mm} ${yyyy}`,
-        `${d}.${m}.${yyyy}`,
-        `${d}-${m}-${yyyy}`,
-        `${d}/${m}/${yyyy}`,
-        `${d} ${m} ${yyyy}`,
-      ];
+      let day = 0;
+      let month = 0;
+      let explicitYear = null;
+      let twoDigitYear = 0;
 
-      if (monthName) {
-        variants.push(
-          `${dd}. ${monthName} ${yyyy}`,
-          `${d}. ${monthName} ${yyyy}`,
-          `${dd} ${monthName} ${yyyy}`,
-          `${d} ${monthName} ${yyyy}`,
-        );
+      if (digits.length === 8) {
+        const possibleIsoYear = Number(digits.slice(0, 4));
+        const possibleIsoMonth = Number(digits.slice(4, 6));
+        const possibleIsoDay = Number(digits.slice(6, 8));
+        const nowYear = new Date().getFullYear();
 
-        const dateObj = new Date(Number(yyyy), mmNum - 1, ddNum);
-        if (!Number.isNaN(dateObj.getTime())
-          && dateObj.getFullYear() === Number(yyyy)
-          && dateObj.getMonth() === mmNum - 1
-          && dateObj.getDate() === ddNum) {
-          const weekday = weekdayNamesNo[dateObj.getDay()];
-          if (weekday) {
-            variants.push(
-              `${weekday} ${dd}. ${monthName} ${yyyy}`,
-              `${weekday} ${d}. ${monthName} ${yyyy}`,
-              `${weekday} ${dd} ${monthName} ${yyyy}`,
-              `${weekday} ${d} ${monthName} ${yyyy}`,
-            );
+        if (possibleIsoYear >= nowYear - BIRTHDATE_MAX_AGE
+          && possibleIsoYear <= nowYear
+          && isValidCalendarDate(possibleIsoDay, possibleIsoMonth, possibleIsoYear)) {
+          day = possibleIsoDay;
+          month = possibleIsoMonth;
+          explicitYear = possibleIsoYear;
+        } else {
+          day = Number(digits.slice(0, 2));
+          month = Number(digits.slice(2, 4));
+          explicitYear = Number(digits.slice(4, 8));
+        }
+      } else {
+        // For a complete identity number only the encoded date part is used.
+        const dateDigits = digits.slice(0, 6);
+        day = Number(dateDigits.slice(0, 2));
+        month = Number(dateDigits.slice(2, 4));
+        twoDigitYear = Number(dateDigits.slice(4, 6));
+      }
+
+      ({ day, month } = normalizeNorwegianIdentityDateParts(day, month));
+
+      const years = explicitYear === null
+        ? getPlausibleTwoDigitBirthYears(twoDigitYear, day, month)
+        : [explicitYear];
+
+      return years
+        .filter((year) => isValidCalendarDate(day, month, year))
+        .map((year) => ({
+          day,
+          month,
+          year,
+          dd: String(day).padStart(2, '0'),
+          mm: String(month).padStart(2, '0'),
+          yy: String(year).slice(-2),
+          yyyy: String(year),
+        }));
+    };
+
+    const getEnglishOrdinalSuffix = (day) => {
+      const remainder100 = day % 100;
+      if (remainder100 >= 11 && remainder100 <= 13) return 'th';
+      if (day % 10 === 1) return 'st';
+      if (day % 10 === 2) return 'nd';
+      if (day % 10 === 3) return 'rd';
+      return 'th';
+    };
+
+    const expandBirthdateFormats = (value) => {
+      const variants = new Set();
+      const add = (...values) => values.filter(Boolean).forEach((entry) => variants.add(entry));
+
+      for (const candidate of parseBirthdateCandidates(value)) {
+        const { day, month, year, dd, mm, yy, yyyy } = candidate;
+        const d = String(day);
+        const m = String(month);
+        const dayForms = [...new Set([dd, d])];
+        const monthForms = [...new Set([mm, m])];
+        const yearForms = [yy, yyyy];
+
+        add(`${dd}${mm}${yy}`, `${dd}${mm}${yyyy}`, `${yyyy}${mm}${dd}`);
+
+        for (const dayForm of dayForms) {
+          for (const monthForm of monthForms) {
+            for (const yearForm of yearForms) {
+              for (const separator of ['.', '-', '/', ' ', ',']) {
+                add(`${dayForm}${separator}${monthForm}${separator}${yearForm}`);
+              }
+              add(
+                `${dayForm} . ${monthForm} . ${yearForm}`,
+                `${dayForm} - ${monthForm} - ${yearForm}`,
+                `${dayForm} / ${monthForm} / ${yearForm}`,
+                `${dayForm}.${monthForm}-${yearForm}`,
+                `${dayForm}/${monthForm}-${yearForm}`,
+                `${dayForm}-${monthForm}.${yearForm}`,
+              );
+            }
           }
+        }
+
+        for (const separator of ['-', '/', '.', ' ']) {
+          add(
+            `${yyyy}${separator}${mm}${separator}${dd}`,
+            `${yyyy}${separator}${m}${separator}${d}`,
+          );
+        }
+
+        const noMonths = BIRTHDATE_MONTHS_NO[month - 1] || [];
+        const enMonths = BIRTHDATE_MONTHS_EN[month - 1] || [];
+        const dateObj = new Date(year, month - 1, day);
+        const weekdayNo = BIRTHDATE_WEEKDAYS_NO[dateObj.getDay()];
+        const weekdayEn = BIRTHDATE_WEEKDAYS_EN[dateObj.getDay()];
+        const ordinal = `${d}${getEnglishOrdinalSuffix(day)}`;
+
+        for (const monthName of noMonths) {
+          const isShort = monthName.length <= 4 && monthName !== 'mars';
+          for (const yearForm of yearForms) {
+            add(
+              `${d} ${monthName} ${yearForm}`,
+              `${d}. ${monthName} ${yearForm}`,
+              `${dd} ${monthName} ${yearForm}`,
+              `${dd}. ${monthName} ${yearForm}`,
+            );
+            if (isShort) {
+              add(`${d} ${monthName}. ${yearForm}`, `${d}. ${monthName}. ${yearForm}`);
+            }
+          }
+          add(
+            `${weekdayNo} ${d}. ${monthName} ${yyyy}`,
+            `${weekdayNo} ${d} ${monthName} ${yyyy}`,
+          );
+        }
+
+        for (const monthName of enMonths) {
+          const isShort = monthName.length <= 4;
+          for (const yearForm of yearForms) {
+            add(
+              `${d} ${monthName} ${yearForm}`,
+              `${d} ${monthName}, ${yearForm}`,
+              `${monthName} ${d} ${yearForm}`,
+              `${monthName} ${d}, ${yearForm}`,
+              `${ordinal} ${monthName} ${yearForm}`,
+              `${monthName} ${ordinal}, ${yearForm}`,
+            );
+            if (isShort) {
+              add(`${d} ${monthName}. ${yearForm}`, `${monthName}. ${d}, ${yearForm}`);
+            }
+          }
+          add(
+            `${weekdayEn}, ${monthName} ${d}, ${yyyy}`,
+            `${weekdayEn} ${d} ${monthName} ${yyyy}`,
+          );
         }
       }
 
-      return [...new Set(variants)];
+      return [...variants];
+    };
+
+    const BIRTHDATE_SEPARATOR_SOURCE =
+      '(?:[ \\t]*[.\\/,\\-–—][ \\t]*|[ \\t]+)';
+
+    const getBirthdateNumberSource = (number) => {
+      const plain = String(number);
+      return number < 10 ? `(?:0?${plain})` : plain;
+    };
+
+    const getBirthdateMonthNameSource = (monthForms) =>
+      `(?:${monthForms
+        .map((monthName) => `${escapeRegex(monthName)}\\.?`)
+        .join('|')})`;
+
+    const getBirthdateRedactionPatterns = (value) => {
+      const sources = new Set();
+
+      for (const candidate of parseBirthdateCandidates(value)) {
+        const { day, month, dd, mm, yy, yyyy } = candidate;
+        const daySource = getBirthdateNumberSource(day);
+        const monthSource = getBirthdateNumberSource(month);
+        const yearSource = `(?:${yyyy}|${yy})`;
+        const ordinalDaySource = `${daySource}(?:st|nd|rd|th)?`;
+        const noMonthSource = getBirthdateMonthNameSource(BIRTHDATE_MONTHS_NO[month - 1] || []);
+        const enMonthSource = getBirthdateMonthNameSource(BIRTHDATE_MONTHS_EN[month - 1] || []);
+
+        sources.add(`${daySource}${BIRTHDATE_SEPARATOR_SOURCE}${monthSource}${BIRTHDATE_SEPARATOR_SOURCE}${yearSource}`);
+        sources.add(`${yyyy}${BIRTHDATE_SEPARATOR_SOURCE}${monthSource}${BIRTHDATE_SEPARATOR_SOURCE}${daySource}`);
+        sources.add(`${monthSource}${BIRTHDATE_SEPARATOR_SOURCE}${daySource}${BIRTHDATE_SEPARATOR_SOURCE}${yearSource}`);
+        sources.add(`(?:${dd}${mm}${yy}|${dd}${mm}${yyyy}|${yyyy}${mm}${dd}|${mm}${dd}${yy}|${mm}${dd}${yyyy})`);
+
+        if (noMonthSource !== '(?:)') {
+          sources.add(`${daySource}\\.?${BIRTHDATE_SEPARATOR_SOURCE}${noMonthSource}${BIRTHDATE_SEPARATOR_SOURCE}${yearSource}`);
+        }
+        if (enMonthSource !== '(?:)') {
+          sources.add(`${ordinalDaySource}\\.?${BIRTHDATE_SEPARATOR_SOURCE}${enMonthSource}${BIRTHDATE_SEPARATOR_SOURCE}${yearSource}`);
+          sources.add(`${enMonthSource}${BIRTHDATE_SEPARATOR_SOURCE}${ordinalDaySource}${BIRTHDATE_SEPARATOR_SOURCE}${yearSource}`);
+        }
+      }
+
+      return [...sources].map((source) => new RegExp(
+        `(?<![\\p{L}\\p{N}_])(?:${source})(?![\\p{L}\\p{N}_])`,
+        'giu'
+      ));
+    };
+
+    const getOcrTolerantDigitSource = (digits) => Array.from(String(digits))
+      .map((digit) => {
+        if (digit === '0') return '[0Oo]';
+        if (digit === '1') return '[1Il]';
+        return digit;
+      })
+      .join('');
+
+    const getOcrTolerantNumberSource = (number, paddedWidth = 0) => {
+      const plain = String(number);
+      const padded = paddedWidth ? plain.padStart(paddedWidth, '0') : plain;
+      const variants = new Set([
+        getOcrTolerantDigitSource(plain),
+        getOcrTolerantDigitSource(padded),
+      ]);
+      return `(?:${[...variants].join('|')})`;
+    };
+
+    const getLabeledOcrBirthdatePatterns = (value) => {
+      const labelSource =
+        '(?:fødselsdato|født|f\\.?[ \\t]*dato|dob|date[ \\t]+of[ \\t]+birth|born)';
+      const patterns = [];
+
+      for (const candidate of parseBirthdateCandidates(value)) {
+        const daySource = getOcrTolerantNumberSource(candidate.day, 2);
+        const monthSource = getOcrTolerantNumberSource(candidate.month, 2);
+        const fullYearSource = getOcrTolerantDigitSource(candidate.yyyy);
+        const yearSource = `(?:${fullYearSource}|${getOcrTolerantDigitSource(candidate.yy)})`;
+        const separatorSource = '(?:[ \\t]*[.\\/,\\-–—][ \\t]*|[ \\t]+)';
+        const dateSource =
+          `(?:${daySource}${separatorSource}${monthSource}${separatorSource}${yearSource}|` +
+          `${fullYearSource}${separatorSource}${monthSource}${separatorSource}${daySource})`;
+
+        patterns.push(new RegExp(
+          `(\\b${labelSource}[ \\t]*(?::|[-–])?[ \\t]*)${dateSource}`,
+          'giu'
+        ));
+      }
+
+      return patterns;
+    };
+
+    const redactBirthdateFormatsInText = (text, value) => {
+      let output = text || '';
+      let replacedAny = false;
+
+      for (const pattern of getBirthdateRedactionPatterns(value)) {
+        const updated = output.replace(pattern, '[REDACTED]');
+        if (updated !== output) {
+          replacedAny = true;
+          output = updated;
+        }
+      }
+
+      // OCR commonly confuses 0/O and 1/I/l. Tolerate those substitutions only
+      // after an explicit birthdate label, where the risk of false positives is low.
+      for (const pattern of getLabeledOcrBirthdatePatterns(value)) {
+        const updated = output.replace(pattern, (_match, label) => `${label}[REDACTED]`);
+        if (updated !== output) {
+          replacedAny = true;
+          output = updated;
+        }
+      }
+
+      return { text: output, replacedAny };
     };
 
     const readClipboardImage = async () => {
