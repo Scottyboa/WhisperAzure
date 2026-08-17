@@ -1,16 +1,26 @@
 ## 17 August, 2026
 
-### Easy API key backup to OneDrive or Google Drive
+### Easy backup of API keys and custom prompts to OneDrive or Google Drive
 
-You can now back up your API keys directly to your own **Microsoft OneDrive** or **Google Drive**. This makes it easier to move your keys to a new computer or browser without having to download, store, and locate a separate JSON file.
+You can now back up both your API keys and custom prompts directly to your own **Microsoft OneDrive** or **Google Drive**. This makes it easier to move to a new computer or browser without having to download, store, and locate separate JSON files.
+
+#### API keys
 
 Before exporting, make sure that **every key and secret you want to back up has been completely entered in the correct field on the front page**. The backup uses the values present in the fields when you export, and empty fields are saved as empty. Then select **Export keys**, choose **Microsoft OneDrive** or **Google Drive**, and create a separate encryption password.
 
 To retrieve the keys later, select **Import keys**, choose the same cloud service, sign in with the same Microsoft or Google account, and enter the encryption password. The fields do not need to be filled in before importing. The keys are retrieved from the backup and inserted automatically. Review the fields and select **Enter** as usual.
 
-The keys are encrypted in your browser before the backup file is uploaded. The backup is stored only in the signed-in user's cloud storage – not in the app developer's Microsoft or Google account. The app can access only its own OneDrive folder or private Google Drive app storage and cannot overwrite the user's other files. The encryption password is never stored or uploaded, so it is important to remember it. The backup cannot be opened without the correct password.
+#### Custom prompts
 
-A new export to the same cloud service replaces the previous backup in that service. The OneDrive and Google Drive backups are separate and do not affect each other. The existing JSON file export and import options remain available for users who prefer them.
+Custom prompts can now be backed up in the same simple way. First select the prompt profile you want to back up and make sure that **all prompts you want to include are completely entered in their prompt slots**. Select **Export** above the Custom Prompt field and choose a JSON file, **Microsoft OneDrive**, or **Google Drive**. A cloud export includes all 20 prompt slots and their labels from the active prompt profile, including any slots that are empty.
+
+To retrieve the prompts later, select the desired active prompt profile, click **Import**, choose the same cloud service, sign in with the same Microsoft or Google account, and enter the encryption password. A prompt backup must have been exported to that service beforehand. Import replaces all 20 prompt slots and labels in the active profile. If the backup was created from a differently named profile, the app displays a clear warning before anything is replaced; importing does not automatically switch profiles.
+
+#### Encryption and storage
+
+The API keys and prompts are encrypted in your browser before the backup files are uploaded. The backups are stored only in the signed-in user's cloud storage – not in the app developer's Microsoft or Google account. The app can access only its own OneDrive folder or private Google Drive app storage and cannot overwrite the user's other files. The API-key backup and prompt backup are also stored as separate files, so they cannot overwrite each other. The encryption password is never stored or uploaded, so it is important to remember it. A backup cannot be opened without the correct password.
+
+A new export replaces only the previous backup of the same type in the selected cloud service. For example, a new OneDrive prompt export replaces the previous OneDrive prompt backup, but does not affect the API-key backup, the Google Drive backup, or other files. The existing JSON file export and import options remain available for users who prefer them.
 
 ---
 

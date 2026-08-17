@@ -1,16 +1,26 @@
 ## 17. august 2026
 
-### Enkel sikkerhetskopiering av API-nøkler til OneDrive eller Google Drive
+### Enkel sikkerhetskopiering av API-nøkler og tilpassede prompter til OneDrive eller Google Drive
 
-Du kan nå sikkerhetskopiere API-nøklene dine direkte til din egen **Microsoft OneDrive** eller **Google Drive**. Dette gjør det enklere å flytte nøklene til en ny PC eller nettleser, uten at du trenger å laste ned, oppbevare og finne igjen en egen JSON-fil.
+Du kan nå sikkerhetskopiere både API-nøklene og de tilpassede promptene dine direkte til din egen **Microsoft OneDrive** eller **Google Drive**. Dette gjør det enklere å flytte til en ny PC eller nettleser, uten at du trenger å laste ned, oppbevare og finne igjen separate JSON-filer.
+
+#### API-nøkler
 
 Før du eksporterer, må du kontrollere at **alle nøklene og hemmelighetene du ønsker å sikkerhetskopiere, er ferdig utfylt i de riktige feltene på forsiden**. Backupen bruker verdiene som står i feltene når du eksporterer, og tomme felt lagres som tomme. Trykk deretter **Export keys**, velg **Microsoft OneDrive** eller **Google Drive**, og opprett et eget krypteringspassord.
 
 Når du senere vil hente tilbake nøklene, trykker du **Import keys**, velger den samme skyløsningen, logger inn med den samme Microsoft- eller Google-kontoen og skriver inn krypteringspassordet. Feltene trenger ikke å være utfylt før import. Nøklene hentes fra backupen og fylles automatisk inn. Kontroller feltene og trykk deretter **Enter** som vanlig.
 
-Nøklene krypteres i nettleseren før backupfilen lastes opp. Backupen lagres bare i skylagringen til den innloggede brukeren – ikke i apputviklerens Microsoft- eller Google-konto. Appen har kun tilgang til sin egen OneDrive-mappe eller private Google Drive-appområde og kan ikke overskrive brukerens andre filer. Krypteringspassordet blir ikke lagret eller lastet opp, så det er viktig å huske det. Uten riktig passord kan backupen ikke åpnes.
+#### Tilpassede prompter
 
-En ny eksport til samme skytjeneste erstatter den tidligere backupen i den tjenesten. OneDrive- og Google Drive-backupene er separate og påvirker ikke hverandre. Den vanlige eksporten og importen med JSON-fil er fortsatt tilgjengelig for dem som foretrekker det.
+Tilpassede prompter kan nå sikkerhetskopieres på den samme enkle måten. Velg først promptprofilen du ønsker å sikkerhetskopiere, og kontroller at **alle promptene du ønsker å ta med, er ferdig utfylt i promptplassene sine**. Trykk **Eksporter** over feltet for tilpasset prompt, og velg JSON-fil, **Microsoft OneDrive** eller **Google Drive**. En skyeksport tar med alle de 20 promptplassene og navnene deres fra den aktive promptprofilen, inkludert eventuelle tomme plasser.
+
+Når du senere vil hente tilbake promptene, velger du ønsket aktiv promptprofil, trykker **Importer**, velger den samme skytjenesten, logger inn med den samme Microsoft- eller Google-kontoen og skriver inn krypteringspassordet. En promptkopi må ha blitt eksportert til tjenesten på forhånd. Import erstatter alle 20 promptplassene og navnene i den aktive profilen. Dersom sikkerhetskopien ble laget fra en profil med et annet navn, viser appen en tydelig advarsel før noe erstattes; importen bytter ikke profil automatisk.
+
+#### Kryptering og lagring
+
+API-nøklene og promptene krypteres i nettleseren før backupfilene lastes opp. Backupene lagres bare i skylagringen til den innloggede brukeren – ikke i apputviklerens Microsoft- eller Google-konto. Appen har kun tilgang til sin egen OneDrive-mappe eller det private Google Drive-appområdet og kan ikke overskrive brukerens andre filer. Sikkerhetskopien av API-nøkler og sikkerhetskopien av prompter lagres også som separate filer, slik at de ikke kan overskrive hverandre. Krypteringspassordet blir aldri lagret eller lastet opp, så det er viktig å huske det. Uten riktig passord kan en sikkerhetskopi ikke åpnes.
+
+En ny eksport erstatter bare den forrige sikkerhetskopien av samme type i den valgte skytjenesten. En ny eksport av prompter til OneDrive erstatter for eksempel den tidligere OneDrive-kopien av promptene, men påvirker ikke sikkerhetskopien av API-nøkler, Google Drive-kopien eller andre filer. Den vanlige eksporten og importen med JSON-fil er fortsatt tilgjengelig for dem som foretrekker det.
 
 ---
 
