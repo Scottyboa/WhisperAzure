@@ -647,22 +647,43 @@
 <body>
   <script>
     // OAuth popup callback. The authorization code is returned only to the
-    // same-origin opener and is exchanged there with PKCE (no client secret).
+    // same-origin app and is exchanged there with PKCE (no client secret).
+    // BroadcastChannel is a fallback for browsers that sever window.opener
+    // while the popup is visiting Microsoft's cross-origin sign-in page.
     (() => {
       const params = new URLSearchParams(window.location.search);
       const state = params.get("state") || "";
       const isMicrosoftCallback = state.startsWith("whisper-ms-") &&
         (params.has("code") || params.has("error"));
-      if (!isMicrosoftCallback || !window.opener || window.opener === window) return;
+      if (!isMicrosoftCallback) return;
 
-      window.opener.postMessage({
+      const payload = {
         type: "whisper-microsoft-oauth-callback",
         state,
         code: params.get("code") || "",
         error: params.get("error") || "",
         errorDescription: params.get("error_description") || ""
-      }, window.location.origin);
-      window.close();
+      };
+
+      try {
+        if (window.opener && window.opener !== window) {
+          window.opener.postMessage(payload, window.location.origin);
+        }
+      } catch {}
+
+      let callbackChannel = null;
+      try {
+        if (typeof window.BroadcastChannel === "function") {
+          callbackChannel = new window.BroadcastChannel(`whisper-ms-oauth-${state}`);
+          callbackChannel.postMessage(payload);
+        }
+      } catch {}
+
+      // Give the opener time to receive the queued callback before closing.
+      window.setTimeout(() => {
+        try { callbackChannel?.close(); } catch {}
+        window.close();
+      }, 250);
     })();
   </script>
 
@@ -1512,15 +1533,33 @@
 
         return await new Promise((resolve, reject) => {
           let settled = false;
+          let callbackReceived = false;
+          let popupClosedAt = 0;
+          let oauthChannel = null;
           const timeoutId = window.setTimeout(() => finish(new Error("Microsoft sign-in timed out.")), 120000);
           const closedPollId = window.setInterval(() => {
-            if (popup.closed) finish(new Error("Microsoft sign-in was closed before completion."));
+            if (!popup.closed) {
+              popupClosedAt = 0;
+              return;
+            }
+            if (!popupClosedAt) {
+              popupClosedAt = Date.now();
+              return;
+            }
+            // A successful callback closes the popup before its queued message
+            // is always delivered. Allow a short grace period for that message.
+            if (Date.now() - popupClosedAt >= 2000) {
+              finish(new Error("Microsoft sign-in was closed before completion."));
+            }
           }, 500);
 
           function cleanup() {
             window.clearTimeout(timeoutId);
             window.clearInterval(closedPollId);
             window.removeEventListener("message", onMessage);
+            try { oauthChannel?.removeEventListener("message", onBroadcastMessage); } catch {}
+            try { oauthChannel?.close(); } catch {}
+            oauthChannel = null;
             try { if (!popup.closed) popup.close(); } catch {}
           }
 
@@ -1532,17 +1571,18 @@
             else resolve(token);
           }
 
-          async function onMessage(event) {
-            const data = event.data || {};
-            if (event.origin !== window.location.origin ||
+          async function handleCallback(data) {
+            if (settled || callbackReceived ||
                 data.type !== "whisper-microsoft-oauth-callback" || data.state !== state) return;
-
-            if (settled) return;
-            settled = true;
-            cleanup();
+            callbackReceived = true;
+            window.clearInterval(closedPollId);
+            window.removeEventListener("message", onMessage);
+            try { oauthChannel?.removeEventListener("message", onBroadcastMessage); } catch {}
+            try { oauthChannel?.close(); } catch {}
+            oauthChannel = null;
 
             if (data.error) {
-              reject(new Error(data.errorDescription || data.error));
+              finish(new Error(data.errorDescription || data.error));
               return;
             }
 
@@ -1563,13 +1603,30 @@
               if (!tokenResponse.ok || !tokenData.access_token) {
                 throw new Error(tokenData.error_description || "Microsoft did not return an access token.");
               }
-              resolve(tokenData.access_token);
+              finish(null, tokenData.access_token);
             } catch (error) {
-              reject(error);
+              finish(error);
             }
           }
 
+          function onMessage(event) {
+            if (event.origin !== window.location.origin) return;
+            handleCallback(event.data || {});
+          }
+
+          function onBroadcastMessage(event) {
+            handleCallback(event.data || {});
+          }
+
           window.addEventListener("message", onMessage);
+          try {
+            if (typeof window.BroadcastChannel === "function") {
+              oauthChannel = new window.BroadcastChannel(`whisper-ms-oauth-${state}`);
+              oauthChannel.addEventListener("message", onBroadcastMessage);
+            }
+          } catch {
+            oauthChannel = null;
+          }
           try {
             popup.location.replace(authUrl.toString());
           } catch (error) {

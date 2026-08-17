@@ -184,18 +184,36 @@ async function requestMicrosoftAccessToken() {
 
     return await new Promise((resolve, reject) => {
       let settled = false;
+      let callbackReceived = false;
+      let popupClosedAt = 0;
+      let oauthChannel = null;
       const timeoutId = window.setTimeout(
         () => finish(new Error("Microsoft sign-in timed out.")),
         120000
       );
       const closedPollId = window.setInterval(() => {
-        if (popup.closed) finish(new Error("Microsoft sign-in was closed before completion."));
+        if (!popup.closed) {
+          popupClosedAt = 0;
+          return;
+        }
+        if (!popupClosedAt) {
+          popupClosedAt = Date.now();
+          return;
+        }
+        // The callback page closes itself after queueing its response. Give
+        // that response time to arrive before treating the close as a cancel.
+        if (Date.now() - popupClosedAt >= 2000) {
+          finish(new Error("Microsoft sign-in was closed before completion."));
+        }
       }, 500);
 
       function cleanup() {
         window.clearTimeout(timeoutId);
         window.clearInterval(closedPollId);
         window.removeEventListener("message", onMessage);
+        try { oauthChannel?.removeEventListener("message", onBroadcastMessage); } catch {}
+        try { oauthChannel?.close(); } catch {}
+        oauthChannel = null;
         try { if (!popup.closed) popup.close(); } catch {}
       }
 
@@ -207,11 +225,16 @@ async function requestMicrosoftAccessToken() {
         else resolve(token);
       }
 
-      async function onMessage(event) {
-        const data = event.data || {};
-        if (event.origin !== window.location.origin ||
+      async function handleCallback(data) {
+        if (settled || callbackReceived ||
             data.type !== "whisper-microsoft-oauth-callback" ||
             data.state !== state) return;
+        callbackReceived = true;
+        window.clearInterval(closedPollId);
+        window.removeEventListener("message", onMessage);
+        try { oauthChannel?.removeEventListener("message", onBroadcastMessage); } catch {}
+        try { oauthChannel?.close(); } catch {}
+        oauthChannel = null;
 
         if (data.error) {
           finish(new Error(data.errorDescription || data.error));
@@ -241,7 +264,24 @@ async function requestMicrosoftAccessToken() {
         }
       }
 
+      function onMessage(event) {
+        if (event.origin !== window.location.origin) return;
+        handleCallback(event.data || {});
+      }
+
+      function onBroadcastMessage(event) {
+        handleCallback(event.data || {});
+      }
+
       window.addEventListener("message", onMessage);
+      try {
+        if (typeof window.BroadcastChannel === "function") {
+          oauthChannel = new window.BroadcastChannel(`whisper-ms-oauth-${state}`);
+          oauthChannel.addEventListener("message", onBroadcastMessage);
+        }
+      } catch {
+        oauthChannel = null;
+      }
       try {
         popup.location.replace(authUrl.toString());
       } catch (error) {
@@ -561,4 +601,3 @@ export const PromptCloudBackup = Object.freeze({
   saveToGoogleDrive,
   loadFromGoogleDrive,
 });
-
