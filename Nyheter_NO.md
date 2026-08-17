@@ -1,16 +1,16 @@
 ## 17. august 2026
 
-### Enkel sikkerhetskopiering av API-nøkler til OneDrive
+### Enkel sikkerhetskopiering av API-nøkler til OneDrive eller Google Drive
 
-Du kan nå sikkerhetskopiere API-nøklene dine direkte til din egen Microsoft OneDrive. Dette gjør det enklere å flytte nøklene til en ny PC eller nettleser, uten at du trenger å laste ned, oppbevare og finne igjen en egen JSON-fil.
+Du kan nå sikkerhetskopiere API-nøklene dine direkte til din egen **Microsoft OneDrive** eller **Google Drive**. Dette gjør det enklere å flytte nøklene til en ny PC eller nettleser, uten at du trenger å laste ned, oppbevare og finne igjen en egen JSON-fil.
 
-Før du eksporterer, må du kontrollere at alle nøklene og hemmelighetene du ønsker å sikkerhetskopiere, er skrevet inn i de riktige feltene på forsiden. Trykk deretter **Export keys**, velg **OneDrive**, og opprett et eget krypteringspassord. Nøklene krypteres i nettleseren før backupfilen lagres i appens egen mappe i din private OneDrive.
+Før du eksporterer, må du kontrollere at **alle nøklene og hemmelighetene du ønsker å sikkerhetskopiere, er ferdig utfylt i de riktige feltene på forsiden**. Backupen bruker verdiene som står i feltene når du eksporterer, og tomme felt lagres som tomme. Trykk deretter **Export keys**, velg **Microsoft OneDrive** eller **Google Drive**, og opprett et eget krypteringspassord.
 
-Når du senere vil hente tilbake nøklene, trykker du **Import keys**, velger **OneDrive**, logger inn med den samme Microsoft-kontoen og skriver inn krypteringspassordet. Nøklene blir da hentet fra din egen OneDrive og fylt inn i feltene. Kontroller feltene og trykk deretter **Enter** som vanlig.
+Når du senere vil hente tilbake nøklene, trykker du **Import keys**, velger den samme skyløsningen, logger inn med den samme Microsoft- eller Google-kontoen og skriver inn krypteringspassordet. Feltene trenger ikke å være utfylt før import. Nøklene hentes fra backupen og fylles automatisk inn. Kontroller feltene og trykk deretter **Enter** som vanlig.
 
-Backupen lagres kun i OneDrive-kontoen til den innloggede brukeren – ikke i apputviklerens Microsoft-konto. Appen har bare tilgang til sin egen OneDrive-mappe og kan ikke overskrive andre filer eller data som ligger i OneDrive. Krypteringspassordet blir ikke lagret eller lastet opp, så det er viktig å huske det. Uten riktig passord kan backupen ikke åpnes.
+Nøklene krypteres i nettleseren før backupfilen lastes opp. Backupen lagres bare i skylagringen til den innloggede brukeren – ikke i apputviklerens Microsoft- eller Google-konto. Appen har kun tilgang til sin egen OneDrive-mappe eller private Google Drive-appområde og kan ikke overskrive brukerens andre filer. Krypteringspassordet blir ikke lagret eller lastet opp, så det er viktig å huske det. Uten riktig passord kan backupen ikke åpnes.
 
-En ny OneDrive-eksport erstatter den tidligere OneDrive-backupen. Pass derfor på at alle nøklene du vil beholde, er fylt inn før du eksporterer på nytt. Den vanlige eksporten og importen med JSON-fil er fortsatt tilgjengelig for dem som foretrekker det.
+En ny eksport til samme skytjeneste erstatter den tidligere backupen i den tjenesten. OneDrive- og Google Drive-backupene er separate og påvirker ikke hverandre. Den vanlige eksporten og importen med JSON-fil er fortsatt tilgjengelig for dem som foretrekker det.
 
 ---
 

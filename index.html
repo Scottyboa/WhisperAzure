@@ -323,6 +323,8 @@
     #importKeysModal,
     #exportKeysModal {
       width: min(92vw, 460px);
+      max-height: calc(100vh - 32px);
+      overflow-y: auto;
       background: #fff;
       border: 1px solid #ddd;
       border-radius: 14px;
@@ -415,6 +417,12 @@
       justify-content: flex-end;
       margin-top: 12px;
       flex-wrap: wrap;
+    }
+    .mini-modal__status {
+      min-height: 1.35em;
+      margin: 10px 0 0;
+      font-size: 12px;
+      line-height: 1.35;
     }
     /* Discreet "ghost" button for Clear keys */
     .keys-io-btn--ghost-green {
@@ -721,6 +729,9 @@
         </div>
 
         <div id="exportKeysModalChoice">
+          <div class="mini-modal__notice">
+            Before exporting, make sure every key and secret you want to back up is filled in. The backup uses the current field values, so empty fields are saved as empty.
+          </div>
           <button type="button" id="exportChoiceJson" class="keys-io-btn mini-modal__option">
             Export as JSON file
           </button>
@@ -729,10 +740,17 @@
           </div>
 
           <button type="button" id="exportChoiceOneDrive" class="keys-io-btn mini-modal__option">
-            Export to my OneDrive
+            Export to Microsoft OneDrive
           </button>
           <div class="mini-modal__help">
             Sign in with your personal Microsoft account. The keys are encrypted in this browser before one backup file is saved in your own OneDrive. A new export replaces the previous OneDrive backup.
+          </div>
+
+          <button type="button" id="exportChoiceGoogleDrive" class="keys-io-btn mini-modal__option">
+            Export to Google Drive
+          </button>
+          <div class="mini-modal__help">
+            Sign in with your Google account. The keys are encrypted in this browser before one backup file is saved in your private Google Drive app storage. A new export replaces the previous Google Drive backup.
           </div>
         </div>
 
@@ -749,6 +767,21 @@
             <button type="button" id="exportOneDriveBackBtn" class="keys-io-btn keys-io-btn--ghost-green">Back</button>
           </div>
         </div>
+
+        <div id="exportKeysModalGoogleDrive" style="display:none">
+          <div class="mini-modal__notice">
+            Create a separate encryption password. It is never uploaded or stored by this app. If you forget it, the Google Drive backup cannot be restored. Saving again replaces any previous Google Drive backup.
+          </div>
+          <label class="mini-modal__field-label" for="exportGoogleDrivePassword">Encryption password (minimum 10 characters)</label>
+          <input type="password" id="exportGoogleDrivePassword" class="mini-modal__password" autocomplete="new-password">
+          <label class="mini-modal__field-label" for="exportGoogleDrivePasswordConfirm">Repeat password</label>
+          <input type="password" id="exportGoogleDrivePasswordConfirm" class="mini-modal__password" autocomplete="new-password">
+          <div class="mini-modal__actions">
+            <button type="button" id="exportGoogleDriveSaveBtn" class="keys-io-btn">Save to Google Drive</button>
+            <button type="button" id="exportGoogleDriveBackBtn" class="keys-io-btn keys-io-btn--ghost-green">Back</button>
+          </div>
+        </div>
+        <p id="exportKeysModalStatus" class="mini-modal__status" aria-live="polite"></p>
       </div>
     </div>
 
@@ -760,8 +793,11 @@
           <button type="button" id="importKeysModalX" aria-label="Close">×</button>
         </div>
 
-        <!-- Step 1: Choose JSON or OneDrive -->
+        <!-- Step 1: Choose JSON, Microsoft OneDrive, or Google Drive -->
         <div id="importKeysModalChoice">
+          <div class="mini-modal__notice">
+            The key fields do not need to be filled in before importing. The backup fills them for you; review the fields afterwards and then select Enter.
+          </div>
           <button type="button" id="importChoiceJson" class="keys-io-btn mini-modal__option">
             Import from JSON
           </button>
@@ -770,10 +806,17 @@
           </div>
 
           <button type="button" id="importChoiceOneDrive" class="keys-io-btn mini-modal__option">
-            Import from my OneDrive
+            Import from Microsoft OneDrive
           </button>
           <div class="mini-modal__help">
             Sign in with the same personal Microsoft account and enter the encryption password. You must previously have exported a backup to OneDrive.
+          </div>
+
+          <button type="button" id="importChoiceGoogleDrive" class="keys-io-btn mini-modal__option">
+            Import from Google Drive
+          </button>
+          <div class="mini-modal__help">
+            Sign in with the same Google account and enter the encryption password. You must previously have exported a backup to Google Drive.
           </div>
         </div>
 
@@ -818,10 +861,24 @@
             <button type="button" id="importOneDriveBackBtn" class="keys-io-btn keys-io-btn--ghost-green">Back</button>
           </div>
         </div>
+
+        <!-- Step 2d: Encrypted Google Drive backup -->
+        <div id="importKeysModalGoogleDrive" style="display:none">
+          <div class="mini-modal__notice">
+            This downloads the encrypted backup from your private Google Drive app storage. A Google Drive backup must already have been created from Export keys. The password is used only in this browser.
+          </div>
+          <label class="mini-modal__field-label" for="importGoogleDrivePassword">Encryption password</label>
+          <input type="password" id="importGoogleDrivePassword" class="mini-modal__password" autocomplete="current-password">
+          <div class="mini-modal__actions">
+            <button type="button" id="importGoogleDriveFetchBtn" class="keys-io-btn">Import from Google Drive</button>
+            <button type="button" id="importGoogleDriveBackBtn" class="keys-io-btn keys-io-btn--ghost-green">Back</button>
+          </div>
+        </div>
+        <p id="importKeysModalStatus" class="mini-modal__status" aria-live="polite"></p>
       </div>
     </div>
     <p id="keysIoHint">
-      Export keys to a file and store it securely. Next time, import the file to refill the fields, which saves time and avoids retyping.
+      Back up keys as a JSON file, to Microsoft OneDrive, or to Google Drive. Import the backup later to refill the fields and avoid retyping.
     </p>
     <p id="keysIoStatus" aria-live="polite"></p>
 
@@ -1136,7 +1193,7 @@
       if (storedSecret && !bedrockBackendSecretInput.value) bedrockBackendSecretInput.value = storedSecret;
     }
 
-    // Import/Export key bundles: existing JSON flow + encrypted OneDrive backup.
+    // Import/Export key bundles: JSON + encrypted Microsoft OneDrive / Google Drive backups.
     const exportKeysBtn  = document.getElementById("exportKeysBtn");
     const importKeysBtn  = document.getElementById("importKeysBtn");
     const clearKeysBtn   = document.getElementById("clearKeysBtn");
@@ -1150,6 +1207,13 @@
     const ONEDRIVE_BACKUP_SCHEMA = "whisper.keys.onedrive.encrypted";
     const ONEDRIVE_BACKUP_VERSION = 1;
     const ONEDRIVE_KDF_ITERATIONS = 250000;
+    const GOOGLE_CLIENT_ID = "432102972557-hivdvjrkht1joq2pa2115phruhdgthua.apps.googleusercontent.com";
+    const GOOGLE_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.appdata";
+    const GOOGLE_DRIVE_BACKUP_FILENAME = "whisper-keys-backup.enc.json";
+    const GOOGLE_DRIVE_BACKUP_SCHEMA = "whisper.keys.google-drive.encrypted";
+    const GOOGLE_DRIVE_BACKUP_VERSION = 1;
+    const GOOGLE_DRIVE_KDF_ITERATIONS = 250000;
+    const GOOGLE_IDENTITY_SCRIPT_URL = "https://accounts.google.com/gsi/client";
 
     const KEY_FIELDS = [
       { id: "apiKeyInput",               storageKey: "openai_api_key" },
@@ -1166,9 +1230,28 @@
     ];
 
     function setKeysIoStatus(message, isError) {
-      if (!keysIoStatus) return;
-      keysIoStatus.textContent = message || "";
-      keysIoStatus.style.color = isError ? "#b00020" : "#2e7d32";
+      const color = isError ? "#b00020" : "#2e7d32";
+      if (keysIoStatus) {
+        keysIoStatus.textContent = message || "";
+        keysIoStatus.style.color = color;
+      }
+
+      const activeModalStatus = document.getElementById("exportKeysModalBackdrop")?.classList.contains("active")
+        ? document.getElementById("exportKeysModalStatus")
+        : document.getElementById("importKeysModalBackdrop")?.classList.contains("active")
+          ? document.getElementById("importKeysModalStatus")
+          : null;
+      if (activeModalStatus) {
+        activeModalStatus.textContent = message || "";
+        activeModalStatus.style.color = color;
+      }
+    }
+
+    function clearCloudModalStatuses() {
+      ["exportKeysModalStatus", "importKeysModalStatus"].forEach((id) => {
+        const status = document.getElementById(id);
+        if (status) status.textContent = "";
+      });
     }
 
     function buildKeyBundle() {
@@ -1276,7 +1359,7 @@
       return bytes;
     }
 
-    async function deriveOneDriveKey(password, salt, iterations, usages) {
+    async function deriveCloudBackupKey(password, salt, iterations, usages) {
       const encoder = new TextEncoder();
       const keyMaterial = await crypto.subtle.importKey(
         "raw",
@@ -1294,15 +1377,15 @@
       );
     }
 
-    async function encryptKeyBundleForOneDrive(bundle, password) {
+    async function encryptKeyBundleForCloud(bundle, password, config) {
       if (!window.isSecureContext || !crypto.subtle) {
         throw new Error("Secure browser encryption is unavailable on this page.");
       }
       const encoder = new TextEncoder();
       const salt = randomBytes(16);
       const iv = randomBytes(12);
-      const key = await deriveOneDriveKey(password, salt, ONEDRIVE_KDF_ITERATIONS, ["encrypt"]);
-      const aad = encoder.encode(`${ONEDRIVE_BACKUP_SCHEMA}:${ONEDRIVE_BACKUP_VERSION}`);
+      const key = await deriveCloudBackupKey(password, salt, config.iterations, ["encrypt"]);
+      const aad = encoder.encode(`${config.schema}:${config.version}`);
       const ciphertext = await crypto.subtle.encrypt(
         { name: "AES-GCM", iv, additionalData: aad },
         key,
@@ -1310,13 +1393,13 @@
       );
 
       return {
-        schema: ONEDRIVE_BACKUP_SCHEMA,
-        version: ONEDRIVE_BACKUP_VERSION,
+        schema: config.schema,
+        version: config.version,
         createdAt: new Date().toISOString(),
         encryption: {
           algorithm: "AES-256-GCM",
           kdf: "PBKDF2-SHA-256",
-          iterations: ONEDRIVE_KDF_ITERATIONS,
+          iterations: config.iterations,
           salt: bytesToBase64(salt),
           iv: bytesToBase64(iv)
         },
@@ -1324,15 +1407,15 @@
       };
     }
 
-    async function decryptKeyBundleFromOneDrive(container, password) {
-      if (!container || container.schema !== ONEDRIVE_BACKUP_SCHEMA ||
-          container.version !== ONEDRIVE_BACKUP_VERSION || !container.encryption) {
-        throw new Error("The OneDrive backup has an unsupported format.");
+    async function decryptKeyBundleFromCloud(container, password, config) {
+      if (!container || container.schema !== config.schema ||
+          container.version !== config.version || !container.encryption) {
+        throw new Error(`The ${config.providerName} backup has an unsupported format.`);
       }
 
       const iterations = Number(container.encryption.iterations);
       if (!Number.isInteger(iterations) || iterations < 100000 || iterations > 1000000) {
-        throw new Error("The OneDrive backup has invalid encryption settings.");
+        throw new Error(`The ${config.providerName} backup has invalid encryption settings.`);
       }
 
       try {
@@ -1341,8 +1424,8 @@
         const salt = base64ToBytes(container.encryption.salt);
         const iv = base64ToBytes(container.encryption.iv);
         if (salt.length !== 16 || iv.length !== 12) throw new Error("Invalid encryption parameters");
-        const key = await deriveOneDriveKey(password, salt, iterations, ["decrypt"]);
-        const aad = encoder.encode(`${ONEDRIVE_BACKUP_SCHEMA}:${ONEDRIVE_BACKUP_VERSION}`);
+        const key = await deriveCloudBackupKey(password, salt, iterations, ["decrypt"]);
+        const aad = encoder.encode(`${config.schema}:${config.version}`);
         const plaintext = await crypto.subtle.decrypt(
           { name: "AES-GCM", iv, additionalData: aad },
           key,
@@ -1350,8 +1433,40 @@
         );
         return JSON.parse(decoder.decode(plaintext));
       } catch {
-        throw new Error("Incorrect password or damaged OneDrive backup.");
+        throw new Error(`Incorrect password or damaged ${config.providerName} backup.`);
       }
+    }
+
+    function encryptKeyBundleForOneDrive(bundle, password) {
+      return encryptKeyBundleForCloud(bundle, password, {
+        schema: ONEDRIVE_BACKUP_SCHEMA,
+        version: ONEDRIVE_BACKUP_VERSION,
+        iterations: ONEDRIVE_KDF_ITERATIONS
+      });
+    }
+
+    function decryptKeyBundleFromOneDrive(container, password) {
+      return decryptKeyBundleFromCloud(container, password, {
+        schema: ONEDRIVE_BACKUP_SCHEMA,
+        version: ONEDRIVE_BACKUP_VERSION,
+        providerName: "OneDrive"
+      });
+    }
+
+    function encryptKeyBundleForGoogleDrive(bundle, password) {
+      return encryptKeyBundleForCloud(bundle, password, {
+        schema: GOOGLE_DRIVE_BACKUP_SCHEMA,
+        version: GOOGLE_DRIVE_BACKUP_VERSION,
+        iterations: GOOGLE_DRIVE_KDF_ITERATIONS
+      });
+    }
+
+    function decryptKeyBundleFromGoogleDrive(container, password) {
+      return decryptKeyBundleFromCloud(container, password, {
+        schema: GOOGLE_DRIVE_BACKUP_SCHEMA,
+        version: GOOGLE_DRIVE_BACKUP_VERSION,
+        providerName: "Google Drive"
+      });
     }
 
     function getMicrosoftRedirectUri() {
@@ -1521,18 +1636,243 @@
       }
     }
 
+    let googleIdentityServicesPromise = null;
+
+    function loadGoogleIdentityServices() {
+      if (window.google?.accounts?.oauth2) return Promise.resolve();
+      if (googleIdentityServicesPromise) return googleIdentityServicesPromise;
+
+      googleIdentityServicesPromise = new Promise((resolve, reject) => {
+        let script = document.querySelector(`script[src="${GOOGLE_IDENTITY_SCRIPT_URL}"]`);
+        const timeoutId = window.setTimeout(() => {
+          if (!window.google?.accounts?.oauth2) script?.remove();
+          reject(new Error("Google sign-in could not be loaded. Check your connection and try again."));
+        }, 15000);
+
+        const finish = () => {
+          window.clearTimeout(timeoutId);
+          if (window.google?.accounts?.oauth2) resolve();
+          else reject(new Error("Google sign-in is unavailable in this browser."));
+        };
+
+        const fail = () => {
+          window.clearTimeout(timeoutId);
+          script?.remove();
+          reject(new Error("Google sign-in could not be loaded. Check your connection and try again."));
+        };
+
+        if (!script) {
+          script = document.createElement("script");
+          script.src = GOOGLE_IDENTITY_SCRIPT_URL;
+          script.async = true;
+          script.defer = true;
+          script.addEventListener("load", finish, { once: true });
+          script.addEventListener("error", fail, { once: true });
+          document.head.appendChild(script);
+        } else {
+          script.addEventListener("load", finish, { once: true });
+          script.addEventListener("error", fail, { once: true });
+        }
+      }).catch((error) => {
+        googleIdentityServicesPromise = null;
+        throw error;
+      });
+
+      return googleIdentityServicesPromise;
+    }
+
+    async function prepareGoogleDriveButton(button) {
+      if (!button) return;
+      const readyLabel = button.dataset.readyLabel || button.textContent;
+      button.dataset.readyLabel = readyLabel;
+      button.disabled = true;
+      button.textContent = "Loading Google…";
+      try {
+        await loadGoogleIdentityServices();
+        button.disabled = false;
+        button.textContent = readyLabel;
+      } catch (error) {
+        button.textContent = readyLabel;
+        setKeysIoStatus(error?.message || "Google sign-in could not be loaded.", true);
+      }
+    }
+
+    function requestGoogleAccessToken() {
+      if (!window.google?.accounts?.oauth2) {
+        throw new Error("Google sign-in is still loading. Wait a moment and try again.");
+      }
+
+      return new Promise((resolve, reject) => {
+        let settled = false;
+        const timeoutId = window.setTimeout(() => finish(new Error("Google sign-in timed out.")), 120000);
+
+        function finish(error, token) {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timeoutId);
+          if (error) reject(error);
+          else resolve(token);
+        }
+
+        try {
+          const tokenClient = window.google.accounts.oauth2.initTokenClient({
+            client_id: GOOGLE_CLIENT_ID,
+            scope: GOOGLE_DRIVE_SCOPE,
+            prompt: "select_account",
+            callback: (response) => {
+              if (response?.error) {
+                finish(new Error(response.error_description || response.error));
+                return;
+              }
+              if (!response?.access_token) {
+                finish(new Error("Google did not return an access token."));
+                return;
+              }
+              const hasScope = typeof window.google.accounts.oauth2.hasGrantedAllScopes !== "function" ||
+                window.google.accounts.oauth2.hasGrantedAllScopes(response, GOOGLE_DRIVE_SCOPE);
+              if (!hasScope) {
+                finish(new Error("Google Drive app-storage permission was not granted."));
+                return;
+              }
+              finish(null, response.access_token);
+            },
+            error_callback: (error) => {
+              const message = error?.type === "popup_failed_to_open"
+                ? "Google sign-in was blocked. Allow pop-ups and try again."
+                : error?.type === "popup_closed"
+                  ? "Google sign-in was closed before completion."
+                  : "Google sign-in failed. Please try again.";
+              finish(new Error(message));
+            }
+          });
+          tokenClient.requestAccessToken();
+        } catch (error) {
+          finish(error);
+        }
+      });
+    }
+
+    async function googleDriveRequest(accessToken, url, options = {}) {
+      const headers = new Headers(options.headers || {});
+      headers.set("Authorization", `Bearer ${accessToken}`);
+      const response = await fetch(url, {
+        ...options,
+        headers,
+        cache: "no-store"
+      });
+      if (!response.ok) {
+        let message = `Google Drive error (${response.status})`;
+        try {
+          const details = await response.clone().json();
+          message = details?.error?.message || message;
+        } catch {}
+        const error = new Error(message);
+        error.status = response.status;
+        throw error;
+      }
+      return response;
+    }
+
+    async function findGoogleDriveBackup(accessToken) {
+      const params = new URLSearchParams({
+        spaces: "appDataFolder",
+        q: `name = '${GOOGLE_DRIVE_BACKUP_FILENAME}' and trashed = false`,
+        fields: "files(id,name,modifiedTime)",
+        orderBy: "modifiedTime desc",
+        pageSize: "1"
+      });
+      const response = await googleDriveRequest(
+        accessToken,
+        `https://www.googleapis.com/drive/v3/files?${params.toString()}`
+      );
+      const data = await response.json();
+      return Array.isArray(data?.files) && data.files.length ? data.files[0] : null;
+    }
+
+    async function uploadEncryptedBackupToGoogleDrive(accessToken, encryptedBackup) {
+      const existing = await findGoogleDriveBackup(accessToken);
+      const content = JSON.stringify(encryptedBackup);
+
+      if (existing?.id) {
+        await googleDriveRequest(
+          accessToken,
+          `https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(existing.id)}?uploadType=media`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: content
+          }
+        );
+        return;
+      }
+
+      const boundary = `whisper_backup_${bytesToBase64Url(randomBytes(18))}`;
+      const metadata = JSON.stringify({
+        name: GOOGLE_DRIVE_BACKUP_FILENAME,
+        parents: ["appDataFolder"],
+        mimeType: "application/json"
+      });
+      const multipartBody = [
+        `--${boundary}`,
+        "Content-Type: application/json; charset=UTF-8",
+        "",
+        metadata,
+        `--${boundary}`,
+        "Content-Type: application/json",
+        "",
+        content,
+        `--${boundary}--`,
+        ""
+      ].join("\r\n");
+
+      await googleDriveRequest(
+        accessToken,
+        "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",
+        {
+          method: "POST",
+          headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
+          body: multipartBody
+        }
+      );
+    }
+
+    async function downloadEncryptedBackupFromGoogleDrive(accessToken) {
+      const backup = await findGoogleDriveBackup(accessToken);
+      if (!backup?.id) {
+        throw new Error("No Google Drive backup was found. Export keys to Google Drive first.");
+      }
+
+      const response = await googleDriveRequest(
+        accessToken,
+        `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(backup.id)}?alt=media`
+      );
+      const raw = await response.text();
+      if (raw.length > 2000000) throw new Error("The Google Drive backup is unexpectedly large.");
+      try {
+        return JSON.parse(raw);
+      } catch {
+        throw new Error("The Google Drive backup is not valid JSON.");
+      }
+    }
+
     const exportModal = {
       backdrop: document.getElementById("exportKeysModalBackdrop"),
       card: document.getElementById("exportKeysModal"),
       close: document.getElementById("exportKeysModalX"),
       choice: document.getElementById("exportKeysModalChoice"),
       oneDrive: document.getElementById("exportKeysModalOneDrive"),
+      googleDrive: document.getElementById("exportKeysModalGoogleDrive"),
       json: document.getElementById("exportChoiceJson"),
       oneDriveChoice: document.getElementById("exportChoiceOneDrive"),
-      password: document.getElementById("exportOneDrivePassword"),
-      passwordConfirm: document.getElementById("exportOneDrivePasswordConfirm"),
-      save: document.getElementById("exportOneDriveSaveBtn"),
-      back: document.getElementById("exportOneDriveBackBtn")
+      googleDriveChoice: document.getElementById("exportChoiceGoogleDrive"),
+      oneDrivePassword: document.getElementById("exportOneDrivePassword"),
+      oneDrivePasswordConfirm: document.getElementById("exportOneDrivePasswordConfirm"),
+      oneDriveSave: document.getElementById("exportOneDriveSaveBtn"),
+      oneDriveBack: document.getElementById("exportOneDriveBackBtn"),
+      googleDrivePassword: document.getElementById("exportGoogleDrivePassword"),
+      googleDrivePasswordConfirm: document.getElementById("exportGoogleDrivePasswordConfirm"),
+      googleDriveSave: document.getElementById("exportGoogleDriveSaveBtn"),
+      googleDriveBack: document.getElementById("exportGoogleDriveBackBtn")
     };
 
     const importModal = {
@@ -1543,29 +1883,38 @@
       jsonChoice: document.getElementById("importKeysModalJsonChoice"),
       paste: document.getElementById("importKeysModalPaste"),
       oneDrive: document.getElementById("importKeysModalOneDrive"),
+      googleDrive: document.getElementById("importKeysModalGoogleDrive"),
       json: document.getElementById("importChoiceJson"),
       oneDriveChoice: document.getElementById("importChoiceOneDrive"),
+      googleDriveChoice: document.getElementById("importChoiceGoogleDrive"),
       file: document.getElementById("importChoiceFile"),
       pasteChoice: document.getElementById("importChoicePaste"),
       jsonBack: document.getElementById("importJsonBackBtn"),
       pasteBack: document.getElementById("importPasteBackBtn"),
       jsonText: document.getElementById("importKeysJsonText"),
       jsonFetch: document.getElementById("importKeysFetchBtn"),
-      password: document.getElementById("importOneDrivePassword"),
+      oneDrivePassword: document.getElementById("importOneDrivePassword"),
       oneDriveFetch: document.getElementById("importOneDriveFetchBtn"),
-      oneDriveBack: document.getElementById("importOneDriveBackBtn")
+      oneDriveBack: document.getElementById("importOneDriveBackBtn"),
+      googleDrivePassword: document.getElementById("importGoogleDrivePassword"),
+      googleDriveFetch: document.getElementById("importGoogleDriveFetchBtn"),
+      googleDriveBack: document.getElementById("importGoogleDriveBackBtn")
     };
 
     function showExportChoice() {
       if (exportModal.choice) exportModal.choice.style.display = "";
       if (exportModal.oneDrive) exportModal.oneDrive.style.display = "none";
-      if (exportModal.password) exportModal.password.value = "";
-      if (exportModal.passwordConfirm) exportModal.passwordConfirm.value = "";
+      if (exportModal.googleDrive) exportModal.googleDrive.style.display = "none";
+      if (exportModal.oneDrivePassword) exportModal.oneDrivePassword.value = "";
+      if (exportModal.oneDrivePasswordConfirm) exportModal.oneDrivePasswordConfirm.value = "";
+      if (exportModal.googleDrivePassword) exportModal.googleDrivePassword.value = "";
+      if (exportModal.googleDrivePasswordConfirm) exportModal.googleDrivePasswordConfirm.value = "";
     }
 
     function openExportModal() {
       if (!exportModal.backdrop) return;
       showExportChoice();
+      clearCloudModalStatuses();
       exportModal.backdrop.classList.add("active");
       exportModal.backdrop.setAttribute("aria-hidden", "false");
       exportModal.json?.focus();
@@ -1581,7 +1930,17 @@
     function showExportOneDrive() {
       if (exportModal.choice) exportModal.choice.style.display = "none";
       if (exportModal.oneDrive) exportModal.oneDrive.style.display = "";
-      exportModal.password?.focus();
+      if (exportModal.googleDrive) exportModal.googleDrive.style.display = "none";
+      exportModal.oneDrivePassword?.focus();
+    }
+
+    function showExportGoogleDrive() {
+      if (exportModal.choice) exportModal.choice.style.display = "none";
+      if (exportModal.oneDrive) exportModal.oneDrive.style.display = "none";
+      if (exportModal.googleDrive) exportModal.googleDrive.style.display = "";
+      prepareGoogleDriveButton(exportModal.googleDriveSave).then(() => {
+        exportModal.googleDrivePassword?.focus();
+      });
     }
 
     function showImportChoice() {
@@ -1589,13 +1948,16 @@
       if (importModal.jsonChoice) importModal.jsonChoice.style.display = "none";
       if (importModal.paste) importModal.paste.style.display = "none";
       if (importModal.oneDrive) importModal.oneDrive.style.display = "none";
+      if (importModal.googleDrive) importModal.googleDrive.style.display = "none";
       if (importModal.jsonText) importModal.jsonText.value = "";
-      if (importModal.password) importModal.password.value = "";
+      if (importModal.oneDrivePassword) importModal.oneDrivePassword.value = "";
+      if (importModal.googleDrivePassword) importModal.googleDrivePassword.value = "";
     }
 
     function openImportModal() {
       if (!importModal.backdrop) return;
       showImportChoice();
+      clearCloudModalStatuses();
       importModal.backdrop.classList.add("active");
       importModal.backdrop.setAttribute("aria-hidden", "false");
       importModal.json?.focus();
@@ -1623,7 +1985,17 @@
     function showImportOneDrive() {
       if (importModal.choice) importModal.choice.style.display = "none";
       if (importModal.oneDrive) importModal.oneDrive.style.display = "";
-      importModal.password?.focus();
+      if (importModal.googleDrive) importModal.googleDrive.style.display = "none";
+      importModal.oneDrivePassword?.focus();
+    }
+
+    function showImportGoogleDrive() {
+      if (importModal.choice) importModal.choice.style.display = "none";
+      if (importModal.oneDrive) importModal.oneDrive.style.display = "none";
+      if (importModal.googleDrive) importModal.googleDrive.style.display = "";
+      prepareGoogleDriveButton(importModal.googleDriveFetch).then(() => {
+        importModal.googleDrivePassword?.focus();
+      });
     }
 
     exportKeysBtn?.addEventListener("click", openExportModal);
@@ -1631,8 +2003,10 @@
     clearKeysBtn?.addEventListener("click", clearAllKeyFields);
 
     exportModal.close?.addEventListener("click", closeExportModal);
-    exportModal.back?.addEventListener("click", showExportChoice);
+    exportModal.oneDriveBack?.addEventListener("click", showExportChoice);
+    exportModal.googleDriveBack?.addEventListener("click", showExportChoice);
     exportModal.oneDriveChoice?.addEventListener("click", showExportOneDrive);
+    exportModal.googleDriveChoice?.addEventListener("click", showExportGoogleDrive);
     exportModal.backdrop?.addEventListener("click", (event) => {
       if (event.target === exportModal.backdrop) closeExportModal();
     });
@@ -1647,24 +2021,24 @@
       }
     });
 
-    exportModal.save?.addEventListener("click", async () => {
-      const password = exportModal.password?.value || "";
-      const confirmation = exportModal.passwordConfirm?.value || "";
+    exportModal.oneDriveSave?.addEventListener("click", async () => {
+      const password = exportModal.oneDrivePassword?.value || "";
+      const confirmation = exportModal.oneDrivePasswordConfirm?.value || "";
       if (password.length < 10) {
         setKeysIoStatus("Use an encryption password with at least 10 characters.", true);
-        exportModal.password?.focus();
+        exportModal.oneDrivePassword?.focus();
         return;
       }
       if (password !== confirmation) {
         setKeysIoStatus("The two encryption passwords do not match.", true);
-        exportModal.passwordConfirm?.focus();
+        exportModal.oneDrivePasswordConfirm?.focus();
         return;
       }
-      if (!window.confirm("Save this encrypted backup to OneDrive? Any previous OneDrive backup will be replaced.")) return;
+      if (!window.confirm("Save this encrypted backup to Microsoft OneDrive? Any previous OneDrive backup will be replaced.")) return;
 
-      const idleLabel = exportModal.save.textContent;
-      exportModal.save.disabled = true;
-      exportModal.save.textContent = "Saving…";
+      const idleLabel = exportModal.oneDriveSave.textContent;
+      exportModal.oneDriveSave.disabled = true;
+      exportModal.oneDriveSave.textContent = "Saving…";
       setKeysIoStatus("Waiting for Microsoft sign-in…", false);
       try {
         const accessToken = await requestMicrosoftAccessToken();
@@ -1676,19 +2050,57 @@
       } catch (error) {
         setKeysIoStatus("OneDrive export failed: " + (error?.message || "Unknown error"), true);
       } finally {
-        if (exportModal.password) exportModal.password.value = "";
-        if (exportModal.passwordConfirm) exportModal.passwordConfirm.value = "";
-        exportModal.save.disabled = false;
-        exportModal.save.textContent = idleLabel;
+        if (exportModal.oneDrivePassword) exportModal.oneDrivePassword.value = "";
+        if (exportModal.oneDrivePasswordConfirm) exportModal.oneDrivePasswordConfirm.value = "";
+        exportModal.oneDriveSave.disabled = false;
+        exportModal.oneDriveSave.textContent = idleLabel;
+      }
+    });
+
+    exportModal.googleDriveSave?.addEventListener("click", async () => {
+      const password = exportModal.googleDrivePassword?.value || "";
+      const confirmation = exportModal.googleDrivePasswordConfirm?.value || "";
+      if (password.length < 10) {
+        setKeysIoStatus("Use an encryption password with at least 10 characters.", true);
+        exportModal.googleDrivePassword?.focus();
+        return;
+      }
+      if (password !== confirmation) {
+        setKeysIoStatus("The two encryption passwords do not match.", true);
+        exportModal.googleDrivePasswordConfirm?.focus();
+        return;
+      }
+      if (!window.confirm("Save this encrypted backup to Google Drive? Any previous Google Drive backup will be replaced.")) return;
+
+      const idleLabel = exportModal.googleDriveSave.dataset.readyLabel || exportModal.googleDriveSave.textContent;
+      exportModal.googleDriveSave.disabled = true;
+      exportModal.googleDriveSave.textContent = "Saving…";
+      setKeysIoStatus("Waiting for Google sign-in…", false);
+      try {
+        const accessToken = await requestGoogleAccessToken();
+        setKeysIoStatus("Encrypting and saving the backup…", false);
+        const encrypted = await encryptKeyBundleForGoogleDrive(buildKeyBundle(), password);
+        await uploadEncryptedBackupToGoogleDrive(accessToken, encrypted);
+        closeExportModal();
+        setKeysIoStatus("Encrypted Google Drive backup saved. Any previous backup was replaced.", false);
+      } catch (error) {
+        setKeysIoStatus("Google Drive export failed: " + (error?.message || "Unknown error"), true);
+      } finally {
+        if (exportModal.googleDrivePassword) exportModal.googleDrivePassword.value = "";
+        if (exportModal.googleDrivePasswordConfirm) exportModal.googleDrivePasswordConfirm.value = "";
+        exportModal.googleDriveSave.disabled = false;
+        exportModal.googleDriveSave.textContent = idleLabel;
       }
     });
 
     importModal.close?.addEventListener("click", closeImportModal);
     importModal.json?.addEventListener("click", showImportJsonChoice);
     importModal.oneDriveChoice?.addEventListener("click", showImportOneDrive);
+    importModal.googleDriveChoice?.addEventListener("click", showImportGoogleDrive);
     importModal.jsonBack?.addEventListener("click", showImportChoice);
     importModal.pasteBack?.addEventListener("click", showImportJsonChoice);
     importModal.oneDriveBack?.addEventListener("click", showImportChoice);
+    importModal.googleDriveBack?.addEventListener("click", showImportChoice);
     importModal.backdrop?.addEventListener("click", (event) => {
       if (event.target === importModal.backdrop) closeImportModal();
     });
@@ -1716,10 +2128,10 @@
     });
 
     importModal.oneDriveFetch?.addEventListener("click", async () => {
-      const password = importModal.password?.value || "";
+      const password = importModal.oneDrivePassword?.value || "";
       if (!password) {
         setKeysIoStatus("Enter the encryption password for your OneDrive backup.", true);
-        importModal.password?.focus();
+        importModal.oneDrivePassword?.focus();
         return;
       }
 
@@ -1738,9 +2150,38 @@
       } catch (error) {
         setKeysIoStatus("OneDrive import failed: " + (error?.message || "Unknown error"), true);
       } finally {
-        if (importModal.password) importModal.password.value = "";
+        if (importModal.oneDrivePassword) importModal.oneDrivePassword.value = "";
         importModal.oneDriveFetch.disabled = false;
         importModal.oneDriveFetch.textContent = idleLabel;
+      }
+    });
+
+    importModal.googleDriveFetch?.addEventListener("click", async () => {
+      const password = importModal.googleDrivePassword?.value || "";
+      if (!password) {
+        setKeysIoStatus("Enter the encryption password for your Google Drive backup.", true);
+        importModal.googleDrivePassword?.focus();
+        return;
+      }
+
+      const idleLabel = importModal.googleDriveFetch.dataset.readyLabel || importModal.googleDriveFetch.textContent;
+      importModal.googleDriveFetch.disabled = true;
+      importModal.googleDriveFetch.textContent = "Importing…";
+      setKeysIoStatus("Waiting for Google sign-in…", false);
+      try {
+        const accessToken = await requestGoogleAccessToken();
+        setKeysIoStatus("Downloading and decrypting the backup…", false);
+        const encrypted = await downloadEncryptedBackupFromGoogleDrive(accessToken);
+        const bundle = await decryptKeyBundleFromGoogleDrive(encrypted, password);
+        applyKeyBundle(bundle);
+        closeImportModal();
+        setKeysIoStatus("Imported keys from Google Drive. Review the fields, then click Enter.", false);
+      } catch (error) {
+        setKeysIoStatus("Google Drive import failed: " + (error?.message || "Unknown error"), true);
+      } finally {
+        if (importModal.googleDrivePassword) importModal.googleDrivePassword.value = "";
+        importModal.googleDriveFetch.disabled = false;
+        importModal.googleDriveFetch.textContent = idleLabel;
       }
     });
 
@@ -1768,9 +2209,13 @@
           else closeImportModal();
         } else if (event.key === "Enter" && event.target?.tagName !== "TEXTAREA") {
           if (card === exportModal.card && exportModal.oneDrive?.style.display !== "none") {
-            exportModal.save?.click();
+            exportModal.oneDriveSave?.click();
+          } else if (card === exportModal.card && exportModal.googleDrive?.style.display !== "none") {
+            exportModal.googleDriveSave?.click();
           } else if (card === importModal.card && importModal.oneDrive?.style.display !== "none") {
             importModal.oneDriveFetch?.click();
+          } else if (card === importModal.card && importModal.googleDrive?.style.display !== "none") {
+            importModal.googleDriveFetch?.click();
           }
         }
         // Prevent the page-wide Enter shortcut from navigating away while a modal is active.
