@@ -1,3 +1,19 @@
+## 17. august 2026
+
+### Enkel sikkerhetskopiering av API-nøkler til OneDrive
+
+Du kan nå sikkerhetskopiere API-nøklene dine direkte til din egen Microsoft OneDrive. Dette gjør det enklere å flytte nøklene til en ny PC eller nettleser, uten at du trenger å laste ned, oppbevare og finne igjen en egen JSON-fil.
+
+Før du eksporterer, må du kontrollere at alle nøklene og hemmelighetene du ønsker å sikkerhetskopiere, er skrevet inn i de riktige feltene på forsiden. Trykk deretter **Export keys**, velg **OneDrive**, og opprett et eget krypteringspassord. Nøklene krypteres i nettleseren før backupfilen lagres i appens egen mappe i din private OneDrive.
+
+Når du senere vil hente tilbake nøklene, trykker du **Import keys**, velger **OneDrive**, logger inn med den samme Microsoft-kontoen og skriver inn krypteringspassordet. Nøklene blir da hentet fra din egen OneDrive og fylt inn i feltene. Kontroller feltene og trykk deretter **Enter** som vanlig.
+
+Backupen lagres kun i OneDrive-kontoen til den innloggede brukeren – ikke i apputviklerens Microsoft-konto. Appen har bare tilgang til sin egen OneDrive-mappe og kan ikke overskrive andre filer eller data som ligger i OneDrive. Krypteringspassordet blir ikke lagret eller lastet opp, så det er viktig å huske det. Uten riktig passord kan backupen ikke åpnes.
+
+En ny OneDrive-eksport erstatter den tidligere OneDrive-backupen. Pass derfor på at alle nøklene du vil beholde, er fylt inn før du eksporterer på nytt. Den vanlige eksporten og importen med JSON-fil er fortsatt tilgjengelig for dem som foretrekker det.
+
+---
+
 ## 28. juli 2026
 
 ### Ny historikk for genererte notater

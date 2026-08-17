@@ -1,3 +1,19 @@
+## 17 August, 2026
+
+### Easy API key backup to OneDrive
+
+You can now back up your API keys directly to your own Microsoft OneDrive. This makes it easier to move your keys to a new computer or browser without having to download, store, and locate a separate JSON file.
+
+Before exporting, make sure that every key and secret you want to back up has been entered in the correct field on the front page. Then select **Export keys**, choose **OneDrive**, and create a separate encryption password. The keys are encrypted in your browser before the backup file is saved in the app's dedicated folder in your private OneDrive.
+
+To retrieve the keys later, select **Import keys**, choose **OneDrive**, sign in with the same Microsoft account, and enter the encryption password. The keys will then be downloaded from your own OneDrive and placed into the relevant fields. Review the fields and select **Enter** as usual.
+
+The backup is stored only in the signed-in user's OneDrive account – not in the app developer's Microsoft account. The app can access only its own dedicated OneDrive folder and cannot overwrite other files or data stored in OneDrive. The encryption password is never stored or uploaded, so it is important to remember it. The backup cannot be opened without the correct password.
+
+A new OneDrive export replaces the previous OneDrive backup. Make sure that all keys you want to keep are filled in before exporting again. The existing JSON file export and import options remain available for users who prefer them.
+
+---
+
 ## 28 July, 2026
 
 ### New history for generated notes
