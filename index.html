@@ -304,8 +304,9 @@
       min-width: 110px;
     }
 
-    /* Mini Import Keys modal (compact + neat) */
-    #importKeysModalBackdrop {
+    /* Compact Import/Export Keys modals */
+    #importKeysModalBackdrop,
+    #exportKeysModalBackdrop {
       display: none;
       position: fixed;
       inset: 0;
@@ -315,10 +316,12 @@
       justify-content: center;
       padding: 16px;
     }
-    #importKeysModalBackdrop.active {
+    #importKeysModalBackdrop.active,
+    #exportKeysModalBackdrop.active {
       display: flex;
     }
-    #importKeysModal {
+    #importKeysModal,
+    #exportKeysModal {
       width: min(92vw, 460px);
       background: #fff;
       border: 1px solid #ddd;
@@ -327,20 +330,23 @@
       padding: 14px 16px 16px;
       text-align: left;
     }
-    #importKeysModal .mini-modal__header {
+    #importKeysModal .mini-modal__header,
+    #exportKeysModal .mini-modal__header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
       margin-bottom: 10px;
     }
-    #importKeysModalTitle {
+    #importKeysModalTitle,
+    #exportKeysModalTitle {
       font-family: inherit;
       font-size: 16px;
       font-weight: 700;
       margin: 0;
     }
-    #importKeysModalX {
+    #importKeysModalX,
+    #exportKeysModalX {
       border: none;
       background: transparent;
       cursor: pointer;
@@ -360,6 +366,36 @@
       font-size: 12px;
       color: #555;
       line-height: 1.35;
+    }
+    .mini-modal__notice {
+      margin: 0 0 12px;
+      padding: 10px 11px;
+      border: 1px solid rgba(72, 153, 153, 0.35);
+      border-radius: 10px;
+      background: rgba(85, 170, 153, 0.08);
+      color: #35484a;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .mini-modal__field-label {
+      display: block;
+      margin: 9px 0 5px;
+      font-size: 12px;
+      color: #444;
+    }
+    .mini-modal__password {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      font: inherit;
+      font-size: 14px;
+    }
+    .mini-modal__password:focus {
+      border-color: #66afe9;
+      box-shadow: 0 0 6px rgba(102, 175, 233, 0.45);
+      outline: none;
     }
     #importKeysJsonText {
       width: 100%;
@@ -601,6 +637,27 @@
  
 </head>
 <body>
+  <script>
+    // OAuth popup callback. The authorization code is returned only to the
+    // same-origin opener and is exchanged there with PKCE (no client secret).
+    (() => {
+      const params = new URLSearchParams(window.location.search);
+      const state = params.get("state") || "";
+      const isMicrosoftCallback = state.startsWith("whisper-ms-") &&
+        (params.has("code") || params.has("error"));
+      if (!isMicrosoftCallback || !window.opener || window.opener === window) return;
+
+      window.opener.postMessage({
+        type: "whisper-microsoft-oauth-callback",
+        state,
+        code: params.get("code") || "",
+        error: params.get("error") || "",
+        errorDescription: params.get("error_description") || ""
+      }, window.location.origin);
+      window.close();
+    })();
+  </script>
+
   <!-- Language Dropdown -->
   <div id="lang-container">
     <img src="language-icon.png" alt="Language Icon">
@@ -655,6 +712,46 @@
       <input type="file" id="importKeysFile" accept="application/json" style="display:none">
     </div>
 
+    <!-- Compact Export Keys modal -->
+    <div id="exportKeysModalBackdrop" aria-hidden="true">
+      <div id="exportKeysModal" role="dialog" aria-modal="true" aria-labelledby="exportKeysModalTitle">
+        <div class="mini-modal__header">
+          <div id="exportKeysModalTitle">Export keys</div>
+          <button type="button" id="exportKeysModalX" aria-label="Close">×</button>
+        </div>
+
+        <div id="exportKeysModalChoice">
+          <button type="button" id="exportChoiceJson" class="keys-io-btn mini-modal__option">
+            Export as JSON file
+          </button>
+          <div class="mini-modal__help">
+            Saves the same JSON file as before on this device. The file contains readable keys, so store it securely.
+          </div>
+
+          <button type="button" id="exportChoiceOneDrive" class="keys-io-btn mini-modal__option">
+            Export to my OneDrive
+          </button>
+          <div class="mini-modal__help">
+            Sign in with your personal Microsoft account. The keys are encrypted in this browser before one backup file is saved in your own OneDrive. A new export replaces the previous OneDrive backup.
+          </div>
+        </div>
+
+        <div id="exportKeysModalOneDrive" style="display:none">
+          <div class="mini-modal__notice">
+            Create a separate encryption password. It is never uploaded or stored by this app. If you forget it, the OneDrive backup cannot be restored. Saving again replaces any previous backup.
+          </div>
+          <label class="mini-modal__field-label" for="exportOneDrivePassword">Encryption password (minimum 10 characters)</label>
+          <input type="password" id="exportOneDrivePassword" class="mini-modal__password" autocomplete="new-password">
+          <label class="mini-modal__field-label" for="exportOneDrivePasswordConfirm">Repeat password</label>
+          <input type="password" id="exportOneDrivePasswordConfirm" class="mini-modal__password" autocomplete="new-password">
+          <div class="mini-modal__actions">
+            <button type="button" id="exportOneDriveSaveBtn" class="keys-io-btn">Save to OneDrive</button>
+            <button type="button" id="exportOneDriveBackBtn" class="keys-io-btn keys-io-btn--ghost-green">Back</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Compact Import Keys modal -->
     <div id="importKeysModalBackdrop" aria-hidden="true">
       <div id="importKeysModal" role="dialog" aria-modal="true" aria-labelledby="importKeysModalTitle">
@@ -663,10 +760,27 @@
           <button type="button" id="importKeysModalX" aria-label="Close">×</button>
         </div>
 
-        <!-- Step 1: Choose import method -->
+        <!-- Step 1: Choose JSON or OneDrive -->
         <div id="importKeysModalChoice">
+          <button type="button" id="importChoiceJson" class="keys-io-btn mini-modal__option">
+            Import from JSON
+          </button>
+          <div class="mini-modal__help">
+            Use the existing method: choose a keys JSON file from this device or paste its contents.
+          </div>
+
+          <button type="button" id="importChoiceOneDrive" class="keys-io-btn mini-modal__option">
+            Import from my OneDrive
+          </button>
+          <div class="mini-modal__help">
+            Sign in with the same personal Microsoft account and enter the encryption password. You must previously have exported a backup to OneDrive.
+          </div>
+        </div>
+
+        <!-- Step 2a: Existing JSON choices -->
+        <div id="importKeysModalJsonChoice" style="display:none">
           <button type="button" id="importChoiceFile" class="keys-io-btn mini-modal__option">
-            Import from JSON file
+            Choose JSON file
           </button>
           <div class="mini-modal__help">
             Choose a keys .json file from this device. Keys are stored only in this tab (session storage).
@@ -676,17 +790,32 @@
             Paste JSON content
           </button>
           <div class="mini-modal__help">
-            Use this on shared computers to avoid downloading a file. Open the JSON in Dropbox (or similar),
-            copy the contents, paste it here, then click Fetch. Keys are stored only in this tab.
+            Open the JSON in Dropbox or a similar service, copy the contents and paste it here.
+          </div>
+          <div class="mini-modal__actions">
+            <button type="button" id="importJsonBackBtn" class="keys-io-btn keys-io-btn--ghost-green">Back</button>
           </div>
         </div>
 
-        <!-- Step 2: Paste JSON -->
+        <!-- Step 2b: Paste JSON -->
         <div id="importKeysModalPaste" style="display:none">
           <textarea id="importKeysJsonText" placeholder='Paste JSON here (example: {"data": {...}})'></textarea>
           <div class="mini-modal__actions">
             <button type="button" id="importKeysFetchBtn" class="keys-io-btn">Fetch</button>
-            <button type="button" id="importKeysModalCloseBtn" class="keys-io-btn keys-io-btn--ghost-green">Close</button>
+            <button type="button" id="importPasteBackBtn" class="keys-io-btn keys-io-btn--ghost-green">Back</button>
+          </div>
+        </div>
+
+        <!-- Step 2c: Encrypted OneDrive backup -->
+        <div id="importKeysModalOneDrive" style="display:none">
+          <div class="mini-modal__notice">
+            This downloads the encrypted backup from your own OneDrive. A OneDrive backup must already have been created from Export keys. The password is used only in this browser.
+          </div>
+          <label class="mini-modal__field-label" for="importOneDrivePassword">Encryption password</label>
+          <input type="password" id="importOneDrivePassword" class="mini-modal__password" autocomplete="current-password">
+          <div class="mini-modal__actions">
+            <button type="button" id="importOneDriveFetchBtn" class="keys-io-btn">Import from OneDrive</button>
+            <button type="button" id="importOneDriveBackBtn" class="keys-io-btn keys-io-btn--ghost-green">Back</button>
           </div>
         </div>
       </div>
@@ -1007,12 +1136,20 @@
       if (storedSecret && !bedrockBackendSecretInput.value) bedrockBackendSecretInput.value = storedSecret;
     }
 
-    // Import/Export key bundle (local JSON file that YOU store; not uploaded anywhere)
+    // Import/Export key bundles: existing JSON flow + encrypted OneDrive backup.
     const exportKeysBtn  = document.getElementById("exportKeysBtn");
     const importKeysBtn  = document.getElementById("importKeysBtn");
     const clearKeysBtn   = document.getElementById("clearKeysBtn");
     const importKeysFile = document.getElementById("importKeysFile");
     const keysIoStatus   = document.getElementById("keysIoStatus");
+
+    const MICROSOFT_CLIENT_ID = "bec616c7-9967-4a96-b169-7cd2be16e9ac";
+    const MICROSOFT_AUTHORITY = "https://login.microsoftonline.com/consumers/oauth2/v2.0";
+    const MICROSOFT_SCOPES = ["Files.ReadWrite.AppFolder"];
+    const ONEDRIVE_BACKUP_FILENAME = "whisper-keys-backup.enc.json";
+    const ONEDRIVE_BACKUP_SCHEMA = "whisper.keys.onedrive.encrypted";
+    const ONEDRIVE_BACKUP_VERSION = 1;
+    const ONEDRIVE_KDF_ITERATIONS = 250000;
 
     const KEY_FIELDS = [
       { id: "apiKeyInput",               storageKey: "openai_api_key" },
@@ -1052,7 +1189,7 @@
     function applyKeyBundle(bundle) {
       if (!bundle) throw new Error("Empty file");
 
-      // Support both {data:{...}} and legacy flat {openai_api_key:"..."} shapes
+      // Support both {data:{...}} and legacy flat {openai_api_key:"..."} shapes.
       const data = (bundle.data && typeof bundle.data === "object") ? bundle.data : bundle;
 
       KEY_FIELDS.forEach(({ id, storageKey }) => {
@@ -1061,15 +1198,14 @@
         if (el && typeof data[storageKey] === "string") {
           el.value = data[storageKey];
         }
-        // Keep behavior consistent with your Enter button: put values in sessionStorage.
         try { sessionStorage.setItem(storageKey, (data[storageKey] || "").toString()); } catch {}
       });
 
-      // Back-compat: default active key remains OpenAI
+      // Back-compat: default active key remains OpenAI.
       try { sessionStorage.setItem("user_api_key", (data.openai_api_key || "").toString()); } catch {}
     }
+
     function clearAllKeyFields() {
-      // Confirm to prevent accidental wipe
       const ok = window.confirm(
         "Clear all key/secret/url fields and remove them from this tab’s session-storage?"
       );
@@ -1080,38 +1216,22 @@
         if (el && typeof el.value === "string") el.value = "";
         try { sessionStorage.removeItem(storageKey); } catch {}
       });
-
-      // Also clear the derived active key
       try { sessionStorage.removeItem("user_api_key"); } catch {}
-
       setKeysIoStatus("Cleared keys from fields and session.", false);
     }
 
-
-    if (exportKeysBtn) {
-  exportKeysBtn.addEventListener("click", async function () {
-    try {
-      const bundle = buildKeyBundle();
-      const pretty = JSON.stringify(bundle, null, 2);
-
+    async function exportKeysToJsonFile() {
+      const pretty = JSON.stringify(buildKeyBundle(), null, 2);
       const now = new Date();
       const y = now.getFullYear();
       const m = String(now.getMonth() + 1).padStart(2, "0");
       const d = String(now.getDate()).padStart(2, "0");
       const filename = `whisper-keys-${y}${m}${d}.json`;
 
-      // Prefer a user-chosen save location (Chromium-based browsers).
-      // Fallback keeps the current download behavior for other browsers.
-      const canPickSaveLocation = typeof window.showSaveFilePicker === "function";
-      if (canPickSaveLocation) {
+      if (typeof window.showSaveFilePicker === "function") {
         const handle = await window.showSaveFilePicker({
           suggestedName: filename,
-          types: [
-            {
-              description: "JSON",
-              accept: { "application/json": [".json"] },
-            },
-          ],
+          types: [{ description: "JSON", accept: { "application/json": [".json"] } }]
         });
         const writable = await handle.createWritable();
         await writable.write(pretty);
@@ -1119,7 +1239,6 @@
       } else {
         const blob = new Blob([pretty], { type: "application/json" });
         const url = URL.createObjectURL(blob);
-
         const a = document.createElement("a");
         a.href = url;
         a.download = filename;
@@ -1128,131 +1247,536 @@
         a.remove();
         URL.revokeObjectURL(url);
       }
-
       setKeysIoStatus("Exported keys file. Store it somewhere safe.", false);
-    } catch (e) {
-      console.error(e);
-      setKeysIoStatus(
-        "Export failed: " + (e && e.message ? e.message : "Unknown error"),
-        true
+    }
+
+    function bytesToBase64(bytes) {
+      let binary = "";
+      const chunkSize = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+      }
+      return btoa(binary);
+    }
+
+    function base64ToBytes(value) {
+      const binary = atob(value);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+      return bytes;
+    }
+
+    function bytesToBase64Url(bytes) {
+      return bytesToBase64(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+    }
+
+    function randomBytes(length) {
+      const bytes = new Uint8Array(length);
+      crypto.getRandomValues(bytes);
+      return bytes;
+    }
+
+    async function deriveOneDriveKey(password, salt, iterations, usages) {
+      const encoder = new TextEncoder();
+      const keyMaterial = await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(password),
+        "PBKDF2",
+        false,
+        ["deriveKey"]
+      );
+      return crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt, iterations, hash: "SHA-256" },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        usages
       );
     }
-  });
-}
-    if (clearKeysBtn) {
-      clearKeysBtn.addEventListener("click", clearAllKeyFields);
+
+    async function encryptKeyBundleForOneDrive(bundle, password) {
+      if (!window.isSecureContext || !crypto.subtle) {
+        throw new Error("Secure browser encryption is unavailable on this page.");
+      }
+      const encoder = new TextEncoder();
+      const salt = randomBytes(16);
+      const iv = randomBytes(12);
+      const key = await deriveOneDriveKey(password, salt, ONEDRIVE_KDF_ITERATIONS, ["encrypt"]);
+      const aad = encoder.encode(`${ONEDRIVE_BACKUP_SCHEMA}:${ONEDRIVE_BACKUP_VERSION}`);
+      const ciphertext = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv, additionalData: aad },
+        key,
+        encoder.encode(JSON.stringify(bundle))
+      );
+
+      return {
+        schema: ONEDRIVE_BACKUP_SCHEMA,
+        version: ONEDRIVE_BACKUP_VERSION,
+        createdAt: new Date().toISOString(),
+        encryption: {
+          algorithm: "AES-256-GCM",
+          kdf: "PBKDF2-SHA-256",
+          iterations: ONEDRIVE_KDF_ITERATIONS,
+          salt: bytesToBase64(salt),
+          iv: bytesToBase64(iv)
+        },
+        ciphertext: bytesToBase64(new Uint8Array(ciphertext))
+      };
     }
 
-
-    if (importKeysBtn && importKeysFile) {
-      // Modal elements
-      const importKeysModalBackdrop = document.getElementById("importKeysModalBackdrop");
-      const importKeysModalX = document.getElementById("importKeysModalX");
-      const importChoiceFile = document.getElementById("importChoiceFile");
-      const importChoicePaste = document.getElementById("importChoicePaste");
-      const importKeysModalChoice = document.getElementById("importKeysModalChoice");
-      const importKeysModalPaste = document.getElementById("importKeysModalPaste");
-      const importKeysJsonText = document.getElementById("importKeysJsonText");
-      const importKeysFetchBtn = document.getElementById("importKeysFetchBtn");
-      const importKeysModalCloseBtn = document.getElementById("importKeysModalCloseBtn");
-
-      function openImportKeysModal() {
-        if (!importKeysModalBackdrop) return;
-        // Reset to choice view each time
-        if (importKeysModalChoice) importKeysModalChoice.style.display = "";
-        if (importKeysModalPaste) importKeysModalPaste.style.display = "none";
-        if (importKeysJsonText) importKeysJsonText.value = "";
-        importKeysModalBackdrop.classList.add("active");
-        importKeysModalBackdrop.setAttribute("aria-hidden", "false");
-        // Focus first option for keyboard users
-        if (importChoiceFile) importChoiceFile.focus();
+    async function decryptKeyBundleFromOneDrive(container, password) {
+      if (!container || container.schema !== ONEDRIVE_BACKUP_SCHEMA ||
+          container.version !== ONEDRIVE_BACKUP_VERSION || !container.encryption) {
+        throw new Error("The OneDrive backup has an unsupported format.");
       }
 
-      function closeImportKeysModal() {
-        if (!importKeysModalBackdrop) return;
-        importKeysModalBackdrop.classList.remove("active");
-        importKeysModalBackdrop.setAttribute("aria-hidden", "true");
+      const iterations = Number(container.encryption.iterations);
+      if (!Number.isInteger(iterations) || iterations < 100000 || iterations > 1000000) {
+        throw new Error("The OneDrive backup has invalid encryption settings.");
       }
 
-      function showPasteView() {
-        if (importKeysModalChoice) importKeysModalChoice.style.display = "none";
-        if (importKeysModalPaste) importKeysModalPaste.style.display = "";
-        if (importKeysJsonText) importKeysJsonText.focus();
+      try {
+        const decoder = new TextDecoder();
+        const encoder = new TextEncoder();
+        const salt = base64ToBytes(container.encryption.salt);
+        const iv = base64ToBytes(container.encryption.iv);
+        if (salt.length !== 16 || iv.length !== 12) throw new Error("Invalid encryption parameters");
+        const key = await deriveOneDriveKey(password, salt, iterations, ["decrypt"]);
+        const aad = encoder.encode(`${ONEDRIVE_BACKUP_SCHEMA}:${ONEDRIVE_BACKUP_VERSION}`);
+        const plaintext = await crypto.subtle.decrypt(
+          { name: "AES-GCM", iv, additionalData: aad },
+          key,
+          base64ToBytes(container.ciphertext)
+        );
+        return JSON.parse(decoder.decode(plaintext));
+      } catch {
+        throw new Error("Incorrect password or damaged OneDrive backup.");
       }
+    }
 
-      importKeysBtn.addEventListener("click", openImportKeysModal);
+    function getMicrosoftRedirectUri() {
+      // Always use the containing folder, so both /WhisperAzure/ and /Whisper-dev/
+      // match the registered SPA redirect URIs even if index.html is shown explicitly.
+      const pathname = window.location.pathname;
+      const folderPath = pathname.endsWith("/")
+        ? pathname
+        : pathname.slice(0, pathname.lastIndexOf("/") + 1);
+      return window.location.origin + folderPath;
+    }
 
-      // Close behaviors
-      if (importKeysModalX) importKeysModalX.addEventListener("click", closeImportKeysModal);
-      if (importKeysModalCloseBtn) importKeysModalCloseBtn.addEventListener("click", closeImportKeysModal);
-      if (importKeysModalBackdrop) {
-        importKeysModalBackdrop.addEventListener("click", function (e) {
-          // Only close when clicking the dimmed backdrop, not inside the modal card
-          if (e.target === importKeysModalBackdrop) closeImportKeysModal();
-        });
-      }
-      document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape" && importKeysModalBackdrop && importKeysModalBackdrop.classList.contains("active")) {
-          closeImportKeysModal();
-        }
-      });
+    async function requestMicrosoftAccessToken() {
+      // Open immediately while this call still has a trusted click gesture.
+      const popup = window.open("", "whisperMicrosoftSignIn", "popup=yes,width=520,height=720");
+      if (!popup) throw new Error("Microsoft sign-in was blocked. Allow pop-ups and try again.");
 
-      // Choice: import from file (same as old behavior)
-      if (importChoiceFile) {
-        importChoiceFile.addEventListener("click", function () {
-          closeImportKeysModal();
-          importKeysFile.value = ""; // allow re-importing the same file
-          importKeysFile.click();
-        });
-      }
+      try {
+        popup.document.title = "Microsoft sign-in";
+        popup.document.body.textContent = "Opening Microsoft sign-in…";
+      } catch {}
 
-      // Choice: paste JSON content
-      if (importChoicePaste) {
-        importChoicePaste.addEventListener("click", showPasteView);
-      }
+      try {
+        const verifier = bytesToBase64Url(randomBytes(64));
+        const challengeBytes = new Uint8Array(
+          await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier))
+        );
+        const challenge = bytesToBase64Url(challengeBytes);
+        const state = `whisper-ms-${bytesToBase64Url(randomBytes(24))}`;
+        const redirectUri = getMicrosoftRedirectUri();
+        const authUrl = new URL(`${MICROSOFT_AUTHORITY}/authorize`);
+        authUrl.search = new URLSearchParams({
+          client_id: MICROSOFT_CLIENT_ID,
+          response_type: "code",
+          redirect_uri: redirectUri,
+          response_mode: "query",
+          scope: MICROSOFT_SCOPES.join(" "),
+          state,
+          code_challenge: challenge,
+          code_challenge_method: "S256",
+          prompt: "select_account"
+        }).toString();
 
-      // Fetch pasted JSON -> applyKeyBundle (sessionStorage behavior remains unchanged)
-      if (importKeysFetchBtn) {
-        importKeysFetchBtn.addEventListener("click", function () {
-          try {
-            const raw = String(importKeysJsonText && importKeysJsonText.value ? importKeysJsonText.value : "").trim();
-            if (!raw) {
-              setKeysIoStatus("Paste JSON content first.", true);
+        return await new Promise((resolve, reject) => {
+          let settled = false;
+          const timeoutId = window.setTimeout(() => finish(new Error("Microsoft sign-in timed out.")), 120000);
+          const closedPollId = window.setInterval(() => {
+            if (popup.closed) finish(new Error("Microsoft sign-in was closed before completion."));
+          }, 500);
+
+          function cleanup() {
+            window.clearTimeout(timeoutId);
+            window.clearInterval(closedPollId);
+            window.removeEventListener("message", onMessage);
+            try { if (!popup.closed) popup.close(); } catch {}
+          }
+
+          function finish(error, token) {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            if (error) reject(error);
+            else resolve(token);
+          }
+
+          async function onMessage(event) {
+            const data = event.data || {};
+            if (event.origin !== window.location.origin ||
+                data.type !== "whisper-microsoft-oauth-callback" || data.state !== state) return;
+
+            if (settled) return;
+            settled = true;
+            cleanup();
+
+            if (data.error) {
+              reject(new Error(data.errorDescription || data.error));
               return;
             }
-            const parsed = JSON.parse(raw);
-            applyKeyBundle(parsed);
-            setKeysIoStatus("Imported keys. Review the fields, then click Enter.", false);
-            closeImportKeysModal();
-          } catch (e) {
-            console.error(e);
-            setKeysIoStatus("Import failed: invalid JSON content.", true);
+
+            try {
+              const tokenResponse = await fetch(`${MICROSOFT_AUTHORITY}/token`, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                  client_id: MICROSOFT_CLIENT_ID,
+                  grant_type: "authorization_code",
+                  code: data.code,
+                  redirect_uri: redirectUri,
+                  code_verifier: verifier,
+                  scope: MICROSOFT_SCOPES.join(" ")
+                })
+              });
+              const tokenData = await tokenResponse.json();
+              if (!tokenResponse.ok || !tokenData.access_token) {
+                throw new Error(tokenData.error_description || "Microsoft did not return an access token.");
+              }
+              resolve(tokenData.access_token);
+            } catch (error) {
+              reject(error);
+            }
+          }
+
+          window.addEventListener("message", onMessage);
+          try {
+            popup.location.replace(authUrl.toString());
+          } catch (error) {
+            finish(error);
           }
         });
+      } catch (error) {
+        try { if (!popup.closed) popup.close(); } catch {}
+        throw error;
+      }
+    }
+
+    async function graphRequest(accessToken, path, options = {}) {
+      const headers = new Headers(options.headers || {});
+      headers.set("Authorization", `Bearer ${accessToken}`);
+      const response = await fetch(`https://graph.microsoft.com/v1.0${path}`, {
+        ...options,
+        headers,
+        cache: "no-store"
+      });
+      if (!response.ok) {
+        let message = `Microsoft Graph error (${response.status})`;
+        try {
+          const details = await response.clone().json();
+          message = details?.error?.message || message;
+        } catch {}
+        const error = new Error(message);
+        error.status = response.status;
+        throw error;
+      }
+      return response;
+    }
+
+    async function uploadEncryptedBackupToOneDrive(accessToken, encryptedBackup) {
+      // Accessing approot creates/locates this app's isolated folder in the signed-in user's OneDrive.
+      await graphRequest(accessToken, "/me/drive/special/approot");
+      await graphRequest(
+        accessToken,
+        `/me/drive/special/approot:/${ONEDRIVE_BACKUP_FILENAME}:/content`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(encryptedBackup)
+        }
+      );
+    }
+
+    async function downloadEncryptedBackupFromOneDrive(accessToken) {
+      try {
+        await graphRequest(accessToken, "/me/drive/special/approot");
+        const response = await graphRequest(
+          accessToken,
+          `/me/drive/special/approot:/${ONEDRIVE_BACKUP_FILENAME}:/content`
+        );
+        const raw = await response.text();
+        if (raw.length > 2000000) throw new Error("The OneDrive backup is unexpectedly large.");
+        return JSON.parse(raw);
+      } catch (error) {
+        if (error && error.status === 404) {
+          throw new Error("No OneDrive backup was found. Export keys to OneDrive first.");
+        }
+        if (error instanceof SyntaxError) throw new Error("The OneDrive backup is not valid JSON.");
+        throw error;
+      }
+    }
+
+    const exportModal = {
+      backdrop: document.getElementById("exportKeysModalBackdrop"),
+      card: document.getElementById("exportKeysModal"),
+      close: document.getElementById("exportKeysModalX"),
+      choice: document.getElementById("exportKeysModalChoice"),
+      oneDrive: document.getElementById("exportKeysModalOneDrive"),
+      json: document.getElementById("exportChoiceJson"),
+      oneDriveChoice: document.getElementById("exportChoiceOneDrive"),
+      password: document.getElementById("exportOneDrivePassword"),
+      passwordConfirm: document.getElementById("exportOneDrivePasswordConfirm"),
+      save: document.getElementById("exportOneDriveSaveBtn"),
+      back: document.getElementById("exportOneDriveBackBtn")
+    };
+
+    const importModal = {
+      backdrop: document.getElementById("importKeysModalBackdrop"),
+      card: document.getElementById("importKeysModal"),
+      close: document.getElementById("importKeysModalX"),
+      choice: document.getElementById("importKeysModalChoice"),
+      jsonChoice: document.getElementById("importKeysModalJsonChoice"),
+      paste: document.getElementById("importKeysModalPaste"),
+      oneDrive: document.getElementById("importKeysModalOneDrive"),
+      json: document.getElementById("importChoiceJson"),
+      oneDriveChoice: document.getElementById("importChoiceOneDrive"),
+      file: document.getElementById("importChoiceFile"),
+      pasteChoice: document.getElementById("importChoicePaste"),
+      jsonBack: document.getElementById("importJsonBackBtn"),
+      pasteBack: document.getElementById("importPasteBackBtn"),
+      jsonText: document.getElementById("importKeysJsonText"),
+      jsonFetch: document.getElementById("importKeysFetchBtn"),
+      password: document.getElementById("importOneDrivePassword"),
+      oneDriveFetch: document.getElementById("importOneDriveFetchBtn"),
+      oneDriveBack: document.getElementById("importOneDriveBackBtn")
+    };
+
+    function showExportChoice() {
+      if (exportModal.choice) exportModal.choice.style.display = "";
+      if (exportModal.oneDrive) exportModal.oneDrive.style.display = "none";
+      if (exportModal.password) exportModal.password.value = "";
+      if (exportModal.passwordConfirm) exportModal.passwordConfirm.value = "";
+    }
+
+    function openExportModal() {
+      if (!exportModal.backdrop) return;
+      showExportChoice();
+      exportModal.backdrop.classList.add("active");
+      exportModal.backdrop.setAttribute("aria-hidden", "false");
+      exportModal.json?.focus();
+    }
+
+    function closeExportModal() {
+      if (!exportModal.backdrop) return;
+      showExportChoice();
+      exportModal.backdrop.classList.remove("active");
+      exportModal.backdrop.setAttribute("aria-hidden", "true");
+    }
+
+    function showExportOneDrive() {
+      if (exportModal.choice) exportModal.choice.style.display = "none";
+      if (exportModal.oneDrive) exportModal.oneDrive.style.display = "";
+      exportModal.password?.focus();
+    }
+
+    function showImportChoice() {
+      if (importModal.choice) importModal.choice.style.display = "";
+      if (importModal.jsonChoice) importModal.jsonChoice.style.display = "none";
+      if (importModal.paste) importModal.paste.style.display = "none";
+      if (importModal.oneDrive) importModal.oneDrive.style.display = "none";
+      if (importModal.jsonText) importModal.jsonText.value = "";
+      if (importModal.password) importModal.password.value = "";
+    }
+
+    function openImportModal() {
+      if (!importModal.backdrop) return;
+      showImportChoice();
+      importModal.backdrop.classList.add("active");
+      importModal.backdrop.setAttribute("aria-hidden", "false");
+      importModal.json?.focus();
+    }
+
+    function closeImportModal() {
+      if (!importModal.backdrop) return;
+      showImportChoice();
+      importModal.backdrop.classList.remove("active");
+      importModal.backdrop.setAttribute("aria-hidden", "true");
+    }
+
+    function showImportJsonChoice() {
+      if (importModal.choice) importModal.choice.style.display = "none";
+      if (importModal.jsonChoice) importModal.jsonChoice.style.display = "";
+      importModal.file?.focus();
+    }
+
+    function showImportPaste() {
+      if (importModal.jsonChoice) importModal.jsonChoice.style.display = "none";
+      if (importModal.paste) importModal.paste.style.display = "";
+      importModal.jsonText?.focus();
+    }
+
+    function showImportOneDrive() {
+      if (importModal.choice) importModal.choice.style.display = "none";
+      if (importModal.oneDrive) importModal.oneDrive.style.display = "";
+      importModal.password?.focus();
+    }
+
+    exportKeysBtn?.addEventListener("click", openExportModal);
+    importKeysBtn?.addEventListener("click", openImportModal);
+    clearKeysBtn?.addEventListener("click", clearAllKeyFields);
+
+    exportModal.close?.addEventListener("click", closeExportModal);
+    exportModal.back?.addEventListener("click", showExportChoice);
+    exportModal.oneDriveChoice?.addEventListener("click", showExportOneDrive);
+    exportModal.backdrop?.addEventListener("click", (event) => {
+      if (event.target === exportModal.backdrop) closeExportModal();
+    });
+
+    exportModal.json?.addEventListener("click", async () => {
+      closeExportModal();
+      try {
+        await exportKeysToJsonFile();
+      } catch (error) {
+        if (error && error.name === "AbortError") return;
+        setKeysIoStatus("Export failed: " + (error?.message || "Unknown error"), true);
+      }
+    });
+
+    exportModal.save?.addEventListener("click", async () => {
+      const password = exportModal.password?.value || "";
+      const confirmation = exportModal.passwordConfirm?.value || "";
+      if (password.length < 10) {
+        setKeysIoStatus("Use an encryption password with at least 10 characters.", true);
+        exportModal.password?.focus();
+        return;
+      }
+      if (password !== confirmation) {
+        setKeysIoStatus("The two encryption passwords do not match.", true);
+        exportModal.passwordConfirm?.focus();
+        return;
+      }
+      if (!window.confirm("Save this encrypted backup to OneDrive? Any previous OneDrive backup will be replaced.")) return;
+
+      const idleLabel = exportModal.save.textContent;
+      exportModal.save.disabled = true;
+      exportModal.save.textContent = "Saving…";
+      setKeysIoStatus("Waiting for Microsoft sign-in…", false);
+      try {
+        const accessToken = await requestMicrosoftAccessToken();
+        setKeysIoStatus("Encrypting and saving the backup…", false);
+        const encrypted = await encryptKeyBundleForOneDrive(buildKeyBundle(), password);
+        await uploadEncryptedBackupToOneDrive(accessToken, encrypted);
+        closeExportModal();
+        setKeysIoStatus("Encrypted OneDrive backup saved. Any previous backup was replaced.", false);
+      } catch (error) {
+        setKeysIoStatus("OneDrive export failed: " + (error?.message || "Unknown error"), true);
+      } finally {
+        if (exportModal.password) exportModal.password.value = "";
+        if (exportModal.passwordConfirm) exportModal.passwordConfirm.value = "";
+        exportModal.save.disabled = false;
+        exportModal.save.textContent = idleLabel;
+      }
+    });
+
+    importModal.close?.addEventListener("click", closeImportModal);
+    importModal.json?.addEventListener("click", showImportJsonChoice);
+    importModal.oneDriveChoice?.addEventListener("click", showImportOneDrive);
+    importModal.jsonBack?.addEventListener("click", showImportChoice);
+    importModal.pasteBack?.addEventListener("click", showImportJsonChoice);
+    importModal.oneDriveBack?.addEventListener("click", showImportChoice);
+    importModal.backdrop?.addEventListener("click", (event) => {
+      if (event.target === importModal.backdrop) closeImportModal();
+    });
+
+    importModal.file?.addEventListener("click", () => {
+      closeImportModal();
+      importKeysFile.value = "";
+      importKeysFile.click();
+    });
+    importModal.pasteChoice?.addEventListener("click", showImportPaste);
+
+    importModal.jsonFetch?.addEventListener("click", () => {
+      try {
+        const raw = String(importModal.jsonText?.value || "").trim();
+        if (!raw) {
+          setKeysIoStatus("Paste JSON content first.", true);
+          return;
+        }
+        applyKeyBundle(JSON.parse(raw));
+        closeImportModal();
+        setKeysIoStatus("Imported keys. Review the fields, then click Enter.", false);
+      } catch {
+        setKeysIoStatus("Import failed: invalid JSON content.", true);
+      }
+    });
+
+    importModal.oneDriveFetch?.addEventListener("click", async () => {
+      const password = importModal.password?.value || "";
+      if (!password) {
+        setKeysIoStatus("Enter the encryption password for your OneDrive backup.", true);
+        importModal.password?.focus();
+        return;
       }
 
-      importKeysFile.addEventListener("change", function () {
-        const file = importKeysFile.files && importKeysFile.files[0];
-        if (!file) return;
+      const idleLabel = importModal.oneDriveFetch.textContent;
+      importModal.oneDriveFetch.disabled = true;
+      importModal.oneDriveFetch.textContent = "Importing…";
+      setKeysIoStatus("Waiting for Microsoft sign-in…", false);
+      try {
+        const accessToken = await requestMicrosoftAccessToken();
+        setKeysIoStatus("Downloading and decrypting the backup…", false);
+        const encrypted = await downloadEncryptedBackupFromOneDrive(accessToken);
+        const bundle = await decryptKeyBundleFromOneDrive(encrypted, password);
+        applyKeyBundle(bundle);
+        closeImportModal();
+        setKeysIoStatus("Imported keys from your OneDrive. Review the fields, then click Enter.", false);
+      } catch (error) {
+        setKeysIoStatus("OneDrive import failed: " + (error?.message || "Unknown error"), true);
+      } finally {
+        if (importModal.password) importModal.password.value = "";
+        importModal.oneDriveFetch.disabled = false;
+        importModal.oneDriveFetch.textContent = idleLabel;
+      }
+    });
 
-        const reader = new FileReader();
-        reader.onerror = function () {
-          setKeysIoStatus("Import failed: could not read file.", true);
-        };
-        reader.onload = function () {
-          try {
-            const text = String(reader.result || "");
-            const parsed = JSON.parse(text);
-            applyKeyBundle(parsed);
-            setKeysIoStatus("Imported keys. Review the fields, then click Enter.", false);
-          } catch (e) {
-            console.error(e);
-            setKeysIoStatus("Import failed: invalid JSON file.", true);
+    importKeysFile?.addEventListener("change", function () {
+      const file = importKeysFile.files && importKeysFile.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onerror = () => setKeysIoStatus("Import failed: could not read file.", true);
+      reader.onload = () => {
+        try {
+          applyKeyBundle(JSON.parse(String(reader.result || "")));
+          setKeysIoStatus("Imported keys. Review the fields, then click Enter.", false);
+        } catch {
+          setKeysIoStatus("Import failed: invalid JSON file.", true);
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    [exportModal.card, importModal.card].forEach((card) => {
+      card?.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          if (card === exportModal.card) closeExportModal();
+          else closeImportModal();
+        } else if (event.key === "Enter" && event.target?.tagName !== "TEXTAREA") {
+          if (card === exportModal.card && exportModal.oneDrive?.style.display !== "none") {
+            exportModal.save?.click();
+          } else if (card === importModal.card && importModal.oneDrive?.style.display !== "none") {
+            importModal.oneDriveFetch?.click();
           }
-        };
-        reader.readAsText(file);
+        }
+        // Prevent the page-wide Enter shortcut from navigating away while a modal is active.
+        event.stopPropagation();
       });
-    }
+    });
   });
 </script>
 
@@ -1547,4 +2071,3 @@
   
 </body>
 </html>
-
