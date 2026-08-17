@@ -1446,6 +1446,131 @@
       font-size: 14px;
       padding: 6px 10px;
     }
+    #promptBackupStatus {
+      min-height: 1.2em;
+      margin: 4px 0 5px;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    #promptBackupModalBackdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 4000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.38);
+    }
+    #promptBackupModalBackdrop.active {
+      display: flex;
+    }
+    #promptBackupModal {
+      width: min(92vw, 480px);
+      max-height: calc(100vh - 32px);
+      overflow-y: auto;
+      box-sizing: border-box;
+      padding: 15px 17px 17px;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.27);
+      color: #222;
+      text-align: left;
+    }
+    .prompt-backup-modal__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 9px;
+    }
+    #promptBackupModalTitle {
+      margin: 0;
+      font-family: inherit;
+      font-size: 17px;
+      font-weight: 700;
+    }
+    #promptBackupModalClose {
+      min-width: 0;
+      margin: 0;
+      padding: 0 6px;
+      border: 0;
+      background: transparent;
+      color: #c11;
+      font-size: 26px;
+      line-height: 1;
+      cursor: pointer;
+    }
+    .prompt-backup-modal__profile {
+      margin: 0 0 10px;
+      font-size: 12px;
+      color: #555;
+    }
+    .prompt-backup-modal__notice {
+      margin: 0 0 12px;
+      padding: 10px 11px;
+      border: 1px solid rgba(72, 153, 153, 0.35);
+      border-radius: 10px;
+      background: rgba(85, 170, 153, 0.08);
+      color: #35484a;
+      font-size: 12px;
+      line-height: 1.42;
+    }
+    .prompt-backup-modal__option {
+      display: block;
+      width: 100%;
+      margin: 0;
+      padding: 8px 11px;
+      text-align: left;
+    }
+    .prompt-backup-modal__help {
+      margin: 6px 0 12px;
+      color: #555;
+      font-size: 12px;
+      line-height: 1.38;
+    }
+    .prompt-backup-modal__field-label {
+      display: block;
+      margin: 9px 0 5px;
+      color: #444;
+      font-size: 12px;
+    }
+    .prompt-backup-modal__password {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font: inherit;
+      font-size: 14px;
+    }
+    .prompt-backup-modal__password:focus {
+      border-color: #66afe9;
+      outline: none;
+      box-shadow: 0 0 6px rgba(102, 175, 233, 0.42);
+    }
+    .prompt-backup-modal__actions {
+      display: flex;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 13px;
+    }
+    .prompt-backup-modal__back {
+      border: 1px solid rgba(46, 125, 50, 0.45);
+      background: transparent;
+      color: #2e7d32;
+    }
+    .prompt-backup-modal__back:hover {
+      background: rgba(46, 125, 50, 0.10);
+    }
+    #promptBackupModalStatus {
+      min-height: 1.35em;
+      margin: 10px 0 0;
+      font-size: 12px;
+      line-height: 1.35;
+    }
     /* Ad Containers for Right Sidebar */
     #right-ad-unit-1 {
       width: 300px;
@@ -2825,6 +2950,71 @@
               <button id="promptExportBtn" type="button">Export</button>
               <button id="promptImportBtn" type="button">Import</button>
               <input id="promptImportFile" type="file" accept="application/json" style="display:none;">
+            </div>
+          </div>
+          <p id="promptBackupStatus" aria-live="polite"></p>
+
+          <div id="promptBackupModalBackdrop" aria-hidden="true">
+            <div
+              id="promptBackupModal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="promptBackupModalTitle"
+            >
+              <div class="prompt-backup-modal__header">
+                <h2 id="promptBackupModalTitle">Export prompts</h2>
+                <button id="promptBackupModalClose" type="button" aria-label="Close">×</button>
+              </div>
+              <p id="promptBackupModalProfile" class="prompt-backup-modal__profile"></p>
+
+              <div id="promptBackupChoiceStep">
+                <div id="promptBackupChoiceNotice" class="prompt-backup-modal__notice"></div>
+
+                <button id="promptBackupJsonChoice" type="button" class="prompt-backup-modal__option">
+                  Export as JSON file
+                </button>
+                <p id="promptBackupJsonHelp" class="prompt-backup-modal__help"></p>
+
+                <button id="promptBackupOneDriveChoice" type="button" class="prompt-backup-modal__option">
+                  Export to Microsoft OneDrive
+                </button>
+                <p id="promptBackupOneDriveHelp" class="prompt-backup-modal__help"></p>
+
+                <button id="promptBackupGoogleDriveChoice" type="button" class="prompt-backup-modal__option">
+                  Export to Google Drive
+                </button>
+                <p id="promptBackupGoogleDriveHelp" class="prompt-backup-modal__help"></p>
+              </div>
+
+              <div id="promptBackupCloudStep" style="display:none">
+                <div id="promptBackupCloudNotice" class="prompt-backup-modal__notice"></div>
+                <label id="promptBackupPasswordLabel" class="prompt-backup-modal__field-label" for="promptBackupPassword">
+                  Encryption password
+                </label>
+                <input
+                  id="promptBackupPassword"
+                  class="prompt-backup-modal__password"
+                  type="password"
+                  autocomplete="current-password"
+                >
+                <div id="promptBackupPasswordConfirmWrap">
+                  <label id="promptBackupPasswordConfirmLabel" class="prompt-backup-modal__field-label" for="promptBackupPasswordConfirm">
+                    Repeat password
+                  </label>
+                  <input
+                    id="promptBackupPasswordConfirm"
+                    class="prompt-backup-modal__password"
+                    type="password"
+                    autocomplete="new-password"
+                  >
+                </div>
+                <div class="prompt-backup-modal__actions">
+                  <button id="promptBackupCloudAction" type="button">Save</button>
+                  <button id="promptBackupCloudBack" class="prompt-backup-modal__back" type="button">Back</button>
+                </div>
+              </div>
+
+              <p id="promptBackupModalStatus" aria-live="polite"></p>
             </div>
           </div>
 

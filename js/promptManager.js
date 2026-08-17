@@ -296,21 +296,21 @@ export const PromptManager = (() => {
         const writable = await handle.createWritable();
         await writable.write(new Blob([text], { type: mime }));
         await writable.close();
-        return;
+        return true;
       } catch (err) {
-        if (err && (err.name === "AbortError" || err.code === 20)) return;
+        if (err && (err.name === "AbortError" || err.code === 20)) return false;
         console.warn("Save picker failed; falling back to auto-download:", err);
       }
     }
 
     downloadTextFile(filename, text, mime);
+    return true;
   }
 
-  async function exportPromptsToFile() {
+  function buildPromptExportBundle() {
     const profileId = getPromptProfileId();
     if (!profileId) {
-      console.warn("Cannot export prompts: prompt profile id not set.");
-      return false;
+      throw new Error("Prompt profile ID is not set.");
     }
 
     const slots = {};
@@ -322,32 +322,128 @@ export const PromptManager = (() => {
     const slotNames = loadSlotNames(profileId);
     const hasAnySlotNames = slotNames && Object.keys(slotNames).length > 0;
 
-    const payload = {
+    return {
+      schema: "whisper.prompts",
       version: 2,
       exportedAt: new Date().toISOString(),
       profileId,
       slots,
       ...(hasAnySlotNames ? { slotNames } : {})
     };
+  }
 
-    const safe = sanitizeForFilename(profileId);
+  async function exportPromptsToFile() {
+    let payload;
+    try {
+      payload = buildPromptExportBundle();
+    } catch (error) {
+      console.warn("Cannot export prompts:", error);
+      return false;
+    }
+
+    const safe = sanitizeForFilename(payload.profileId);
     const date = new Date().toISOString().slice(0, 10);
 
-    await saveTextFileWithPicker(
+    const saved = await saveTextFileWithPicker(
       `prompts-${safe}-${date}.json`,
       JSON.stringify(payload, null, 2),
       "application/json"
     );
+    if (!saved) return false;
 
     emitPromptManagerEvent("prompt-slots-exported", {
-      profileId,
+      profileId: payload.profileId,
       slotCount: PROMPT_SLOT_COUNT,
     });
 
     return true;
   }
 
-  async function importPromptsFromFile(file) {
+  function validatePromptImportBundle(parsed) {
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new Error("The backup is empty or has an unsupported format.");
+    }
+
+    const slotsObj = parsed.slots;
+    if (!slotsObj || typeof slotsObj !== "object" || Array.isArray(slotsObj)) {
+      throw new Error("The backup is missing its prompt slots.");
+    }
+
+    const slots = {};
+    for (let i = 1; i <= PROMPT_SLOT_COUNT; i++) {
+      const key = String(i);
+      const value = Object.prototype.hasOwnProperty.call(slotsObj, key)
+        ? slotsObj[key]
+        : "";
+      slots[key] = value == null ? "" : String(value);
+    }
+
+    const slotNames = {};
+    if (parsed.slotNames != null) {
+      if (typeof parsed.slotNames !== "object" || Array.isArray(parsed.slotNames)) {
+        throw new Error("The backup contains invalid prompt labels.");
+      }
+      for (let i = 1; i <= PROMPT_SLOT_COUNT; i++) {
+        const key = String(i);
+        const name = parsed.slotNames[key];
+        if (name != null && String(name).trim()) {
+          slotNames[key] = String(name).trim();
+        }
+      }
+    }
+
+    return {
+      schema: String(parsed.schema || ""),
+      version: Number(parsed.version || 1),
+      exportedAt: String(parsed.exportedAt || ""),
+      profileId: normalizeProfileId(parsed.profileId),
+      slots,
+      slotNames,
+    };
+  }
+
+  function importPromptsFromBundle(parsed, options = {}) {
+    const profileId = getPromptProfileId();
+    if (!profileId) {
+      throw new Error("Prompt profile ID is not set.");
+    }
+
+    const bundle = validatePromptImportBundle(parsed);
+    const sourceProfileId = bundle.profileId;
+
+    if (options.confirm !== false) {
+      let message = String(options.confirmMessage || "").trim();
+      if (!message) {
+        message = "Replace all 20 prompts and labels in the active profile?";
+        if (sourceProfileId && sourceProfileId !== profileId) {
+          message = `This backup was exported from profile "${sourceProfileId}", but the active profile is "${profileId}".\n\n${message}`;
+        }
+      }
+      if (!window.confirm(message)) return false;
+    }
+
+    for (let i = 1; i <= PROMPT_SLOT_COUNT; i++) {
+      const key = String(i);
+      writeLocalStorage(getPromptStorageKey(key), bundle.slots[key]);
+    }
+
+    if (Object.keys(bundle.slotNames).length > 0) {
+      saveSlotNames(profileId, bundle.slotNames);
+    } else {
+      clearSlotNames(profileId);
+    }
+
+    emitPromptManagerEvent("prompt-slots-imported", {
+      profileId,
+      sourceProfileId,
+      slotCount: PROMPT_SLOT_COUNT,
+      hasSlotNames: Object.keys(bundle.slotNames).length > 0,
+    });
+
+    return true;
+  }
+
+  async function importPromptsFromFile(file, options = {}) {
     const profileId = getPromptProfileId();
     if (!profileId) {
       console.warn("Cannot import prompts: prompt profile id not set.");
@@ -372,35 +468,12 @@ export const PromptManager = (() => {
       return false;
     }
 
-    const slotsObj = parsed && parsed.slots;
-    if (!slotsObj || typeof slotsObj !== "object") {
-      window.alert("Import failed: missing 'slots' object.");
+    try {
+      return importPromptsFromBundle(parsed, options);
+    } catch (error) {
+      window.alert(`Import failed: ${error?.message || "unsupported prompt backup"}`);
       return false;
     }
-
-    const ok = window.confirm("Replace existing prompts in this profile?");
-    if (!ok) return false;
-
-    for (let i = 1; i <= PROMPT_SLOT_COUNT; i++) {
-      const k = String(i);
-      const v = (k in slotsObj) ? (slotsObj[k] ?? "") : "";
-      writeLocalStorage(getPromptStorageKey(k), String(v));
-    }
-
-    const importedSlotNames = parsed && parsed.slotNames;
-    if (importedSlotNames && typeof importedSlotNames === "object") {
-      saveSlotNames(profileId, importedSlotNames);
-    } else {
-      clearSlotNames(profileId);
-    }
-
-    emitPromptManagerEvent("prompt-slots-imported", {
-      profileId,
-      slotCount: PROMPT_SLOT_COUNT,
-      hasSlotNames: !!(importedSlotNames && typeof importedSlotNames === "object"),
-    });
-
-    return true;
   }
 
   function normalizeSlotNumber(slot) {
@@ -517,6 +590,9 @@ export const PromptManager = (() => {
     getSlotDisplayName,
     setSlotDisplayName,
     reorderPromptSlots,
+    buildPromptExportBundle,
+    validatePromptImportBundle,
+    importPromptsFromBundle,
     exportPromptsToFile,
     importPromptsFromFile,
   };
