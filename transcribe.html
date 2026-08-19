@@ -3195,6 +3195,9 @@
       </div>
     </div>
   </div>
+  <!-- Preset runtime storage isolation must run before provider modules. -->
+  <script src="./js/features/workspace-preset-bootstrap.js"></script>
+
   <!-- Provider persistence + provider UI wiring -->
   <script type="module" src="./js/features/provider-persistence.js"></script>
   <script type="module" src="./js/features/page-ui.js"></script>
@@ -3262,6 +3265,9 @@
 
 <!-- Page-owned field feedback helpers (kept after main boot on purpose) -->
   <script type="module" src="./js/features/field-feedback.js"></script>
+
+  <!-- Concurrent preset workspaces, preset backup, and preset toolbar. -->
+  <script type="module" src="./js/features/workspace-presets.js"></script>
 
 
 

@@ -27,6 +27,7 @@ const STATE_REFRESH_MS = 350;
 const AUTO_COPY_DOWNLOAD_HREF = 'div/autocopy.zip';
 const MINI_HUB_CHANNEL_NAME = 'whisperazure-mini-panel-hub';
 const MINI_HUB_PAGE_SESSION_KEY = 'mini_panel_page_session_id';
+const MINI_WORKSPACE_PANEL_MODE_KEY = 'whisper_workspace_mini_panel_mode';
 
 // Liveness model: instead of blindly pruning tabs whose updatedAt has
 // gone stale (which was causing "tab vanishes and reappears" flicker
@@ -211,7 +212,7 @@ const STICKY_FIELDS = [
   'tabOrder',
   'pageSessionId',
 ];
-const LIVE_FIELDS = ['state', 'updatedAt', 'activatedAt'];
+const LIVE_FIELDS = ['state', 'workspacePresets', 'updatedAt', 'activatedAt'];
 
 function isMeaningfulValue(v) {
   if (v === undefined || v === null) return false;
@@ -798,7 +799,7 @@ function buildLocalHubSnapshot() {
   // Outbound snapshot intentionally omits accentKey/accentColor. Color
   // is owned by the hub via tabColors and is not part of the snapshot
   // protocol. Receivers assign/lookup their own color locally.
-  return {
+  const snapshot = {
     tabId,
     pageSessionId: getOrCreateLocalPageSessionId(),
     promptLabel,
@@ -807,6 +808,8 @@ function buildLocalHubSnapshot() {
     state,
     updatedAt: Date.now(),
   };
+
+  return window.__workspacePresets?.decorateHubSnapshot?.(snapshot) || snapshot;
 }
 
 function upsertHubTab(snapshot) {
@@ -2086,6 +2089,176 @@ function getMiniPhasePresentation(state) {
   }
 }
 
+function getMiniPresetCopy() {
+  const norwegian = ['no', 'nb', 'nn'].includes(getPageLanguage());
+  return norwegian ? {
+    standard: 'Standardvisning', presets: 'Presetvisning', noPresets: 'Ingen presets tilgjengelig i valgt fane.',
+    idle: 'Klar', recording: 'Tar opp', paused: 'Pauset', transcribing: 'Transkriberer',
+    generating: 'Genererer notat', complete: 'Ferdig', start: 'Start', stop: 'Stopp',
+    pause: 'Pause', resume: 'Fortsett', generate: 'Generer', abortRecording: 'Avbryt opptak',
+    abortNote: 'Avbryt notat', switchToPresets: 'Bytt til presetvisning', switchToStandard: 'Bytt til standardvisning',
+  } : {
+    standard: 'Standard view', presets: 'Preset view', noPresets: 'No presets are available in the selected tab.',
+    idle: 'Ready', recording: 'Recording', paused: 'Paused', transcribing: 'Transcribing',
+    generating: 'Generating note', complete: 'Completed', start: 'Start', stop: 'Stop',
+    pause: 'Pause', resume: 'Resume', generate: 'Generate', abortRecording: 'Abort recording',
+    abortNote: 'Abort note', switchToPresets: 'Switch to preset view', switchToStandard: 'Switch to standard view',
+  };
+}
+
+function getMiniPanelViewMode() {
+  try {
+    return localStorage.getItem(MINI_WORKSPACE_PANEL_MODE_KEY) === 'presets' ? 'presets' : 'standard';
+  } catch (_) {
+    return 'standard';
+  }
+}
+
+function setMiniPanelViewMode(mode) {
+  const normalized = mode === 'presets' ? 'presets' : 'standard';
+  try { localStorage.setItem(MINI_WORKSPACE_PANEL_MODE_KEY, normalized); } catch (_) {}
+  requestUiRefresh();
+}
+
+function getMiniPresetStatus(item, copy) {
+  const state = item?.state || {};
+  const phase = String(state.miniPanelStatusPhase || '').toLowerCase();
+  if (phase === 'recording') return { tone: 'recording', label: copy.recording };
+  if (phase === 'paused') return { tone: 'recording', label: copy.paused };
+  if (state.noteBusy || item?.secondaryBusy || phase === 'note-generating') {
+    return { tone: 'generating', label: copy.generating };
+  }
+  if (state.transcribeBusy || phase.includes('transcrib')) {
+    return { tone: 'transcribing', label: copy.transcribing };
+  }
+  if (['transcript-completed', 'transcript-complete', 'note-completed'].includes(phase)) {
+    return { tone: 'complete', label: copy.complete };
+  }
+  return { tone: '', label: copy.idle };
+}
+
+function getMiniPresetElapsed(item) {
+  const state = item?.state || {};
+  if (state.noteBusy) {
+    return computeTimerElapsedMs(
+      Number(state.noteGenerationStartedAt || 0),
+      Number(state.noteGenerationElapsedMs || 0)
+    );
+  }
+  if (state.transcribeBusy) {
+    return computeTimerElapsedMs(
+      Number(state.transcriptStartedAt || 0),
+      Number(state.transcriptElapsedMs || 0)
+    );
+  }
+  if (['recording', 'paused'].includes(String(state.miniPanelStatusPhase || ''))) {
+    return computeRecordingElapsedMs(state);
+  }
+  return 0;
+}
+
+function updateSelectedWorkspaceSnapshot(presetId) {
+  updateSelectedHubSnapshot((prev) => ({
+    ...prev,
+    workspacePresets: {
+      ...(prev.workspacePresets || {}),
+      activePresetId: String(presetId || ''),
+    },
+  }));
+}
+
+function runMiniPresetAction(presetId, actionName) {
+  dispatchHubAction('runWorkspacePresetAction', String(presetId || ''), actionName);
+  requestUiRefresh();
+}
+
+function renderMiniPresetDashboard(snapshot) {
+  const doc = getMiniDoc();
+  if (!doc) return;
+  const copy = getMiniPresetCopy();
+  const workspace = snapshot?.workspacePresets || {};
+  const items = Array.isArray(workspace.items) ? workspace.items : [];
+  const mode = getMiniPanelViewMode();
+  const standard = $('miniStandardView');
+  const dashboard = $('miniPresetDashboard');
+  const list = $('miniPresetList');
+  const toggle = $('miniPresetModeButton');
+  const badge = $('miniPresetModeBadge');
+
+  if (standard) standard.hidden = mode === 'presets';
+  if (dashboard) dashboard.hidden = mode !== 'presets';
+  if (doc.body) doc.body.dataset.viewMode = mode;
+  if (toggle) {
+    toggle.dataset.active = mode === 'presets' ? '1' : '0';
+    toggle.title = mode === 'presets' ? copy.switchToStandard : copy.switchToPresets;
+    toggle.setAttribute('aria-label', toggle.title);
+  }
+
+  const activeJobs = items.filter((item) => item?.busy).length;
+  if (badge) {
+    badge.hidden = activeJobs === 0;
+    badge.textContent = String(activeJobs);
+  }
+  if (!list || mode !== 'presets') return;
+  list.replaceChildren();
+  if (!items.length) {
+    const empty = doc.createElement('div');
+    empty.className = 'mini-preset-empty';
+    empty.textContent = copy.noPresets;
+    list.appendChild(empty);
+    return;
+  }
+
+  items.forEach((item) => {
+    const state = item?.state || {};
+    const status = getMiniPresetStatus(item, copy);
+    const row = doc.createElement('section');
+    row.className = 'mini-preset-item';
+    row.classList.toggle('is-active', String(item.id) === String(workspace.activePresetId));
+
+    const head = doc.createElement('div');
+    head.className = 'mini-preset-head';
+    const dot = doc.createElement('span');
+    dot.className = `mini-preset-status-dot ${status.tone}`;
+    const select = doc.createElement('button');
+    select.type = 'button'; select.className = 'mini-preset-select'; select.textContent = String(item.name || 'Preset');
+    select.title = String(item.name || 'Preset');
+    select.addEventListener('click', () => {
+      dispatchHubAction('selectWorkspacePreset', String(item.id || ''));
+      updateSelectedWorkspaceSnapshot(item.id);
+      requestUiRefresh();
+    });
+    head.append(dot, select);
+
+    const meta = doc.createElement('div');
+    meta.className = 'mini-preset-meta';
+    const elapsed = getMiniPresetElapsed(item);
+    meta.textContent = elapsed > 0 ? `${status.label} · ${formatElapsedMs(elapsed)}` : status.label;
+
+    const actions = doc.createElement('div');
+    actions.className = 'mini-preset-actions';
+    const addAction = (label, actionName, enabled = true, extraClass = '') => {
+      const button = doc.createElement('button');
+      button.type = 'button'; button.className = `mini-preset-action ${extraClass}`.trim();
+      button.textContent = label; button.disabled = !enabled;
+      button.addEventListener('click', () => runMiniPresetAction(item.id, actionName));
+      actions.appendChild(button);
+    };
+
+    if (state.canStart) addAction(copy.start, 'startRecording');
+    if (state.canPauseResume) {
+      addAction(String(state.pauseResumeLabel || '').toLowerCase().includes('resume') || String(state.miniPanelStatusPhase) === 'paused' ? copy.resume : copy.pause, 'pauseResumeRecording');
+    }
+    if (state.canStop) addAction(copy.stop, 'stopRecording');
+    if (state.hasTranscript && !state.noteBusy) addAction(copy.generate, 'triggerGenerateNote');
+    if (state.canAbort) addAction(copy.abortRecording, 'abortRecording', true, 'abort');
+    if (state.noteBusy) addAction(copy.abortNote, 'abortNoteGeneration', true, 'abort');
+
+    row.append(head, meta, actions);
+    list.appendChild(row);
+  });
+}
+
 function updateMiniPanelUi() {
   const doc = getMiniDoc();
   if (!doc) return;
@@ -2097,6 +2270,7 @@ function updateMiniPanelUi() {
   syncHubTabDropdown();
 
   const snapshot = getSelectedHubSnapshot();
+  renderMiniPresetDashboard(snapshot);
   const state = snapshot?.state || {
     canStart: false,
     canStop: false,
@@ -2404,6 +2578,7 @@ function bindMiniPanelEvents() {
   const abortButton = $('miniAbortButton');
   const closeButton = $('miniCloseButton');
   const focusTabButton = $('miniFocusTabButton');
+  const presetModeButton = $('miniPresetModeButton');
   const promptSelect = $('miniPromptSelect');
   const tabSelect = $('miniTabSelect');
   const tabPickerTrigger = $('miniTabPickerTrigger');
@@ -2675,6 +2850,12 @@ function bindMiniPanelEvents() {
       try {
         miniWindow?.close();
       } catch (_) {}
+    });
+  }
+
+  if (presetModeButton) {
+    presetModeButton.addEventListener('click', () => {
+      setMiniPanelViewMode(getMiniPanelViewMode() === 'presets' ? 'standard' : 'presets');
     });
   }
 
@@ -2999,10 +3180,162 @@ function renderMiniPanelDocument(targetWindow) {
 
     .top-right {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       gap: 4px;
-      align-items: flex-end;
+      align-items: center;
       flex: 0 0 auto;
+    }
+
+    .view-mode-btn {
+      position: relative;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .view-mode-btn[data-active="1"] {
+      color: var(--accent);
+      border-color: rgba(111,211,166,.55);
+      background: rgba(111,211,166,.10);
+    }
+
+    .view-mode-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      min-width: 14px;
+      height: 14px;
+      padding: 0 3px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: #d7263d;
+      color: #fff;
+      font-size: 8px;
+      font-weight: 800;
+    }
+
+    .mini-standard-view {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .mini-preset-dashboard {
+      max-height: 208px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .mini-preset-empty {
+      padding: 14px 8px;
+      color: var(--muted);
+      font-size: 11px;
+      text-align: center;
+    }
+
+    .mini-preset-list {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .mini-preset-item {
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 5px 6px;
+      background: rgba(255,255,255,.025);
+    }
+
+    .mini-preset-item.is-active {
+      border-color: rgba(111,211,166,.50);
+      background: rgba(111,211,166,.065);
+    }
+
+    .mini-preset-head {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .mini-preset-select {
+      flex: 1 1 auto;
+      min-width: 0;
+      border: 0;
+      padding: 1px 0;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .mini-preset-status-dot {
+      width: 7px;
+      height: 7px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: #7b879b;
+    }
+
+    .mini-preset-status-dot.recording {
+      background: #ef4055;
+      animation: miniPresetPulse 1.25s infinite;
+    }
+
+    .mini-preset-status-dot.transcribing { background: #4da3ff; }
+    .mini-preset-status-dot.generating { background: #a98bff; }
+    .mini-preset-status-dot.complete { background: var(--accent); }
+
+    .mini-preset-meta {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 9px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mini-preset-actions {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    .mini-preset-action {
+      min-height: 21px;
+      padding: 2px 7px;
+      border: 1px solid var(--button-border);
+      border-radius: 6px;
+      background: var(--button);
+      color: var(--text);
+      font-size: 9px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .mini-preset-action:disabled { opacity: .38; cursor: default; }
+    .mini-preset-action.abort { color: var(--danger); }
+
+    @keyframes miniPresetPulse {
+      0% { box-shadow: 0 0 0 0 rgba(239,64,85,.55); }
+      70% { box-shadow: 0 0 0 5px rgba(239,64,85,0); }
+      100% { box-shadow: 0 0 0 0 rgba(239,64,85,0); }
     }
 
     .focus-btn {
@@ -3638,11 +3971,13 @@ function renderMiniPanelDocument(targetWindow) {
           </div>
         </div>
         <div class="top-right">
-          <button id="miniCloseButton" class="close-btn" type="button" aria-label="Close mini panel">×</button>
           <button id="miniFocusTabButton" class="focus-btn" type="button" aria-label="Jump to selected tab" title="Jump to selected tab" hidden>↗</button>
+          <button id="miniPresetModeButton" class="view-mode-btn" type="button" aria-label="Switch mini panel view" title="Switch between standard and preset view">▦<span id="miniPresetModeBadge" class="view-mode-badge" hidden>0</span></button>
+          <button id="miniCloseButton" class="close-btn" type="button" aria-label="Close mini panel">×</button>
         </div>
       </div>
 
+      <div id="miniStandardView" class="mini-standard-view">
       <div class="status-row">
         <div class="status-slot status-slot--left">
           <div id="miniStatusBadge" class="badge" data-tone="idle">Idle</div>
@@ -3757,6 +4092,11 @@ function renderMiniPanelDocument(targetWindow) {
           <select id="miniBedrockModelSelect" class="prompt-select note-config-select note-config-select--model" aria-label="Bedrock model" hidden></select>
           <select id="miniRequestyModelSelect" class="prompt-select note-config-select note-config-select--model" aria-label="Requesty model" hidden></select>
         </div>
+      </div>
+      </div>
+
+      <div id="miniPresetDashboard" class="mini-preset-dashboard" hidden>
+        <div id="miniPresetList" class="mini-preset-list"></div>
       </div>
     </div>
   </div>
@@ -4145,6 +4485,10 @@ function bootMiniController() {
   } catch (_) {}
 }
 
-bootMiniController();
-
-
+if (!window.__workspacePresetFrame) {
+  bootMiniController();
+} else {
+  // An embedded preset has its own recording/generation runtime, but the
+  // browser tab must still have exactly one Mini Panel hub/controller.
+  window.__openMiniPanel = () => window.parent?.__openMiniPanel?.();
+}

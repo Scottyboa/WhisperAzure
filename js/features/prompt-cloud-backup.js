@@ -8,6 +8,7 @@ const GOOGLE_IDENTITY_SCRIPT_URL = "https://accounts.google.com/gsi/client";
 
 const PROMPT_BACKUP_FILENAME = "whisper-prompts-backup.enc.json";
 const GENERAL_TERMS_BACKUP_FILENAME = "whisper-general-terms-backup.enc.json";
+const WORKSPACE_PRESETS_BACKUP_FILENAME = "whisper-workspace-presets-backup.enc.json";
 const BACKUP_VERSION = 1;
 const KDF_ITERATIONS = 250000;
 const MAX_BACKUP_BYTES = 2000000;
@@ -35,6 +36,19 @@ const GENERAL_TERMS_PROVIDERS = {
     schema: "whisper.redactor-general-terms.google-drive.encrypted",
     providerName: "Google Drive",
     backupLabel: "General terms backup",
+  },
+};
+
+const WORKSPACE_PRESET_PROVIDERS = {
+  oneDrive: {
+    schema: "whisper.workspace-presets.onedrive.encrypted",
+    providerName: "Microsoft OneDrive",
+    backupLabel: "workspace preset backup",
+  },
+  googleDrive: {
+    schema: "whisper.workspace-presets.google-drive.encrypted",
+    providerName: "Google Drive",
+    backupLabel: "workspace preset backup",
   },
 };
 
@@ -745,9 +759,68 @@ async function loadFromGoogleDrive(password, onStatus = () => {}) {
   return result.promptBundle;
 }
 
+async function saveWorkspacePresetsToOneDrive(bundle, password, onStatus = () => {}) {
+  onStatus("microsoftSignIn");
+  const accessToken = await requestMicrosoftAccessToken();
+  onStatus("encryptingAndSaving");
+  const encrypted = await encryptBackupBundle(
+    bundle,
+    password,
+    WORKSPACE_PRESET_PROVIDERS.oneDrive
+  );
+  await uploadToOneDrive(accessToken, WORKSPACE_PRESETS_BACKUP_FILENAME, encrypted);
+}
+
+async function loadWorkspacePresetsFromOneDrive(password, onStatus = () => {}) {
+  onStatus("microsoftSignIn");
+  const accessToken = await requestMicrosoftAccessToken();
+  onStatus("downloadingAndDecrypting");
+  const encrypted = await downloadFromOneDrive(
+    accessToken,
+    WORKSPACE_PRESETS_BACKUP_FILENAME,
+    "workspace preset backup"
+  );
+  return decryptBackupBundle(
+    encrypted,
+    password,
+    WORKSPACE_PRESET_PROVIDERS.oneDrive
+  );
+}
+
+async function saveWorkspacePresetsToGoogleDrive(bundle, password, onStatus = () => {}) {
+  onStatus("googleSignIn");
+  await loadGoogleIdentityServices();
+  const accessToken = await requestGoogleAccessToken();
+  onStatus("encryptingAndSaving");
+  const encrypted = await encryptBackupBundle(
+    bundle,
+    password,
+    WORKSPACE_PRESET_PROVIDERS.googleDrive
+  );
+  await uploadToGoogleDrive(accessToken, WORKSPACE_PRESETS_BACKUP_FILENAME, encrypted);
+}
+
+async function loadWorkspacePresetsFromGoogleDrive(password, onStatus = () => {}) {
+  onStatus("googleSignIn");
+  await loadGoogleIdentityServices();
+  const accessToken = await requestGoogleAccessToken();
+  onStatus("downloadingAndDecrypting");
+  const encrypted = await downloadFromGoogleDrive(
+    accessToken,
+    WORKSPACE_PRESETS_BACKUP_FILENAME,
+    "workspace preset backup"
+  );
+  return decryptBackupBundle(
+    encrypted,
+    password,
+    WORKSPACE_PRESET_PROVIDERS.googleDrive
+  );
+}
+
 export const PromptCloudBackup = Object.freeze({
   filename: PROMPT_BACKUP_FILENAME,
   generalTermsFilename: GENERAL_TERMS_BACKUP_FILENAME,
+  workspacePresetsFilename: WORKSPACE_PRESETS_BACKUP_FILENAME,
   prepareGoogleSignIn: loadGoogleIdentityServices,
   saveToOneDrive,
   loadFromOneDrive,
@@ -757,4 +830,8 @@ export const PromptCloudBackup = Object.freeze({
   loadPackageFromOneDrive,
   savePackageToGoogleDrive,
   loadPackageFromGoogleDrive,
+  saveWorkspacePresetsToOneDrive,
+  loadWorkspacePresetsFromOneDrive,
+  saveWorkspacePresetsToGoogleDrive,
+  loadWorkspacePresetsFromGoogleDrive,
 });

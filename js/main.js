@@ -224,6 +224,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getMiniHubChannel() {
+    // Embedded preset runtimes are represented by their parent tab. Letting
+    // every same-origin iframe join the BroadcastChannel would make one
+    // browser tab appear as several unrelated tabs in the Mini Panel.
+    if (window.__workspacePresetFrame) return null;
+
     if (miniHubChannel || typeof BroadcastChannel !== 'function') {
       return miniHubChannel;
     }
@@ -414,6 +419,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getCurrentMiniHubContentText(kind) {
+    const managedContent = window.__workspacePresets?.getContent?.(kind);
+    if (managedContent != null) return String(managedContent);
+
     const normalizedKind = String(kind || '').trim().toLowerCase();
     const fieldId = normalizedKind === 'note' ? 'generatedNote' : 'transcription';
     const field = document.getElementById(fieldId);
@@ -2334,7 +2342,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // broadcast 'mini-hub-accent-assigned' separately. Including
     // accent data here would re-introduce the echo-chain bug where
     // multiple tabs overwrote each other's color state.
-    return {
+    const snapshot = {
       tabId: getOrCreateMiniHubTabId(),
       pageSessionId: getOrCreateMiniHubPageSessionId(),
       promptLabel: getCurrentPromptSlotTitle() || 'Untitled',
@@ -2343,6 +2351,8 @@ document.addEventListener('DOMContentLoaded', () => {
       state: getMiniPanelStateSnapshot(),
       updatedAt: Date.now(),
     };
+
+    return window.__workspacePresets?.decorateHubSnapshot?.(snapshot) || snapshot;
   }
 
   function initMiniPanelStatusPhaseFlow() {
@@ -3132,7 +3142,6 @@ document.addEventListener('DOMContentLoaded', () => {
   void initNoteProvider(getSelectedEffectiveNoteProvider());
   void initMiniControllerFeature();
 });
-
 
 
 
