@@ -2184,9 +2184,22 @@ function renderMiniPresetDashboard(snapshot) {
   const list = $('miniPresetList');
   const toggle = $('miniPresetModeButton');
   const badge = $('miniPresetModeBadge');
+  const tabPicker = doc.querySelector('.mini-tab-picker');
+  const presetPicker = $('miniPresetPicker');
+  const presetSelect = $('miniPresetSelect');
+  const presetPickerLabel = $('miniPresetPickerLabel');
 
-  if (standard) standard.hidden = mode === 'presets';
-  if (dashboard) dashboard.hidden = mode !== 'presets';
+  if (standard) {
+    standard.hidden = mode === 'presets';
+    standard.style.display = mode === 'presets' ? 'none' : 'flex';
+  }
+  if (dashboard) {
+    dashboard.hidden = mode !== 'presets';
+    dashboard.style.display = mode === 'presets' ? 'block' : 'none';
+  }
+  if (tabPicker) tabPicker.hidden = mode === 'presets';
+  if (presetPicker) presetPicker.hidden = mode !== 'presets';
+  if (presetPickerLabel) presetPickerLabel.textContent = copy.presets;
   if (doc.body) doc.body.dataset.viewMode = mode;
   if (toggle) {
     toggle.dataset.active = mode === 'presets' ? '1' : '0';
@@ -2199,13 +2212,38 @@ function renderMiniPresetDashboard(snapshot) {
     badge.hidden = activeJobs === 0;
     badge.textContent = String(activeJobs);
   }
-  if (!list || mode !== 'presets') return;
+
+  if (presetSelect) {
+    const signature = items.map((item) => `${item.id}:${item.name}`).join('|');
+    if (presetSelect.dataset.signature !== signature) {
+      presetSelect.dataset.syncing = '1';
+      presetSelect.replaceChildren();
+      items.forEach((item) => {
+        const option = doc.createElement('option');
+        option.value = String(item.id || '');
+        option.textContent = String(item.name || 'Preset');
+        presetSelect.appendChild(option);
+      });
+      presetSelect.dataset.signature = signature;
+      presetSelect.dataset.syncing = '0';
+    }
+    presetSelect.disabled = items.length === 0;
+    if (items.some((item) => String(item.id) === String(workspace.activePresetId))) {
+      presetSelect.value = String(workspace.activePresetId);
+    }
+  }
+
+  const refreshScale = () => {
+    try { miniWindow?.__applyMiniPanelScale?.(); } catch (_) {}
+  };
+  if (!list || mode !== 'presets') { refreshScale(); return; }
   list.replaceChildren();
   if (!items.length) {
     const empty = doc.createElement('div');
     empty.className = 'mini-preset-empty';
     empty.textContent = copy.noPresets;
     list.appendChild(empty);
+    refreshScale();
     return;
   }
 
@@ -2257,6 +2295,7 @@ function renderMiniPresetDashboard(snapshot) {
     row.append(head, meta, actions);
     list.appendChild(row);
   });
+  refreshScale();
 }
 
 function updateMiniPanelUi() {
@@ -2323,7 +2362,10 @@ function updateMiniPanelUi() {
   }
   setText('miniStatusText', recordingLineText);
   syncMiniSttSummary(state);
-  setText('miniTitle', tMini('sharedMiniPanel'));
+  setText(
+    'miniTitle',
+    getMiniPanelViewMode() === 'presets' ? getMiniPresetCopy().presets : tMini('sharedMiniPanel')
+  );
   setText('miniAutoGenerateLabel', tMini('autoGenerate'));
   setText('miniAutoCopyLabel', tMini('autoCopy'));
   setText('miniPromptLabel', tMini('prompt'));
@@ -2579,6 +2621,7 @@ function bindMiniPanelEvents() {
   const closeButton = $('miniCloseButton');
   const focusTabButton = $('miniFocusTabButton');
   const presetModeButton = $('miniPresetModeButton');
+  const presetSelect = $('miniPresetSelect');
   const promptSelect = $('miniPromptSelect');
   const tabSelect = $('miniTabSelect');
   const tabPickerTrigger = $('miniTabPickerTrigger');
@@ -2859,6 +2902,17 @@ function bindMiniPanelEvents() {
     });
   }
 
+  if (presetSelect) {
+    presetSelect.addEventListener('change', () => {
+      if (presetSelect.dataset.syncing === '1') return;
+      const presetId = String(presetSelect.value || '').trim();
+      if (!presetId) return;
+      dispatchHubAction('selectWorkspacePreset', presetId);
+      updateSelectedWorkspaceSnapshot(presetId);
+      requestUiRefresh();
+    });
+  }
+
   if (focusTabButton) {
     focusTabButton.addEventListener('click', () => {
       dispatchFocusSelectedTab();
@@ -2899,19 +2953,13 @@ function installMiniPanelAutoScale(targetWindow) {
   const doc = targetWindow.document;
   const root = doc.documentElement;
 
-  let basePanelHeight = null;
-
   function applyScale() {
     try {
       const width = Math.max(1, targetWindow.innerWidth || MINI_PANEL_WIDTH);
       const height = Math.max(1, targetWindow.innerHeight || MINI_PANEL_HEIGHT);
 
       const panel = doc.querySelector('.panel-shell');
-      if (!basePanelHeight && panel) {
-        basePanelHeight = panel.scrollHeight;
-      }
-
-      const effectiveHeight = basePanelHeight || MINI_PANEL_HEIGHT;
+      const effectiveHeight = panel?.scrollHeight || MINI_PANEL_HEIGHT;
       const scaleX = width / MINI_PANEL_WIDTH;
       const scaleY = height / effectiveHeight;
       const scale = Math.min(1, scaleX, scaleY);
@@ -2923,6 +2971,8 @@ function installMiniPanelAutoScale(targetWindow) {
   try {
     targetWindow.addEventListener('resize', applyScale);
   } catch (_) {}
+
+  targetWindow.__applyMiniPanelScale = applyScale;
 
   applyScale();
 }
@@ -3020,6 +3070,42 @@ function renderMiniPanelDocument(targetWindow) {
       width: 100%;
       min-width: 0;
       max-width: 100%;
+    }
+
+    .mini-tab-picker[hidden],
+    .mini-preset-picker[hidden],
+    .mini-standard-view[hidden],
+    .mini-preset-dashboard[hidden] {
+      display: none !important;
+    }
+
+    .mini-preset-picker {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .mini-preset-picker-label {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .mini-preset-picker-select {
+      flex: 1 1 auto;
+      min-width: 0;
+      height: 28px;
+      border: 1px solid rgba(111,211,166,.50);
+      border-radius: 9px;
+      padding: 4px 7px;
+      background: var(--select-bg);
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 700;
+      outline: none;
     }
 
     .mini-tab-select--hidden {
@@ -3968,6 +4054,10 @@ function renderMiniPanelDocument(targetWindow) {
             <div id="miniTabPickerPopover" class="mini-tab-picker-popover" hidden>
               <div id="miniTabPickerList" class="mini-tab-picker-list"></div>
             </div>
+          </div>
+          <div id="miniPresetPicker" class="mini-preset-picker" hidden>
+            <label id="miniPresetPickerLabel" class="mini-preset-picker-label" for="miniPresetSelect">Preset view</label>
+            <select id="miniPresetSelect" class="mini-preset-picker-select" aria-label="Select preset"></select>
           </div>
         </div>
         <div class="top-right">

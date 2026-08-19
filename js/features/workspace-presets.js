@@ -55,7 +55,7 @@ const TEXT = {
     busyClose: "Stop or abort the active recording, transcription, or generation before closing this preset.",
     closeConfirm: "Close \"{name}\"? Its transcript, notes and other workspace text will be removed from this tab session.",
     importBusy: "Stop or abort all active recordings and generations before importing presets.",
-    helpHtml: `<strong>Presets are separate workspaces.</strong><br/>Each preset keeps its own text, prompts, models, settings and active processes. Switching presets does not stop recording or generation.<br/><br/>Use + to create a fresh preset and × to close one.<br/><br/><strong>Import/export:</strong> Saves only preset setup, prompts, models and relevant settings. Transcripts, notes, audio, API keys and other patient information are never exported. Cloud backups are encrypted. A downloaded JSON file is readable and should be stored securely.`,
+    helpHtml: `<strong>Presets are separate workspaces.</strong><br/>Each preset keeps its own text, prompts, models, settings and active processes. Its name automatically follows the selected prompt slot name. Switching presets does not stop recording or generation.<br/><br/>Use + to create a fresh preset and × to close one.<br/><br/><strong>Import/export:</strong> Saves only preset setup, prompts, models and relevant settings. Transcripts, notes, audio, API keys and other patient information are never exported. Cloud backups are encrypted. A downloaded JSON file is readable and should be stored securely.`,
     exportTitle: "Export presets", importTitle: "Import presets",
     jsonExport: "Export as JSON file", jsonImport: "Import from JSON file",
     oneDriveExport: "Export to Microsoft OneDrive", oneDriveImport: "Import from Microsoft OneDrive",
@@ -84,7 +84,7 @@ const TEXT = {
     busyClose: "Stopp eller avbryt aktivt opptak, transkribering eller generering før presetet lukkes.",
     closeConfirm: "Lukk \"{name}\"? Transcript, notater og annen workspace-tekst fjernes fra denne faneøkten.",
     importBusy: "Stopp eller avbryt alle aktive opptak og genereringer før du importerer presets.",
-    helpHtml: `<strong>Presets er separate arbeidsområder.</strong><br/>Hvert preset beholder egne tekster, prompts, modeller, innstillinger og aktive prosesser. Bytte mellom presets stopper ikke opptak eller generering.<br/><br/>Bruk + for å opprette et nytt preset og × for å lukke et workspace.<br/><br/><strong>Import/eksport:</strong> Lagrer bare preset-oppsettet, prompts, modeller og relevante innstillinger. Transcript, notater, lyd, API-nøkler og andre pasientopplysninger eksporteres aldri. Skybackup krypteres. En nedlastet JSON-fil er lesbar og bør oppbevares sikkert.`,
+    helpHtml: `<strong>Presets er separate arbeidsområder.</strong><br/>Hvert preset beholder egne tekster, prompts, modeller, innstillinger og aktive prosesser. Navnet følger automatisk navnet på valgt prompt-slot. Bytte mellom presets stopper ikke opptak eller generering.<br/><br/>Bruk + for å opprette et nytt preset og × for å lukke et workspace.<br/><br/><strong>Import/eksport:</strong> Lagrer bare preset-oppsettet, prompts, modeller og relevante innstillinger. Transcript, notater, lyd, API-nøkler og andre pasientopplysninger eksporteres aldri. Skybackup krypteres. En nedlastet JSON-fil er lesbar og bør oppbevares sikkert.`,
     exportTitle: "Eksporter presets", importTitle: "Importer presets",
     jsonExport: "Eksporter som JSON-fil", jsonImport: "Importer fra JSON-fil",
     oneDriveExport: "Eksporter til Microsoft OneDrive", oneDriveImport: "Importer fra Microsoft OneDrive",
@@ -122,7 +122,7 @@ function uid() {
   return crypto.randomUUID?.() || `preset-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 function safeName(value, fallback = "Preset") {
-  return String(value || "").trim().slice(0, 60) || fallback;
+  return String(value || "").trim().slice(0, 120) || fallback;
 }
 function dispatchChange(win, element) {
   if (!element) return;
@@ -283,6 +283,7 @@ function initFrameRuntime() {
   document.addEventListener("change", () => notifyParent("config"), true);
   document.addEventListener("click", () => window.setTimeout(() => notifyParent("click"), 0), true);
   window.addEventListener("app:state-changed", () => notifyParent("app-state"));
+  window.addEventListener("mini-hub:prompt-ui-refresh", () => notifyParent("prompt-title"));
 
   window.__workspacePresetBridge = Object.freeze({
     id,
@@ -409,6 +410,10 @@ function initTopLevelManager() {
     render();
     notifyHub();
   }, 500);
+  window.addEventListener("mini-hub:prompt-ui-refresh", () => {
+    render();
+    notifyHub();
+  });
   window.addEventListener("pagehide", () => window.clearInterval(poll), { once: true });
 
   window.__workspacePresets = Object.freeze({
@@ -618,6 +623,7 @@ function initTopLevelManager() {
   }
 
   function render() {
+    syncDefinitionNames();
     const copy = t();
     toolbar.help.setAttribute("aria-label", copy.help); toolbar.helpContent.innerHTML = copy.helpHtml;
     toolbar.importButton.textContent = copy.import; toolbar.exportButton.textContent = copy.export;
@@ -640,9 +646,27 @@ function initTopLevelManager() {
         if (event.target === close) { event.stopPropagation(); closePreset(definition.id); return; }
         switchPreset(definition.id);
       });
-      chip.addEventListener("dblclick", () => renamePreset(definition.id));
       toolbar.list.appendChild(chip);
     });
+  }
+
+  function syncDefinitionNames() {
+    let changed = false;
+    definitions.forEach((definition, index) => {
+      const runtime = runtimes.get(definition.id);
+      if (!runtime?.ready) return;
+      const title = String(runtimeAction(runtime, "getCurrentPromptSlotTitle") || "").trim();
+      if (!title) return;
+      const nextName = safeName(title, fmt(t().defaultName, { n: index + 1 }));
+      if (definition.name === nextName) return;
+      definition.name = nextName;
+      if (runtime.frame) runtime.frame.title = nextName;
+      changed = true;
+    });
+    if (changed) {
+      try { localStorage.setItem(DEFINITIONS_KEY, JSON.stringify(definitions)); } catch {}
+    }
+    return changed;
   }
 
   function statusClass(snapshot) {
@@ -666,22 +690,11 @@ function initTopLevelManager() {
     const copy = t();
     if (definitions.length >= MAX_PRESETS) { toast(copy.max, true); return; }
     const suggested = fmt(copy.defaultName, { n: definitions.length + 1 });
-    const entered = window.prompt(copy.namePrompt, suggested);
-    if (entered == null) return;
-    const definition = { id: uid(), name: safeName(entered, suggested), config: {} };
+    const definition = { id: uid(), name: suggested, config: {} };
     definitions.push(definition);
     createFrameRuntime(definition);
     persistDefinitions();
     switchPreset(definition.id);
-  }
-
-  function renamePreset(id) {
-    const definition = findDefinition(id); if (!definition) return;
-    const next = window.prompt(t().namePrompt, definition.name);
-    if (next == null || !String(next).trim()) return;
-    definition.name = safeName(next, definition.name);
-    if (runtimes.get(id)?.frame) runtimes.get(id).frame.title = definition.name;
-    persistDefinitions(); render(); notifyHub();
   }
 
   function closePreset(id) {
@@ -756,6 +769,7 @@ function initTopLevelManager() {
   }
 
   function buildExportBundle() {
+    syncDefinitionNames();
     persistDefinitions();
     const slots = new Set();
     definitions.forEach((definition) => {
