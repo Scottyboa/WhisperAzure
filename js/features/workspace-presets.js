@@ -329,16 +329,16 @@ function initFrameRuntime() {
 function injectManagerStyle() {
   const style = document.createElement("style");
   style.textContent = `
-    .workspace-preset-bar{display:flex;align-items:center;gap:5px;min-height:34px;margin:0 0 8px;padding:4px 7px;border:1px solid #e4e8e6;border-radius:8px;background:#fbfcfb;color:#4b5550;font-size:12px;box-sizing:border-box}
-    .workspace-preset-bar button,.workspace-modal button{margin:0}.workspace-preset-bar button{font:inherit}.workspace-preset-help{position:relative;width:21px;height:21px;padding:0;border:1px solid #b8c6c0;border-radius:50%;background:#fff;color:#46705f;font-weight:700;cursor:help}
-    .workspace-preset-help-content{display:none;position:absolute;z-index:9999;left:0;top:27px;width:min(390px,78vw);padding:10px 12px;border:1px solid #b8c6c0;border-radius:8px;background:#fff;box-shadow:0 7px 22px rgba(0,0,0,.16);color:#27332e;text-align:left;line-height:1.35;font-weight:400}
+    .workspace-preset-bar{display:flex;align-items:center;gap:7px;min-height:42px;margin:0 0 10px;padding:6px 9px;border:1px solid #e1e7e4;border-radius:9px;background:#fbfcfb;color:#4b5550;font-size:13px;box-sizing:border-box}
+    .workspace-preset-bar button,.workspace-modal button{margin:0}.workspace-preset-bar button{font:inherit}.workspace-preset-help{position:relative;width:24px;height:24px;padding:0;border:1px solid #b8c6c0;border-radius:50%;background:#fff;color:#46705f;font-weight:700;cursor:help;flex:0 0 auto}
+    .workspace-preset-help-content{display:none;position:absolute;z-index:9999;left:0;top:30px;width:min(390px,78vw);padding:10px 12px;border:1px solid #b8c6c0;border-radius:8px;background:#fff;box-shadow:0 7px 22px rgba(0,0,0,.16);color:#27332e;text-align:left;line-height:1.35;font-weight:400}
     .workspace-preset-help:hover .workspace-preset-help-content,.workspace-preset-help:focus .workspace-preset-help-content,.workspace-preset-help.is-open .workspace-preset-help-content{display:block}
-    .workspace-preset-io{padding:3px 7px;border:1px solid #cbd5d1;border-radius:6px;background:#fff;color:#3d5148;cursor:pointer}.workspace-preset-io:hover{background:#f1f7f4}
-    .workspace-preset-label{margin-left:9px;color:#68746f;font-weight:600;white-space:nowrap}.workspace-preset-list{display:flex;align-items:center;gap:5px;min-width:0;overflow-x:auto;padding:1px 0;scrollbar-width:thin}
-    .workspace-preset-chip{display:inline-flex;align-items:center;gap:5px;flex:0 0 auto;padding:4px 5px 4px 9px;border:1px solid #d2dad6;border-radius:999px;background:#fff;color:#34463e;cursor:pointer;max-width:190px}.workspace-preset-chip:hover{background:#f2f8f5;color:#34463e}
+    .workspace-preset-io{padding:5px 9px;border:1px solid #cbd5d1;border-radius:7px;background:#fff;color:#3d5148;cursor:pointer}.workspace-preset-io:hover{background:#f1f7f4}
+    .workspace-preset-label{margin-left:10px;color:#68746f;font-weight:600;white-space:nowrap}.workspace-preset-list{display:flex;align-items:center;gap:7px;min-width:0;overflow-x:auto;padding:2px 0;scrollbar-width:thin}
+    .workspace-preset-chip{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;min-height:29px;padding:5px 7px 5px 10px;border:1px solid #d2dad6;border-radius:999px;background:#fff;color:#34463e;cursor:pointer;max-width:210px}.workspace-preset-chip:hover{background:#f2f8f5;color:#34463e}
     .workspace-preset-chip.is-active{border-color:#69a98d;background:#edf7f2;box-shadow:inset 0 -2px 0 #5a9}.workspace-preset-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .workspace-preset-dot{width:7px;height:7px;border-radius:50%;background:#b8c0bd;flex:0 0 auto}.workspace-preset-dot.recording{background:#d7263d;box-shadow:0 0 0 0 rgba(215,38,61,.5);animation:workspacePulse 1.3s infinite}.workspace-preset-dot.generating{background:#7b61c9;animation:workspaceSpin 1.2s linear infinite}.workspace-preset-dot.transcribing{background:#2c7bd9}.workspace-preset-dot.complete{background:#2f9d61}
-    .workspace-preset-close{border:0;background:transparent;color:#87918d;padding:0 2px;line-height:1;font-size:14px;cursor:pointer}.workspace-preset-close:hover{color:#a4001e}.workspace-preset-add{width:25px;height:25px;padding:0;border:1px dashed #aebbb5;border-radius:50%;background:#fff;color:#426857;font-size:17px;line-height:1;cursor:pointer;flex:0 0 auto}
+    .workspace-preset-dot{width:8px;height:8px;border-radius:50%;background:#b8c0bd;flex:0 0 auto}.workspace-preset-dot.recording{background:#d7263d;box-shadow:0 0 0 0 rgba(215,38,61,.5);animation:workspacePulse 1.3s infinite}.workspace-preset-dot.generating{background:#7b61c9;animation:workspaceSpin 1.2s linear infinite}.workspace-preset-dot.transcribing{background:#2c7bd9}.workspace-preset-dot.complete{background:#2f9d61}
+    .workspace-preset-close{border:0;background:transparent;color:#87918d;padding:0 2px;line-height:1;font-size:15px;cursor:pointer}.workspace-preset-close:hover{color:#a4001e}.workspace-preset-add{width:29px;height:29px;padding:0;border:1px dashed #aebbb5;border-radius:50%;background:#fff;color:#426857;font-size:19px;line-height:1;cursor:pointer;flex:0 0 auto}
     .workspace-preset-frame-host{position:relative;width:100%}.workspace-preset-frame{border:0;background:#f8f8f8}.workspace-preset-frame.is-active{position:relative;display:block;width:100%;min-height:600px;opacity:1;pointer-events:auto}.workspace-preset-frame.is-parked{position:fixed;left:-10000px;top:0;width:2px!important;height:2px!important;opacity:0;pointer-events:none}
     .workspace-preset-toast{position:fixed;z-index:10020;left:50%;bottom:18px;transform:translateX(-50%);padding:8px 13px;border-radius:8px;background:#24352d;color:white;font-size:13px;box-shadow:0 5px 20px rgba(0,0,0,.2)}
     .workspace-backdrop{position:fixed;z-index:10010;inset:0;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.4)}.workspace-backdrop[hidden]{display:none}.workspace-modal{width:min(480px,94vw);max-height:88vh;overflow:auto;background:#fff;border-radius:12px;padding:16px;box-shadow:0 16px 48px rgba(0,0,0,.3)}.workspace-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.workspace-modal-head h2{font-size:18px;margin:0}.workspace-modal-close{border:0;background:transparent;color:#a4001e;padding:2px 6px;font-size:22px;cursor:pointer}.workspace-modal-notice{padding:9px;border:1px solid #b8d6ca;border-radius:8px;background:#f3faf7;font-size:12px;line-height:1.4}.workspace-modal-option{display:block;width:100%;margin-top:10px!important;padding:9px;border:1px solid #9bc4b2;border-radius:8px;background:#fff;color:#2e5544;text-align:left;cursor:pointer}.workspace-modal-option:hover{background:#f1f8f5;color:#2e5544}.workspace-modal-field{display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:8px;border:1px solid #cbd5d1;border-radius:7px}.workspace-modal-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.workspace-modal-actions button{padding:7px 11px;border-radius:7px;font-size:12px}.workspace-modal-status{min-height:18px;font-size:12px}.workspace-import-preview{margin-top:10px;padding:9px;border:1px solid #d8dfdc;border-radius:8px;background:#fafafa;font-size:12px}
@@ -655,7 +655,11 @@ function initTopLevelManager() {
     definitions.forEach((definition, index) => {
       const runtime = runtimes.get(definition.id);
       if (!runtime?.ready) return;
-      const title = String(runtimeAction(runtime, "getCurrentPromptSlotTitle") || "").trim();
+      const title = String(
+        runtimeAction(runtime, "getCurrentPromptSlotTitle") ||
+        runtime.doc?.getElementById("promptSlotTriggerName")?.textContent ||
+        ""
+      ).trim();
       if (!title) return;
       const nextName = safeName(title, fmt(t().defaultName, { n: index + 1 }));
       if (definition.name === nextName) return;
@@ -988,8 +992,19 @@ function sanitizeConfig(config) {
   return safe;
 }
 
-if (window.__workspacePresetFrame) {
-  initFrameRuntime();
+function bootWorkspacePresets() {
+  if (window.__workspacePresetFrame) {
+    initFrameRuntime();
+  } else {
+    initTopLevelManager();
+  }
+}
+
+// main.js registers the native page actions from its DOMContentLoaded handler.
+// Waiting for that handler keeps preset 1 on the same late-bound action path as
+// the iframe presets, including prompt-title lookup and Mini Panel delegation.
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootWorkspacePresets, { once: true });
 } else {
-  initTopLevelManager();
+  bootWorkspacePresets();
 }

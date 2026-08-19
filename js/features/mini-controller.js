@@ -2093,14 +2093,12 @@ function getMiniPresetCopy() {
   const norwegian = ['no', 'nb', 'nn'].includes(getPageLanguage());
   return norwegian ? {
     standard: 'Standardvisning', presets: 'Presetvisning', noPresets: 'Ingen presets tilgjengelig i valgt fane.',
-    idle: 'Klar', recording: 'Tar opp', paused: 'Pauset', transcribing: 'Transkriberer',
-    generating: 'Genererer notat', complete: 'Ferdig', start: 'Start', stop: 'Stopp',
+    finishingTranscription: 'Fullfører transkripsjon', generatingNote: 'Genererer notat',
     pause: 'Pause', resume: 'Fortsett', generate: 'Generer', abortRecording: 'Avbryt opptak',
     abortNote: 'Avbryt notat', switchToPresets: 'Bytt til presetvisning', switchToStandard: 'Bytt til standardvisning',
   } : {
     standard: 'Standard view', presets: 'Preset view', noPresets: 'No presets are available in the selected tab.',
-    idle: 'Ready', recording: 'Recording', paused: 'Paused', transcribing: 'Transcribing',
-    generating: 'Generating note', complete: 'Completed', start: 'Start', stop: 'Stop',
+    finishingTranscription: 'Finishing transcription', generatingNote: 'Generating note',
     pause: 'Pause', resume: 'Resume', generate: 'Generate', abortRecording: 'Abort recording',
     abortNote: 'Abort note', switchToPresets: 'Switch to preset view', switchToStandard: 'Switch to standard view',
   };
@@ -2123,53 +2121,30 @@ function setMiniPanelViewMode(mode) {
 function getMiniPresetStatus(item, copy) {
   const state = item?.state || {};
   const phase = String(state.miniPanelStatusPhase || '').toLowerCase();
-  if (phase === 'recording') return { tone: 'recording', label: copy.recording };
-  if (phase === 'paused') return { tone: 'recording', label: copy.paused };
+  const recording = phase === 'recording';
   if (state.noteBusy || item?.secondaryBusy || phase === 'note-generating') {
-    return { tone: 'generating', label: copy.generating };
+    return { recording, label: copy.generatingNote };
+  }
+  if (phase === 'recording' || phase === 'paused') {
+    return { recording, label: '' };
   }
   if (state.transcribeBusy || phase.includes('transcrib')) {
-    return { tone: 'transcribing', label: copy.transcribing };
+    return { recording, label: copy.finishingTranscription };
   }
-  if (['transcript-completed', 'transcript-complete', 'note-completed'].includes(phase)) {
-    return { tone: 'complete', label: copy.complete };
-  }
-  return { tone: '', label: copy.idle };
-}
-
-function getMiniPresetElapsed(item) {
-  const state = item?.state || {};
-  if (state.noteBusy) {
-    return computeTimerElapsedMs(
-      Number(state.noteGenerationStartedAt || 0),
-      Number(state.noteGenerationElapsedMs || 0)
-    );
-  }
-  if (state.transcribeBusy) {
-    return computeTimerElapsedMs(
-      Number(state.transcriptStartedAt || 0),
-      Number(state.transcriptElapsedMs || 0)
-    );
-  }
-  if (['recording', 'paused'].includes(String(state.miniPanelStatusPhase || ''))) {
-    return computeRecordingElapsedMs(state);
-  }
-  return 0;
+  return { recording, label: '' };
 }
 
 function updateSelectedWorkspaceSnapshot(presetId) {
   updateSelectedHubSnapshot((prev) => ({
     ...prev,
+    state: (prev.workspacePresets?.items || []).find(
+      (item) => String(item?.id || '') === String(presetId || '')
+    )?.state || prev.state,
     workspacePresets: {
       ...(prev.workspacePresets || {}),
       activePresetId: String(presetId || ''),
     },
   }));
-}
-
-function runMiniPresetAction(presetId, actionName) {
-  dispatchHubAction('runWorkspacePresetAction', String(presetId || ''), actionName);
-  requestUiRefresh();
 }
 
 function renderMiniPresetDashboard(snapshot) {
@@ -2185,21 +2160,16 @@ function renderMiniPresetDashboard(snapshot) {
   const toggle = $('miniPresetModeButton');
   const badge = $('miniPresetModeBadge');
   const tabPicker = doc.querySelector('.mini-tab-picker');
-  const presetPicker = $('miniPresetPicker');
-  const presetSelect = $('miniPresetSelect');
-  const presetPickerLabel = $('miniPresetPickerLabel');
 
   if (standard) {
-    standard.hidden = mode === 'presets';
-    standard.style.display = mode === 'presets' ? 'none' : 'flex';
+    standard.hidden = false;
+    standard.style.display = 'flex';
   }
   if (dashboard) {
     dashboard.hidden = mode !== 'presets';
     dashboard.style.display = mode === 'presets' ? 'block' : 'none';
   }
   if (tabPicker) tabPicker.hidden = mode === 'presets';
-  if (presetPicker) presetPicker.hidden = mode !== 'presets';
-  if (presetPickerLabel) presetPickerLabel.textContent = copy.presets;
   if (doc.body) doc.body.dataset.viewMode = mode;
   if (toggle) {
     toggle.dataset.active = mode === 'presets' ? '1' : '0';
@@ -2211,26 +2181,6 @@ function renderMiniPresetDashboard(snapshot) {
   if (badge) {
     badge.hidden = activeJobs === 0;
     badge.textContent = String(activeJobs);
-  }
-
-  if (presetSelect) {
-    const signature = items.map((item) => `${item.id}:${item.name}`).join('|');
-    if (presetSelect.dataset.signature !== signature) {
-      presetSelect.dataset.syncing = '1';
-      presetSelect.replaceChildren();
-      items.forEach((item) => {
-        const option = doc.createElement('option');
-        option.value = String(item.id || '');
-        option.textContent = String(item.name || 'Preset');
-        presetSelect.appendChild(option);
-      });
-      presetSelect.dataset.signature = signature;
-      presetSelect.dataset.syncing = '0';
-    }
-    presetSelect.disabled = items.length === 0;
-    if (items.some((item) => String(item.id) === String(workspace.activePresetId))) {
-      presetSelect.value = String(workspace.activePresetId);
-    }
   }
 
   const refreshScale = () => {
@@ -2248,51 +2198,31 @@ function renderMiniPresetDashboard(snapshot) {
   }
 
   items.forEach((item) => {
-    const state = item?.state || {};
     const status = getMiniPresetStatus(item, copy);
-    const row = doc.createElement('section');
+    const row = doc.createElement('button');
+    row.type = 'button';
     row.className = 'mini-preset-item';
     row.classList.toggle('is-active', String(item.id) === String(workspace.activePresetId));
+    row.setAttribute('aria-pressed', String(item.id) === String(workspace.activePresetId) ? 'true' : 'false');
+    row.title = String(item.name || 'Preset');
 
-    const head = doc.createElement('div');
-    head.className = 'mini-preset-head';
+    const statusText = doc.createElement('span');
+    statusText.className = 'mini-preset-status-text';
+    statusText.textContent = status.label;
+    statusText.hidden = !status.label;
     const dot = doc.createElement('span');
-    dot.className = `mini-preset-status-dot ${status.tone}`;
-    const select = doc.createElement('button');
-    select.type = 'button'; select.className = 'mini-preset-select'; select.textContent = String(item.name || 'Preset');
-    select.title = String(item.name || 'Preset');
-    select.addEventListener('click', () => {
+    dot.className = 'mini-preset-recording-dot';
+    dot.hidden = !status.recording;
+    dot.setAttribute('aria-hidden', 'true');
+    const name = doc.createElement('span');
+    name.className = 'mini-preset-name';
+    name.textContent = String(item.name || 'Preset');
+    row.addEventListener('click', () => {
       dispatchHubAction('selectWorkspacePreset', String(item.id || ''));
       updateSelectedWorkspaceSnapshot(item.id);
       requestUiRefresh();
     });
-    head.append(dot, select);
-
-    const meta = doc.createElement('div');
-    meta.className = 'mini-preset-meta';
-    const elapsed = getMiniPresetElapsed(item);
-    meta.textContent = elapsed > 0 ? `${status.label} · ${formatElapsedMs(elapsed)}` : status.label;
-
-    const actions = doc.createElement('div');
-    actions.className = 'mini-preset-actions';
-    const addAction = (label, actionName, enabled = true, extraClass = '') => {
-      const button = doc.createElement('button');
-      button.type = 'button'; button.className = `mini-preset-action ${extraClass}`.trim();
-      button.textContent = label; button.disabled = !enabled;
-      button.addEventListener('click', () => runMiniPresetAction(item.id, actionName));
-      actions.appendChild(button);
-    };
-
-    if (state.canStart) addAction(copy.start, 'startRecording');
-    if (state.canPauseResume) {
-      addAction(String(state.pauseResumeLabel || '').toLowerCase().includes('resume') || String(state.miniPanelStatusPhase) === 'paused' ? copy.resume : copy.pause, 'pauseResumeRecording');
-    }
-    if (state.canStop) addAction(copy.stop, 'stopRecording');
-    if (state.hasTranscript && !state.noteBusy) addAction(copy.generate, 'triggerGenerateNote');
-    if (state.canAbort) addAction(copy.abortRecording, 'abortRecording', true, 'abort');
-    if (state.noteBusy) addAction(copy.abortNote, 'abortNoteGeneration', true, 'abort');
-
-    row.append(head, meta, actions);
+    row.append(statusText, dot, name);
     list.appendChild(row);
   });
   refreshScale();
@@ -2485,6 +2415,8 @@ function dispatchFocusSelectedTab() {
 
 function getLocalMiniContentText(kind) {
   const normalizedKind = normalizeLower(kind, 'transcript');
+  const workspaceContent = window.__workspacePresets?.getContent?.(normalizedKind);
+  if (typeof workspaceContent === 'string') return workspaceContent;
   const fieldId = normalizedKind === 'note' ? 'generatedNote' : 'transcription';
   return String(document.getElementById(fieldId)?.value || '');
 }
@@ -2621,7 +2553,6 @@ function bindMiniPanelEvents() {
   const closeButton = $('miniCloseButton');
   const focusTabButton = $('miniFocusTabButton');
   const presetModeButton = $('miniPresetModeButton');
-  const presetSelect = $('miniPresetSelect');
   const promptSelect = $('miniPromptSelect');
   const tabSelect = $('miniTabSelect');
   const tabPickerTrigger = $('miniTabPickerTrigger');
@@ -2902,17 +2833,6 @@ function bindMiniPanelEvents() {
     });
   }
 
-  if (presetSelect) {
-    presetSelect.addEventListener('change', () => {
-      if (presetSelect.dataset.syncing === '1') return;
-      const presetId = String(presetSelect.value || '').trim();
-      if (!presetId) return;
-      dispatchHubAction('selectWorkspacePreset', presetId);
-      updateSelectedWorkspaceSnapshot(presetId);
-      requestUiRefresh();
-    });
-  }
-
   if (focusTabButton) {
     focusTabButton.addEventListener('click', () => {
       dispatchFocusSelectedTab();
@@ -2962,9 +2882,16 @@ function installMiniPanelAutoScale(targetWindow) {
       const effectiveHeight = panel?.scrollHeight || MINI_PANEL_HEIGHT;
       const scaleX = width / MINI_PANEL_WIDTH;
       const scaleY = height / effectiveHeight;
-      const scale = Math.min(1, scaleX, scaleY);
+      const presetMode = doc.body?.dataset.viewMode === 'presets';
+      // Keep preset rows at the same visual size as the normal collapsed tab
+      // selector. If the user switches modes in a short window, the preset
+      // panel scrolls vertically instead of shrinking every row and control.
+      const scale = Math.min(1, scaleX, presetMode ? 1 : scaleY);
 
       root.style.setProperty('--mini-scale', String(scale));
+      const needsPresetScroll = presetMode && effectiveHeight * scale > height;
+      root.style.overflowY = needsPresetScroll ? 'auto' : 'hidden';
+      if (doc.body) doc.body.style.overflowY = needsPresetScroll ? 'auto' : 'hidden';
     } catch (_) {}
   }
 
@@ -2975,6 +2902,17 @@ function installMiniPanelAutoScale(targetWindow) {
   targetWindow.__applyMiniPanelScale = applyScale;
 
   applyScale();
+}
+
+function getMiniPanelPreferredHeight() {
+  if (getMiniPanelViewMode() !== 'presets') return MINI_PANEL_HEIGHT;
+  const count = Math.max(
+    1,
+    Number(getSelectedHubSnapshot()?.workspacePresets?.items?.length || 0)
+  );
+  const desired = MINI_PANEL_HEIGHT + (count * 32);
+  const available = Math.max(MINI_PANEL_HEIGHT, Number(window.screen?.availHeight || 800) - 90);
+  return Math.min(desired, available, 720);
 }
 
 function renderMiniPanelDocument(targetWindow) {
@@ -3073,39 +3011,9 @@ function renderMiniPanelDocument(targetWindow) {
     }
 
     .mini-tab-picker[hidden],
-    .mini-preset-picker[hidden],
     .mini-standard-view[hidden],
     .mini-preset-dashboard[hidden] {
       display: none !important;
-    }
-
-    .mini-preset-picker {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      width: 100%;
-      min-width: 0;
-    }
-
-    .mini-preset-picker-label {
-      flex: 0 0 auto;
-      color: var(--muted);
-      font-size: 10px;
-      font-weight: 700;
-    }
-
-    .mini-preset-picker-select {
-      flex: 1 1 auto;
-      min-width: 0;
-      height: 28px;
-      border: 1px solid rgba(111,211,166,.50);
-      border-radius: 9px;
-      padding: 4px 7px;
-      background: var(--select-bg);
-      color: var(--text);
-      font-size: 11px;
-      font-weight: 700;
-      outline: none;
     }
 
     .mini-tab-select--hidden {
@@ -3316,9 +3224,7 @@ function renderMiniPanelDocument(targetWindow) {
     }
 
     .mini-preset-dashboard {
-      max-height: 208px;
-      overflow: auto;
-      padding-right: 2px;
+      width: 100%;
     }
 
     .mini-preset-empty {
@@ -3331,97 +3237,90 @@ function renderMiniPanelDocument(targetWindow) {
     .mini-preset-list {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
     }
 
     .mini-preset-item {
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      padding: 5px 6px;
-      background: rgba(255,255,255,.025);
+      width: 100%;
+      min-width: 0;
+      min-height: 28px;
+      border: 1px solid var(--button-border);
+      border-radius: 10px;
+      padding: 6px 8px;
+      background: var(--select-bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      text-align: left;
+      font: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .mini-preset-item:hover {
+      background: rgba(255,255,255,.07);
     }
 
     .mini-preset-item.is-active {
-      border-color: rgba(111,211,166,.50);
-      background: rgba(111,211,166,.065);
+      border-color: rgba(111,211,166,.95);
+      background: rgba(111,211,166,.11);
+      box-shadow: 0 0 0 1px rgba(111,211,166,.38), 0 0 9px rgba(111,211,166,.15);
     }
 
-    .mini-preset-head {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      min-width: 0;
-    }
-
-    .mini-preset-select {
+    .mini-preset-name {
       flex: 1 1 auto;
       min-width: 0;
-      border: 0;
-      padding: 1px 0;
-      background: transparent;
-      color: var(--text);
-      font: inherit;
-      font-size: 11px;
-      font-weight: 700;
-      text-align: left;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      cursor: pointer;
     }
 
-    .mini-preset-status-dot {
-      width: 7px;
-      height: 7px;
+    .mini-preset-recording-dot {
+      width: 8px;
+      height: 8px;
       flex: 0 0 auto;
-      border-radius: 50%;
-      background: #7b879b;
-    }
-
-    .mini-preset-status-dot.recording {
+      border-radius: 999px;
       background: #ef4055;
       animation: miniPresetPulse 1.25s infinite;
     }
 
-    .mini-preset-status-dot.transcribing { background: #4da3ff; }
-    .mini-preset-status-dot.generating { background: #a98bff; }
-    .mini-preset-status-dot.complete { background: var(--accent); }
-
-    .mini-preset-meta {
-      margin-top: 2px;
-      color: var(--muted);
+    .mini-preset-status-text {
+      flex: 0 1 auto;
+      max-width: 122px;
+      color: var(--info);
       font-size: 9px;
+      font-weight: 700;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-
-    .mini-preset-actions {
-      display: flex;
-      gap: 4px;
-      margin-top: 4px;
-      flex-wrap: wrap;
-    }
-
-    .mini-preset-action {
-      min-height: 21px;
-      padding: 2px 7px;
-      border: 1px solid var(--button-border);
-      border-radius: 6px;
-      background: var(--button);
-      color: var(--text);
-      font-size: 9px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .mini-preset-action:disabled { opacity: .38; cursor: default; }
-    .mini-preset-action.abort { color: var(--danger); }
 
     @keyframes miniPresetPulse {
       0% { box-shadow: 0 0 0 0 rgba(239,64,85,.55); }
       70% { box-shadow: 0 0 0 5px rgba(239,64,85,0); }
       100% { box-shadow: 0 0 0 0 rgba(239,64,85,0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .mini-preset-recording-dot { animation: none; }
+    }
+
+    body[data-view-mode="presets"] .status-row,
+    body[data-view-mode="presets"] .status-meta,
+    body[data-view-mode="presets"] .prompt-left {
+      display: none;
+    }
+
+    body[data-view-mode="presets"] .prompt-wrap {
+      justify-content: flex-start;
+    }
+
+    body[data-view-mode="presets"] .prompt-right {
+      flex: 1 1 auto;
+      justify-content: flex-start;
     }
 
     .focus-btn {
@@ -4055,16 +3954,16 @@ function renderMiniPanelDocument(targetWindow) {
               <div id="miniTabPickerList" class="mini-tab-picker-list"></div>
             </div>
           </div>
-          <div id="miniPresetPicker" class="mini-preset-picker" hidden>
-            <label id="miniPresetPickerLabel" class="mini-preset-picker-label" for="miniPresetSelect">Preset view</label>
-            <select id="miniPresetSelect" class="mini-preset-picker-select" aria-label="Select preset"></select>
-          </div>
         </div>
         <div class="top-right">
           <button id="miniFocusTabButton" class="focus-btn" type="button" aria-label="Jump to selected tab" title="Jump to selected tab" hidden>↗</button>
           <button id="miniPresetModeButton" class="view-mode-btn" type="button" aria-label="Switch mini panel view" title="Switch between standard and preset view">▦<span id="miniPresetModeBadge" class="view-mode-badge" hidden>0</span></button>
           <button id="miniCloseButton" class="close-btn" type="button" aria-label="Close mini panel">×</button>
         </div>
+      </div>
+
+      <div id="miniPresetDashboard" class="mini-preset-dashboard" hidden>
+        <div id="miniPresetList" class="mini-preset-list"></div>
       </div>
 
       <div id="miniStandardView" class="mini-standard-view">
@@ -4184,10 +4083,6 @@ function renderMiniPanelDocument(targetWindow) {
         </div>
       </div>
       </div>
-
-      <div id="miniPresetDashboard" class="mini-preset-dashboard" hidden>
-        <div id="miniPresetList" class="mini-preset-list"></div>
-      </div>
     </div>
   </div>
 </body>
@@ -4278,6 +4173,7 @@ function installMiniPanelWakeupLoop(targetWindow) {
 async function openMiniPanel() {
   ensureHubChannel();
   publishLocalHubSnapshot('open-request');
+  const preferredHeight = getMiniPanelPreferredHeight();
 
   if (isMiniWindowOpen()) {
     try {
@@ -4292,14 +4188,14 @@ async function openMiniPanel() {
     if (canUseDocumentPiP()) {
       miniWindow = await window.documentPictureInPicture.requestWindow({
         width: MINI_PANEL_WIDTH,
-        height: MINI_PANEL_HEIGHT,
+        height: preferredHeight,
         preferInitialWindowPlacement: true,
       });
     } else {
       miniWindow = window.open(
         '',
         MINI_PANEL_WINDOW_NAME,
-        `popup=yes,width=${MINI_PANEL_WIDTH},height=${MINI_PANEL_HEIGHT},resizable=yes`
+        `popup=yes,width=${MINI_PANEL_WIDTH},height=${preferredHeight},resizable=yes`
       );
       if (!miniWindow) {
         // window.open returning null in Safari almost always means
