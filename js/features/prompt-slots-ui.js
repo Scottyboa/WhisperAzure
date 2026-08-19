@@ -18,6 +18,7 @@ const promptExportBtn = document.getElementById("promptExportBtn");
 const promptImportBtn = document.getElementById("promptImportBtn");
 const promptImportFile = document.getElementById("promptImportFile");
 const promptBackupStatus = document.getElementById("promptBackupStatus");
+const redactorGeneralTerms = document.getElementById("redactorGeneralTerms");
 const promptBackupModal = {
   backdrop: document.getElementById("promptBackupModalBackdrop"),
   card: document.getElementById("promptBackupModal"),
@@ -51,21 +52,21 @@ const PROMPT_BACKUP_TEXT = {
     exportTitle: "Export prompts",
     importTitle: "Import prompts",
     activeProfile: "Active prompt profile: {profile}",
-    exportNotice: "Before exporting, make sure every prompt you want to back up is filled in. All 20 prompt slots and their labels in the active profile are included; empty slots are saved as empty.",
-    importNotice: "Import replaces all 20 prompt slots and their labels in the active profile. A JSON or cloud backup must already have been created.",
+    exportNotice: "Before exporting, make sure every prompt you want to back up is filled in. All 20 prompt slots and their labels in the active profile are included; empty slots are saved as empty. Cloud export also saves General terms as a separate encrypted backup when that field contains text. Specific terms are never included.",
+    importNotice: "Import replaces all 20 prompt slots and their labels in the active profile. A JSON or cloud backup must already have been created. Cloud import also restores an available General terms backup for this tab; Specific terms are never imported.",
     exportJson: "Export as JSON file",
     importJson: "Import from JSON file",
     exportJsonHelp: "Uses the existing method and saves a readable JSON file on this device. Store the file securely.",
     importJsonHelp: "Uses the existing method: choose a previously exported prompt JSON file from this device.",
     exportOneDrive: "Export to Microsoft OneDrive",
     importOneDrive: "Import from Microsoft OneDrive",
-    exportOneDriveHelp: "Encrypts the active profile in this browser and saves one prompt backup in your private Microsoft OneDrive app folder. A new export replaces only the previous OneDrive prompt backup.",
-    importOneDriveHelp: "Sign in with the same personal Microsoft account and enter the backup password. The prompts are downloaded from your private OneDrive app folder.",
+    exportOneDriveHelp: "Encrypts the active profile in this browser and saves one prompt backup in your private Microsoft OneDrive app folder. If General terms contains text, it is encrypted and saved as a separate backup. An empty General terms field never overwrites an earlier General terms backup.",
+    importOneDriveHelp: "Sign in with the same personal Microsoft account and enter the backup password. Prompts and any available General terms backup are downloaded from your private OneDrive app folder.",
     exportGoogleDrive: "Export to Google Drive",
     importGoogleDrive: "Import from Google Drive",
-    exportGoogleDriveHelp: "Encrypts the active profile in this browser and saves one prompt backup in your private Google Drive app storage. A new export replaces only the previous Google Drive prompt backup.",
-    importGoogleDriveHelp: "Sign in with the same Google account and enter the backup password. The prompts are downloaded from private Google Drive app storage.",
-    exportCloudNotice: "Create an encryption password. It is never uploaded or stored by this app. If you forget it, the backup cannot be restored. This prompt backup is separate from your API-key backup and other files.",
+    exportGoogleDriveHelp: "Encrypts the active profile in this browser and saves one prompt backup in your private Google Drive app storage. If General terms contains text, it is encrypted and saved as a separate backup. An empty General terms field never overwrites an earlier General terms backup.",
+    importGoogleDriveHelp: "Sign in with the same Google account and enter the backup password. Prompts and any available General terms backup are downloaded from private Google Drive app storage.",
+    exportCloudNotice: "Create an encryption password. It is never uploaded or stored by this app. If you forget it, the backup cannot be restored. Prompt and General terms backups are separate from your API-key backup and other files.",
     importCloudNotice: "Enter the password used when this prompt backup was exported. The password is used only in this browser and is never stored.",
     newPassword: "Encryption password (minimum 10 characters)",
     currentPassword: "Encryption password",
@@ -81,16 +82,21 @@ const PROMPT_BACKUP_TEXT = {
     minimumPassword: "Use an encryption password with at least 10 characters.",
     passwordsMismatch: "The two encryption passwords do not match.",
     passwordRequired: "Enter the encryption password for this backup.",
-    confirmOneDriveExport: "Save this encrypted prompt backup to Microsoft OneDrive? The previous OneDrive prompt backup will be replaced.",
-    confirmGoogleDriveExport: "Save this encrypted prompt backup to Google Drive? The previous Google Drive prompt backup will be replaced.",
+    confirmOneDriveExport: "Save this encrypted prompt backup to Microsoft OneDrive? The previous OneDrive prompt backup will be replaced. If General terms contains text, its separate backup will also be replaced; if empty, the previous General terms backup remains unchanged.",
+    confirmGoogleDriveExport: "Save this encrypted prompt backup to Google Drive? The previous Google Drive prompt backup will be replaced. If General terms contains text, its separate backup will also be replaced; if empty, the previous General terms backup remains unchanged.",
     microsoftSignIn: "Waiting for Microsoft sign-in…",
     googleSignIn: "Waiting for Google sign-in…",
     encryptingAndSaving: "Encrypting and saving the prompt backup…",
     downloadingAndDecrypting: "Downloading and decrypting the prompt backup…",
     oneDriveSaved: "Encrypted prompt backup saved to Microsoft OneDrive. Any previous OneDrive prompt backup was replaced.",
     googleDriveSaved: "Encrypted prompt backup saved to Google Drive. Any previous Google Drive prompt backup was replaced.",
+    oneDriveSavedWithGeneral: "Encrypted prompt and General terms backups saved to Microsoft OneDrive. Previous backups of those files were replaced.",
+    googleDriveSavedWithGeneral: "Encrypted prompt and General terms backups saved to Google Drive. Previous backups of those files were replaced.",
     oneDriveImported: "Prompts imported from Microsoft OneDrive into the active profile.",
     googleDriveImported: "Prompts imported from Google Drive into the active profile.",
+    oneDriveImportedWithGeneral: "Prompts and General terms imported from Microsoft OneDrive. General terms is available for this tab only.",
+    googleDriveImportedWithGeneral: "Prompts and General terms imported from Google Drive. General terms is available for this tab only.",
+    generalTermsImportWarning: "Prompts were imported, but the separate General terms backup could not be restored: {error}",
     jsonExported: "Prompt JSON export completed.",
     jsonImported: "Prompts imported from the JSON file into the active profile.",
     exportFailed: "Prompt export failed: {error}",
@@ -98,27 +104,28 @@ const PROMPT_BACKUP_TEXT = {
     invalidJson: "Prompt import failed: the file is not valid JSON.",
     replaceActive: "Replace all 20 prompts and labels in the active profile \"{active}\"?",
     profileMismatch: "This backup was exported from profile \"{source}\", but the active profile is \"{active}\".\n\nImporting will replace the active profile; it will not switch profiles. Continue?",
+    replaceGeneralTerms: "The available General terms backup will also replace General terms for this tab. Specific terms will not be changed.",
   },
   no: {
     close: "Lukk",
     exportTitle: "Eksporter prompter",
     importTitle: "Importer prompter",
     activeProfile: "Aktiv promptprofil: {profile}",
-    exportNotice: "Før eksport må alle promptene du ønsker å sikkerhetskopiere være ferdig utfylt. Alle 20 promptplassene og navnene deres i den aktive profilen tas med; tomme plasser lagres som tomme.",
-    importNotice: "Import erstatter alle 20 promptplassene og navnene deres i den aktive profilen. En JSON- eller skysikkerhetskopi må være opprettet på forhånd.",
+    exportNotice: "Før eksport må alle promptene du ønsker å sikkerhetskopiere være ferdig utfylt. Alle 20 promptplassene og navnene deres i den aktive profilen tas med; tomme plasser lagres som tomme. Ved skyeksport lagres også Generelle begreper som en separat kryptert kopi når feltet inneholder tekst. Spesifikke begreper tas aldri med.",
+    importNotice: "Import erstatter alle 20 promptplassene og navnene deres i den aktive profilen. En JSON- eller skysikkerhetskopi må være opprettet på forhånd. Skyimport gjenoppretter også en tilgjengelig kopi av Generelle begreper for denne fanen; Spesifikke begreper importeres aldri.",
     exportJson: "Eksporter som JSON-fil",
     importJson: "Importer fra JSON-fil",
     exportJsonHelp: "Bruker den eksisterende metoden og lagrer en lesbar JSON-fil på denne enheten. Oppbevar filen sikkert.",
     importJsonHelp: "Bruker den eksisterende metoden: velg en tidligere eksportert prompt-JSON-fil fra denne enheten.",
     exportOneDrive: "Eksporter til Microsoft OneDrive",
     importOneDrive: "Importer fra Microsoft OneDrive",
-    exportOneDriveHelp: "Krypterer den aktive profilen i nettleseren og lagrer én prompt-sikkerhetskopi i den private appmappen i Microsoft OneDrive. Ny eksport erstatter bare den forrige OneDrive-kopien av promptene.",
-    importOneDriveHelp: "Logg inn med samme private Microsoft-konto og skriv inn passordet. Promptene hentes fra den private appmappen i OneDrive.",
+    exportOneDriveHelp: "Krypterer den aktive profilen i nettleseren og lagrer én promptkopi i den private appmappen i Microsoft OneDrive. Hvis Generelle begreper inneholder tekst, krypteres og lagres dette som en separat kopi. Et tomt felt overskriver aldri en eldre kopi av Generelle begreper.",
+    importOneDriveHelp: "Logg inn med samme private Microsoft-konto og skriv inn passordet. Prompter og en eventuell kopi av Generelle begreper hentes fra den private appmappen i OneDrive.",
     exportGoogleDrive: "Eksporter til Google Drive",
     importGoogleDrive: "Importer fra Google Drive",
-    exportGoogleDriveHelp: "Krypterer den aktive profilen i nettleseren og lagrer én prompt-sikkerhetskopi i det private appområdet i Google Drive. Ny eksport erstatter bare den forrige Google Drive-kopien av promptene.",
-    importGoogleDriveHelp: "Logg inn med samme Google-konto og skriv inn passordet. Promptene hentes fra det private appområdet i Google Drive.",
-    exportCloudNotice: "Lag et krypteringspassord. Det blir aldri lastet opp eller lagret av appen. Hvis du glemmer det, kan sikkerhetskopien ikke gjenopprettes. Promptkopien er adskilt fra sikkerhetskopien av API-nøkler og andre filer.",
+    exportGoogleDriveHelp: "Krypterer den aktive profilen i nettleseren og lagrer én promptkopi i det private appområdet i Google Drive. Hvis Generelle begreper inneholder tekst, krypteres og lagres dette som en separat kopi. Et tomt felt overskriver aldri en eldre kopi av Generelle begreper.",
+    importGoogleDriveHelp: "Logg inn med samme Google-konto og skriv inn passordet. Prompter og en eventuell kopi av Generelle begreper hentes fra det private appområdet i Google Drive.",
+    exportCloudNotice: "Lag et krypteringspassord. Det blir aldri lastet opp eller lagret av appen. Hvis du glemmer det, kan sikkerhetskopien ikke gjenopprettes. Kopiene av prompter og Generelle begreper er adskilt fra sikkerhetskopien av API-nøkler og andre filer.",
     importCloudNotice: "Skriv inn passordet som ble brukt da promptkopien ble eksportert. Passordet brukes bare i nettleseren og lagres aldri.",
     newPassword: "Krypteringspassord (minst 10 tegn)",
     currentPassword: "Krypteringspassord",
@@ -134,16 +141,21 @@ const PROMPT_BACKUP_TEXT = {
     minimumPassword: "Bruk et krypteringspassord med minst 10 tegn.",
     passwordsMismatch: "De to krypteringspassordene er ikke like.",
     passwordRequired: "Skriv inn krypteringspassordet for sikkerhetskopien.",
-    confirmOneDriveExport: "Lagre denne krypterte promptkopien i Microsoft OneDrive? Den forrige OneDrive-kopien av promptene erstattes.",
-    confirmGoogleDriveExport: "Lagre denne krypterte promptkopien i Google Drive? Den forrige Google Drive-kopien av promptene erstattes.",
+    confirmOneDriveExport: "Lagre denne krypterte promptkopien i Microsoft OneDrive? Den forrige OneDrive-kopien av promptene erstattes. Hvis Generelle begreper inneholder tekst, erstattes også den separate kopien; hvis feltet er tomt, beholdes den forrige kopien uendret.",
+    confirmGoogleDriveExport: "Lagre denne krypterte promptkopien i Google Drive? Den forrige Google Drive-kopien av promptene erstattes. Hvis Generelle begreper inneholder tekst, erstattes også den separate kopien; hvis feltet er tomt, beholdes den forrige kopien uendret.",
     microsoftSignIn: "Venter på Microsoft-innlogging…",
     googleSignIn: "Venter på Google-innlogging…",
     encryptingAndSaving: "Krypterer og lagrer promptkopien…",
     downloadingAndDecrypting: "Laster ned og dekrypterer promptkopien…",
     oneDriveSaved: "Kryptert promptkopi lagret i Microsoft OneDrive. En eventuell tidligere OneDrive-kopi ble erstattet.",
     googleDriveSaved: "Kryptert promptkopi lagret i Google Drive. En eventuell tidligere Google Drive-kopi ble erstattet.",
+    oneDriveSavedWithGeneral: "Krypterte kopier av prompter og Generelle begreper ble lagret i Microsoft OneDrive. Tidligere kopier av disse filene ble erstattet.",
+    googleDriveSavedWithGeneral: "Krypterte kopier av prompter og Generelle begreper ble lagret i Google Drive. Tidligere kopier av disse filene ble erstattet.",
     oneDriveImported: "Promptene ble importert fra Microsoft OneDrive til den aktive profilen.",
     googleDriveImported: "Promptene ble importert fra Google Drive til den aktive profilen.",
+    oneDriveImportedWithGeneral: "Prompter og Generelle begreper ble importert fra Microsoft OneDrive. Generelle begreper er bare tilgjengelig i denne fanen.",
+    googleDriveImportedWithGeneral: "Prompter og Generelle begreper ble importert fra Google Drive. Generelle begreper er bare tilgjengelig i denne fanen.",
+    generalTermsImportWarning: "Promptene ble importert, men den separate kopien av Generelle begreper kunne ikke gjenopprettes: {error}",
     jsonExported: "Eksport av prompt-JSON er fullført.",
     jsonImported: "Promptene ble importert fra JSON-filen til den aktive profilen.",
     exportFailed: "Eksport av prompter mislyktes: {error}",
@@ -151,6 +163,7 @@ const PROMPT_BACKUP_TEXT = {
     invalidJson: "Import av prompter mislyktes: filen inneholder ikke gyldig JSON.",
     replaceActive: "Erstatt alle 20 promptene og navnene i den aktive profilen \"{active}\"?",
     profileMismatch: "Denne sikkerhetskopien ble eksportert fra profilen \"{source}\", men den aktive profilen er \"{active}\".\n\nImporten erstatter den aktive profilen; den bytter ikke profil. Vil du fortsette?",
+    replaceGeneralTerms: "Den tilgjengelige kopien av Generelle begreper vil også erstatte innholdet i feltet for denne fanen. Spesifikke begreper endres ikke.",
   },
 };
 
@@ -741,21 +754,64 @@ function closePromptBackupModal({ force = false } = {}) {
   returnFocus?.focus();
 }
 
-function buildPromptImportConfirmation(bundle) {
+function normalizeGeneralTermsText(value) {
+  return String(value || "").replace(/\r\n?/g, "\n").trim();
+}
+
+function getCurrentGeneralTerms() {
+  return normalizeGeneralTermsText(redactorGeneralTerms?.value || "");
+}
+
+function buildGeneralTermsExportBundle() {
+  const generalTerms = getCurrentGeneralTerms();
+  if (!generalTerms) return null;
+  return {
+    schema: "whisper.redactor-general-terms",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    generalTerms,
+  };
+}
+
+function applyGeneralTermsImportBundle(bundle) {
+  if (!bundle || bundle.schema !== "whisper.redactor-general-terms" ||
+      bundle.version !== 1 || typeof bundle.generalTerms !== "string") {
+    throw new Error("The General terms backup has an unsupported format.");
+  }
+
+  const generalTerms = normalizeGeneralTermsText(bundle.generalTerms);
+  if (!generalTerms || !redactorGeneralTerms) return false;
+
+  redactorGeneralTerms.value = generalTerms;
+  redactorGeneralTerms.dispatchEvent(new Event("input", { bubbles: true }));
+  try {
+    sessionStorage.setItem("redactor_general_terms_session", generalTerms);
+  } catch {}
+  return true;
+}
+
+function buildPromptImportConfirmation(bundle, { includesGeneralTerms = false } = {}) {
   const text = getPromptBackupText();
   const validated = PromptManager.validatePromptImportBundle(bundle);
   const active = getCurrentProfileId();
+  let message = "";
   if (validated.profileId && validated.profileId !== active) {
-    return formatPromptBackupText(text.profileMismatch, {
+    message = formatPromptBackupText(text.profileMismatch, {
       source: validated.profileId,
       active,
     });
+  } else {
+    message = formatPromptBackupText(text.replaceActive, { active });
   }
-  return formatPromptBackupText(text.replaceActive, { active });
+
+  if (includesGeneralTerms) {
+    message += `\n\n${text.replaceGeneralTerms}`;
+  }
+  return message;
 }
 
-function importPromptBundleWithConfirmation(bundle) {
-  const confirmMessage = buildPromptImportConfirmation(bundle);
+function importPromptBundleWithConfirmation(bundle, options = {}) {
+  const confirmMessage = buildPromptImportConfirmation(bundle, options);
   return PromptManager.importPromptsFromBundle(bundle, { confirmMessage });
 }
 
@@ -800,6 +856,9 @@ async function runPromptCloudAction() {
   }
 
   let succeeded = false;
+  let generalTermsSaved = false;
+  let generalTermsImported = false;
+  let generalTermsImportError = null;
   const busyLabel = isExport ? text.saving : text.importing;
   setPromptBackupBusy(true, busyLabel);
   setPromptBackupStatus("", false, { modalOnly: true });
@@ -810,19 +869,43 @@ async function runPromptCloudAction() {
     };
 
     if (isExport) {
-      const bundle = PromptManager.buildPromptExportBundle();
+      const promptBundle = PromptManager.buildPromptExportBundle();
+      const generalTermsBundle = buildGeneralTermsExportBundle();
+      let result;
       if (provider === "oneDrive") {
-        await PromptCloudBackup.saveToOneDrive(bundle, password, updateProgress);
+        result = await PromptCloudBackup.savePackageToOneDrive(
+          { promptBundle, generalTermsBundle },
+          password,
+          updateProgress
+        );
       } else {
-        await PromptCloudBackup.saveToGoogleDrive(bundle, password, updateProgress);
+        result = await PromptCloudBackup.savePackageToGoogleDrive(
+          { promptBundle, generalTermsBundle },
+          password,
+          updateProgress
+        );
       }
+      generalTermsSaved = Boolean(result?.generalTermsSaved);
       succeeded = true;
     } else {
-      const bundle = provider === "oneDrive"
-        ? await PromptCloudBackup.loadFromOneDrive(password, updateProgress)
-        : await PromptCloudBackup.loadFromGoogleDrive(password, updateProgress);
-      const imported = importPromptBundleWithConfirmation(bundle);
+      const result = provider === "oneDrive"
+        ? await PromptCloudBackup.loadPackageFromOneDrive(password, updateProgress)
+        : await PromptCloudBackup.loadPackageFromGoogleDrive(password, updateProgress);
+      const imported = importPromptBundleWithConfirmation(result.promptBundle, {
+        includesGeneralTerms: Boolean(result.generalTermsBundle),
+      });
       if (!imported) return;
+
+      if (result.generalTermsBundle) {
+        try {
+          generalTermsImported = applyGeneralTermsImportBundle(result.generalTermsBundle);
+        } catch (error) {
+          generalTermsImportError = error;
+        }
+      }
+      if (result.generalTermsError) {
+        generalTermsImportError = result.generalTermsError;
+      }
       refreshPromptUiAfterImport();
       succeeded = true;
     }
@@ -838,11 +921,24 @@ async function runPromptCloudAction() {
 
   if (!succeeded) return;
 
-  const successMessage = isExport
-    ? (provider === "oneDrive" ? text.oneDriveSaved : text.googleDriveSaved)
-    : (provider === "oneDrive" ? text.oneDriveImported : text.googleDriveImported);
+  let successMessage;
+  if (isExport) {
+    successMessage = provider === "oneDrive"
+      ? (generalTermsSaved ? text.oneDriveSavedWithGeneral : text.oneDriveSaved)
+      : (generalTermsSaved ? text.googleDriveSavedWithGeneral : text.googleDriveSaved);
+  } else {
+    successMessage = provider === "oneDrive"
+      ? (generalTermsImported ? text.oneDriveImportedWithGeneral : text.oneDriveImported)
+      : (generalTermsImported ? text.googleDriveImportedWithGeneral : text.googleDriveImported);
+  }
   closePromptBackupModal({ force: true });
-  setPromptBackupStatus(successMessage, false);
+  if (generalTermsImportError) {
+    setPromptBackupStatus(formatPromptBackupText(text.generalTermsImportWarning, {
+      error: generalTermsImportError?.message || "Unknown error",
+    }), true);
+  } else {
+    setPromptBackupStatus(successMessage, false);
+  }
 }
 
 restorePersistedSelectedSlot();
