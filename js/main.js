@@ -418,8 +418,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function getCurrentMiniHubContentText(kind) {
-    const managedContent = window.__workspacePresets?.getContent?.(kind);
+  function getCurrentMiniHubContentText(kind, presetId = '') {
+    const managedContent = window.__workspacePresets?.getContent?.(kind, presetId);
     if (managedContent != null) return String(managedContent);
 
     const normalizedKind = String(kind || '').trim().toLowerCase();
@@ -474,6 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           const requestId = String(data?.requestId || '').trim();
           const kind = String(data?.kind || '').trim().toLowerCase();
+          const presetId = String(data?.presetId || '').trim();
           if (!requestId || !kind) return;
 
           postMiniHubMessage({
@@ -482,7 +483,8 @@ document.addEventListener('DOMContentLoaded', () => {
             tabId: getOrCreateMiniHubTabId(),
             pageSessionId: getOrCreateMiniHubPageSessionId(),
             kind,
-            text: getCurrentMiniHubContentText(kind),
+            presetId,
+            text: getCurrentMiniHubContentText(kind, presetId),
             at: Date.now(),
           });
           return;
@@ -3142,6 +3144,5 @@ document.addEventListener('DOMContentLoaded', () => {
   void initNoteProvider(getSelectedEffectiveNoteProvider());
   void initMiniControllerFeature();
 });
-
 
 
