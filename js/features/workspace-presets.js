@@ -1005,14 +1005,42 @@ function sanitizeConfig(config) {
 function bootWorkspacePresets() {
   if (window.__workspacePresetFrame) {
     initFrameRuntime();
-  } else {
-    initTopLevelManager();
+    return;
   }
+
+  // ES modules with dependency graphs do not guarantee that this module's
+  // DOMContentLoaded listener runs after main.js has finished registering its
+  // window.__app actions. Preset 1 uses the native page runtime and captures
+  // those actions during manager installation, so binding even one tick too
+  // early leaves its Mini Panel command bridge permanently empty.
+  let attempts = 0;
+  const waitForNativeActions = () => {
+    const app = window.__app;
+    const ready = [
+      "startRecording", "stopRecording", "pauseResumeRecording",
+      "abortRecording", "getMiniPanelState", "setAutoGenerateEnabled",
+      "setUsePromptEnabled", "setSelectedPromptSlot", "switchNoteProvider",
+    ].every((name) => typeof app?.[name] === "function");
+
+    if (ready) {
+      initTopLevelManager();
+      return;
+    }
+
+    attempts += 1;
+    if (attempts < 200) {
+      window.setTimeout(waitForNativeActions, 25);
+      return;
+    }
+
+    console.error("[workspace-presets] Native app actions were not ready; preset manager was not started.");
+  };
+
+  waitForNativeActions();
 }
 
-// main.js registers the native page actions from its DOMContentLoaded handler.
-// Waiting for that handler keeps preset 1 on the same late-bound action path as
-// the iframe presets, including prompt-title lookup and Mini Panel delegation.
+// main.js also registers from DOMContentLoaded. bootWorkspacePresets performs
+// an explicit readiness check because listener ordering alone is insufficient.
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", bootWorkspacePresets, { once: true });
 } else {
