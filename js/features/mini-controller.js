@@ -450,15 +450,15 @@ function tMini(key) {
       it: 'Prompt',
     },
     usePrompt: {
-      en: 'Use',
-      no: 'Bruk',
-      nb: 'Bruk',
-      nn: 'Bruk',
-      sv: 'Använd',
-      da: 'Brug',
-      de: 'Nutzen',
-      fr: 'Utiliser',
-      it: 'Usa',
+      en: 'Use prompt',
+      no: 'Bruk prompt',
+      nb: 'Bruk prompt',
+      nn: 'Bruk prompt',
+      sv: 'Använd prompt',
+      da: 'Brug prompt',
+      de: 'Prompt nutzen',
+      fr: 'Utiliser le prompt',
+      it: 'Usa prompt',
     },
     untitled: {
       en: 'Untitled',
@@ -1433,30 +1433,83 @@ function setText(id, text) {
   }
 }
 
+const miniControlPointerLocks = new Set();
+const miniControlReleaseTimers = new Map();
+
 function setDisabled(id, disabled) {
   const el = $(id);
-  if (el) {
+  // A hub refresh can arrive between pointer-down and the browser's click
+  // event. Do not change the enabled state mid-gesture, because Chrome then
+  // cancels the click even though the user pressed an enabled control.
+  if (el && !miniControlPointerLocks.has(id)) {
     el.disabled = !!disabled;
   }
 }
 
+function stabilizeMiniControlPointerGesture(el) {
+  if (!el?.id) return;
+  const release = () => {
+    window.setTimeout(() => {
+      miniControlPointerLocks.delete(el.id);
+      requestUiRefresh();
+    }, 0);
+  };
+  el.addEventListener('pointerdown', () => {
+    if (el.disabled) return;
+    miniControlPointerLocks.add(el.id);
+  });
+  el.addEventListener('pointerup', release);
+  el.addEventListener('pointercancel', release);
+  el.addEventListener('click', release);
+  el.addEventListener('blur', release);
+}
+
+function stabilizeMiniValueControl(el) {
+  if (!el?.id) return;
+  const lock = () => {
+    const pending = miniControlReleaseTimers.get(el.id);
+    if (pending) window.clearTimeout(pending);
+    miniControlReleaseTimers.delete(el.id);
+    miniControlPointerLocks.add(el.id);
+  };
+  const release = (delay = 0) => {
+    const pending = miniControlReleaseTimers.get(el.id);
+    if (pending) window.clearTimeout(pending);
+    const timer = window.setTimeout(() => {
+      miniControlReleaseTimers.delete(el.id);
+      miniControlPointerLocks.delete(el.id);
+      requestUiRefresh();
+    }, delay);
+    miniControlReleaseTimers.set(el.id, timer);
+  };
+  el.addEventListener('pointerdown', () => {
+    if (!el.disabled) lock();
+  });
+  el.addEventListener('focus', lock);
+  // Allow the target preset's state message to make the selection canonical
+  // before periodic rendering is permitted to write this control again.
+  el.addEventListener('change', () => release(800));
+  el.addEventListener('pointercancel', () => release());
+  el.addEventListener('blur', () => release());
+}
+
 function setChecked(id, checked) {
   const el = $(id);
-  if (el && 'checked' in el) {
+  if (el && 'checked' in el && !miniControlPointerLocks.has(id)) {
     el.checked = !!checked;
   }
 }
 
 function setValue(id, value) {
   const el = $(id);
-  if (el && 'value' in el) {
+  if (el && 'value' in el && !miniControlPointerLocks.has(id)) {
     el.value = value;
   }
 }
 
 function setHidden(id, hidden) {
   const el = $(id);
-  if (el) {
+  if (el && !miniControlPointerLocks.has(id)) {
     el.hidden = !!hidden;
   }
 }
@@ -1475,6 +1528,7 @@ function getOptionSignature(options) {
 function ensureSelectOptions(selectId, options) {
   const el = $(selectId);
   if (!el) return;
+  if (miniControlPointerLocks.has(selectId)) return;
 
   const normalizedOptions = (Array.isArray(options) ? options : []).map((item) => ({
     value: String(item?.value || '').trim(),
@@ -1557,13 +1611,13 @@ function syncMiniSonioxSpeakerLabels(state) {
     DEFAULTS.sonioxSpeakerLabels
   );
   // Avoid clobbering an in-flight user selection that hasn't dispatched yet.
-  if (select.value !== speakerLabels) {
+  if (!miniControlPointerLocks.has(select.id) && select.value !== speakerLabels) {
     select.value = speakerLabels;
   }
 
   // Mirror the main-page rule: disabled while transcription is busy.
   const busy = !!state?.transcribeBusy;
-  select.disabled = busy;
+  if (!miniControlPointerLocks.has(select.id)) select.disabled = busy;
 }
 
 function syncMiniNoteProviderControls(state, snapshot) {
@@ -1811,6 +1865,7 @@ function normalizePromptOptionLabel(item) {
 function syncPromptDropdown(snapshot) {
   const select = $('miniPromptSelect');
   if (!select) return;
+  if (miniControlPointerLocks.has(select.id)) return;
 
   const options = Array.isArray(snapshot?.promptOptions)
     ? snapshot.promptOptions.map(normalizePromptOptionLabel).filter(Boolean)
@@ -2027,6 +2082,7 @@ function syncHubTabDropdown() {
 function syncAutoCopyOptions() {
   const select = $('miniAutoCopyModeSelect');
   if (!select) return;
+  if (miniControlPointerLocks.has(select.id)) return;
 
   const desired = [
     { value: 'off', label: tMini('off') },
@@ -2622,6 +2678,19 @@ function bindMiniPanelEvents() {
   const miniRequestyModelSelect = $('miniRequestyModelSelect');
   const miniSonioxSpeakerLabelsSelect = $('miniSonioxSpeakerLabels');
 
+  // Keep frequently refreshed action controls stable from pointer-down until
+  // click. Their actual enabled/disabled rules remain owned by the snapshot.
+  [
+    startButton, stopButton, pauseButton, abortButton,
+    copyTranscriptButton, copyNoteButton, $('miniGenerateNoteButton'),
+  ].forEach(stabilizeMiniControlPointerGesture);
+  [
+    autoGenerateToggle, autoCopyModeSelect, usePromptToggle, promptSelect,
+    miniNoteProviderSelect, miniOpenAiModelSelect, miniNoteProviderModeSelect,
+    miniGeminiModelSelect, miniVertexModelSelect, miniBedrockModelSelect,
+    miniRequestyModelSelect, miniSonioxSpeakerLabelsSelect,
+  ].forEach(stabilizeMiniValueControl);
+
   if (startButton) {
     startButton.addEventListener('click', () => {
       dispatchPanelAction('startRecording');
@@ -2777,7 +2846,12 @@ function bindMiniPanelEvents() {
 
   if (usePromptToggle) {
     usePromptToggle.addEventListener('change', () => {
-      dispatchPanelAction('setUsePromptEnabled', !!usePromptToggle.checked);
+      const nextEnabled = !!usePromptToggle.checked;
+      dispatchPanelAction('setUsePromptEnabled', nextEnabled);
+      updateSelectedHubSnapshot((prev) => ({
+        ...prev,
+        state: { ...(prev.state || {}), usePromptEnabled: nextEnabled },
+      }));
       requestUiRefresh();
     });
   }
@@ -2787,6 +2861,10 @@ function bindMiniPanelEvents() {
       const next = String(miniNoteProviderSelect.value || '').trim().toLowerCase();
       if (!next) return;
       dispatchPanelAction('switchNoteProvider', next);
+      updateSelectedHubSnapshot((prev) => ({
+        ...prev,
+        state: { ...(prev.state || {}), noteProviderUi: next },
+      }));
       requestUiRefresh();
     });
   }
@@ -2796,6 +2874,10 @@ function bindMiniPanelEvents() {
       const next = String(miniOpenAiModelSelect.value || '').trim().toLowerCase();
       if (!next) return;
       dispatchPanelAction('setOpenAiModel', next);
+      updateSelectedHubSnapshot((prev) => ({
+        ...prev,
+        state: { ...(prev.state || {}), openaiModel: next },
+      }));
       requestUiRefresh();
     });
   }
@@ -2805,6 +2887,10 @@ function bindMiniPanelEvents() {
       const next = String(miniNoteProviderModeSelect.value || '').trim().toLowerCase();
       if (!next) return;
       dispatchPanelAction('setNoteProviderMode', next);
+      updateSelectedHubSnapshot((prev) => ({
+        ...prev,
+        state: { ...(prev.state || {}), noteProviderMode: next },
+      }));
       requestUiRefresh();
     });
   }
@@ -2814,6 +2900,10 @@ function bindMiniPanelEvents() {
       const next = String(miniGeminiModelSelect.value || '').trim().toLowerCase();
       if (!next) return;
       dispatchPanelAction('setGeminiModel', next);
+      updateSelectedHubSnapshot((prev) => ({
+        ...prev,
+        state: { ...(prev.state || {}), geminiModel: next },
+      }));
       requestUiRefresh();
     });
   }
@@ -2823,6 +2913,10 @@ function bindMiniPanelEvents() {
       const next = String(miniVertexModelSelect.value || '').trim().toLowerCase();
       if (!next) return;
       dispatchPanelAction('setVertexModel', next);
+      updateSelectedHubSnapshot((prev) => ({
+        ...prev,
+        state: { ...(prev.state || {}), vertexModel: next },
+      }));
       requestUiRefresh();
     });
   }
@@ -2832,6 +2926,10 @@ function bindMiniPanelEvents() {
       const next = String(miniBedrockModelSelect.value || '').trim().toLowerCase();
       if (!next) return;
       dispatchPanelAction('setBedrockModel', next);
+      updateSelectedHubSnapshot((prev) => ({
+        ...prev,
+        state: { ...(prev.state || {}), bedrockModel: next },
+      }));
       requestUiRefresh();
     });
   }
@@ -2841,6 +2939,10 @@ function bindMiniPanelEvents() {
       const next = String(miniRequestyModelSelect.value || '').trim().toLowerCase();
       if (!next) return;
       dispatchPanelAction('setRequestyModel', next);
+      updateSelectedHubSnapshot((prev) => ({
+        ...prev,
+        state: { ...(prev.state || {}), requestyModel: next },
+      }));
       requestUiRefresh();
     });
   }
@@ -3364,18 +3466,8 @@ function renderMiniPanelDocument(targetWindow) {
     }
 
     body[data-view-mode="presets"] .status-row,
-    body[data-view-mode="presets"] .status-meta,
-    body[data-view-mode="presets"] .prompt-left {
+    body[data-view-mode="presets"] .status-meta {
       display: none;
-    }
-
-    body[data-view-mode="presets"] .prompt-wrap {
-      justify-content: flex-start;
-    }
-
-    body[data-view-mode="presets"] .prompt-right {
-      flex: 1 1 auto;
-      justify-content: flex-start;
     }
 
     .focus-btn {
@@ -4118,7 +4210,7 @@ function renderMiniPanelDocument(targetWindow) {
         <div class="prompt-right">
           <label class="mini-check" for="miniUsePromptToggle">
             <input id="miniUsePromptToggle" type="checkbox" />
-            <span id="miniUsePromptLabel">Use</span>
+            <span id="miniUsePromptLabel">Use prompt</span>
           </label>
         </div>
       </div>
