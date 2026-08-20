@@ -1602,9 +1602,17 @@ function syncMiniSonioxSpeakerLabels(state) {
 
   const provider = normalizeLower(state?.transcribeProvider, DEFAULTS.transcribeProvider);
   const isSoniox = provider === 'soniox';
-  container.hidden = !isSoniox;
+  // Keep the setting visible in both Mini Panel modes so users can see that
+  // speaker labels are unavailable for the selected non-Soniox provider.
+  container.hidden = false;
 
-  if (!isSoniox) return;
+  if (!isSoniox) {
+    if (!miniControlPointerLocks.has(select.id)) {
+      select.value = 'off';
+      select.disabled = true;
+    }
+    return;
+  }
 
   const speakerLabels = normalizeLower(
     state?.sonioxSpeakerLabels,
@@ -3463,11 +3471,6 @@ function renderMiniPanelDocument(targetWindow) {
 
     @media (prefers-reduced-motion: reduce) {
       .mini-preset-recording-dot { animation: none; }
-    }
-
-    body[data-view-mode="presets"] .status-row,
-    body[data-view-mode="presets"] .status-meta {
-      display: none;
     }
 
     .focus-btn {

@@ -216,9 +216,13 @@ function hasDraftText(draft) {
   return Object.values(draft?.fields || {}).some((value) => String(value || "").trim());
 }
 
-function getRuntimeSnapshot(win, doc) {
+function getRuntimeSnapshot(win, doc, getStateOverride = null) {
   let state = {};
-  try { state = win.__app?.getMiniPanelState?.() || {}; } catch {}
+  try {
+    state = typeof getStateOverride === "function"
+      ? getStateOverride() || {}
+      : win.__app?.getMiniPanelState?.() || {};
+  } catch {}
   const secondaryAbort = doc.getElementById("secondaryAbortButton");
   const secondaryBusy = Boolean(secondaryAbort && !secondaryAbort.disabled);
   return {
@@ -538,7 +542,11 @@ function initTopLevelManager() {
   function runtimeSnapshot(runtime) {
     if (!runtime?.ready) return { state: {}, secondaryBusy: false, busy: false };
     if (runtime.kind === "frame") return runtime.win?.__workspacePresetBridge?.getSnapshot() || { state: {}, busy: false };
-    return getRuntimeSnapshot(window, document);
+    // The top-level __app.getMiniPanelState function is delegated to whichever
+    // preset is currently selected. Using it here would make inactive Preset 1
+    // inherit the selected preset's idle/recording state. Call the captured
+    // native getter so its background recording dot remains independent.
+    return getRuntimeSnapshot(window, document, originalActions.getMiniPanelState);
   }
   function runtimeAction(runtime, actionName, ...args) {
     if (!runtime?.ready) return false;
