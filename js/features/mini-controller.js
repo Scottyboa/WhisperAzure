@@ -2158,15 +2158,15 @@ function getMiniPhasePresentation(state) {
 function getMiniPresetCopy() {
   const norwegian = ['no', 'nb', 'nn'].includes(getPageLanguage());
   return norwegian ? {
-    standard: 'Standardvisning', presets: 'Presetvisning', noPresets: 'Ingen presets tilgjengelig i valgt fane.',
+    standard: 'Mini Panel — Browser Tabs', presets: 'Mini Panel — Workspaces', noPresets: 'Ingen Workspaces er tilgjengelige i valgt fane.',
     finishingTranscription: 'Fullfører transkripsjon', generatingNote: 'Genererer notat',
     pause: 'Pause', resume: 'Fortsett', generate: 'Generer', abortRecording: 'Avbryt opptak',
-    abortNote: 'Avbryt notat', switchToPresets: 'Bytt til presetvisning', switchToStandard: 'Bytt til standardvisning',
+    abortNote: 'Avbryt notat', switchToPresets: 'Switch to Workspaces', switchToStandard: 'Switch to Browser Tabs',
   } : {
-    standard: 'Standard view', presets: 'Preset view', noPresets: 'No presets are available in the selected tab.',
+    standard: 'Mini Panel — Browser Tabs', presets: 'Mini Panel — Workspaces', noPresets: 'No workspaces are available in the selected tab.',
     finishingTranscription: 'Finishing transcription', generatingNote: 'Generating note',
     pause: 'Pause', resume: 'Resume', generate: 'Generate', abortRecording: 'Abort recording',
-    abortNote: 'Abort note', switchToPresets: 'Switch to preset view', switchToStandard: 'Switch to standard view',
+    abortNote: 'Abort note', switchToPresets: 'Switch to Workspaces', switchToStandard: 'Switch to Browser Tabs',
   };
 }
 
@@ -2328,7 +2328,7 @@ function renderMiniPresetDashboard(snapshot) {
     const active = String(item.id) === String(workspace.activePresetId);
     row.classList.toggle('is-active', active);
     row.setAttribute('aria-pressed', active ? 'true' : 'false');
-    row.title = String(item.name || 'Preset');
+    row.title = String(item.name || 'Workspace');
 
     const statusText = row.querySelector('.mini-preset-status-text');
     statusText.textContent = status.label;
@@ -2336,7 +2336,7 @@ function renderMiniPresetDashboard(snapshot) {
     const dot = row.querySelector('.mini-preset-recording-dot');
     dot.hidden = !status.recording;
     const name = row.querySelector('.mini-preset-name');
-    name.textContent = String(item.name || 'Preset');
+    name.textContent = String(item.name || 'Workspace');
   });
   refreshScale();
 }
@@ -2407,7 +2407,9 @@ function updateMiniPanelUi() {
   syncMiniSttSummary(state);
   setText(
     'miniTitle',
-    getMiniPanelViewMode() === 'presets' ? getMiniPresetCopy().presets : tMini('sharedMiniPanel')
+    getMiniPanelViewMode() === 'presets'
+      ? getMiniPresetCopy().presets
+      : getMiniPresetCopy().standard
   );
   setText('miniAutoGenerateLabel', tMini('autoGenerate'));
   setText('miniAutoCopyLabel', tMini('autoCopy'));
@@ -4107,7 +4109,7 @@ function renderMiniPanelDocument(targetWindow) {
         </div>
         <div class="top-right">
           <button id="miniFocusTabButton" class="focus-btn" type="button" aria-label="Jump to selected tab" title="Jump to selected tab" hidden>↗</button>
-          <button id="miniPresetModeButton" class="view-mode-btn" type="button" aria-label="Switch mini panel view" title="Switch between standard and preset view">▦<span id="miniPresetModeBadge" class="view-mode-badge" hidden>0</span></button>
+          <button id="miniPresetModeButton" class="view-mode-btn" type="button" aria-label="Switch to Workspaces" title="Switch to Workspaces">▦<span id="miniPresetModeBadge" class="view-mode-badge" hidden>0</span></button>
           <button id="miniCloseButton" class="close-btn" type="button" aria-label="Close mini panel">×</button>
         </div>
       </div>

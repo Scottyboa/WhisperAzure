@@ -182,7 +182,7 @@
     .grid-container.ads-disabled .main-content {
       grid-column: 2 / 3;
     }
-    /* Per-tab note history */
+    /* Per-workspace note history */
     .note-history-sidebar {
       grid-column: 1 / 2;
       grid-row: 1 / 2;
@@ -389,7 +389,8 @@
       flex: 1 1 auto;
       min-height: 0;
       display: grid;
-      grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-rows: minmax(0, 1fr);
       gap: 12px;
       padding: 12px 14px 14px;
       box-sizing: border-box;
@@ -426,6 +427,23 @@
     }
     body.note-history-modal-open {
       overflow: hidden;
+    }
+    @media (max-width: 900px) {
+      .note-history-modal {
+        padding: 2vh 2vw;
+      }
+      .note-history-modal-panel {
+        width: 96vw;
+        height: 94vh;
+      }
+      .note-history-modal-body {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: repeat(3, minmax(230px, 1fr));
+        overflow-y: auto;
+      }
+      .note-history-modal-section {
+        min-height: 230px;
+      }
     }
     .note-history-sidebar.is-collapsed .note-history-header {
       padding: 8px 0;
@@ -3184,6 +3202,17 @@
           ></textarea>
         </section>
         <section class="note-history-modal-section">
+          <h3 id="noteHistorySupplementaryTitle" class="note-history-modal-section-title">
+            Supplementary Information
+          </h3>
+          <textarea
+            id="noteHistorySupplementary"
+            class="note-history-modal-text"
+            readonly
+            aria-labelledby="noteHistorySupplementaryTitle"
+          ></textarea>
+        </section>
+        <section class="note-history-modal-section">
           <h3 id="noteHistoryNoteTitle" class="note-history-modal-section-title">Note</h3>
           <textarea
             id="noteHistoryNote"
@@ -3257,7 +3286,7 @@
   <!-- Prompt slot control extracted from inline transcribe.html logic -->
   <script type="module" src="./js/features/prompt-slots-ui.js"></script>
 
-  <!-- Per-tab history of the 30 most recent successfully generated primary notes -->
+  <!-- Per-workspace history of the 30 most recent successfully generated primary notes -->
   <script type="module" src="./js/features/note-history.js"></script>
 
   <script type="module" src="./js/features/ad-refresh.js"></script>

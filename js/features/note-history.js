@@ -8,10 +8,11 @@ const STRINGS = {
     clear: "Clear",
     helpLabel: "Note history help",
     tooltip:
-      "Shows the 30 most recent generated notes in this tab. Select an item to view its transcript and note. History remains after refresh and is removed when the tab session ends.",
+      "Shows the 30 most recent generated notes in the active workspace. Select an item to view its transcript, supplementary information and note. Each workspace has its own history. History remains after refresh and is removed when the tab session ends.",
     empty: "No generated notes yet.",
     note: "Note",
     transcript: "Transcript",
+    supplementary: "Supplementary Information",
     prompt: "Prompt",
     withoutPrompt: "No prompt",
     close: "Close",
@@ -24,10 +25,11 @@ const STRINGS = {
     clear: "Clear",
     helpLabel: "Hjelp for notathistorikk",
     tooltip:
-      "Viser de 30 siste genererte notatene i denne fanen. Klikk på et element for å vise transkripsjonen og notatet. Historikken beholdes ved oppdatering av siden og slettes når faneøkten avsluttes.",
+      "Viser de 30 siste genererte notatene i aktivt Workspace. Klikk på et element for å vise transkripsjonen, supplerende informasjon og notatet. Hvert Workspace har sin egen historikk. Historikken beholdes ved oppdatering av siden og slettes når faneøkten avsluttes.",
     empty: "Ingen genererte notater ennå.",
     note: "Notat",
     transcript: "Transkripsjon",
+    supplementary: "Supplerende informasjon",
     prompt: "Prompt",
     withoutPrompt: "Uten prompt",
     close: "Lukk",
@@ -40,10 +42,11 @@ const STRINGS = {
     clear: "Rensa",
     helpLabel: "Hjälp för anteckningshistorik",
     tooltip:
-      "Visar de 30 senast genererade anteckningarna i den här fliken. Välj ett objekt för att visa transkriptionen och anteckningen. Historiken finns kvar efter uppdatering och tas bort när fliksessionen avslutas.",
+      "Visar de 30 senast genererade anteckningarna i den aktiva arbetsytan. Välj ett objekt för att visa transkriptionen, kompletterande information och anteckningen. Varje arbetsyta har sin egen historik. Historiken finns kvar efter uppdatering och tas bort när fliksessionen avslutas.",
     empty: "Inga genererade anteckningar ännu.",
     note: "Anteckning",
     transcript: "Transkription",
+    supplementary: "Kompletterande information",
     prompt: "Prompt",
     withoutPrompt: "Utan prompt",
     close: "Stäng",
@@ -56,10 +59,11 @@ const STRINGS = {
     clear: "Leeren",
     helpLabel: "Hilfe zum Notizverlauf",
     tooltip:
-      "Zeigt die 30 zuletzt erstellten Notizen in diesem Tab. Wählen Sie einen Eintrag, um Transkript und Notiz anzuzeigen. Der Verlauf bleibt nach dem Aktualisieren erhalten und wird am Ende der Tabsitzung entfernt.",
+      "Zeigt die 30 zuletzt erstellten Notizen im aktiven Arbeitsbereich. Wählen Sie einen Eintrag, um Transkript, ergänzende Informationen und Notiz anzuzeigen. Jeder Arbeitsbereich hat einen eigenen Verlauf. Der Verlauf bleibt nach dem Aktualisieren erhalten und wird am Ende der Tabsitzung entfernt.",
     empty: "Noch keine Notizen erstellt.",
     note: "Notiz",
     transcript: "Transkript",
+    supplementary: "Ergänzende Informationen",
     prompt: "Prompt",
     withoutPrompt: "Ohne Prompt",
     close: "Schließen",
@@ -72,10 +76,11 @@ const STRINGS = {
     clear: "Effacer",
     helpLabel: "Aide sur l’historique des notes",
     tooltip:
-      "Affiche les 30 dernières notes générées dans cet onglet. Sélectionnez un élément pour afficher la transcription et la note. L’historique persiste après actualisation et disparaît à la fin de la session de l’onglet.",
+      "Affiche les 30 dernières notes générées dans l’espace de travail actif. Sélectionnez un élément pour afficher la transcription, les informations complémentaires et la note. Chaque espace de travail possède son propre historique. L’historique persiste après actualisation et disparaît à la fin de la session de l’onglet.",
     empty: "Aucune note générée.",
     note: "Note",
     transcript: "Transcription",
+    supplementary: "Informations complémentaires",
     prompt: "Prompt",
     withoutPrompt: "Sans prompt",
     close: "Fermer",
@@ -88,10 +93,11 @@ const STRINGS = {
     clear: "Cancella",
     helpLabel: "Guida alla cronologia delle note",
     tooltip:
-      "Mostra le 30 note generate più di recente in questa scheda. Seleziona un elemento per visualizzare trascrizione e nota. La cronologia rimane dopo l’aggiornamento e viene rimossa al termine della sessione della scheda.",
+      "Mostra le 30 note generate più di recente nell’area di lavoro attiva. Seleziona un elemento per visualizzare trascrizione, informazioni supplementari e nota. Ogni area di lavoro ha una cronologia separata. La cronologia rimane dopo l’aggiornamento e viene rimossa al termine della sessione della scheda.",
     empty: "Nessuna nota generata.",
     note: "Nota",
     transcript: "Trascrizione",
+    supplementary: "Informazioni supplementari",
     prompt: "Prompt",
     withoutPrompt: "Senza prompt",
     close: "Chiudi",
@@ -137,6 +143,8 @@ function normalizeStoredEntry(raw) {
   const sequence = Number(raw.sequence);
   const createdAt = Number(raw.createdAt);
   const transcript = typeof raw.transcript === "string" ? raw.transcript : "";
+  const supplementary =
+    typeof raw.supplementary === "string" ? raw.supplementary : "";
   const note = typeof raw.note === "string" ? raw.note : "";
 
   if (
@@ -155,11 +163,29 @@ function normalizeStoredEntry(raw) {
     sequence,
     createdAt,
     transcript,
+    supplementary,
     note,
     promptSlot: String(raw.promptSlot || ""),
     promptLabel: String(raw.promptLabel || ""),
     usedPrompt: raw.usedPrompt !== false,
   };
+}
+
+function normalizeHistorySnapshot(raw) {
+  const entries = Array.isArray(raw?.entries)
+    ? raw.entries.map(normalizeStoredEntry).filter(Boolean).slice(0, MAX_ENTRIES)
+    : [];
+  const highestSequence = entries.reduce(
+    (highest, entry) => Math.max(highest, entry.sequence),
+    0
+  );
+  const storedNext = Number(raw?.nextSequence);
+  const nextSequence =
+    Number.isInteger(storedNext) && storedNext > highestSequence
+      ? storedNext
+      : highestSequence + 1;
+
+  return { entries, nextSequence };
 }
 
 function loadHistory() {
@@ -172,21 +198,9 @@ function loadHistory() {
     parsed = null;
   }
 
-  const entries = Array.isArray(parsed?.entries)
-    ? parsed.entries.map(normalizeStoredEntry).filter(Boolean).slice(0, MAX_ENTRIES)
-    : [];
-
-  const highestSequence = entries.reduce(
-    (highest, entry) => Math.max(highest, entry.sequence),
-    0
-  );
-  const storedNext = Number(parsed?.nextSequence);
-
-  state.entries = entries;
-  state.nextSequence =
-    Number.isInteger(storedNext) && storedNext > highestSequence
-      ? storedNext
-      : highestSequence + 1;
+  const snapshot = normalizeHistorySnapshot(parsed);
+  state.entries = snapshot.entries;
+  state.nextSequence = snapshot.nextSequence;
 }
 
 function loadCollapsedState() {
@@ -229,7 +243,7 @@ function toggleCollapsedState() {
 
 function buildStoragePayload() {
   return JSON.stringify({
-    version: 1,
+    version: 2,
     nextSequence: state.nextSequence,
     entries: state.entries,
   });
@@ -250,6 +264,82 @@ function persistHistory() {
       state.entries.pop();
     }
   }
+}
+
+function getLocalHistorySnapshot() {
+  return {
+    entries: state.entries.map((entry) => ({ ...entry })),
+    nextSequence: state.nextSequence,
+  };
+}
+
+function notifyLocalHistoryUpdated(reason = "updated") {
+  try {
+    window.dispatchEvent(
+      new CustomEvent("note-history-updated", {
+        detail: {
+          reason,
+          runtimeId: String(window.__workspacePresetRuntimeId || "primary"),
+          count: state.entries.length,
+        },
+      })
+    );
+  } catch (_) {}
+}
+
+function replaceLocalHistorySnapshot(snapshot, { notify = true } = {}) {
+  const normalized = normalizeHistorySnapshot(snapshot);
+  state.entries = normalized.entries;
+  state.nextSequence = normalized.nextSequence;
+  state.pendingRun = null;
+
+  try {
+    if (state.entries.length) {
+      persistHistory();
+    } else {
+      sessionStorage.removeItem(STORAGE_KEY);
+    }
+  } catch (_) {}
+
+  closeModal();
+  renderHistory();
+  if (notify) notifyLocalHistoryUpdated("replaced");
+  return true;
+}
+
+function clearLocalHistory({ notify = true } = {}) {
+  state.entries = [];
+  state.nextSequence = 1;
+  state.pendingRun = null;
+
+  try {
+    sessionStorage.removeItem(STORAGE_KEY);
+  } catch (_) {}
+
+  closeModal();
+  renderHistory();
+  if (notify) notifyLocalHistoryUpdated("cleared");
+  return true;
+}
+
+function getVisibleHistorySnapshot() {
+  if (!window.__workspacePresetFrame) {
+    try {
+      const snapshot = window.__workspacePresets?.getHistorySnapshot?.();
+      if (snapshot && Array.isArray(snapshot.entries)) {
+        return normalizeHistorySnapshot(snapshot);
+      }
+    } catch (_) {}
+  }
+  return getLocalHistorySnapshot();
+}
+
+function getVisibleEntries() {
+  return getVisibleHistorySnapshot().entries;
+}
+
+function findVisibleEntry(entryId) {
+  return getVisibleEntries().find((item) => item.id === entryId) || null;
 }
 
 function getEntryPromptLabel(entry) {
@@ -297,11 +387,12 @@ function renderHistory() {
   const list = byId("noteHistoryList");
   const empty = byId("noteHistoryEmpty");
   if (!list || !empty) return;
+  const entries = getVisibleEntries();
 
   list.replaceChildren();
-  empty.hidden = state.entries.length > 0;
+  empty.hidden = entries.length > 0;
 
-  state.entries.forEach((entry) => {
+  entries.forEach((entry) => {
     const card = document.createElement("button");
     card.type = "button";
     card.className = "note-history-card";
@@ -331,7 +422,7 @@ function renderHistory() {
 
 function syncModalContent() {
   if (!state.activeEntryId) return;
-  const entry = state.entries.find((item) => item.id === state.activeEntryId);
+  const entry = findVisibleEntry(state.activeEntryId);
   if (!entry) {
     closeModal();
     return;
@@ -339,6 +430,7 @@ function syncModalContent() {
 
   const title = byId("noteHistoryModalTitle");
   const transcript = byId("noteHistoryTranscript");
+  const supplementary = byId("noteHistorySupplementary");
   const note = byId("noteHistoryNote");
 
   if (title) {
@@ -350,6 +442,10 @@ function syncModalContent() {
     transcript.value = entry.transcript;
     transcript.scrollTop = 0;
   }
+  if (supplementary) {
+    supplementary.value = entry.supplementary || "";
+    supplementary.scrollTop = 0;
+  }
   if (note) {
     note.value = entry.note;
     note.scrollTop = 0;
@@ -357,7 +453,7 @@ function syncModalContent() {
 }
 
 function openEntry(entryId) {
-  const entry = state.entries.find((item) => item.id === entryId);
+  const entry = findVisibleEntry(entryId);
   const modal = byId("noteHistoryModal");
   if (!entry || !modal) return;
 
@@ -390,21 +486,23 @@ function closeModal() {
   }
 }
 
-function clearHistory() {
-  state.entries = [];
-  state.nextSequence = 1;
-
-  try {
-    sessionStorage.removeItem(STORAGE_KEY);
-  } catch (_) {}
-
-  closeModal();
-  renderHistory();
+function clearVisibleHistory() {
+  if (!window.__workspacePresetFrame) {
+    try {
+      if (window.__workspacePresets?.clearHistory?.() === true) {
+        closeModal();
+        renderHistory();
+        return true;
+      }
+    } catch (_) {}
+  }
+  return clearLocalHistory();
 }
 
 function capturePendingRun() {
   const app = window.__app || {};
   const transcript = String(byId("transcription")?.value || "").trim();
+  const supplementary = String(byId("supplementaryInfo")?.value || "").trim();
   const promptSlot =
     typeof app.getSelectedPromptSlot === "function"
       ? String(app.getSelectedPromptSlot() || "").trim()
@@ -420,6 +518,7 @@ function capturePendingRun() {
 
   state.pendingRun = {
     transcript,
+    supplementary,
     promptSlot,
     promptLabel,
     usedPrompt,
@@ -433,6 +532,9 @@ function addFinishedNote(detail) {
   const transcript = String(
     state.pendingRun?.transcript ?? byId("transcription")?.value ?? ""
   ).trim();
+  const supplementary = String(
+    state.pendingRun?.supplementary ?? byId("supplementaryInfo")?.value ?? ""
+  ).trim();
 
   if (!note.trim() || !transcript) return;
 
@@ -443,6 +545,7 @@ function addFinishedNote(detail) {
     sequence,
     createdAt,
     transcript,
+    supplementary,
     note,
     promptSlot: String(state.pendingRun?.promptSlot || ""),
     promptLabel: String(state.pendingRun?.promptLabel || ""),
@@ -454,6 +557,7 @@ function addFinishedNote(detail) {
   state.entries = state.entries.slice(0, MAX_ENTRIES);
   persistHistory();
   renderHistory();
+  notifyLocalHistoryUpdated("entry-added");
 }
 
 function updateLanguage(language) {
@@ -467,6 +571,7 @@ function updateLanguage(language) {
   const empty = byId("noteHistoryEmpty");
   const close = byId("noteHistoryModalClose");
   const transcriptTitle = byId("noteHistoryTranscriptTitle");
+  const supplementaryTitle = byId("noteHistorySupplementaryTitle");
   const noteTitle = byId("noteHistoryNoteTitle");
 
   if (title) title.textContent = copy.history;
@@ -476,6 +581,7 @@ function updateLanguage(language) {
   if (empty) empty.textContent = copy.empty;
   if (close) close.setAttribute("aria-label", copy.close);
   if (transcriptTitle) transcriptTitle.textContent = copy.transcript;
+  if (supplementaryTitle) supplementaryTitle.textContent = copy.supplementary;
   if (noteTitle) noteTitle.textContent = copy.note;
 
   renderHistory();
@@ -485,7 +591,7 @@ function updateLanguage(language) {
 
 function bindEvents() {
   byId("noteHistoryCollapseButton")?.addEventListener("click", toggleCollapsedState);
-  byId("noteHistoryClearButton")?.addEventListener("click", clearHistory);
+  byId("noteHistoryClearButton")?.addEventListener("click", clearVisibleHistory);
   byId("noteHistoryModalClose")?.addEventListener("click", closeModal);
 
   byId("noteHistoryModal")?.addEventListener("click", (event) => {
@@ -517,6 +623,16 @@ function bindEvents() {
   window.addEventListener("transcribe-language-updated", (event) => {
     updateLanguage(event?.detail?.lang || byId("lang-select-transcribe")?.value);
   });
+
+  window.addEventListener("workspace-history-view-changed", () => {
+    closeModal();
+    renderHistory();
+  });
+
+  window.addEventListener("workspace-history-updated", () => {
+    renderHistory();
+    syncModalContent();
+  });
 }
 
 function init() {
@@ -529,5 +645,11 @@ function init() {
       "en"
   );
 }
+
+window.__noteHistory = Object.freeze({
+  getSnapshot: getLocalHistorySnapshot,
+  clearLocal: clearLocalHistory,
+  replaceLocal: replaceLocalHistorySnapshot,
+});
 
 init();

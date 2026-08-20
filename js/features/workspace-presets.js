@@ -48,61 +48,61 @@ const DELEGATED_APP_ACTIONS = [
 
 const TEXT = {
   en: {
-    presets: "Presets:", help: "Preset help", import: "Import", export: "Export",
-    add: "Add preset", close: "Close preset", defaultName: "Preset {n}",
-    namePrompt: "Preset name", max: "You can have up to 12 presets open.",
-    atLeastOne: "At least one preset must remain open.",
-    busyClose: "Stop or abort the active recording, transcription, or generation before closing this preset.",
+    presets: "Workspace set:", help: "Workspace set help", import: "Import", export: "Export",
+    add: "Add workspace", close: "Close workspace", defaultName: "Workspace {n}",
+    namePrompt: "Workspace name", max: "You can have up to 12 workspaces open.",
+    atLeastOne: "At least one workspace must remain open.",
+    busyClose: "Stop or abort the active recording, transcription, or generation before closing this workspace.",
     closeConfirm: "Close \"{name}\"? Its transcript, notes and other workspace text will be removed from this tab session.",
-    importBusy: "Stop or abort all active recordings and generations before importing presets.",
-    helpHtml: `<strong>Presets are separate workspaces.</strong><br/>Each preset keeps its own text, prompts, models, settings and active processes. Its name automatically follows the selected prompt slot name. Switching presets does not stop recording or generation.<br/><br/>Use + to create a fresh preset and × to close one.<br/><br/><strong>Import/export:</strong> Saves only preset setup, prompts, models and relevant settings. Transcripts, notes, audio, API keys and other patient information are never exported. Cloud backups are encrypted. A downloaded JSON file is readable and should be stored securely.`,
-    exportTitle: "Export presets", importTitle: "Import presets",
+    importBusy: "Stop or abort all active recordings and generations before importing a workspace set.",
+    helpHtml: `<strong>Workspaces are separate work areas in this browser tab.</strong><br/>Each workspace keeps its own text, prompts, models, settings, history and active processes. Its name automatically follows the selected prompt slot name. Switching workspaces does not stop recording or generation.<br/><br/>Use + to add a workspace and × to close one.<br/><br/><strong>Import/export:</strong> A workspace set backup saves the workspace setup, selected prompts, models and relevant settings. Transcripts, supplementary information, notes, history, audio, API keys and other patient information are never exported. Cloud backups are encrypted. A downloaded JSON file is readable and should be stored securely.`,
+    exportTitle: "Export workspace set", importTitle: "Import workspace set",
     jsonExport: "Export as JSON file", jsonImport: "Import from JSON file",
     oneDriveExport: "Export to Microsoft OneDrive", oneDriveImport: "Import from Microsoft OneDrive",
     googleExport: "Export to Google Drive", googleImport: "Import from Google Drive",
-    exportNotice: "Exports every preset currently shown in the preset row, including prompts, models and workflow settings. Window text, recordings, API keys and patient information are not included.",
-    importNotice: "Choose a previously exported preset backup. Imported workspaces start with empty text fields.",
+    exportNotice: "Exports every workspace currently shown in the workspace set, including selected prompts, models and workflow settings. Window text, history, recordings, API keys and patient information are not included.",
+    importNotice: "Choose a previously exported workspace set. Imported workspaces start with empty text fields and empty history.",
     password: "Encryption password", repeat: "Repeat password",
     passwordMin: "Use a password with at least 10 characters.", mismatch: "The passwords do not match.",
     passwordRequired: "Enter the backup password.", save: "Save", back: "Back", cancel: "Cancel",
-    addMode: "Add presets", replaceMode: "Replace preset setup",
-    preview: "{n} presets found: {names}",
-    replaceWarning: "Replace the current preset setup? Existing workspace text will be discarded. Active jobs must already be stopped.",
+    addMode: "Add workspaces", replaceMode: "Replace workspace set",
+    preview: "{n} workspaces found: {names}",
+    replaceWarning: "Replace the current workspace set? Existing workspace text and history will be discarded. Active jobs must already be stopped.",
     microsoftSignIn: "Waiting for Microsoft sign-in…", googleSignIn: "Waiting for Google sign-in…",
-    encryptingAndSaving: "Encrypting and saving preset backup…",
-    downloadingAndDecrypting: "Downloading and decrypting preset backup…",
-    savedJson: "Preset JSON export completed.", savedOneDrive: "Encrypted preset backup saved to Microsoft OneDrive.",
-    savedGoogle: "Encrypted preset backup saved to Google Drive.", imported: "Preset setup imported.",
-    failed: "Preset backup failed: {error}", invalid: "The selected file is not a valid preset backup.",
+    encryptingAndSaving: "Encrypting and saving workspace set backup…",
+    downloadingAndDecrypting: "Downloading and decrypting workspace set backup…",
+    savedJson: "Workspace set JSON export completed.", savedOneDrive: "Encrypted workspace set saved to Microsoft OneDrive.",
+    savedGoogle: "Encrypted workspace set saved to Google Drive.", imported: "Workspace set imported.",
+    failed: "Workspace set backup failed: {error}", invalid: "The selected file is not a valid workspace set backup.",
     recording: "Recording", paused: "Paused", transcribing: "Transcribing", generating: "Generating", complete: "Completed",
   },
   no: {
-    presets: "Presets:", help: "Hjelp om presets", import: "Importer", export: "Eksporter",
-    add: "Legg til preset", close: "Lukk preset", defaultName: "Preset {n}",
-    namePrompt: "Navn på preset", max: "Du kan ha opptil 12 åpne presets.",
-    atLeastOne: "Minst ett preset må være åpent.",
-    busyClose: "Stopp eller avbryt aktivt opptak, transkribering eller generering før presetet lukkes.",
-    closeConfirm: "Lukk \"{name}\"? Transcript, notater og annen workspace-tekst fjernes fra denne faneøkten.",
-    importBusy: "Stopp eller avbryt alle aktive opptak og genereringer før du importerer presets.",
-    helpHtml: `<strong>Presets er separate arbeidsområder.</strong><br/>Hvert preset beholder egne tekster, prompts, modeller, innstillinger og aktive prosesser. Navnet følger automatisk navnet på valgt prompt-slot. Bytte mellom presets stopper ikke opptak eller generering.<br/><br/>Bruk + for å opprette et nytt preset og × for å lukke et workspace.<br/><br/><strong>Import/eksport:</strong> Lagrer bare preset-oppsettet, prompts, modeller og relevante innstillinger. Transcript, notater, lyd, API-nøkler og andre pasientopplysninger eksporteres aldri. Skybackup krypteres. En nedlastet JSON-fil er lesbar og bør oppbevares sikkert.`,
-    exportTitle: "Eksporter presets", importTitle: "Importer presets",
+    presets: "Workspace set:", help: "Hjelp om Workspace set", import: "Importer", export: "Eksporter",
+    add: "Legg til Workspace", close: "Lukk Workspace", defaultName: "Workspace {n}",
+    namePrompt: "Navn på Workspace", max: "Du kan ha opptil 12 åpne Workspaces.",
+    atLeastOne: "Minst ett Workspace må være åpent.",
+    busyClose: "Stopp eller avbryt aktivt opptak, transkribering eller generering før Workspace-et lukkes.",
+    closeConfirm: "Lukk \"{name}\"? Transkripsjon, notater, historikk og annen Workspace-tekst fjernes fra denne faneøkten.",
+    importBusy: "Stopp eller avbryt alle aktive opptak og genereringer før du importerer et Workspace set.",
+    helpHtml: `<strong>Workspaces er separate arbeidsområder i denne nettleserfanen.</strong><br/>Hvert Workspace beholder egne tekster, prompts, modeller, innstillinger, historikk og aktive prosesser. Navnet følger automatisk navnet på valgt prompt-slot. Bytte mellom Workspaces stopper ikke opptak eller generering.<br/><br/>Bruk + for å legge til et Workspace og × for å lukke det.<br/><br/><strong>Import/eksport:</strong> En Workspace set-backup lagrer Workspace-oppsettet, valgte prompts, modeller og relevante innstillinger. Transkripsjoner, supplerende informasjon, notater, historikk, lyd, API-nøkler og andre pasientopplysninger eksporteres aldri. Skybackup krypteres. En nedlastet JSON-fil er lesbar og bør oppbevares sikkert.`,
+    exportTitle: "Eksporter Workspace set", importTitle: "Importer Workspace set",
     jsonExport: "Eksporter som JSON-fil", jsonImport: "Importer fra JSON-fil",
     oneDriveExport: "Eksporter til Microsoft OneDrive", oneDriveImport: "Importer fra Microsoft OneDrive",
     googleExport: "Eksporter til Google Drive", googleImport: "Importer fra Google Drive",
-    exportNotice: "Eksporterer alle presets som vises i preset-raden, inkludert prompts, modeller og workflow-innstillinger. Tekst i vinduene, opptak, API-nøkler og pasientopplysninger tas ikke med.",
-    importNotice: "Velg en tidligere eksportert preset-backup. Importerte workspaces starter med tomme tekstfelt.",
+    exportNotice: "Eksporterer alle Workspaces i Workspace set-et, inkludert valgte prompts, modeller og workflow-innstillinger. Tekst i vinduene, historikk, opptak, API-nøkler og pasientopplysninger tas ikke med.",
+    importNotice: "Velg et tidligere eksportert Workspace set. Importerte Workspaces starter med tomme tekstfelt og tom historikk.",
     password: "Krypteringspassord", repeat: "Gjenta passord",
     passwordMin: "Bruk et passord med minst 10 tegn.", mismatch: "Passordene er ikke like.",
     passwordRequired: "Skriv inn passordet til backupen.", save: "Lagre", back: "Tilbake", cancel: "Avbryt",
-    addMode: "Legg til presets", replaceMode: "Erstatt preset-oppsettet",
-    preview: "{n} presets funnet: {names}",
-    replaceWarning: "Erstatt nåværende preset-oppsett? Eksisterende workspace-tekst forkastes. Aktive jobber må allerede være stoppet.",
+    addMode: "Legg til Workspaces", replaceMode: "Erstatt Workspace set",
+    preview: "{n} Workspaces funnet: {names}",
+    replaceWarning: "Erstatt nåværende Workspace set? Eksisterende Workspace-tekst og historikk forkastes. Aktive jobber må allerede være stoppet.",
     microsoftSignIn: "Venter på Microsoft-innlogging…", googleSignIn: "Venter på Google-innlogging…",
-    encryptingAndSaving: "Krypterer og lagrer preset-backup…",
-    downloadingAndDecrypting: "Laster ned og dekrypterer preset-backup…",
-    savedJson: "Eksport av preset-JSON er fullført.", savedOneDrive: "Kryptert preset-backup lagret i Microsoft OneDrive.",
-    savedGoogle: "Kryptert preset-backup lagret i Google Drive.", imported: "Preset-oppsettet ble importert.",
-    failed: "Preset-backup mislyktes: {error}", invalid: "Den valgte filen er ikke en gyldig preset-backup.",
+    encryptingAndSaving: "Krypterer og lagrer Workspace set-backup…",
+    downloadingAndDecrypting: "Laster ned og dekrypterer Workspace set-backup…",
+    savedJson: "Eksport av Workspace set-JSON er fullført.", savedOneDrive: "Kryptert Workspace set lagret i Microsoft OneDrive.",
+    savedGoogle: "Kryptert Workspace set lagret i Google Drive.", imported: "Workspace set-et ble importert.",
+    failed: "Workspace set-backup mislyktes: {error}", invalid: "Den valgte filen er ikke en gyldig Workspace set-backup.",
     recording: "Tar opp", paused: "Pauset", transcribing: "Transkriberer", generating: "Genererer", complete: "Ferdig",
   },
 };
@@ -121,8 +121,14 @@ function fmt(value, data = {}) {
 function uid() {
   return crypto.randomUUID?.() || `preset-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
-function safeName(value, fallback = "Preset") {
+function safeName(value, fallback = "Workspace") {
   return String(value || "").trim().slice(0, 120) || fallback;
+}
+
+function normalizeWorkspaceName(value, index) {
+  const fallback = `Workspace ${index + 1}`;
+  const name = safeName(value, fallback);
+  return /^Preset\s+\d+$/i.test(name) ? fallback : name;
 }
 function dispatchChange(win, element) {
   if (!element) return;
@@ -287,6 +293,7 @@ function initFrameRuntime() {
   document.addEventListener("change", () => notifyParent("config"), true);
   document.addEventListener("click", () => window.setTimeout(() => notifyParent("click"), 0), true);
   window.addEventListener("app:state-changed", () => notifyParent("app-state"));
+  window.addEventListener("note-history-updated", () => notifyParent("history"));
   window.addEventListener("mini-hub:prompt-ui-refresh", () => notifyParent("prompt-title"));
 
   window.__workspacePresetBridge = Object.freeze({
@@ -300,6 +307,8 @@ function initFrameRuntime() {
       try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
     },
     getSnapshot: () => getRuntimeSnapshot(window, document),
+    getHistorySnapshot: () => window.__noteHistory?.getSnapshot?.() || { entries: [], nextSequence: 1 },
+    clearHistory: () => window.__noteHistory?.clearLocal?.() !== false,
     getGeneralTerms: () => String(document.getElementById("redactorGeneralTerms")?.value || ""),
     setGeneralTerms(value) {
       const el = document.getElementById("redactorGeneralTerms");
@@ -333,21 +342,21 @@ function initFrameRuntime() {
 function injectManagerStyle() {
   const style = document.createElement("style");
   style.textContent = `
-    .workspace-preset-bar{display:flex;align-items:center;gap:11px;min-height:68px;margin:0 0 15px;padding:11px 15px;border:1px solid #e1e7e4;border-radius:12px;background:#fbfcfb;color:#4b5550;font-size:16px;box-sizing:border-box}
-    .workspace-preset-bar button,.workspace-modal button{margin:0}.workspace-preset-bar button{font:inherit}.workspace-preset-help{position:relative;width:34px;height:34px;padding:0;border:1px solid #b8c6c0;border-radius:50%;background:#fff;color:#46705f;font-weight:700;cursor:help;flex:0 0 auto}
-    .workspace-preset-help-content{display:none;position:absolute;z-index:9999;left:0;top:33px;width:min(390px,78vw);padding:10px 12px;border:1px solid #b8c6c0;border-radius:8px;background:#fff;box-shadow:0 7px 22px rgba(0,0,0,.16);color:#27332e;text-align:left;line-height:1.35;font-weight:400}
+    .workspace-preset-bar{display:flex;align-items:center;gap:13px;min-height:80px;margin:0 0 17px;padding:13px 18px;border:1px solid #e1e7e4;border-radius:13px;background:#fbfcfb;color:#4b5550;font-size:17px;box-sizing:border-box}
+    .workspace-preset-bar button,.workspace-modal button{margin:0}.workspace-preset-bar button{font:inherit}.workspace-preset-help{position:relative;width:38px;height:38px;padding:0;border:1px solid #b8c6c0;border-radius:50%;background:#fff;color:#46705f;font-weight:700;cursor:help;flex:0 0 auto}
+    .workspace-preset-help-content{display:none;position:absolute;z-index:9999;left:0;top:38px;width:min(410px,78vw);padding:11px 13px;border:1px solid #b8c6c0;border-radius:8px;background:#fff;box-shadow:0 7px 22px rgba(0,0,0,.16);color:#27332e;text-align:left;line-height:1.35;font-weight:400}
     .workspace-preset-help:hover .workspace-preset-help-content,.workspace-preset-help:focus .workspace-preset-help-content,.workspace-preset-help.is-open .workspace-preset-help-content{display:block}
-    .workspace-preset-io{min-height:36px;padding:8px 15px;border:1px solid #cbd5d1;border-radius:8px;background:#fff;color:#3d5148;cursor:pointer}.workspace-preset-io:hover{background:#f1f7f4}
-    .workspace-preset-label{margin-left:16px;color:#68746f;font-weight:600;white-space:nowrap}.workspace-preset-list{display:flex;align-items:center;gap:10px;min-width:0;overflow-x:auto;padding:4px 0;scrollbar-width:thin}
-    .workspace-preset-chip{display:inline-flex;align-items:center;gap:9px;flex:0 0 auto;min-height:46px;padding:9px 12px 9px 16px;border:1px solid #d2dad6;border-radius:999px;background:#fff;color:#34463e;cursor:pointer;max-width:280px}.workspace-preset-chip:hover{background:#f2f8f5;color:#34463e}
+    .workspace-preset-io{min-height:42px;padding:9px 17px;border:1px solid #cbd5d1;border-radius:9px;background:#fff;color:#3d5148;cursor:pointer}.workspace-preset-io:hover{background:#f1f7f4}
+    .workspace-preset-label{margin-left:18px;color:#68746f;font-weight:600;white-space:nowrap}.workspace-preset-list{display:flex;align-items:center;gap:11px;min-width:0;overflow-x:auto;padding:5px 0;scrollbar-width:thin}
+    .workspace-preset-chip{display:inline-flex;align-items:center;gap:10px;flex:0 0 auto;min-height:52px;padding:10px 14px 10px 18px;border:1px solid #d2dad6;border-radius:999px;background:#fff;color:#34463e;cursor:pointer;max-width:300px}.workspace-preset-chip:hover{background:#f2f8f5;color:#34463e}
     .workspace-preset-chip.is-active{border-color:#69a98d;background:#edf7f2;box-shadow:inset 0 -2px 0 #5a9}.workspace-preset-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .workspace-preset-dot{width:10px;height:10px;border-radius:50%;background:#b8c0bd;flex:0 0 auto}.workspace-preset-dot.recording{background:#d7263d;box-shadow:0 0 0 0 rgba(215,38,61,.5);animation:workspacePulse 1.3s infinite}.workspace-preset-dot.generating{background:#7b61c9;animation:workspaceSpin 1.2s linear infinite}.workspace-preset-dot.transcribing{background:#2c7bd9}.workspace-preset-dot.complete{background:#2f9d61}
-    .workspace-preset-close{border:0;background:transparent;color:#87918d;padding:0 2px;line-height:1;font-size:18px;cursor:pointer}.workspace-preset-close:hover{color:#a4001e}.workspace-preset-add{width:44px;height:44px;padding:0;border:1px dashed #aebbb5;border-radius:50%;background:#fff;color:#426857;font-size:24px;line-height:1;cursor:pointer;flex:0 0 auto}
+    .workspace-preset-dot{width:11px;height:11px;border-radius:50%;background:#b8c0bd;flex:0 0 auto}.workspace-preset-dot.recording{background:#d7263d;box-shadow:0 0 0 0 rgba(215,38,61,.5);animation:workspacePulse 1.3s infinite}.workspace-preset-dot.generating{background:#7b61c9;animation:workspaceSpin 1.2s linear infinite}.workspace-preset-dot.transcribing{background:#2c7bd9}.workspace-preset-dot.complete{background:#2f9d61}
+    .workspace-preset-close{border:0;background:transparent;color:#87918d;padding:0 2px;line-height:1;font-size:20px;cursor:pointer}.workspace-preset-close:hover{color:#a4001e}.workspace-preset-add{width:50px;height:50px;padding:0;border:1px dashed #aebbb5;border-radius:50%;background:#fff;color:#426857;font-size:27px;line-height:1;cursor:pointer;flex:0 0 auto}
     .workspace-preset-frame-host{position:relative;width:100%}.workspace-preset-frame{border:0;background:#f8f8f8}.workspace-preset-frame.is-active{position:relative;display:block;width:100%;min-height:600px;opacity:1;pointer-events:auto}.workspace-preset-frame.is-parked{position:fixed;left:-10000px;top:0;width:2px!important;height:2px!important;opacity:0;pointer-events:none}
     .workspace-preset-toast{position:fixed;z-index:10020;left:50%;bottom:18px;transform:translateX(-50%);padding:8px 13px;border-radius:8px;background:#24352d;color:white;font-size:13px;box-shadow:0 5px 20px rgba(0,0,0,.2)}
     .workspace-backdrop{position:fixed;z-index:10010;inset:0;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.4)}.workspace-backdrop[hidden]{display:none}.workspace-modal{width:min(480px,94vw);max-height:88vh;overflow:auto;background:#fff;border-radius:12px;padding:16px;box-shadow:0 16px 48px rgba(0,0,0,.3)}.workspace-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.workspace-modal-head h2{font-size:18px;margin:0}.workspace-modal-close{border:0;background:transparent;color:#a4001e;padding:2px 6px;font-size:22px;cursor:pointer}.workspace-modal-notice{padding:9px;border:1px solid #b8d6ca;border-radius:8px;background:#f3faf7;font-size:12px;line-height:1.4}.workspace-modal-option{display:block;width:100%;margin-top:10px!important;padding:9px;border:1px solid #9bc4b2;border-radius:8px;background:#fff;color:#2e5544;text-align:left;cursor:pointer}.workspace-modal-option:hover{background:#f1f8f5;color:#2e5544}.workspace-modal-field{display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:8px;border:1px solid #cbd5d1;border-radius:7px}.workspace-modal-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.workspace-modal-actions button{padding:7px 11px;border-radius:7px;font-size:12px}.workspace-modal-status{min-height:18px;font-size:12px}.workspace-import-preview{margin-top:10px;padding:9px;border:1px solid #d8dfdc;border-radius:8px;background:#fafafa;font-size:12px}
     @keyframes workspacePulse{0%{box-shadow:0 0 0 0 rgba(215,38,61,.48)}70%{box-shadow:0 0 0 5px rgba(215,38,61,0)}100%{box-shadow:0 0 0 0 rgba(215,38,61,0)}}@keyframes workspaceSpin{50%{opacity:.35}}
-    @media(max-width:700px){.workspace-preset-label{margin-left:4px}.workspace-preset-io{font-size:11px;padding:3px 5px}.workspace-preset-bar{gap:3px}}
+    @media(max-width:700px){.workspace-preset-label{margin-left:4px}.workspace-preset-io{min-height:36px;font-size:11px;padding:5px 7px}.workspace-preset-bar{min-height:70px;padding:9px 10px;gap:4px}.workspace-preset-help{width:34px;height:34px}.workspace-preset-chip{min-height:46px;padding:8px 11px 8px 14px}.workspace-preset-add{width:44px;height:44px;font-size:24px}}
   `;
   document.head.appendChild(style);
 }
@@ -395,8 +404,10 @@ function initTopLevelManager() {
       return;
     }
     if (data.type === "workspace-preset-frame-update") {
+      let becameReady = false;
       if (!runtime.ready && runtime.frame.contentWindow?.__workspacePresetBridge) {
         runtime.ready = true;
+        becameReady = true;
         runtime.win = runtime.frame.contentWindow;
         runtime.doc = runtime.frame.contentDocument;
         bindRuntimeDocument(runtime);
@@ -407,6 +418,9 @@ function initTopLevelManager() {
       scheduleConfigSave(runtime.id);
       render();
       notifyHub();
+      if ((data.reason === "history" || becameReady) && runtime.id === activeId) {
+        notifyHistoryUpdated(becameReady ? "runtime-ready" : "background-generation", runtime.id);
+      }
     }
   }
 
@@ -428,6 +442,17 @@ function initTopLevelManager() {
       return runtimeAction(runtime, actionName, ...args);
     },
     getSnapshot: buildWorkspaceSnapshot,
+    getHistorySnapshot(presetId = activeId) {
+      const requestedId = String(presetId || activeId);
+      return runtimeHistorySnapshot(runtimes.get(requestedId) || runtimes.get(activeId));
+    },
+    clearHistory(presetId = activeId) {
+      const requestedId = String(presetId || activeId);
+      const runtime = runtimes.get(requestedId) || runtimes.get(activeId);
+      const cleared = clearRuntimeHistory(runtime);
+      if (cleared && runtime?.id === activeId) notifyHistoryUpdated("cleared", runtime.id);
+      return cleared;
+    },
     getContent(kind, presetId = activeId) {
       const requestedId = String(presetId || activeId);
       const runtime = runtimes.get(requestedId) || runtimes.get(activeId);
@@ -453,6 +478,7 @@ function initTopLevelManager() {
     },
     panelModeKey: PANEL_MODE_KEY,
   });
+  window.setTimeout(() => notifyHistoryViewChanged("manager-ready"), 0);
 
   function loadDefinitions() {
     try {
@@ -460,12 +486,12 @@ function initTopLevelManager() {
       if (Array.isArray(parsed) && parsed.length) {
         return parsed.slice(0, MAX_PRESETS).map((item, index) => ({
           id: String(item?.id || uid()),
-          name: safeName(item?.name, `Preset ${index + 1}`),
+          name: normalizeWorkspaceName(item?.name, index),
           config: sanitizeConfig(item?.config),
         }));
       }
     } catch {}
-    return [{ id: uid(), name: "Preset 1", config: captureConfig(document) }];
+    return [{ id: uid(), name: "Workspace 1", config: captureConfig(document) }];
   }
 
   function persistDefinitions() {
@@ -555,6 +581,49 @@ function initTopLevelManager() {
     return typeof original === "function" ? original(...args) : false;
   }
 
+  function runtimeHistorySnapshot(runtime) {
+    if (!runtime?.ready) return { entries: [], nextSequence: 1 };
+    if (runtime.kind === "frame") {
+      return runtime.win?.__workspacePresetBridge?.getHistorySnapshot?.() || {
+        entries: [],
+        nextSequence: 1,
+      };
+    }
+    return window.__noteHistory?.getSnapshot?.() || { entries: [], nextSequence: 1 };
+  }
+
+  function clearRuntimeHistory(runtime) {
+    if (!runtime?.ready) return false;
+    if (runtime.kind === "frame") {
+      return runtime.win?.__workspacePresetBridge?.clearHistory?.() !== false;
+    }
+    return window.__noteHistory?.clearLocal?.() !== false;
+  }
+
+  function replaceNativeHistory(snapshot) {
+    return window.__noteHistory?.replaceLocal?.(snapshot) !== false;
+  }
+
+  function notifyHistoryViewChanged(reason = "workspace-switched") {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("workspace-history-view-changed", {
+          detail: { reason, workspaceId: activeId },
+        })
+      );
+    } catch (_) {}
+  }
+
+  function notifyHistoryUpdated(reason = "updated", workspaceId = activeId) {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("workspace-history-updated", {
+          detail: { reason, workspaceId: String(workspaceId || activeId) },
+        })
+      );
+    } catch (_) {}
+  }
+
   function syncGeneralTermsFrom(runtime) {
     if (!runtime?.ready) return;
     lastGeneralTerms = runtime.kind === "frame"
@@ -603,6 +672,7 @@ function initTopLevelManager() {
       if (applySavedConfig) applyConfig(activeRuntime.win, activeRuntime.doc, findDefinition(activeId)?.config || {});
     }
     render();
+    notifyHistoryViewChanged("workspace-switched");
   }
 
   function buildToolbar() {
@@ -727,7 +797,9 @@ function initTopLevelManager() {
       }
       const replacementRuntime = runtimes.get(replacement.id);
       const replacementDraft = captureRuntimeDraft(replacementRuntime);
+      const replacementHistory = runtimeHistorySnapshot(replacementRuntime);
       replacement.config = captureRuntimeConfig(replacementRuntime);
+      clearRuntimeHistory(replacementRuntime);
       replacementRuntime.frame?.remove();
       runtimes.delete(replacement.id);
       clearRuntimeDraft(runtime);
@@ -738,7 +810,9 @@ function initTopLevelManager() {
       primaryPresetId = replacement.id;
       definitions = definitions.filter((item) => item.id !== id);
       activeId = replacement.id;
+      replaceNativeHistory(replacementHistory);
     } else {
+      clearRuntimeHistory(runtime);
       runtime.frame.remove(); runtimes.delete(id);
       definitions = definitions.filter((item) => item.id !== id);
       if (activeId === id) activeId = primaryPresetId;
@@ -829,7 +903,7 @@ function initTopLevelManager() {
   function validateBundle(bundle) {
     if (!bundle || bundle.schema !== PRESET_SCHEMA || Number(bundle.version) !== PRESET_VERSION || !Array.isArray(bundle.presets)) throw new Error(t().invalid);
     const presets = bundle.presets.slice(0, MAX_PRESETS).map((item, index) => ({
-      id: uid(), name: safeName(item?.name, `Preset ${index + 1}`), config: sanitizeConfig(item?.config),
+      id: uid(), name: normalizeWorkspaceName(item?.name, index), config: sanitizeConfig(item?.config),
     }));
     if (!presets.length) throw new Error(t().invalid);
     const prompts = {};
@@ -854,7 +928,11 @@ function initTopLevelManager() {
     importPromptDependencies(validated.prompts);
     if (mode === "replace") {
       if (!window.confirm(t().replaceWarning)) return false;
-      [...runtimes.values()].filter((runtime) => runtime.kind === "frame").forEach((runtime) => runtime.frame.remove());
+      [...runtimes.values()].filter((runtime) => runtime.kind === "frame").forEach((runtime) => {
+        clearRuntimeHistory(runtime);
+        runtime.frame.remove();
+      });
+      replaceNativeHistory({ entries: [], nextSequence: 1 });
       runtimes.clear(); clearRuntimeDraft({ id: primaryPresetId, kind: "native", win: window, doc: document });
       definitions = validated.presets;
       primaryPresetId = definitions[0].id; activeId = primaryPresetId;
@@ -951,7 +1029,7 @@ function initTopLevelManager() {
   }
 
   async function exportJson() {
-    const copy = t(); const bundle = buildExportBundle(); const text = JSON.stringify(bundle, null, 2); const filename = `whisper-presets-${new Date().toISOString().slice(0, 10)}.json`;
+    const copy = t(); const bundle = buildExportBundle(); const text = JSON.stringify(bundle, null, 2); const filename = `transcribe-notes-workspace-set-${new Date().toISOString().slice(0, 10)}.json`;
     try {
       if (window.showSaveFilePicker) {
         const handle = await window.showSaveFilePicker({ suggestedName: filename, types: [{ description: "JSON", accept: { "application/json": [".json"] } }] });
