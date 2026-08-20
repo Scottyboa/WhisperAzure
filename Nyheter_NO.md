@@ -1,3 +1,22 @@
+## 20. august 2026
+
+### Nye Workspaces, to Mini Panel-visninger og separat historikk
+
+Du kan nå ha flere separate **Workspaces** i samme nettleserfane. Samlingen av disse kalles et **Workspace Set**. Hvert Workspace beholder egne tekster, valgt prompt, tilbydere, modeller og innstillinger. Opptak og notatgenerering kan fortsette i bakgrunnen mens du bytter Workspace.
+
+Mini Panel har nå to visninger. Bruk ikonet øverst til høyre i panelet for å bytte mellom dem:
+
+- **Mini Panel — Browser Tabs** lar deg bytte mellom og styre separate Transcribe Notes-faner. Dette passer godt dersom du foretrekker ett Workspace per nettleserfane.
+- **Mini Panel — Workspaces** viser og styrer alle Workspaces i den valgte Transcribe Notes-fanen. Dette passer godt dersom du vil ha flere arbeidsområder i samme nettleserfane.
+
+Du kan eksportere eller importere et Workspace Set som en lokal JSON-fil eller via Microsoft OneDrive og Google Drive. Lagringen inkluderer antall og rekkefølge på Workspaces, navn, valgte promptplasser med tilhørende prompttekst og navn, tilbydere, modeller, reasoning-valg, relevante avkrysningsbokser og om blant annet Secondary Note og Redactor er åpne.
+
+Transkripsjoner, supplerende informasjon, genererte notater, historikk, lydopptak, API-nøkler, passord og andre pasientopplysninger blir ikke inkludert. Skykopier krypteres i nettleseren. Lokale JSON-filer er lesbare og bør oppbevares sikkert.
+
+Historikkolonnen følger nå det aktive Workspace-et automatisk. Hvert Workspace har sin egen logg med de 30 siste fullførte primære notatgenereringene. Når du åpner et historikkelement, vises transkripsjonen, den supplerende informasjonen som ble brukt, og det genererte notatet i tre like store felt. Historikken lagres bare i den aktuelle faneøkten og fjernes når fanen lukkes eller historikken tømmes.
+
+---
+
 ## 17. august 2026
 
 ### Enkel sikkerhetskopiering av API-nøkler og tilpassede prompter til OneDrive eller Google Drive

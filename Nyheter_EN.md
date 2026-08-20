@@ -1,3 +1,22 @@
+## 20 August, 2026
+
+### New Workspaces, two Mini Panel views and separate history
+
+You can now use multiple separate **Workspaces** within the same browser tab. A collection of Workspaces is called a **Workspace Set**. Each Workspace keeps its own text, selected prompt, providers, models and settings. Recordings and note generation can continue in the background while you switch Workspaces.
+
+The Mini Panel now has two views. Use the icon in the upper-right corner of the panel to switch between them:
+
+- **Mini Panel — Browser Tabs** lets you switch between and control separate Transcribe Notes tabs. This is useful if you prefer one Workspace per browser tab.
+- **Mini Panel — Workspaces** shows and controls all Workspaces in the selected Transcribe Notes tab. This is useful if you prefer multiple work areas within one browser tab.
+
+You can export or import a Workspace Set as a local JSON file or through Microsoft OneDrive and Google Drive. The backup includes the number and order of Workspaces, names, selected prompt slots with their prompt text and labels, providers, models, reasoning selections, relevant checkboxes, and whether modules such as Secondary Note and Redactor are open.
+
+Transcripts, supplementary information, generated notes, history, audio recordings, API keys, passwords and other patient information are not included. Cloud backups are encrypted in the browser. Local JSON files are readable and should be stored securely.
+
+The history column now follows the active Workspace automatically. Each Workspace has its own log containing the 30 most recent completed primary note generations. Opening a history item displays the transcript, the supplementary information used, and the generated note in three equally sized fields. History is stored only for the current tab session and is removed when the tab is closed or the history is cleared.
+
+---
+
 ## 17 August, 2026
 
 ### Easy backup of API keys and custom prompts to OneDrive or Google Drive

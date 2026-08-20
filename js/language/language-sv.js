@@ -514,77 +514,90 @@ export const transcribeTranslations = {
   customPromptPlaceholder: "Skriv in anpassad prompt här",
   adUnitText: "Din annons här",
   guideHeading: "Guide & instruktioner",
-  guideText: `Välkommen till <strong>Transcribe Notes</strong>. Denna applikation låter vårdpersonal, terapeuter och andra yrkesutövare spela in och transkribera konsultationer samt generera professionella anteckningar med hjälp av en AI-baserad anteckningsgenerator.<br><br>
+guideText: `Välkommen till <strong>Transcribe Notes</strong>. Appen kan spela in och transkribera samtal och använda den färdiga texten för att skapa en anteckning. Inhämta alltid nödvändigt samtycke före inspelning och granska alltid medicinskt innehåll före användning.<br><br>
 
-<strong>Så använder du funktionerna:</strong><br><br>
+<strong>Snabbstart</strong><br>
+<ol>
+  <li>Välj Workspace, transkriptionsleverantör och önskade inställningar.</li>
+  <li>Klicka på <strong>Starta inspelning</strong>. Använd <strong>Pausa</strong>, <strong>Fortsätt</strong>, <strong>Stoppa/Slutför</strong> eller <strong>Avbryt</strong> vid behov.</li>
+  <li>Välj prompt, leverantör och modell för anteckningen och klicka på <strong>Generera anteckning</strong>. Du kan också aktivera Auto-generate.</li>
+</ol>
 
-<ul>
-  <li><strong>Inspelning:</strong> Patientens samtycke måste alltid inhämtas före inspelning. Välj önskad tal-till-text-modell från rullgardinsmenyn, klicka sedan på "Starta inspelning" för att börja inspelningen..<br><br>
-  
-  <strong><u>Viktigt:</u> Inspelningsfunktionen fungerar inte i alla webbläsare. Vi rekommenderar därför att använda <strong>Google Chrome</strong> eller <strong>Microsoft Edge</strong>.</strong></li><br>
+<details open>
+  <summary><strong>Inspelning och transkription</strong></summary>
+  <ul>
+    <li>Välj tal-till-text-leverantör innan inspelningen startar. Google Chrome eller Microsoft Edge rekommenderas.</li>
+    <li><strong>Pausa</strong> slutför det aktuella ljudsegmentet och låter dig fortsätta senare. <strong>Stoppa/Slutför</strong> avslutar inspelningen och inväntar återstående transkription. <strong>Avbryt</strong> kasserar den aktiva inspelningen utan normal slutföring.</li>
+    <li><strong>Speaker Labels</strong> är endast tillgängligt med Soniox och försöker markera vem som talar, till exempel Speaker 1 och Speaker 2.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Pausa och återuppta:</strong> Du kan använda "Pausa"-knappen för att tillfälligt stoppa inspelningen, till exempel om konsultationen avbryts eller om du behöver lämna kontoret en stund. När du trycker på "Pausa" laddas det aktuella ljudsegmentet upp och transkriberas och inspelningen pausas. När du är redo att fortsätta klickar du på "Fortsätt", och inspelningen återupptas automatiskt med nästa segment. Tidtagaren fortsätter där den slutade, och inspelningen kan till slut avslutas som vanligt med "Stopp/Klar".</li><br>
+<details>
+  <summary><strong>Workspaces och Workspace Sets</strong></summary>
+  <ul>
+    <li>Ett <strong>Workspace</strong> är en separat arbetsyta i webbläsarfliken. Varje Workspace har egna texter, valda prompts, leverantörer, modeller, inställningar, historik och aktiva processer. Byte mellan Workspaces stoppar inte inspelning eller generering.</li>
+    <li>Namnet följer normalt etiketten för vald promptplats. Använd <strong>+</strong> för att lägga till och <strong>×</strong> för att stänga ett Workspace. Upp till 12 Workspaces kan vara öppna.</li>
+    <li>Alla öppna Workspaces bildar ett <strong>Workspace Set</strong>. Import och export kan göras med en lokal JSON-fil, Microsoft OneDrive eller Google Drive.</li>
+    <li>Ett Workspace Set sparar antal och ordning, namn, valda promptplatser med prompttext och etiketter, leverantörer, modeller, reasoning-val, relevanta kryssrutor och öppna moduler. Transkriptioner, kompletterande information, anteckningar, historik, ljud, API-nycklar, lösenord och annan patientinformation ingår inte.</li>
+    <li>Molnkopior krypteras i webbläsaren med ditt valda lösenord. Lokala JSON-filer är läsbara och måste förvaras säkert.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Slutförande:</strong> När du klickar på "Stopp/Klar" stoppas inspelningen. Slutförandetimern räknar tiden tills hela transkriptionen har tagits emot (vanligtvis inom 5–10 sekunder).</li><br>
+<details>
+  <summary><strong>Mini Panel</strong></summary>
+  <ul>
+    <li>Öppna panelen med knappen <strong>Mini-panel</strong>. Ikonen uppe till höger växlar mellan de två vyerna.</li>
+    <li><strong>Mini Panel — Browser Tabs</strong> styr separata Transcribe Notes-flikar och passar när du vill ha ett Workspace per webbläsarflik.</li>
+    <li><strong>Mini Panel — Workspaces</strong> visar alla Workspaces i den valda Transcribe Notes-fliken och passar när du vill ha flera arbetsytor i samma flik.</li>
+    <li>Inspelningar och generering fortsätter i bakgrunden när du byter vy eller Workspace.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Anpassad prompt och promptprofiler:</strong> På höger sida väljer du en promptplats (1–10) och skriver in din egen prompt. Prompterna sparas automatiskt på denna enhet. För att göra prompterna oberoende av ändringar i API-nyckel kan du ange ett <strong>Prompt profile ID</strong> (t.ex. “David”, “David 1”, “Office-PC-2”). Aktiv profil visas ovanför promptfältet. Om ingen profil är angiven kan prompterna fortfarande vara sparade med den äldre metoden som var kopplad till API-nyckel.</li><br>
+<details>
+  <summary><strong>Auto-generate, Auto-copy och primär anteckningsgenerering</strong></summary>
+  <ul>
+    <li><strong>Auto-generate</strong> startar anteckningsgenereringen automatiskt när transkriptionen är klar. När funktionen är av använder du <strong>Generera anteckning</strong> manuellt.</li>
+    <li><strong>Auto-copy</strong> kan automatiskt kopiera den färdiga transkriptionen eller anteckningen och kräver det tillhörande webbläsartillägget. Manuella kopieringsknappar fungerar ändå.</li>
+    <li>Huvudanteckningen använder transkriptionen, eventuell vald prompt och texten i <strong>Kompletterande information</strong>. Välj leverantör, modell och eventuellt reasoning-nivå före generering.</li>
+    <li>AI-genererade anteckningar kan innehålla fel eller utelämna information. Granska och validera alltid anteckningen före användning.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Export / import (flytta eller dela prompts):</strong> Klicka <strong>Export</strong> för att ladda ned en liten JSON-fil som innehåller alla 10 promptplatser för den aktuella profilen. På en annan PC anger du Prompt profile ID (samma eller ett nytt) och klickar <strong>Import</strong> för att läsa in filen. Import lägger alltid in prompterna i den <strong>aktiva</strong> profilen på den enheten, vilket också gör det enkelt att dela prompt-«mallar» med kollegor.</li><br>
+<details>
+  <summary><strong>Secondary Note Generation</strong></summary>
+  <p>Modulen är användbar när ett långt dokument först bör förkortas. Klistra in texten i källfältet, välj en separat prompt och modell och skapa en sammanfattning. Resultatet kan kopieras automatiskt eller manuellt till <strong>Kompletterande information</strong>.</p>
+  <p>Du kan till exempel använda en billig modell som GPT-5 Nano via Requesty för att sammanfatta ett dokument på 50 sidor. Huvudmodellen, till exempel GPT-5.6 Sol eller Claude Opus 5, får då den korta sammanfattningen tillsammans med transkriptionen i stället för hela dokumentet. Det kan minska tokenanvändning och kostnad betydligt. Kontrollera sammanfattningen innan den används som medicinsk kontext.</p>
+</details><br>
 
-  <li><strong>Byta profil:</strong> När du ändrar Prompt profile ID kommer promptplatserna omedelbart att visa de prompts som är sparade under den profilen. Detta gör att flera kan använda samma PC utan att blanda prompts, så länge varje användare har sin egen profil.</li><br>
+<details>
+  <summary><strong>Pris och tokenanvändning</strong></summary>
+  <ul>
+    <li>När prisdata finns visas den valda modellens pris i USD per en miljon input- och output-tokens.</li>
+    <li>Efter generering visas tokenanvändning och uppskattat pris när leverantörens svar innehåller nödvändiga användningsdata. Vissa leverantörer kan rapportera en mer exakt kostnad.</li>
+    <li><strong>Kostnadsöversikt</strong> öppnar länkar till leverantörernas egna användnings- och faktureringssidor. Appens priser är vägledande; leverantörens fakturering gäller.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Anteckningsgenerering:</strong> När transkriptionen är slutförd klickar du på "Generera anteckning" för att skapa en anteckning baserad på transkriptionen och den valda/anpassade prompten. Anteckningsgenereringen sker då hos vald leverantör i rullgardinsmenyn i anteckningsgenereringsmodulen. Genererade journalanteckningar måste granskas och valideras av vårdpersonal innan de tas i bruk.</li><br>
+<details>
+  <summary><strong>Promptplatser, historik, Redactor och OCR</strong></summary>
+  <ul>
+    <li>Det finns 20 promptplatser. Prompt profile ID separerar promptuppsättningar på samma enhet. Uppsättningar kan importeras eller exporteras som JSON eller krypterat via OneDrive och Google Drive.</li>
+    <li>Historikkolumnen visar de 30 senaste slutförda primära anteckningsgenereringarna i aktivt Workspace. Klicka på ett objekt för att se transkription, kompletterande information och genererad anteckning. Varje Workspace har egen historik.</li>
+    <li><strong>Redactor</strong> kan ta bort valda allmänna och specifika termer från transkriptionen och kompletterande information. Kontrollera alltid resultatet innan texten skickas vidare.</li>
+    <li><strong>OCR</strong> kan hämta text från en inklistrad skärmbild eller bildfil och skicka texten till listan med specifika termer eller råtextfältet.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Kostnadsöversikt:</strong> För att se din nuvarande förbrukning hos de olika leverantörerna klickar du på länken för kostnadsöversikt som finns uppe till höger på huvudsidan.</li><br>
+<details>
+  <summary><strong>Lagring och integritet</strong></summary>
+  <ul>
+    <li>Arbetstext och Workspace-historik finns kvar i den aktuella webbläsarflikens session och tas bort när sessionen avslutas. <strong>Clear</strong> kan tömma aktivt innehåll eller historik.</li>
+    <li>API-nycklar lagras inte i localStorage. De behålls endast under den aktiva webbläsarsessionen och kan rensas manuellt på startsidan.</li>
+    <li>Data skickas till den leverantör och region du väljer. Lagring och behandling beror på vald leverantör, konto, konfiguration och aktuella villkor. Kontrollera att lösningen är lämplig för informationen du behandlar.</li>
+  </ul>
+</details><br><br>
 
-  <li><strong>Säkerhet:</strong> Din ljudinspelning skickas direkt till vald leverantör (från rullgardinsmenyn) sina servrar för transkribering, och varken lagras(gäller bara för AWS Bedrock, Google Vertex och Soniox) eller används för maskininlärning. Den transkriberade texten visas endast i din webbläsare och raderas/försvinner så snart du stänger webbläsaren eller laddar in nytt innehåll.</li><br>
-
-  <li><strong>Guide-knapp:</strong> Klicka på "Guide"-knappen igen för att gå tillbaka till huvudvyn.</li>
-</ul><br><br>
-
-<strong>Exempel på prompts:</strong><br><br>
-
-<strong>Konsultation:</strong><br>
-"Systemprompt – Medicinsk anteckningsgenerator
-Syfte: Generera en medicinskt korrekt, journalfärdig anteckning baserad på en transkriberad läkar–patient-samtal.
-
-Struktur (om inget annat anges i diktatet):
-Bakgrund (endast vid relevant historik)
-Aktuellt/anamnes
-Undersökning (punktvis)
-Bedömning
-Plan
-
-Regler:
-– Inkludera endast uppgifter, undersökningar och fynd som explicit framgår i samtalet.
-– Ta med negativa fynd endast om de nämns.
-– Om blodprover beställs utan specifikation: skriv “relevanta blodprover beställs”. Om blodprover inte nämns som beställda, nämn då ingenting om blodprover.
-– Rätta uppenbara felstavningar i läkemedelsnamn.
-– Använd inte specialtecken, fetstil eller extra radbrytningar i rubriker.
-– Om ett avsnitt ska listas punktvis, använd “-” framför varje punkt.
-– Följ explicita instruktioner från läkaren om stil, längd eller ordalydelse.
-– Ta med eventuella läkartillägg efter att patienten har lämnat rummet.
-– Använd ett precist och flytande journalspråk utan onödiga utfyllnadsord eller repetitioner.
-– Språket ska vara medicinskt korrekt, klart och koncist.
-– Använd inte ";" eller "-" för att binda ihop meningar. Kan eventuellt använda "," eller bara ha separata meningar.
-– Om det läggs till kompletterande information i "[kompletterande information]" ovanför diktatet kan denna information användas som kontext när anteckningen skrivs.
-– Du behöver inte skriva "här är den färdiga anteckningen.. etc" före anteckningen. Det räcker att bara skicka anteckningen.
-– Dubbelkolla läkemedelsnamn så att de stavas/skrivs korrekt.
-– All text ska vara helt oformaterad: ingen användning av fetstil, kursiv, markdown-symboler (som # eller **) eller ändrad textstorlek i varken rubriker eller brödtext.
-
-
-Syftet är att producera en färdig, journalgod anteckning som kan användas direkt i patientjournal utan vidare redigering."<br><br>
-
-<strong>Brev till patient:</strong><br>
-"Skriv brev. Börja brevet med «Hej [namn],(sedan dubbel radbrytning)»(om namn inte nämns säg bara "Hej"). Avsluta alltid med:
-«Med vänliga hälsningar
-<LEGENS NAMN>
-<MOTTAGNINGENS NAMN>».
-
-Lägg inte till information eller artighetsfraser som inte nämns. Du kan ändra meningsstruktur/grammatik/språk/ordning vid behov så att texten blir bättre, eventuellt rätta språket. Om jag säger "hör bara av dig om du undrar något mer," så skriv inget annat än detta på slutet. 
-"<br><br>
-
-Detta är exempel som fungerar bra, men du står fritt att anpassa dem så att de passar din dokumentationsstil, specialitet och typ av konsultation. Du kan också skapa helt egna prompts för vilket syfte du vill.  
+Klicka på <strong>Guide</strong> igen eller använd stängningsknappen för att återgå till huvudvyn.
 `,
 
   // Sekundär anteckningsgenerator

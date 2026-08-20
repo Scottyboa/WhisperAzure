@@ -211,59 +211,90 @@ export const transcribeTranslations = {
   customPromptPlaceholder: "Saisissez l'invite personnalisée ici",
   adUnitText: "Votre publicité ici",
   guideHeading: "Guide et instructions",
-guideText: `Bienvenue dans <strong>Transcribe Notes</strong>. Cette application permet aux professionnels de santé, thérapeutes et autres praticiens d’enregistrer et de transcrire des consultations, ainsi que de générer des notes professionnelles grâce à un générateur alimenté par intelligence artificielle.<br><br>
+guideText: `Bienvenue dans <strong>Transcribe Notes</strong>. L'application peut enregistrer et transcrire des conversations, puis utiliser le texte obtenu pour générer une note. Obtenez toujours le consentement requis avant l'enregistrement et vérifiez tout contenu clinique avant de l'utiliser.<br><br>
 
-<strong>Comment utiliser les fonctionnalités :</strong><br><br>
+<strong>Démarrage rapide</strong><br>
+<ol>
+  <li>Sélectionnez un Workspace, un fournisseur de transcription et les réglages nécessaires.</li>
+  <li>Sélectionnez <strong>Démarrer l'enregistrement</strong>. Utilisez <strong>Pause</strong>, <strong>Reprendre</strong>, <strong>Arrêter/Terminer</strong> ou <strong>Abandonner</strong> selon les besoins.</li>
+  <li>Sélectionnez le prompt, le fournisseur et le modèle de la note, puis <strong>Générer la note</strong>. Auto-generate peut également être activé.</li>
+</ol>
 
-<ul>
-  <li><strong>Enregistrement :</strong> Le consentement du patient doit toujours être obtenu avant d'utiliser cette application. Cliquez sur "Démarrer l’enregistrement" pour commencer à capturer l’audio. Toutes les 2 minutes, un segment audio est automatiquement envoyé aux serveurs d’OpenAI pour transcription. Les transcriptions apparaîtront progressivement dans le champ de sortie.<br><br>
-  <strong><u>Important :</u> L’enregistreur ne fonctionne pas avec tous les navigateurs. Il est recommandé d’utiliser <strong>Google Chrome</strong> ou <strong>Microsoft Edge</strong>.</strong></li><br>
+<details open>
+  <summary><strong>Enregistrement et transcription</strong></summary>
+  <ul>
+    <li>Sélectionnez le fournisseur de reconnaissance vocale avant l'enregistrement. Google Chrome ou Microsoft Edge est recommandé.</li>
+    <li><strong>Pause</strong> termine le segment audio en cours et permet de reprendre plus tard. <strong>Arrêter/Terminer</strong> met fin à l'enregistrement et attend la transcription restante. <strong>Abandonner</strong> supprime l'enregistrement actif sans finalisation normale.</li>
+    <li><strong>Speaker Labels</strong> est disponible uniquement avec Soniox et tente d'indiquer qui parle, par exemple Speaker 1 et Speaker 2.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Pause et reprise :</strong> Vous pouvez utiliser le bouton "Pause" pour interrompre temporairement l’enregistrement, par exemple si la consultation est interrompue ou si vous devez quitter le cabinet un instant. Lorsque vous cliquez sur "Pause", le segment audio en cours est téléchargé et transcrit, puis l’enregistrement est mis en pause. Lorsque vous êtes prêt à continuer, cliquez sur "Reprendre", et l’enregistrement reprendra automatiquement avec le segment suivant. Le minuteur continue là où il s’était arrêté, et la session peut être terminée normalement en cliquant sur "Stop/Terminer".</li><br>
+<details>
+  <summary><strong>Workspaces et Workspace Sets</strong></summary>
+  <ul>
+    <li>Un <strong>Workspace</strong> est un espace de travail distinct dans l'onglet du navigateur. Chaque Workspace possède ses propres textes, prompts sélectionnés, fournisseurs, modèles, réglages, historique et processus actifs. Changer de Workspace n'arrête ni l'enregistrement ni la génération.</li>
+    <li>Le nom reprend normalement le libellé de l'emplacement de prompt sélectionné. Utilisez <strong>+</strong> pour ajouter et <strong>×</strong> pour fermer un Workspace. Jusqu'à 12 Workspaces peuvent être ouverts.</li>
+    <li>Tous les Workspaces ouverts forment un <strong>Workspace Set</strong>. L'importation et l'exportation sont possibles par fichier JSON local, Microsoft OneDrive ou Google Drive.</li>
+    <li>Un Workspace Set enregistre le nombre et l'ordre, les noms, les emplacements de prompt sélectionnés avec leur texte et leur libellé, les fournisseurs, les modèles, les choix de raisonnement, les cases pertinentes et les modules ouverts. Il n'inclut pas les transcriptions, informations complémentaires, notes, historique, fichiers audio, clés API, mots de passe ni autres informations sur les patients.</li>
+    <li>Les sauvegardes cloud sont chiffrées dans le navigateur avec le mot de passe choisi. Les fichiers JSON locaux sont lisibles et doivent être conservés en sécurité.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Finalisation :</strong> Après avoir cliqué sur "Stop/Terminer", l’enregistrement s’arrête. Le minuteur de finalisation indique le temps nécessaire pour recevoir la transcription complète (généralement en 5 à 10 secondes).</li><br>
+<details>
+  <summary><strong>Mini Panel</strong></summary>
+  <ul>
+    <li>Ouvrez-le avec le bouton <strong>Mini-panel</strong>. L'icône en haut à droite permet de passer d'une vue à l'autre.</li>
+    <li><strong>Mini Panel — Browser Tabs</strong> contrôle des onglets Transcribe Notes séparés et convient à un Workspace par onglet.</li>
+    <li><strong>Mini Panel — Workspaces</strong> affiche tous les Workspaces de l'onglet Transcribe Notes sélectionné et convient à plusieurs espaces dans un seul onglet.</li>
+    <li>Les enregistrements et les générations continuent en arrière-plan lors du changement de vue ou de Workspace.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Prompt personnalisé :</strong> Sur la droite, sélectionnez un emplacement de prompt (1 à 10) et saisissez votre propre prompt. Il sera automatiquement enregistré et associé à votre clé API. Vous pouvez créer tout type de prompt adapté à votre style de documentation, ton et domaine clinique. Cela vous offre une flexibilité totale dans la génération des notes.</li><br>
+<details>
+  <summary><strong>Auto-generate, Auto-copy et génération principale</strong></summary>
+  <ul>
+    <li><strong>Auto-generate</strong> lance automatiquement la génération de la note à la fin de la transcription. Sinon, utilisez manuellement <strong>Générer la note</strong>.</li>
+    <li><strong>Auto-copy</strong> peut copier automatiquement la transcription ou la note terminée et nécessite l'extension de navigateur associée. Les boutons de copie manuelle restent disponibles.</li>
+    <li>La note principale utilise la transcription, le prompt éventuellement sélectionné et le texte du champ <strong>Informations complémentaires</strong>. Sélectionnez le fournisseur, le modèle et, si disponible, le niveau de raisonnement avant la génération.</li>
+    <li>Les notes générées par l'IA peuvent contenir des erreurs ou omettre des éléments. Vérifiez et validez toujours une note avant de l'enregistrer ou de l'envoyer.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Génération de note :</strong> Une fois la transcription terminée, cliquez sur "Générer la note" pour créer une note basée sur la transcription et le prompt sélectionné/personnalisé. Les notes médicales générées doivent être vérifiées et validées par du personnel de santé avant d’être utilisées.</li><br>
+<details>
+  <summary><strong>Secondary Note Generation</strong></summary>
+  <p>Ce module est utile lorsqu'un long document doit d'abord être raccourci. Collez le texte dans le champ source, choisissez un prompt et un modèle distincts, puis générez un résumé. Le résultat peut être copié automatiquement ou manuellement dans <strong>Informations complémentaires</strong>.</p>
+  <p>Vous pouvez par exemple utiliser un modèle économique tel que GPT-5 Nano via Requesty pour résumer un document de 50 pages. Le modèle principal, par exemple GPT-5.6 Sol ou Claude Opus 5, reçoit alors le résumé court avec la transcription au lieu du document complet. Cela peut réduire nettement le nombre de tokens et le coût. Vérifiez le résumé avant de l'utiliser comme contexte clinique.</p>
+</details><br>
 
-  <li><strong>Aperçu des coûts :</strong> Pour consulter votre utilisation actuelle chez OpenAI, cliquez sur le lien vers l’aperçu des coûts situé en haut à droite de cette page.</li><br>
+<details>
+  <summary><strong>Prix et utilisation des tokens</strong></summary>
+  <ul>
+    <li>Lorsque les données tarifaires sont disponibles, le modèle sélectionné affiche son prix en USD par million de tokens d'entrée et de sortie.</li>
+    <li>Après la génération, l'utilisation des tokens et un prix estimé sont affichés si la réponse du fournisseur contient les données nécessaires. Certains fournisseurs peuvent communiquer un coût plus précis.</li>
+    <li><strong>Aperçu des coûts</strong> ouvre les pages d'utilisation et de facturation des fournisseurs. Les prix de l'application sont indicatifs; la facturation du fournisseur fait foi.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Sécurité :</strong> Votre enregistrement audio est envoyé directement aux serveurs API d’OpenAI, qui ne stockent pas les données et les utilisent uniquement pour la transcription. Le texte transcrit s’affiche uniquement dans votre navigateur, et <strong>il est supprimé/disparaît dès que vous fermez le navigateur ou rechargez du contenu.</strong></li><br>
+<details>
+  <summary><strong>Emplacements de prompts, historique, Redactor et OCR</strong></summary>
+  <ul>
+    <li>Vingt emplacements de prompts sont disponibles. Prompt profile ID sépare les jeux de prompts sur un même appareil. Ils peuvent être importés ou exportés en JSON ou sous forme chiffrée via OneDrive et Google Drive.</li>
+    <li>La colonne d'historique affiche les 30 dernières générations principales terminées du Workspace actif. Sélectionnez un élément pour voir la transcription, les informations complémentaires et la note générée. Chaque Workspace a son propre historique.</li>
+    <li><strong>Redactor</strong> peut supprimer les termes généraux et spécifiques choisis de la transcription et des informations complémentaires. Vérifiez toujours le résultat avant envoi.</li>
+    <li><strong>OCR</strong> peut extraire le texte d'une capture d'écran collée ou d'un fichier image et l'envoyer vers la liste des termes spécifiques ou le champ de texte brut.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Bouton "Guide" :</strong> Cliquez de nouveau sur le bouton "Guide" pour revenir à l’interface principale.</li>
-</ul><br><br>
+<details>
+  <summary><strong>Stockage et confidentialité</strong></summary>
+  <ul>
+    <li>Le texte de travail et l'historique du Workspace restent dans la session de l'onglet actuel et sont supprimés à la fin de cette session. <strong>Clear</strong> permet d'effacer le contenu actif ou l'historique.</li>
+    <li>Les clés API ne sont pas placées dans localStorage. Elles sont conservées uniquement pendant la session active du navigateur et peuvent être effacées manuellement depuis la page d'accueil.</li>
+    <li>Les données sont envoyées au fournisseur et dans la région choisis. Le stockage et le traitement dépendent du fournisseur, du compte, de la configuration et des conditions en vigueur. Vérifiez que l'installation convient aux informations traitées.</li>
+  </ul>
+</details><br><br>
 
-<strong>Exemples de prompts :</strong><br><br>
-
-<strong>Consultation :</strong><br>
-"Prompt système – Générateur de note médicale
-
-Rédigez une note médicalement précise et prête pour le journal à partir d’une conversation transcrite entre le médecin et le patient. Utilisez la structure suivante (sauf indication contraire dans le dictat) :
-Contexte (seulement si antécédents pertinents), Motif de consultation/anamnèse, Examen (puces), Évaluation, Plan.
-
-Règles :
-– Ne pas inclure d’informations, examens ou constatations non mentionnés explicitement.
-– Constatations négatives uniquement si mentionnées.
-– Bilans sanguins : écrivez “des bilans sanguins pertinents sont prescrits”, sans les détailler.
-– Corrigez les fautes évidentes dans les noms de médicaments.
-– N’utilisez pas de caractères spéciaux ni de sauts de ligne avant les titres.
-– Suivez les instructions explicites du médecin concernant le style, la longueur ou les formulations spécifiques.
-
-Si le médecin ajoute des commentaires après le départ du patient, ceux-ci doivent être pris en compte. La note doit être bien rédigée."
-
-<br><br>
-
-<strong>Lettre au patient :</strong><br>
-"Rédigez une lettre du médecin au patient. Commencez par Bonjour \\"nom\\", et terminez par<br>
-Cordialement<br>
-\\"Votre nom\\"<br>
-\\"Nom du cabinet\\"<br>
-La lettre doit avoir un ton professionnel et formel. Vous pouvez améliorer légèrement le style pour une meilleure fluidité."
-
-<br><br>
-
-Ce sont des exemples efficaces, mais vous êtes libre de les adapter à votre style de documentation, votre spécialité ou votre type de consultation. Vous pouvez également créer vos propres prompts pour tout autre usage.
+Sélectionnez de nouveau <strong>Guide</strong> ou utilisez le bouton de fermeture pour revenir à l'affichage principal.
 `,
 
   // Générateur de notes secondaire

@@ -727,64 +727,90 @@ export const transcribeTranslations = {
   customPromptPlaceholder: "Enter custom prompt here",
   adUnitText: "Your Ad Here",
   guideHeading: "Guide & Instructions",
-guideText: `Welcome to the Transcribe Notes Transcription tool. This application allows medical professionals, therapists, and other practitioners to record and transcribe consultations, as well as generate professional notes using an AI-powered note generator.<br><br>
+guideText: `Welcome to <strong>Transcribe Notes</strong>. The app can record and transcribe conversations and use the finished text to generate a note. Always obtain any required consent before recording, and always review clinical content before use.<br><br>
 
-<strong>How to Use the Functions:</strong><br><br>
+<strong>Quick start</strong><br>
+<ol>
+  <li>Select a Workspace, transcription provider and any required settings.</li>
+  <li>Select <strong>Start Recording</strong>. Use <strong>Pause</strong>, <strong>Resume</strong>, <strong>Stop/Complete</strong> or <strong>Abort</strong> as needed.</li>
+  <li>Select the prompt, provider and model for the note, then select <strong>Generate Note</strong>. You can also enable Auto-generate.</li>
+</ol>
 
-<ul>
-  <li><strong>Recording:</strong> The patient’s consent must always be obtained before recording. Select desired transcription model from pulldown menu, then click “Start recording” to begin capturing audio.<br><br>
-  
-  <strong><u>Important:</u> The recording function does not work in all browsers. We therefore recommend using <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong>.</strong></li><br>
+<details open>
+  <summary><strong>Recording and transcription</strong></summary>
+  <ul>
+    <li>Select the speech-to-text provider before recording. Google Chrome or Microsoft Edge is recommended.</li>
+    <li><strong>Pause</strong> completes the current audio segment and lets you resume later. <strong>Stop/Complete</strong> ends the recording and waits for the remaining transcript. <strong>Abort</strong> discards the active recording without normal completion.</li>
+    <li><strong>Speaker Labels</strong> is available only with Soniox. It attempts to identify who is speaking, for example Speaker 1 and Speaker 2.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Pause and resume:</strong> You can use the “Pause” button to temporarily stop the recording, for example if the consultation is interrupted or you need to leave the office for a moment. When you press “Pause,” the current audio segment is uploaded and transcribed, and the recording is paused. When you are ready to continue, click “Resume,” and the recording will automatically continue with the next segment. The timer continues from where it left off, and the recording can ultimately be ended as usual with “Stop/Done.”</li><br>
+<details>
+  <summary><strong>Workspaces and Workspace Sets</strong></summary>
+  <ul>
+    <li>A <strong>Workspace</strong> is a separate work area within the browser tab. Each Workspace has its own text, selected prompts, providers, models, settings, history and active processes. Switching Workspaces does not stop recording or generation.</li>
+    <li>The name normally follows the selected prompt-slot label. Use <strong>+</strong> to add and <strong>×</strong> to close a Workspace. Up to 12 Workspaces can be open.</li>
+    <li>All open Workspaces form a <strong>Workspace Set</strong>. Import and export are available through a local JSON file, Microsoft OneDrive or Google Drive.</li>
+    <li>A Workspace Set stores the number and order of Workspaces, names, selected prompt slots with prompt text and labels, providers, models, reasoning selections, relevant checkboxes and open modules. It does not include transcripts, supplementary information, notes, history, audio, API keys, passwords or other patient information.</li>
+    <li>Cloud backups are encrypted in the browser with your chosen password. Local JSON files are readable and must be stored securely.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Completion:</strong> When you click “Stop/Done,” the recording stops. The completion timer counts the time until the full transcription has been received (usually within 5–10 seconds).</li><br>
+<details>
+  <summary><strong>Mini Panel</strong></summary>
+  <ul>
+    <li>Open it with the <strong>Mini-panel</strong> button. The icon in the upper-right corner switches between its two views.</li>
+    <li><strong>Mini Panel — Browser Tabs</strong> controls separate Transcribe Notes tabs. This is useful when you want one Workspace per browser tab.</li>
+    <li><strong>Mini Panel — Workspaces</strong> shows every Workspace in the selected Transcribe Notes tab. This is useful when you want several work areas in one tab.</li>
+    <li>You can switch view or Workspace while recordings and generation continue in the background.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Custom prompt and prompt profiles:</strong> On the right side, choose a prompt slot (1–20) and enter your own prompt. The prompts are saved automatically on this device. To make the prompts independent of changes to the API key, you can set a <strong>Prompt profile ID</strong> (e.g., “David”, “David 1”, “Office-PC-2”). The active profile is shown above the prompt field. If no profile is set, the prompts may still be saved using the older method that was tied to the API key.</li><br>
+<details>
+  <summary><strong>Auto-generate, Auto-copy and primary note generation</strong></summary>
+  <ul>
+    <li><strong>Auto-generate</strong> starts note generation automatically when transcription finishes. When it is off, use <strong>Generate Note</strong> manually.</li>
+    <li><strong>Auto-copy</strong> can automatically copy the completed transcript or completed note. It requires the companion browser extension. Manual copy buttons work independently.</li>
+    <li>The primary note uses the transcript, any selected prompt and the text in <strong>Supplementary Information</strong>. Select the provider, model and reasoning level, when available, before generation.</li>
+    <li>AI-generated notes can contain errors or omit information. Always review and validate a note before saving or sending it.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Export / import (move or back up prompts and General terms):</strong> Click <strong>Export</strong> and choose a JSON file, Microsoft OneDrive, or Google Drive. Cloud backups contain all 20 prompt slots and labels in the active profile, are encrypted in the browser with the password you choose, and are stored in your own account's private app folder. If <strong>General terms</strong> contains text, it is encrypted and stored as a separate cloud backup using the same sign-in and password. If the field is empty, an earlier General terms backup is left unchanged. <strong>Specific terms are never included.</strong> A new cloud export replaces only the relevant backup files for that same service; it does not overwrite the API-key backup or other files. To restore, click <strong>Import</strong>, choose the same service, and enter the password. Import replaces the prompts in the <strong>active</strong> profile and also restores General terms for the current tab when that separate backup is available.</li><br>
+<details>
+  <summary><strong>Secondary Note Generation</strong></summary>
+  <p>This module is useful when a long document should be shortened first. Paste the text into the source field, select a separate prompt and model, and generate a summary. The result can be copied automatically or manually to <strong>Supplementary Information</strong>.</p>
+  <p>For example, you can use an inexpensive model such as GPT-5 Nano through Requesty to summarize a 50-page document. The primary model, such as GPT-5.6 Sol or Claude Opus 5, then receives the short summary with the transcript instead of the entire document. This can substantially reduce token use and cost. Review the summary before using it as clinical context.</p>
+</details><br>
 
-  <li><strong>Switch profile:</strong> When you change the Prompt profile ID, the prompt slots will immediately show the prompts stored under that profile. This allows multiple people to use the same PC without mixing prompts, as long as each user has their own profile.</li><br>
+<details>
+  <summary><strong>Price and token use</strong></summary>
+  <ul>
+    <li>When pricing data is available, the selected model shows its USD price per one million input and output tokens.</li>
+    <li>After note generation, token use and an estimated price are shown when the provider response contains the required usage data. Some providers may report a more precise cost.</li>
+    <li><strong>Cost Usage Overview</strong> opens links to the providers' own usage and billing pages. Prices shown in the app are estimates; the provider's billing is authoritative.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Note generation:</strong> Once the transcription is complete, click “Generate note” to create a note based on the transcription and the selected/custom prompt. Note generation is performed by the provider selected in the dropdown menu in the note generation module. Generated clinical notes must be reviewed and validated by healthcare personnel before use.</li><br>
+<details>
+  <summary><strong>Prompt slots, history, Redactor and OCR</strong></summary>
+  <ul>
+    <li>There are 20 prompt slots. Prompt profile ID separates prompt sets on the same device. Prompt sets can be imported or exported as JSON or as encrypted backups through OneDrive and Google Drive.</li>
+    <li>The history column shows the 30 most recent completed primary note generations in the active Workspace. Select an item to view the transcript, supplementary information and generated note. Each Workspace has its own history.</li>
+    <li><strong>Redactor</strong> can remove selected General and Specific terms from the transcript and supplementary information. Always inspect the result before sending the text.</li>
+    <li><strong>OCR</strong> can extract text from a pasted screenshot or image file and send it to the Specific terms list or the raw-text field.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Cost overview:</strong> To see your current cost/usage for the different providers, click the cost overview link located at the top right of the main functions page.</li><br>
+<details>
+  <summary><strong>Storage and privacy</strong></summary>
+  <ul>
+    <li>Working text and Workspace history remain in the current browser-tab session and are removed when that tab session ends. <strong>Clear</strong> can be used to remove active content or history.</li>
+    <li>API keys are not placed in localStorage. They are kept only for the active browser session and can be cleared manually from the front page.</li>
+    <li>Data is sent to the provider and region you select. Storage, data processing and any use of data depend on the selected provider, account, configuration and current terms. Confirm that the setup is suitable for the information you process.</li>
+  </ul>
+</details><br><br>
 
-  <li><strong>Security:</strong> Your audio recording is sent directly to the selected provider’s servers (from the dropdown menu) for transcription, and is neither stored (applies only to AWS Bedrock, Google Vertex, and Soniox) nor used for machine learning. The transcribed text is only displayed in your browser and is deleted/disappears as soon as you close the browser or load new content.</li><br>
-
-  <li><strong>Guide button:</strong> Click the “Guide” button again to return to the main view.</li>
-</ul><br><br>
-
-<strong>Prompt Examples:</strong><br><br>
-
-<strong>Consultation:</strong><br>
-"System prompt – Medical Note Generator
-
-Write a medically accurate, journal-ready note based on a transcribed doctor-patient conversation. Use the following structure (unless otherwise specified in the dictation):
-Background (only if relevant history), Presenting complaint/anamnesis, Examination (bullet points), Assessment, Plan.
-
-Rules:
-– Do not include information, investigations, or findings not explicitly mentioned.
-– Negative findings only if stated.
-– Blood tests: write “relevant blood tests are ordered”, do not list them.
-– Correct obvious misspellings in medication names.
-– Do not use special characters or line breaks before headings.
-– Follow explicit instructions from the doctor regarding style, length, or specific wording.
-
-If the doctor adds comments after the patient has left, these must be considered. The note should be well-written."
-
-<br><br>
-
-<strong>Letter to patient:</strong><br>
-"Write a letter from the doctor to the patient. Start with Hi \\"name\\", and end with<br>
-Regards<br>
-\\"Your name\\"<br>
-\\"Clinic name\\"<br>
-The letter must have a professional and formal tone. You may improve the wording slightly for better flow."
-
-<br><br>
-
-These are examples that work well, but feel free to adapt them to your documentation style, specialty, and type of consultation. You can also create entirely custom prompts for any purpose you wish.
+Select <strong>Guide</strong> again or use the close button to return to the main view.
 `,
 
   // Redactor

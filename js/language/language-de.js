@@ -210,59 +210,90 @@ export const transcribeTranslations = {
   customPromptPlaceholder: "Benutzerdefinierten Prompt hier eingeben",
   adUnitText: "Ihre Anzeige hier",
   guideHeading: "Anleitung & Instruktionen",
-guideText: `Willkommen bei <strong>Transcribe Notes</strong>. Diese Anwendung ermöglicht es medizinischem Fachpersonal, Therapeut:innen und anderen Anwender:innen, Gespräche aufzuzeichnen und zu transkribieren sowie professionelle Notizen mithilfe eines KI-gestützten Notizgenerators zu erstellen.<br><br>
+guideText: `Willkommen bei <strong>Transcribe Notes</strong>. Die App kann Gespräche aufnehmen und transkribieren und den fertigen Text zur Erstellung einer Notiz verwenden. Holen Sie vor einer Aufnahme immer die erforderliche Einwilligung ein und prüfen Sie medizinische Inhalte vor der Verwendung.<br><br>
 
-<strong>So verwendest du die Funktionen:</strong><br><br>
+<strong>Schnellstart</strong><br>
+<ol>
+  <li>Workspace, Transkriptionsanbieter und gewünschte Einstellungen auswählen.</li>
+  <li><strong>Aufnahme starten</strong> wählen. Bei Bedarf <strong>Pause</strong>, <strong>Fortsetzen</strong>, <strong>Stopp/Abschließen</strong> oder <strong>Abbrechen</strong> verwenden.</li>
+  <li>Prompt, Anbieter und Modell für die Notiz auswählen und <strong>Notiz generieren</strong> wählen. Auto-generate kann ebenfalls aktiviert werden.</li>
+</ol>
 
-<ul>
-  <li><strong>Aufnahme:</strong> Die Einwilligung des Patienten muss stets eingeholt werden, bevor diese Anwendung verwendet wird. Klicke auf "Aufnahme starten", um mit der Tonaufnahme zu beginnen. Alle 2 Minuten wird ein Audioabschnitt automatisch an die Server von OpenAI gesendet, um transkribiert zu werden. Die Transkripte erscheinen fortlaufend im Transkriptionsfeld.<br><br>
-  <strong><u>Wichtig:</u> Die Aufnahmefunktion funktioniert nicht in allen Webbrowsern. Wir empfehlen die Verwendung von <strong>Google Chrome</strong> oder <strong>Microsoft Edge</strong>.</strong></li><br>
+<details open>
+  <summary><strong>Aufnahme und Transkription</strong></summary>
+  <ul>
+    <li>Vor der Aufnahme den Speech-to-Text-Anbieter wählen. Google Chrome oder Microsoft Edge wird empfohlen.</li>
+    <li><strong>Pause</strong> schließt das aktuelle Audiosegment ab und ermöglicht eine spätere Fortsetzung. <strong>Stopp/Abschließen</strong> beendet die Aufnahme und wartet auf das restliche Transkript. <strong>Abbrechen</strong> verwirft die aktive Aufnahme ohne normalen Abschluss.</li>
+    <li><strong>Speaker Labels</strong> ist nur mit Soniox verfügbar und versucht, Sprecher zu kennzeichnen, zum Beispiel Speaker 1 und Speaker 2.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Pausieren und Fortsetzen:</strong> Sie können die "Pause"-Schaltfläche verwenden, um die Aufnahme vorübergehend zu stoppen – zum Beispiel, wenn die Konsultation unterbrochen wird oder Sie kurz das Büro verlassen müssen. Wenn Sie auf "Pause" klicken, wird das aktuelle Audiosegment hochgeladen und transkribiert, und die Aufnahme pausiert. Wenn Sie bereit sind fortzufahren, klicken Sie auf "Fortsetzen", und die Aufnahme wird automatisch mit dem nächsten Segment fortgesetzt. Der Timer läuft dort weiter, wo er gestoppt wurde, und die Sitzung kann wie gewohnt mit "Stopp/Abschließen" beendet werden.</li><br>
+<details>
+  <summary><strong>Workspaces und Workspace Sets</strong></summary>
+  <ul>
+    <li>Ein <strong>Workspace</strong> ist ein eigener Arbeitsbereich im Browser-Tab. Jeder Workspace hat eigene Texte, ausgewählte Prompts, Anbieter, Modelle, Einstellungen, einen eigenen Verlauf und aktive Prozesse. Ein Wechsel stoppt weder Aufnahme noch Generierung.</li>
+    <li>Der Name folgt normalerweise der Bezeichnung des ausgewählten Prompt-Slots. Mit <strong>+</strong> wird ein Workspace hinzugefügt, mit <strong>×</strong> geschlossen. Bis zu 12 Workspaces können geöffnet sein.</li>
+    <li>Alle geöffneten Workspaces bilden ein <strong>Workspace Set</strong>. Import und Export sind über eine lokale JSON-Datei, Microsoft OneDrive oder Google Drive möglich.</li>
+    <li>Ein Workspace Set speichert Anzahl und Reihenfolge, Namen, ausgewählte Prompt-Slots samt Prompttext und Bezeichnungen, Anbieter, Modelle, Reasoning-Auswahl, relevante Kontrollkästchen und geöffnete Module. Transkripte, ergänzende Informationen, Notizen, Verlauf, Audio, API-Schlüssel, Passwörter und andere Patientendaten sind nicht enthalten.</li>
+    <li>Cloud-Sicherungen werden im Browser mit dem gewählten Passwort verschlüsselt. Lokale JSON-Dateien sind lesbar und müssen sicher aufbewahrt werden.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Abschluss:</strong> Wenn du auf "Stopp/Fertig" klickst, wird die Aufnahme beendet. Der Abschlusstimer zählt, bis das vollständige Transkript empfangen wurde (in der Regel innerhalb von 5–10 Sekunden).</li><br>
+<details>
+  <summary><strong>Mini Panel</strong></summary>
+  <ul>
+    <li>Mit der Schaltfläche <strong>Mini-panel</strong> öffnen. Das Symbol oben rechts wechselt zwischen den beiden Ansichten.</li>
+    <li><strong>Mini Panel — Browser Tabs</strong> steuert separate Transcribe-Notes-Tabs und eignet sich für einen Workspace pro Browser-Tab.</li>
+    <li><strong>Mini Panel — Workspaces</strong> zeigt alle Workspaces im ausgewählten Transcribe-Notes-Tab und eignet sich für mehrere Arbeitsbereiche in einem Tab.</li>
+    <li>Aufnahmen und Generierungen laufen im Hintergrund weiter, wenn Ansicht oder Workspace gewechselt werden.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Benutzerdefinierter Prompt:</strong> Wähle rechts einen Prompt-Slot (1–10) aus und gib deinen eigenen Prompt ein. Dein Prompt wird automatisch gespeichert und mit deinem API-Schlüssel verknüpft. Du kannst jeden beliebigen Prompt erstellen, der zu deinem Dokumentationsstil, Tonfall und fachlichen Fokus passt. So hast du volle Kontrolle über die Generierung deiner Notizen.</li><br>
+<details>
+  <summary><strong>Auto-generate, Auto-copy und primäre Notizgenerierung</strong></summary>
+  <ul>
+    <li><strong>Auto-generate</strong> startet die Notizgenerierung automatisch nach Abschluss der Transkription. Andernfalls wird <strong>Notiz generieren</strong> manuell verwendet.</li>
+    <li><strong>Auto-copy</strong> kann das fertige Transkript oder die fertige Notiz automatisch kopieren und benötigt die zugehörige Browser-Erweiterung. Manuelle Kopierschaltflächen funktionieren unabhängig davon.</li>
+    <li>Die primäre Notiz verwendet das Transkript, einen eventuell gewählten Prompt und den Text unter <strong>Ergänzende Informationen</strong>. Anbieter, Modell und gegebenenfalls Reasoning-Stufe vor der Generierung auswählen.</li>
+    <li>KI-generierte Notizen können Fehler enthalten oder Angaben auslassen. Vor dem Speichern oder Versenden immer prüfen und validieren.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Notiz generieren:</strong> Sobald die Transkription abgeschlossen ist, klicke auf "Notiz generieren", um eine medizinische Notiz basierend auf deinem Transkript und dem gewählten Prompt zu erstellen. Generierte medizinische Notizen müssen vor der Verwendung von medizinischem Fachpersonal überprüft und validiert werden.</li><br>
+<details>
+  <summary><strong>Secondary Note Generation</strong></summary>
+  <p>Dieses Modul ist nützlich, wenn ein langes Dokument zuerst gekürzt werden soll. Text in das Quellfeld einfügen, einen eigenen Prompt und ein Modell auswählen und eine Zusammenfassung erstellen. Das Ergebnis kann automatisch oder manuell in <strong>Ergänzende Informationen</strong> übertragen werden.</p>
+  <p>Beispielsweise kann ein günstiges Modell wie GPT-5 Nano über Requesty ein 50-seitiges Dokument zusammenfassen. Das Hauptmodell, etwa GPT-5.6 Sol oder Claude Opus 5, erhält dann die kurze Zusammenfassung zusammen mit dem Transkript statt des vollständigen Dokuments. Dies kann Tokenverbrauch und Kosten deutlich senken. Die Zusammenfassung vor der Verwendung als medizinischen Kontext prüfen.</p>
+</details><br>
 
-  <li><strong>Kostenübersicht:</strong> Um deine aktuellen Nutzungskosten bei OpenAI zu überprüfen, klicke auf den Link zur Kostenübersicht oben rechts auf dieser Seite.</li><br>
+<details>
+  <summary><strong>Preis und Tokenverbrauch</strong></summary>
+  <ul>
+    <li>Wenn Preisdaten vorhanden sind, wird beim ausgewählten Modell der USD-Preis pro einer Million Input- und Output-Tokens angezeigt.</li>
+    <li>Nach der Generierung werden Tokenverbrauch und geschätzter Preis angezeigt, wenn die Anbieterantwort die erforderlichen Nutzungsdaten enthält. Einige Anbieter melden genauere Kosten.</li>
+    <li><strong>Kostenübersicht</strong> öffnet Links zu den Nutzungs- und Abrechnungsseiten der Anbieter. App-Preise sind Richtwerte; maßgeblich ist die Abrechnung des Anbieters.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Sicherheit:</strong> Deine Audioaufnahme wird direkt an die API-Server von OpenAI gesendet, die die Daten nicht speichern und nur für die Transkription verwenden. Der transkribierte Text wird nur in deinem Browser angezeigt und <strong>er wird gelöscht/verschwindet, sobald du den Browser schließt oder neue Inhalte lädst.</strong></li><br>
+<details>
+  <summary><strong>Prompt-Slots, Verlauf, Redactor und OCR</strong></summary>
+  <ul>
+    <li>Es gibt 20 Prompt-Slots. Die Prompt profile ID trennt Prompt-Sätze auf demselben Gerät. Import und Export sind als JSON oder verschlüsselt über OneDrive und Google Drive möglich.</li>
+    <li>Die Verlaufsspalte zeigt die 30 letzten abgeschlossenen primären Notizgenerierungen des aktiven Workspace. Ein Eintrag zeigt Transkript, ergänzende Informationen und generierte Notiz. Jeder Workspace hat einen eigenen Verlauf.</li>
+    <li><strong>Redactor</strong> kann ausgewählte allgemeine und spezifische Begriffe aus Transkript und ergänzenden Informationen entfernen. Ergebnis vor dem Senden immer prüfen.</li>
+    <li><strong>OCR</strong> kann Text aus einem eingefügten Screenshot oder einer Bilddatei extrahieren und an die Liste spezifischer Begriffe oder das Rohtextfeld übergeben.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Guide-Schaltfläche:</strong> Klicke erneut auf die "Guide"-Schaltfläche, um zur Hauptansicht zurückzukehren.</li>
-</ul><br><br>
+<details>
+  <summary><strong>Speicherung und Datenschutz</strong></summary>
+  <ul>
+    <li>Arbeitstext und Workspace-Verlauf bleiben in der aktuellen Browser-Tab-Sitzung und werden nach Ende dieser Sitzung entfernt. <strong>Clear</strong> kann aktive Inhalte oder den Verlauf leeren.</li>
+    <li>API-Schlüssel werden nicht in localStorage abgelegt. Sie bleiben nur während der aktiven Browsersitzung erhalten und können auf der Startseite manuell gelöscht werden.</li>
+    <li>Daten werden an den gewählten Anbieter und die gewählte Region gesendet. Speicherung und Verarbeitung hängen von Anbieter, Konto, Konfiguration und aktuellen Bedingungen ab. Prüfen Sie, ob die Einrichtung für die verarbeiteten Informationen geeignet ist.</li>
+  </ul>
+</details><br><br>
 
-<strong>Beispiel-Prompts:</strong><br><br>
-
-<strong>Konsultation:</strong><br>
-"Systemprompt – Medizinischer Notizgenerator
-
-Erstelle eine medizinisch präzise, dokumentationsfertige Notiz basierend auf einem transkribierten Arzt-Patienten-Gespräch. Verwende folgende Struktur (sofern im Diktat nicht anders angegeben):
-Hintergrund (nur bei relevanter Vorgeschichte), Aktuelle Beschwerden/Anamnese, Untersuchung (stichpunktartig), Einschätzung, Plan.
-
-Regeln:
-– Keine Informationen, Untersuchungen oder Befunde einfügen, die nicht ausdrücklich erwähnt wurden.
-– Negative Befunde nur, wenn erwähnt.
-– Blutuntersuchungen: schreibe “relevante Blutuntersuchungen werden veranlasst”, ohne sie aufzulisten.
-– Offensichtliche Rechtschreibfehler bei Medikamentennamen korrigieren.
-– Keine Sonderzeichen oder Zeilenumbrüche vor Überschriften verwenden.
-– Halte dich an explizite Anweisungen des Arztes bzgl. Stil, Länge oder Formulierungen.
-
-Wenn der Arzt nach dem Gespräch noch Anmerkungen macht, sind diese zu berücksichtigen. Die Notiz sollte sprachlich gut ausgearbeitet sein."
-
-<br><br>
-
-<strong>Brief an den Patienten:</strong><br>
-"Schreibe einen Brief vom Arzt an den Patienten. Beginne mit Hallo \\"Name\\", und schließe mit<br>
-Mit freundlichen Grüßen<br>
-\\"Ihr Name\\"<br>
-\\"Praxisname\\"<br>
-Der Brief soll professionell und formell formuliert sein. Du kannst den Text stilistisch leicht verbessern."
-
-<br><br>
-
-Diese Beispiele funktionieren gut, aber du kannst sie gern an deinen Dokumentationsstil, deine Fachrichtung oder Konsultationstypen anpassen oder ganz eigene Prompts erstellen.
+Erneut <strong>Anleitung</strong> wählen oder die Schließen-Schaltfläche verwenden, um zur Hauptansicht zurückzukehren.
 `,
 
   // Sekundärer Notizgenerator

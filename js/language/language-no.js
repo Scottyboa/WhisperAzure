@@ -744,77 +744,90 @@ export const transcribeTranslations = {
   customPromptPlaceholder: "Skriv inn tilpasset prompt her",
   adUnitText: "Din annonse her",
   guideHeading: "Guide & Instruksjoner",
-guideText: `Velkommen til <strong>Transcribe Notes</strong>. Denne applikasjonen lar helsepersonell, terapeuter og andre fagpersoner ta opp og transkribere konsultasjoner, samt generere profesjonelle notater ved hjelp av en AI-basert notatgenerator.<br><br>
+guideText: `Velkommen til <strong>Transcribe Notes</strong>. Appen kan ta opp og transkribere samtaler og bruke den ferdige teksten til å generere et notat. Innhent alltid nødvendig samtykke før opptak, og kontroller alltid medisinsk innhold før det brukes.<br><br>
 
-<strong>Slik bruker du funksjonene:</strong><br><br>
+<strong>Hurtigstart</strong><br>
+<ol>
+  <li>Velg Workspace, transkripsjonstilbyder og eventuelle innstillinger.</li>
+  <li>Trykk <strong>Start opptak</strong>. Bruk <strong>Pause</strong>, <strong>Fortsett</strong>, <strong>Stopp/Fullfør</strong> eller <strong>Abort</strong> ved behov.</li>
+  <li>Velg prompt, tilbyder og modell for notatet, og trykk <strong>Generer notat</strong>. Du kan også slå på Auto-generate.</li>
+</ol>
 
-<ul>
-  <li><strong>Opptak:</strong> Pasientens samtykke må alltid innhentes før opptak. Velg ønsket tale-til-tekst modell fra nedtrekksmenu, deretter klikk på "Start opptak" for å begynne opptak..<br><br>
-  
-  <strong><u>Viktig:</u> Opptaksfunksjonen fungerer ikke i alle nettlesere. Vi anbefaler derfor å bruke <strong>Google Chrome</strong> eller <strong>Microsoft Edge</strong>.</strong></li><br>
+<details open>
+  <summary><strong>Opptak og transkripsjon</strong></summary>
+  <ul>
+    <li>Velg tale-til-tekst-tilbyder før opptaket starter. Vi anbefaler Google Chrome eller Microsoft Edge.</li>
+    <li><strong>Pause</strong> ferdigstiller det aktuelle lydsegmentet og lar deg fortsette senere. <strong>Stopp/Fullfør</strong> avslutter opptaket og venter på resten av transkripsjonen. <strong>Abort</strong> forkaster det aktive opptaket uten normal fullføring.</li>
+    <li><strong>Speaker Labels</strong> er bare tilgjengelig med Soniox. Funksjonen forsøker å merke hvem som snakker, for eksempel Speaker 1 og Speaker 2.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Pause og gjenoppta:</strong> Du kan bruke "Pause"-knappen til midlertidig å stoppe opptaket, for eksempel dersom konsultasjonen blir avbrutt eller du trenger å forlate kontoret et øyeblikk. Når du trykker på "Pause", lastes det aktuelle lydsegmentet opp og transkriberes, og opptaket settes på pause. Når du er klar til å fortsette, klikker du på "Fortsett", og opptaket gjenopptas automatisk med neste segment. Tidtakeren fortsetter der den slapp, og opptaket kan til slutt avsluttes som vanlig med "Stopp/Ferdig".</li><br>
+<details>
+  <summary><strong>Workspaces og Workspace Sets</strong></summary>
+  <ul>
+    <li>Et <strong>Workspace</strong> er et eget arbeidsområde i nettleserfanen. Hvert Workspace har egne tekster, valgte prompts, tilbydere, modeller, innstillinger, historikk og aktive prosesser. Bytte mellom Workspaces stopper ikke opptak eller generering.</li>
+    <li>Navnet følger normalt navnet på den valgte promptplassen. Bruk <strong>+</strong> for å legge til og <strong>×</strong> for å lukke et Workspace. Du kan ha opptil 12 åpne Workspaces.</li>
+    <li>Alle åpne Workspaces utgjør et <strong>Workspace Set</strong>. Import og eksport kan gjøres med lokal JSON-fil, Microsoft OneDrive eller Google Drive.</li>
+    <li>Et Workspace Set lagrer antall og rekkefølge, navn, valgte promptplasser med prompttekst og navn, tilbydere, modeller, reasoning-valg, relevante avkrysningsbokser og åpne moduler. Det tar ikke med transkripsjoner, supplerende informasjon, notater, historikk, lyd, API-nøkler, passord eller andre pasientopplysninger.</li>
+    <li>Skykopier krypteres i nettleseren med passordet du velger. Lokale JSON-filer er lesbare og må oppbevares sikkert.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Fullføring:</strong> Når du klikker på "Stopp/Ferdig", stopper opptaket. Fullføringstimeren teller tiden til hele transkripsjonen er mottatt (vanligvis innen 5-10 sekunder).</li><br>
+<details>
+  <summary><strong>Mini Panel</strong></summary>
+  <ul>
+    <li>Åpne panelet med <strong>Mini-panel</strong>-knappen. Ikonet øverst til høyre bytter mellom de to visningene.</li>
+    <li><strong>Mini Panel — Browser Tabs</strong> styrer separate Transcribe Notes-faner. Dette passer når du vil bruke ett Workspace per nettleserfane.</li>
+    <li><strong>Mini Panel — Workspaces</strong> viser alle Workspaces i den valgte Transcribe Notes-fanen. Dette passer når du vil arbeide med flere oppgaver i samme fane.</li>
+    <li>Du kan bytte visning eller Workspace mens opptak og generering fortsetter i bakgrunnen.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Tilpasset prompt og promptprofiler:</strong> På høyre side velger du en prompt-plass (1–20) og skriver inn din egen prompt. Promptene lagres automatisk på denne enheten. For å gjøre promptene uavhengige av endringer i API-nøkkel kan du sette en <strong>Prompt profile ID</strong> (f.eks. “David”, “David 1”, “Office-PC-2”). Aktiv profil vises over prompt-feltet. Hvis ingen profil er satt, kan promptene fortsatt være lagret med den eldre metoden som var knyttet til API-nøkkel.</li><br>
+<details>
+  <summary><strong>Auto-generate, Auto-copy og primær notatgenerering</strong></summary>
+  <ul>
+    <li><strong>Auto-generate</strong> starter notatgenereringen automatisk når transkripsjonen er ferdig. Når funksjonen er av, bruker du <strong>Generer notat</strong> manuelt.</li>
+    <li><strong>Auto-copy</strong> kan automatisk kopiere den ferdige transkripsjonen eller det ferdige notatet. Funksjonen krever den tilhørende nettleserutvidelsen. Manuelle kopieringsknapper fungerer uavhengig av dette.</li>
+    <li>Hovednotatet bruker transkripsjonen, eventuell valgt prompt og teksten i <strong>Supplerende informasjon</strong>. Velg tilbyder, modell og eventuelt reasoning-nivå før generering.</li>
+    <li>AI-genererte notater kan inneholde feil eller utelate opplysninger. Les og valider alltid notatet før det lagres eller sendes.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Eksport / import (flytt eller sikkerhetskopier prompter og Generelle begreper):</strong> Klikk <strong>Eksporter</strong> og velg JSON-fil, Microsoft OneDrive eller Google Drive. Skysikkerhetskopien inneholder alle 20 promptplassene og navnene i den aktive profilen, krypteres i nettleseren med passordet du velger, og lagres i den private appmappen på din egen konto. Hvis <strong>Generelle begreper</strong> inneholder tekst, krypteres og lagres dette som en separat skysikkerhetskopi med samme innlogging og passord. Hvis feltet er tomt, beholdes en tidligere kopi av Generelle begreper uendret. <strong>Spesifikke begreper tas aldri med.</strong> En ny skyeksport erstatter bare de aktuelle sikkerhetskopifilene hos samme tjeneste; den overskriver ikke sikkerhetskopien av API-nøkler eller andre filer. For å hente innholdet velger du <strong>Importer</strong>, samme tjeneste og skriver inn passordet. Import erstatter promptene i den <strong>aktive</strong> profilen og gjenoppretter også Generelle begreper for denne fanen når den separate kopien finnes.</li><br>
+<details>
+  <summary><strong>Secondary Note Generation</strong></summary>
+  <p>Denne modulen er nyttig når du har et langt dokument som først bør forkortes. Lim teksten inn i kildefeltet, velg en egen prompt og modell, og generer et sammendrag. Resultatet kan kopieres automatisk eller manuelt til <strong>Supplerende informasjon</strong>.</p>
+  <p>Du kan for eksempel bruke en rimelig modell som GPT-5 Nano via Requesty til å oppsummere et dokument på 50 sider. Hovedmodellen, for eksempel GPT-5.6 Sol eller Claude Opus 5, mottar da det korte sammendraget sammen med transkripsjonen i stedet for hele dokumentet. Dette kan redusere tokenbruken og kostnaden betydelig. Kontroller sammendraget før det brukes som medisinsk kontekst.</p>
+</details><br>
 
-  <li><strong>Bytte profil:</strong> Når du endrer Prompt profile ID, vil prompt-plassene umiddelbart vise promptene som er lagret under den profilen. Dette gjør at flere kan bruke samme PC uten å blande prompts, så lenge hver bruker har sin egen profil.</li><br>
+<details>
+  <summary><strong>Pris og tokenbruk</strong></summary>
+  <ul>
+    <li>Ved den valgte modellen vises pris i USD per én million input- og output-tokens når appen har prisdata.</li>
+    <li>Etter notatgenerering vises tokenbruk og estimert pris når tilbyderens svar inneholder nødvendige bruksdata. Enkelte tilbydere kan rapportere en mer presis kostnad.</li>
+    <li><strong>Kostnadsoversikt</strong> åpner lenker til tilbydernes egne sider for bruk og fakturering. Prisene i appen er veiledende; tilbyderens faktura er fasiten.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Notatgenerering:</strong> Når transkripsjonen er fullført, klikker du på "Generer notat" for å lage et notat basert på transkripsjonen og den valgte/tilpassede prompten. Notatgenerering skjer da hos valgte tilbyder i nedtrekksmenyen i notatgenereringsmodulen. Genererte journalnotater må gjennomgås og valideres av helsepersonell før de tas i bruk.</li><br>
+<details>
+  <summary><strong>Promptplasser, historikk, Redactor og OCR</strong></summary>
+  <ul>
+    <li>Du har 20 promptplasser. Prompt profile ID skiller promptsett på samme enhet. Promptsett kan importeres eller eksporteres som JSON eller kryptert via OneDrive og Google Drive.</li>
+    <li>Historikkolonnen viser de 30 siste fullførte primære notatgenereringene i det aktive Workspace-et. Klikk på et element for å se transkripsjon, supplerende informasjon og generert notat. Hvert Workspace har sin egen historikk.</li>
+    <li><strong>Redactor</strong> kan fjerne valgte generelle og spesifikke begreper fra transkripsjonen og supplerende informasjon. Kontroller alltid resultatet før teksten sendes videre.</li>
+    <li><strong>OCR</strong> kan hente tekst fra et innlimt skjermbilde eller en bildefil og sende teksten til listen over spesifikke begreper eller til råtekstfeltet.</li>
+  </ul>
+</details><br>
 
-  <li><strong>Kostnadsoversikt:</strong> For å se ditt nåværende forbruk hos de ulike tilbyderne, klikk på lenken for kostnadsoversikt som er plassert oppe til høyre på hovedsiden.</li><br>
+<details>
+  <summary><strong>Lagring og personvern</strong></summary>
+  <ul>
+    <li>Arbeidstekst og Workspace-historikk beholdes i den aktuelle nettleserfanens økt og fjernes når faneøkten avsluttes. <strong>Clear</strong> kan brukes til å tømme aktivt innhold eller historikk.</li>
+    <li>API-nøkler legges ikke i localStorage. De oppbevares bare for den aktive nettleserøkten og kan tømmes manuelt fra forsiden.</li>
+    <li>Data sendes til den tilbyderen og regionen du velger. Lagring, databehandling og eventuell bruk av data styres av valgt tilbyder, konto, oppsett og gjeldende vilkår. Kontroller at løsningen er egnet for opplysningene du behandler.</li>
+  </ul>
+</details><br><br>
 
-  <li><strong>Sikkerhet:</strong> Lydopptaket ditt sendes direkte til valgte tilbyder (fra nedtrekksmenuen) sine servere for transkribering, og hverken lagres(dette gjelder bare for Mistral(*se personvern info på forsiden)AWS Bedrock, Google Vertex og Soniox) eller brukes for maskinlæring. Den transkriberte teksten vises kun i nettleseren din, og slettes/forsvinner så snart du lukker nettleseren eller laster inn nytt innhold.</li><br>
-
-  <li><strong>Guide-knapp:</strong> Klikk på "Guide"-knappen igjen for å gå tilbake til hovedvisningen.</li>
-</ul><br><br>
-
-<strong>Eksempler på prompts:</strong><br><br>
-
-<strong>Konsultasjon:</strong><br>
-"Systemprompt – Medisinsk notatgenerator
-Formål: Generere et medisinsk presist, journalklart notat basert på en transkribert lege-pasient-samtale.
-
-Struktur (med mindre annet er spesifisert i diktatet):
-Bakgrunn (kun ved relevant historikk)
-Aktuelt/anamnese
-Undersøkelse (punktvis)
-Vurdering
-Plan
-
-Regler:
-– Inkluder kun opplysninger, undersøkelser og funn som eksplisitt fremkommer i samtalen.
-– Ta med negative funn kun dersom de er nevnt.
-– Dersom blodprøver rekvireres uten spesifikasjon: skriv “relevante blodprøver rekvireres”. Hvis blodprøver ikke er nevnt bestilt, så ikke nevn noe om blodprøver.
-– Rett åpenbare feilstavinger i medikamentnavn.
-– Ikke bruk spesialtegn, fet skrift eller ekstra linjeskift i overskrifter.
-– Dersom et avsnitt skal listes punktvis, bruk “-” foran hvert punkt.
-– Følg eksplisitte instruksjoner fra legen om stil, lengde eller ordlyd.
-– Ta med eventuelle legetillegg etter at pasienten har forlatt rommet.
-– Bruk presist og flytende journalspråk uten unødvendige fyllord eller repetisjoner.
-– Språket skal være medisinsk korrekt, klart og konsist.
-– Ikke bruk ";" eller "-" for å binde setninger. Kan evt bruke "," eller bare ha separate setninger.
-– Hvis det legges til supplerende informasjon i "[supplerende informasjon]" over diktatet, så kan denne info brukes som kontekst når notatet skrives.
-– Du trenger ikke å skrive "her er det ferdige notatet.. etc" i forkant av notatet. Tilstrekkelig å bare sende notatet.
-– Dobbeltsjekk medisinnavn, slik at de staves/skrives riktig.
-– All tekst skal være fullstendig uformatert: ingen bruk av fet skrift, kursiv, markdown-symboler (som # eller **) eller endret skriftstørrelse i verken overskrifter eller brødtekst.
-
-
-Formålet er å produsere et ferdig, journalgodt notat som kan brukes direkte i pasientjournal uten videre redigering."<br><br>
-
-<strong>Brev til pasient:</strong><br>
-"Skriv brev. Start brevet med «Hei [navn],(så dobbel linje)»(hvis navn ikke nevnes bare si "Hei"). Avslutt alltid med:
-«Mvh
-<LEGENS NAVN>
-<LEGESENTER NAVN>».
-
-Ikke legg til informasjon eller høflighetsfraser som ikke nevnes. Du kan endre setningsstruktur/gramatikk/språk/rekkefølge ved behov, slik at teksten blir bedre, evt rette på språket. Hvis jeg sier "bare ta kontakt hvis du lurer på noe mer," så ikke skriv noe annet en dette på slutten. 
-"<br><br>
-
-Dette er eksempler som fungerer godt, men du står fritt til å tilpasse dem slik at de passer din dokumentasjonsstil, spesialitet og type konsultasjon. Du kan også lage helt egne prompts til hvilket formål du måtte ønske.  
+Klikk på <strong>Guide</strong> igjen eller bruk lukkeknappen for å gå tilbake til hovedvisningen.
 `,
 
   redactorToggleShow: "Vis redactor",
