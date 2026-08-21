@@ -237,6 +237,15 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './requesty.js',
     initExportName: 'initRequestyGpt56Sol',
   },
+  'requesty-gemini37-flash': {
+    id: 'requesty-gemini37-flash',
+    label: 'Requesty Gemini 3.7 Flash',
+    uiProvider: 'requesty',
+    requestyModel: 'gemini-3.7-flash',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyGemini37Flash',
+  },
   'requesty-kimi-k3': {
     id: 'requesty-kimi-k3',
     label: 'Requesty Kimi K3',
@@ -266,6 +275,7 @@ const REQUESTY_MODEL_OPTIONS = [
   { value: 'gpt-5.6-luna', label: 'GPT-5.6 Luna' },
   { value: 'gpt-5.5', label: 'GPT-5.5' },
   { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
+  { value: 'gemini-3.7-flash', label: 'Gemini 3.7 Flash' },
   { value: 'kimi-k3', label: 'Kimi K3' },
 ];
 
@@ -288,6 +298,14 @@ const REQUESTY_GPT56_REASONING_OPTIONS = [
   { value: 'medium', label: 'Medium' },
   { value: 'high', label: 'High' },
   { value: 'xhigh', label: 'X-high' },
+];
+
+// Gemini 3.7 Flash supports exactly low | medium | high. Google documents
+// medium as the default and explicitly rejects the minimal level.
+const REQUESTY_GEMINI37_REASONING_OPTIONS = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
 ];
 
 const REQUESTY_KIMI_K3_REASONING_OPTIONS = [
@@ -438,9 +456,11 @@ export function listRequestyNanoReasoningOptions(
   const options =
     normalizedModel === 'kimi-k3'
       ? REQUESTY_KIMI_K3_REASONING_OPTIONS
-      : REQUESTY_GPT56_MODELS.has(normalizedModel)
-        ? REQUESTY_GPT56_REASONING_OPTIONS
-        : REQUESTY_NANO_REASONING_OPTIONS;
+      : normalizedModel === 'gemini-3.7-flash'
+        ? REQUESTY_GEMINI37_REASONING_OPTIONS
+        : REQUESTY_GPT56_MODELS.has(normalizedModel)
+          ? REQUESTY_GPT56_REASONING_OPTIONS
+          : REQUESTY_NANO_REASONING_OPTIONS;
   return options.map((item) => ({ ...item }));
 }
 
@@ -760,6 +780,7 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   const usesDedicatedRequestyReasoning =
     isRequesty &&
     (reqModel === 'gpt-5-nano' ||
+      reqModel === 'gemini-3.7-flash' ||
       reqModel === 'kimi-k3' ||
       REQUESTY_GPT56_MODELS.has(reqModel));
 
@@ -768,8 +789,8 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   // (#gpt5Reasoning, None/Low/Medium/High): the Anthropic models (Opus 5,
   // Sonnet 5) map reasoning_effort to a thinking budget ("None" omits it),
   // and GPT-5.5 uses the native OpenAI effort string. GPT-5 Nano, GPT-5.6,
-  // and Kimi K3 use the dedicated Requesty selector because their valid option
-  // sets differ from the shared selector.
+  // Gemini 3.7 Flash and Kimi K3 use the dedicated Requesty selector because
+  // their valid option sets differ from the shared selector.
 
   return {
     showOpenAi: isOpenAi,

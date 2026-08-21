@@ -126,6 +126,11 @@ const REQUESTY_VARIANTS = {
     pricingModelId: "gpt-5.6-sol",
     reasoningSelector: "dedicated"
   },
+  "gemini-3.7-flash": {
+    requestyModelId: "vertex/gemini-3.7-flash@eu",
+    pricingModelId: "gemini-3.7-flash",
+    reasoningSelector: "dedicated"
+  },
   "kimi-k3": {
     requestyModelId: "nebius/kimi-k3",
     pricingModelId: "kimi-k3",

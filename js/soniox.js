@@ -211,6 +211,13 @@ let finalChunkProcessed = false;
 let audioFrames = [];
 
 let transcriptChunks = {}; // { chunkNumber: text }
+// Once the user edits the async transcript, preserve that text as the new
+// baseline and append only chunks that were not already represented at the
+// time of the edit. This is intentionally async-only; realtime continues to
+// use finalTranscriptRT as its authoritative transcript.
+let asyncManualTranscriptBase = '';
+let asyncManualTranscriptBaseActive = false;
+let asyncCommittedTranscriptChunks = new Set();
 let transcriptionQueue = []; // [{ sessionId, signal, chunkNum, wavBlob }]
 let isProcessingQueue = false;
 let processingQueueSessionId = null;
@@ -935,9 +942,20 @@ function finalizeAsyncStop() {
 function updateAsyncTranscriptionOutput() {
   if (transcriptFrozen) return;
   const sortedKeys = Object.keys(transcriptChunks).map(Number).sort((a, b) => a - b);
-  let combined = '';
-  for (const key of sortedKeys) combined += transcriptChunks[key] + ' ';
-  const text = combined.trim();
+  const parts = [];
+
+  if (asyncManualTranscriptBaseActive) {
+    const manualBase = asyncManualTranscriptBase.trim();
+    if (manualBase) parts.push(manualBase);
+  }
+
+  for (const key of sortedKeys) {
+    if (asyncManualTranscriptBaseActive && asyncCommittedTranscriptChunks.has(key)) continue;
+    const chunkText = String(transcriptChunks[key] || '').trim();
+    if (chunkText) parts.push(chunkText);
+  }
+
+  const text = parts.join(' ').trim();
   logDebug('UI write: combined text length=', text.length);
   writeTranscriptionElement(text);
 
@@ -1413,6 +1431,9 @@ function beginFreshSession() {
   expectedChunks = 0;
   audioFrames = [];
   transcriptChunks = {};
+  asyncManualTranscriptBase = '';
+  asyncManualTranscriptBaseActive = false;
+  asyncCommittedTranscriptChunks = new Set();
   finalChunkProcessed = false;
   processedAnyAudioFrames = false;
 
@@ -1807,6 +1828,25 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
     }
   } catch (_) {}
   sileroVAD = null;
+
+  const transcriptionElement = document.getElementById('transcription');
+  if (transcriptionElement) {
+    transcriptionElement.addEventListener('input', () => {
+      const currentText = 'value' in transcriptionElement
+        ? transcriptionElement.value
+        : transcriptionElement.textContent || '';
+
+      asyncManualTranscriptBase = String(currentText);
+      asyncManualTranscriptBaseActive = true;
+      asyncCommittedTranscriptChunks = new Set(
+        Object.keys(transcriptChunks).map(Number)
+      );
+      logDebug(
+        'Manual async transcript edit captured; committed chunks=',
+        asyncCommittedTranscriptChunks.size
+      );
+    }, { signal: uiSignal });
+  }
 
   // ── Start ─────────────────────────────────────────────────────────────────
   startButton.addEventListener('click', async () => {

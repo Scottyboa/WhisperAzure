@@ -11,6 +11,7 @@
 //   - GPT-5.6 Luna     -> azure/gpt-5.6-luna@swedencentral   (Azure, Sweden Central)
 //   - GPT-5.6 Terra    -> azure/gpt-5.6-terra@swedencentral  (Azure, Sweden Central)
 //   - GPT-5.6 Sol      -> azure/gpt-5.6-sol@swedencentral    (Azure, Sweden Central)
+//   - Gemini 3.7 Flash -> vertex/gemini-3.7-flash@eu          (Google Vertex AI, EU)
 //   - Kimi K3          -> nebius/kimi-k3                      (Nebius, EU)
 //
 // sessionStorage keys used:
@@ -100,6 +101,13 @@ const VARIANTS = Object.freeze({
     pricingModelId: "gpt-5.6-sol",
     reasoningSelector: "dedicated"
   },
+  "gemini-3.7-flash": {
+    // Google Vertex AI EU deployment. The supported reasoning levels are
+    // low | medium | high, with medium as the model default.
+    requestyModelId: "vertex/gemini-3.7-flash@eu",
+    pricingModelId: "gemini-3.7-flash",
+    reasoningSelector: "dedicated"
+  },
   "kimi-k3": {
     // Nebius's EU-hosted endpoint. Kimi K3 always reasons and supports
     // reasoning_effort low | high | max. The app defaults to low.
@@ -132,7 +140,8 @@ function resolveEffectiveMode() {
 }
 
 function resolveReasoningLevel(variantKey, variantConfig) {
-  // GPT-5 Nano, GPT-5.6, and Kimi K3 use the dedicated Requesty selector.
+  // GPT-5 Nano, GPT-5.6, Gemini 3.7 Flash, and Kimi K3 use the dedicated
+  // Requesty selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
     return normalizeRequestyNanoReasoning(
@@ -320,7 +329,8 @@ async function generateNote() {
 // -----------------------------------------------------------------------------
 //
 // All effective providers (requesty-claude / requesty-sonnet /
-// requesty-gpt55 / requesty-nano / requesty-gpt56-* / requesty-kimi-k3)
+// requesty-gpt55 / requesty-nano / requesty-gpt56-* /
+// requesty-gemini37-flash / requesty-kimi-k3)
 // bind the same generate function; the active model is read from the
 // #requestyModel select / requesty_model session key at click time. Separate
 // exports are kept so the provider-registry entries stay explicit and
@@ -354,6 +364,10 @@ function initRequestyGpt56Sol() {
   bindGenerateNoteButton(generateNote);
 }
 
+function initRequestyGemini37Flash() {
+  bindGenerateNoteButton(generateNote);
+}
+
 function initRequestyKimiK3() {
   bindGenerateNoteButton(generateNote);
 }
@@ -366,5 +380,6 @@ export {
   initRequestyGpt56Luna,
   initRequestyGpt56Terra,
   initRequestyGpt56Sol,
+  initRequestyGemini37Flash,
   initRequestyKimiK3
 };

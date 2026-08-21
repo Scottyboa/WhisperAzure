@@ -177,12 +177,13 @@ import {
     "llama-70b-chat": { input: 1.25, output: 1.25 },
   };
 
-  // Requesty (EU router) — underlying model list prices, USD per 1M tokens.
+  // Requesty (EU router) — published endpoint rates, USD per 1M tokens.
   // claude-opus-5: bedrock/claude-opus-5@eu-north-1 rates
   // claude-sonnet-5: vertex/claude-sonnet-5@eu rates (EU regional pricing)
   // gpt-5.5:         azure/gpt-5.5@swedencentral rates
   // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
   // gpt-5.6-*:       Azure Sweden Central rates from Requesty's model cards
+  // gemini-3.7-flash: vertex/gemini-3.7-flash@eu discounted endpoint rates
   // kimi-k3:          nebius/kimi-k3 rates
   const REQUESTY_USD_PER_MTOK = {
     "claude-opus-5": { input: 5.5, output: 27.5 },
@@ -192,12 +193,14 @@ import {
     "gpt-5.6-luna": { input: 0.22, output: 1.32 },
     "gpt-5.6-terra": { input: 2.2, output: 13.2 },
     "gpt-5.6-sol": { input: 5.5, output: 33.0 },
+    "gemini-3.7-flash": { input: 0.66, output: 3.3 },
     "kimi-k3": { input: 3.0, output: 15.0 },
   };
 
-  // Requesty's ~5% premium is a one-time top-up fee applied when funding
-  // credits, NOT a per-request charge, so it is intentionally not applied to
-  // the per-generation cost estimates below (raw underlying rates are used).
+  // Static labels show Requesty's published provider/endpoint rates. Requesty
+  // currently adds 5% for pay-as-you-go accounts, while BYOK has no markup.
+  // Completed Requesty calls prefer usage.cost, so the displayed final cost
+  // reflects the actual charge, caching, and any current account markup.
 
   // Gemini API (AI Studio): USD per 1M billable tokens.
   const GEMINI_API_USD_PER_MTOK = {
@@ -464,11 +467,10 @@ import {
       });
       if (baseUsd == null) return null;
 
-      // Requesty balance is charged at the underlying model's list price at
-      // request time; the ~5% premium is a one-time top-up fee applied when
-      // credits are funded, not per request. So the per-generation estimate
-      // uses the raw underlying rates (like every other provider) to reflect
-      // the actual balance drawdown for this note.
+      // usage.cost is preferred above whenever Requesty returns it. If it is
+      // unavailable, fall back to the published endpoint rate; account-level
+      // PAYG markup is intentionally excluded because it does not apply to
+      // BYOK accounts.
       return baseUsd;
     }
 
