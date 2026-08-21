@@ -1000,11 +1000,16 @@ function initTopLevelManager() {
     const copy = t(); const exporting = modalState.mode === "export"; modal.body.replaceChildren(); setModalStatus("");
     const notice = document.createElement("div"); notice.className = "workspace-modal-notice"; notice.textContent = exporting ? copy.exportNotice : copy.importNotice;
     const password = document.createElement("input"); password.type = "password"; password.className = "workspace-modal-field"; password.placeholder = copy.password; password.autocomplete = exporting ? "new-password" : "current-password";
-    const repeat = document.createElement("input"); repeat.type = "password"; repeat.className = "workspace-modal-field"; repeat.placeholder = copy.repeat; repeat.autocomplete = "new-password"; repeat.hidden = !exporting;
+    let repeat = null;
+    if (exporting) {
+      repeat = document.createElement("input"); repeat.type = "password"; repeat.className = "workspace-modal-field"; repeat.placeholder = copy.repeat; repeat.autocomplete = "new-password";
+    }
     const actions = document.createElement("div"); actions.className = "workspace-modal-actions";
     const run = document.createElement("button"); run.type = "button"; run.textContent = exporting ? copy.save : copy.import;
     const back = document.createElement("button"); back.type = "button"; back.textContent = copy.back; actions.append(run, back);
-    modal.body.append(notice, password, repeat, actions); back.addEventListener("click", renderChoiceModal);
+    modal.body.append(notice, password);
+    if (repeat) modal.body.append(repeat);
+    modal.body.append(actions); back.addEventListener("click", renderChoiceModal);
     run.addEventListener("click", async () => {
       const value = password.value; if (exporting && value.length < 10) { setModalStatus(copy.passwordMin, true); return; }
       if (exporting && value !== repeat.value) { setModalStatus(copy.mismatch, true); return; }
@@ -1024,7 +1029,7 @@ function initTopLevelManager() {
           showImportPreview(bundle);
         }
       } catch (error) { setModalStatus(fmt(copy.failed, { error: error?.message || "Unknown error" }), true); }
-      finally { password.value = ""; repeat.value = ""; run.disabled = false; }
+      finally { password.value = ""; if (repeat) repeat.value = ""; run.disabled = false; }
     });
   }
 
