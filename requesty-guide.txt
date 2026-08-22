@@ -1,0 +1,262 @@
+============================================================
+REQUESTY SETUP GUIDE — NOTE GENERATION FOR THIS APP
+============================================================
+
+This guide explains how to:
+
+  1) Create a Requesty account
+  2) Add credits or configure billing
+  3) Create and protect an API key
+  4) Configure privacy and Zero Data Retention
+  5) Use the key in Transcribe Notes
+
+Requesty is the recommended note-generation provider for new users of this app.
+It gives access to selected models from several developers through one API key.
+
+
+------------------------------------------------------------
+HOW REQUESTY IS USED BY THIS APP
+------------------------------------------------------------
+
+Transcribe Notes automatically sends Requesty calls through the EU gateway:
+
+   https://router.eu.requesty.ai/v1
+
+The app does not expose Requesty's unrestricted model catalogue. It uses a
+curated set of named deployments selected for EU processing, no model-training
+reuse and appropriate upstream retention characteristics.
+
+The current Requesty model menu includes:
+
+  • Claude Opus 5
+  • Claude Sonnet 5
+  • GPT-5.6 Sol
+  • GPT-5.6 Terra
+  • GPT-5.6 Luna
+  • GPT-5.5
+  • GPT-5 Nano
+  • Gemini 3.7 Flash
+  • Kimi K3
+
+
+============================================================
+STEP-BY-STEP SETUP
+============================================================
+
+-----------------------------------
+STEP 1 — CREATE A REQUESTY ACCOUNT
+-----------------------------------
+
+1) Open:
+
+   https://app.requesty.ai
+
+2) Select Get started / Sign up.
+3) Create the account and complete any email verification.
+4) Sign in to the Requesty dashboard.
+
+Requesty currently states that new accounts receive trial credits. Promotions
+can change, so rely on the balance shown in your own dashboard.
+
+
+-------------------------------------------
+STEP 2 — ADD CREDITS / CONFIGURE BILLING
+-------------------------------------------
+
+1) Open Billing, Credits or Wallet in the Requesty dashboard. The exact label
+   may change as the dashboard is updated.
+2) Choose Add credits / Top up or add a payment method.
+3) Select an appropriate amount and confirm the payment.
+4) Check that the new balance appears before using paid models.
+
+Recommended while testing:
+
+  • Start with a small credit amount
+  • Set a spending limit for the API key if available
+  • Review Requesty's Usage/Analytics page after the first requests
+
+Requesty usage is separate from this app. Transcribe Notes has no subscription
+fee and does not add a markup of its own.
+
+
+----------------------------------
+STEP 3 — CREATE AN API KEY
+----------------------------------
+
+1) Open API Keys in the Requesty dashboard.
+2) Select Create API Key / Create New API Key.
+3) Choose a key for your account, or the appropriate service account if your
+   organisation uses Requesty service accounts.
+4) Give the key a clear name, for example:
+
+   Transcribe Notes — EU
+
+5) Configure an expiration date and spending limit if appropriate.
+6) Choose an Access List if your organisation uses model restrictions.
+7) Create the key.
+8) Copy it immediately and store it securely. It may not be shown again.
+
+Treat the API key like a password. Revoke it immediately if it may have been
+exposed.
+
+
+------------------------------------------------------------
+ACCESS LISTS / APPROVED MODELS
+------------------------------------------------------------
+
+For the simplest personal setup, a key without an Access List can be used if
+your Requesty organisation permits the app's named models.
+
+For stricter governance, create an Access List containing only the model
+deployments you intend to use. Search Requesty's Model Library for the models
+shown in Transcribe Notes and select the matching EU/provider-specific endpoint.
+
+The exact routes currently called by the app are:
+
+  bedrock/claude-opus-5@eu-north-1
+  vertex/claude-sonnet-5@eu
+  azure/gpt-5.6-sol@swedencentral
+  azure/gpt-5.6-terra@swedencentral
+  azure/gpt-5.6-luna@swedencentral
+  azure/gpt-5.5@swedencentral
+  azure/gpt-5-nano@swedencentral
+  vertex/gemini-3.7-flash@eu
+  nebius/kimi-k3
+
+If Requesty returns HTTP 403 for one model while other models work, the key's
+Access List or the organisation's Approved Models setting is the first thing to
+check.
+
+
+-------------------------------------------------
+STEP 4 — CONFIGURE PRIVACY AND RETENTION
+-------------------------------------------------
+
+This step is important before using identifiable patient information.
+
+Requesty states that it does not train on requests or responses. However,
+Requesty's DPA information states that prompt/output logging on self-service
+plans is enabled by default with a 30-day retention period.
+
+Choose one of the following:
+
+OPTION A — DISABLE LOGGING FOR THIS API KEY
+
+1) Open the API key's settings.
+2) Find the logging/privacy setting.
+3) Disable prompt and output content logging for the key.
+4) Save the setting and verify that content logging is off.
+
+OPTION B — ORGANISATION-WIDE ZERO DATA RETENTION
+
+Requesty states that organisation-wide Zero Data Retention is available on
+written request and is enforced server-side. Contact Requesty and ask for ZDR
+to be activated and documented for your organisation.
+
+DPA contact listed by Requesty:
+
+   sales@requesty.ai
+
+Requesty DPA information:
+
+   https://www.requesty.ai/dpa
+
+EU-routing documentation:
+
+   https://docs.requesty.ai/features/eu-routing
+
+The EU gateway keeps Requesty's own processing/storage in the EU. Full EU data
+residency also depends on the upstream model deployment. This app deliberately
+uses the named regional routes listed above, but your organisation must still
+verify the current model card, DPA and subprocessor information.
+
+
+-----------------------------------------------
+STEP 5 — ENTER THE KEY IN TRANSCRIBE NOTES
+-----------------------------------------------
+
+1) Return to the Transcribe Notes front page.
+2) Paste the key into the Requesty API key field.
+3) Enter the transcription tool.
+4) Select Requesty as the note-generation provider.
+5) Select the desired model and reasoning level.
+6) Generate a short test note without patient information.
+7) Confirm the request and cost in Requesty's Usage/Analytics dashboard.
+
+You do not need to enter the Requesty base URL. The app is already configured
+to use the EU gateway.
+
+
+------------------------------------------------------------
+PRIVACY CHECKLIST BEFORE CLINICAL USE
+------------------------------------------------------------
+
+  □ The Requesty API key is stored securely
+  □ Prompt/output logging is disabled, or organisation-wide ZDR is active
+  □ The key/organisation permits the app's specific model routes
+  □ The Requesty EU gateway is being used by the app
+  □ The selected model deployment is documented as EU-hosted
+  □ The DPA and current subprocessor list have been reviewed
+  □ The organisation has completed the necessary DPIA/TIA
+  □ Spending limits and access restrictions are appropriate
+  □ Every generated note will be medically reviewed
+
+Requesty, an EU endpoint or ZDR does not by itself make the entire workflow
+automatically GDPR-compliant. The organisation remains responsible for the
+complete configuration and legal assessment.
+
+
+------------------------------------------------------------
+TROUBLESHOOTING
+------------------------------------------------------------
+
+HTTP 401 / invalid API key:
+  Copy the key again, confirm that it has not expired or been revoked, and make
+  sure no spaces were added before or after it.
+
+Insufficient credits / billing error:
+  Open Billing/Credits and confirm the current balance and payment method.
+
+HTTP 403 / model blocked:
+  Check the key's Access List and the organisation's Approved Models. Make sure
+  the exact provider-specific model route used by the app is allowed.
+
+HTTP 412 / spending limit reached:
+  Review the API key or organisation spending limit in Requesty.
+
+HTTP 429 / rate limit:
+  Wait and retry, reduce simultaneous requests, or review the upstream model's
+  rate limits.
+
+HTTP 500 or a request that remains slow:
+  The upstream deployment may be temporarily slow or unavailable. Check
+  Requesty's logs/status, try again later, or select another model.
+
+The note was generated but no cost is visible:
+  Check Requesty's Usage/Analytics page. The app shows an estimate when the
+  response contains sufficient usage information; Requesty's recorded charge
+  is authoritative.
+
+
+------------------------------------------------------------
+OFFICIAL LINKS
+------------------------------------------------------------
+
+Requesty dashboard:
+https://app.requesty.ai
+
+Quickstart:
+https://docs.requesty.ai/quickstart
+
+EU routing:
+https://docs.requesty.ai/features/eu-routing
+
+Access Lists:
+https://docs.requesty.ai/features/access-lists
+
+Approved Models:
+https://docs.requesty.ai/features/approved-models
+
+DPA and Zero Data Retention:
+https://www.requesty.ai/dpa
+

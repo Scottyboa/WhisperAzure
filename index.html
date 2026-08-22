@@ -597,6 +597,55 @@
     }
     .inline-guide-link:hover { opacity: 0.85; }
 
+    /* Soniox / Requesty guide modals. These intentionally match the existing
+       AWS Bedrock guide window while using shared classes for maintainability. */
+    .provider-guide-view {
+      display: none;
+      position: fixed;
+      top: 10%;
+      left: 10%;
+      width: 80%;
+      height: 80%;
+      box-sizing: border-box;
+      background: white;
+      border: 2px solid #ccc;
+      padding: 20px;
+      overflow-y: auto;
+      z-index: 3004;
+      text-align: left;
+    }
+    .provider-guide-view.active {
+      display: block;
+    }
+    .provider-guide-close {
+      position: sticky;
+      top: 12px;
+      float: right;
+      font-size: 30px;
+      line-height: 1;
+      border: none;
+      background: transparent;
+      color: #d11;
+      cursor: pointer;
+      padding: 0 6px;
+      margin: 0;
+      z-index: 3005;
+    }
+    .provider-guide-close:hover {
+      opacity: 0.8;
+    }
+    .provider-guide-heading {
+      clear: both;
+    }
+    .provider-guide-text {
+      white-space: pre-wrap;
+      font-family: 'Inter', 'Roboto', sans-serif;
+      font-size: 14px;
+      line-height: 1.4;
+      margin: 0;
+      text-align: left;
+    }
+
     /* Google Vertex Guide Modal (opened from the "Guide" link next to Google Vertex) */
     #vertexGuideView {
       display: none;
@@ -911,7 +960,15 @@
         <p class="column-footnote" id="gdpr-column-footnote">(Full EU data residency/processing + zero data retention)</p>
 
         <!-- New (Phase 1): Optional Soniox API Key -->
-        <p id="soniox-text">Soniox API key:</p>
+        <p id="soniox-text">
+          Soniox API key (
+          <button
+            type="button"
+            id="soniox-guide-link"
+            class="inline-guide-link"
+          >Guide</button>
+          ):
+        </p>
         <input type="text" id="sonioxKeyInput" placeholder="Enter Soniox API Key here" autocomplete="off" class="masked-input">
         <br>
       
@@ -948,7 +1005,15 @@
         <br>
 
         <!-- Optional Requesty API Key (EU router; used for Claude Opus 5 Stockholm + other EU-hosted models) -->
-        <p id="requesty-text">Requesty API key:</p>
+        <p id="requesty-text">
+          Requesty API key (
+          <button
+            type="button"
+            id="requesty-guide-link"
+            class="inline-guide-link"
+          >Guide</button>
+          ):
+        </p>
         <input type="text" id="requestyKeyInput" placeholder="Enter Requesty API Key here" autocomplete="off" class="masked-input">
         <br>
       </fieldset>
@@ -2209,6 +2274,34 @@
   <pre id="bedrockGuideText">Loading…</pre>
 </div>
 
+  <!-- Soniox Guide Modal -->
+  <div
+    id="sonioxGuideView"
+    class="provider-guide-view"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="sonioxGuideHeading"
+  >
+    <button id="sonioxGuideClose" class="provider-guide-close" type="button" aria-label="Close">&times;</button>
+    <h3 id="sonioxGuideHeading" class="provider-guide-heading">Soniox setup guide</h3>
+    <pre id="sonioxGuideText" class="provider-guide-text">Loading…</pre>
+  </div>
+
+  <!-- Requesty Guide Modal -->
+  <div
+    id="requestyGuideView"
+    class="provider-guide-view"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="requestyGuideHeading"
+  >
+    <button id="requestyGuideClose" class="provider-guide-close" type="button" aria-label="Close">&times;</button>
+    <h3 id="requestyGuideHeading" class="provider-guide-heading">Requesty setup guide</h3>
+    <pre id="requestyGuideText" class="provider-guide-text">Loading…</pre>
+  </div>
+
   <!-- Google Vertex Guide Modal -->
   <button id="vertex-guide-link" type="button" hidden aria-hidden="true" tabindex="-1">Guide</button>
   <div id="vertexGuideView" aria-hidden="true">
@@ -2385,6 +2478,137 @@
       }
 
 
+      // Soniox and Requesty guides use the same modal pattern as Bedrock,
+      // with Norwegian text when the selected site language is Norwegian.
+      function createProviderGuideController({
+        linkId,
+        viewId,
+        closeId,
+        headingId,
+        textId,
+        englishFile,
+        norwegianFile,
+        englishHeading,
+        norwegianHeading,
+        analyticsAction
+      }) {
+        const link = document.getElementById(linkId);
+        const view = document.getElementById(viewId);
+        const closeButton = document.getElementById(closeId);
+        const heading = document.getElementById(headingId);
+        const textElement = document.getElementById(textId);
+        let loadedLanguage = null;
+        let previouslyFocusedElement = null;
+
+        async function loadForCurrentLanguage() {
+          if (!textElement) return;
+
+          const lang = getCurrentLang();
+          if (loadedLanguage === lang) return;
+
+          if (heading) {
+            heading.textContent = lang === "no" ? norwegianHeading : englishHeading;
+          }
+          textElement.textContent = lang === "no" ? "Laster…" : "Loading…";
+
+          const candidates = lang === "no"
+            ? [norwegianFile, englishFile]
+            : [englishFile];
+
+          try {
+            let loaded = false;
+            for (const url of candidates) {
+              const response = await fetch(url, { cache: "no-store" });
+              if (!response.ok) continue;
+              textElement.textContent = await response.text();
+              loaded = true;
+              break;
+            }
+            if (!loaded) throw new Error("No guide file could be loaded.");
+            loadedLanguage = lang;
+          } catch (error) {
+            console.error(`Failed to load ${viewId}:`, error);
+            textElement.textContent = lang === "no"
+              ? "Kunne ikke laste guideteksten. Kontroller at guidefilen finnes ved siden av index.html."
+              : "Could not load the guide text. Make sure the guide file exists next to index.html.";
+            loadedLanguage = null;
+          }
+        }
+
+        function open() {
+          if (!view) return;
+          previouslyFocusedElement = document.activeElement;
+          view.classList.add("active");
+          view.setAttribute("aria-hidden", "false");
+          view.scrollTop = 0;
+          loadForCurrentLanguage();
+          closeButton?.focus();
+        }
+
+        function close() {
+          if (!view) return;
+          view.classList.remove("active");
+          view.setAttribute("aria-hidden", "true");
+          if (previouslyFocusedElement instanceof HTMLElement) {
+            previouslyFocusedElement.focus();
+          }
+          previouslyFocusedElement = null;
+        }
+
+        function refreshForLanguage() {
+          loadedLanguage = null;
+          if (view?.classList.contains("active")) {
+            loadForCurrentLanguage();
+          }
+        }
+
+        link?.addEventListener("click", (event) => {
+          event.preventDefault();
+          logEvent({ action: analyticsAction });
+          open();
+        });
+        closeButton?.addEventListener("click", close);
+
+        return { view, close, refreshForLanguage };
+      }
+
+      const sonioxGuideController = createProviderGuideController({
+        linkId: "soniox-guide-link",
+        viewId: "sonioxGuideView",
+        closeId: "sonioxGuideClose",
+        headingId: "sonioxGuideHeading",
+        textId: "sonioxGuideText",
+        englishFile: "./soniox-guide.txt",
+        norwegianFile: "./soniox-guide.no.txt",
+        englishHeading: "Soniox setup guide",
+        norwegianHeading: "Oppsettsguide for Soniox",
+        analyticsAction: "Soniox guide"
+      });
+
+      const requestyGuideController = createProviderGuideController({
+        linkId: "requesty-guide-link",
+        viewId: "requestyGuideView",
+        closeId: "requestyGuideClose",
+        headingId: "requestyGuideHeading",
+        textId: "requestyGuideText",
+        englishFile: "./requesty-guide.txt",
+        norwegianFile: "./requesty-guide.no.txt",
+        englishHeading: "Requesty setup guide",
+        norwegianHeading: "Oppsettsguide for Requesty",
+        analyticsAction: "Requesty guide"
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+        if (sonioxGuideController.view?.classList.contains("active")) {
+          sonioxGuideController.close();
+        }
+        if (requestyGuideController.view?.classList.contains("active")) {
+          requestyGuideController.close();
+        }
+      });
+
+
       // Google Vertex "Guide" modal (opened from the link next to Google Vertex)
       const vertexGuideLink = document.getElementById("vertex-guide-link");
       const vertexGuideView = document.getElementById("vertexGuideView");
@@ -2467,6 +2691,8 @@
         requestAnimationFrame(() => {
           bedrockGuideLoadedLang = null;
           vertexGuideLoadedLang = null;
+          sonioxGuideController.refreshForLanguage();
+          requestyGuideController.refreshForLanguage();
 
           if (bedrockGuideView?.classList.contains("active")) {
             loadBedrockGuideForCurrentLanguage();

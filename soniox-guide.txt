@@ -1,0 +1,208 @@
+============================================================
+SONIOX SETUP GUIDE — EU SPEECH-TO-TEXT FOR THIS APP
+============================================================
+
+This guide explains how to:
+
+  1) Create a Soniox account
+  2) Configure billing or credits
+  3) Apply for access to Soniox regional deployments
+  4) Create an EU-region project and API key
+  5) Use the key with the EU endpoint in Transcribe Notes
+
+
+------------------------------------------------------------
+WHY THE EU PROJECT AND ENDPOINT BOTH MATTER
+------------------------------------------------------------
+
+Soniox data residency is configured per project.
+
+According to the Soniox documentation, EU content residency requires BOTH:
+
+  • An API key created in a Soniox project whose region is European Union
+  • The matching EU API domain
+
+When both are used, Soniox states that audio and transcript content remains in
+the selected EU region for processing and storage. Soniox also states that
+submitted content is not used to train or improve its models.
+
+Account information, project metadata, usage statistics and billing data are
+system data and may still be processed outside the selected region.
+
+
+============================================================
+STEP-BY-STEP SETUP
+============================================================
+
+---------------------------------
+STEP 1 — CREATE A SONIOX ACCOUNT
+---------------------------------
+
+1) Open the Soniox Console:
+
+   https://console.soniox.com
+
+2) Create an account and verify your email address if requested.
+3) Sign in to the Console.
+
+
+------------------------------------------
+STEP 2 — CONFIGURE BILLING OR ADD CREDITS
+------------------------------------------
+
+1) Open the Billing, Usage or Credits section in the Soniox Console.
+2) Add a payment method or purchase/add credits if the account requires it.
+3) Consider setting a low spending limit or usage alert while testing.
+
+The exact dashboard labels can change. You pay Soniox for actual API usage;
+Transcribe Notes does not add a subscription or markup.
+
+
+----------------------------------------------
+STEP 3 — REQUEST ACCESS TO THE EU DEPLOYMENT
+----------------------------------------------
+
+Soniox currently instructs users to contact support to obtain access to
+regional deployments:
+
+   support@soniox.com
+
+Suggested subject:
+
+   Request for EU regional deployment access
+
+Suggested message:
+
+   Hello,
+
+   I am a healthcare professional in Norway and would like to use the Soniox
+   Speech-to-Text API for clinical doctor–patient consultations. I need an
+   EU-region project/API key so that audio and transcript content is processed
+   and stored within the European Union.
+
+   Could you please enable access to the European Union regional deployment
+   for my Soniox organisation/account and provide any relevant DPA or security
+   documentation for our compliance review?
+
+   Kind regards,
+   [Name / organisation]
+
+Do not send patient information in this email.
+
+
+-------------------------------------
+STEP 4 — CREATE AN EU-REGION PROJECT
+-------------------------------------
+
+After Soniox confirms that regional deployments are enabled:
+
+1) Sign in to the Soniox Console.
+2) Create a new project, or open the project-creation screen.
+3) Select European Union as the project region.
+4) Give the project a clear name, for example:
+
+   Transcribe Notes — EU
+
+5) Save the project.
+
+The region is tied to the project. Do not use a key from an older US/default
+project if EU data residency is required.
+
+
+----------------------------------
+STEP 5 — CREATE THE EU API KEY
+----------------------------------
+
+1) Open the EU project.
+2) Open API Keys.
+3) Create/generate a new API key.
+4) Give the key a clear name.
+5) Copy it immediately and store it securely.
+
+Treat the key like a password. Do not email it, place it in a patient record,
+or share it with other users. Revoke it in the Soniox Console if it may have
+been exposed.
+
+
+-----------------------------------------------
+STEP 6 — ENTER THE KEY IN TRANSCRIBE NOTES
+-----------------------------------------------
+
+1) Return to the Transcribe Notes front page.
+2) Paste the EU-project key into the Soniox API key field.
+3) Enter the transcription tool.
+4) Select Soniox as the speech-to-text provider.
+5) Select EU as the Soniox endpoint/region.
+
+The app then uses the EU Soniox domains for the selected mode, including the
+EU REST endpoint for batch transcription and the EU WebSocket endpoint for
+real-time transcription.
+
+
+------------------------------------------------------------
+SONIOX MODES IN THIS APP
+------------------------------------------------------------
+
+  • Soniox batch: transcribes completed audio chunks
+  • Soniox batch with Speaker Labels: attempts to identify the speakers
+  • Soniox real-time: returns text while the conversation is taking place
+
+Speaker Labels can be helpful in doctor–patient conversations. Always review
+the transcript; speaker attribution and medical terminology can still be wrong.
+
+
+------------------------------------------------------------
+PRIVACY CHECKLIST BEFORE CLINICAL USE
+------------------------------------------------------------
+
+  □ EU regional access has been enabled by Soniox
+  □ The API key belongs to an EU-region project
+  □ EU is selected as the endpoint in Transcribe Notes
+  □ A suitable DPA has been reviewed/signed
+  □ The organisation has completed the necessary DPIA/TIA assessment
+  □ Retention and deletion behaviour has been reviewed
+  □ API-key access and spending limits are appropriate
+  □ Users know that every transcript must be checked
+
+An EU endpoint is an important technical control, but it does not by itself
+make the entire workflow automatically GDPR-compliant.
+
+
+------------------------------------------------------------
+OFFICIAL DOCUMENTATION
+------------------------------------------------------------
+
+Soniox Console:
+https://console.soniox.com
+
+Data residency:
+https://soniox.com/docs/data-residency
+
+Security and privacy:
+https://soniox.com/docs/security-and-privacy
+
+API documentation:
+https://soniox.com/docs/api-reference
+
+Regional-deployment contact:
+support@soniox.com
+
+
+------------------------------------------------------------
+TROUBLESHOOTING
+------------------------------------------------------------
+
+Authentication error:
+  Confirm that the key was copied completely and has not been revoked.
+
+EU request fails while US works:
+  Confirm that regional deployments are enabled and that the key belongs to an
+  EU-region project. A default/US-project key is not interchangeable with an EU key.
+
+No EU region appears when creating a project:
+  Contact support@soniox.com and ask them to enable regional deployments.
+
+No transcription is returned:
+  Check the browser console, Soniox usage dashboard, account credits/billing,
+  selected provider mode and microphone permissions.
+
