@@ -50,7 +50,9 @@ const DELEGATED_APP_ACTIONS = [
 const TEXT = {
   en: {
     presets: "Workspace set:", help: "Workspace set help", import: "Import", export: "Export",
-    add: "Add workspace", close: "Close workspace", defaultName: "Workspace {n}",
+    add: "Add workspace", clone: "Clone workspace", close: "Close workspace", defaultName: "Workspace {n}",
+    cloneName: "{name} (copy)", cloneLoading: "Wait for this workspace to finish loading before cloning it.",
+    busyClone: "Stop or abort the active recording, transcription, or generation before cloning this workspace.",
     namePrompt: "Workspace name", max: "You can have up to 12 workspaces open.",
     atLeastOne: "At least one workspace must remain open.",
     busyClose: "Stop or abort the active recording, transcription, or generation before closing this workspace.",
@@ -79,7 +81,9 @@ const TEXT = {
   },
   no: {
     presets: "Workspace set:", help: "Hjelp om Workspace set", import: "Importer", export: "Eksporter",
-    add: "Legg til Workspace", close: "Lukk Workspace", defaultName: "Workspace {n}",
+    add: "Legg til Workspace", clone: "Klon Workspace", close: "Lukk Workspace", defaultName: "Workspace {n}",
+    cloneName: "{name} (kopi)", cloneLoading: "Vent til dette Workspace-et er ferdig lastet før du kloner det.",
+    busyClone: "Stopp eller avbryt aktivt opptak, transkribering eller generering før dette Workspace-et klones.",
     namePrompt: "Navn på Workspace", max: "Du kan ha opptil 12 åpne Workspaces.",
     atLeastOne: "Minst ett Workspace må være åpent.",
     busyClose: "Stopp eller avbryt aktivt opptak, transkribering eller generering før Workspace-et lukkes.",
@@ -396,15 +400,15 @@ function injectManagerStyle() {
     .workspace-preset-help:hover .workspace-preset-help-content,.workspace-preset-help:focus .workspace-preset-help-content,.workspace-preset-help.is-open .workspace-preset-help-content{display:block}
     .workspace-preset-io{min-height:39px;padding:8px 16px;border:1px solid #cbd5d1;border-radius:8px;background:#fff;color:#3d5148;cursor:pointer}.workspace-preset-io:hover{background:#f1f7f4}
     .workspace-preset-label{margin-left:17px;color:#68746f;font-weight:600;white-space:nowrap}.workspace-preset-list{display:flex;align-items:center;gap:10px;min-width:0;overflow-x:auto;padding:4px 0;scrollbar-width:thin}
-    .workspace-preset-chip{display:inline-flex;align-items:center;gap:10px;flex:0 0 auto;min-height:49px;padding:9px 13px 9px 17px;border:1px solid #d2dad6;border-radius:999px;background:#fff;color:#34463e;cursor:pointer;max-width:290px}.workspace-preset-chip:hover{background:#f2f8f5;color:#34463e}
-    .workspace-preset-chip.is-active{border-color:#69a98d;background:#edf7f2;box-shadow:inset 0 -2px 0 #5a9}.workspace-preset-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .workspace-preset-chip{display:inline-flex;align-items:center;gap:2px;flex:0 0 auto;min-height:49px;padding:0 9px 0 0;border:1px solid #d2dad6;border-radius:999px;background:#fff;color:#34463e;max-width:310px;box-sizing:border-box}.workspace-preset-chip:hover{background:#f2f8f5;color:#34463e}
+    .workspace-preset-chip.is-active{border-color:#69a98d;background:#edf7f2;box-shadow:inset 0 -2px 0 #5a9}.workspace-preset-select{display:inline-flex;align-items:center;gap:10px;align-self:stretch;min-width:0;max-width:246px;padding:9px 7px 9px 17px;border:0;border-radius:999px 5px 5px 999px;background:transparent;color:inherit;cursor:pointer}.workspace-preset-select:hover,.workspace-preset-select:focus-visible{background:rgba(90,169,153,.09);outline:none}.workspace-preset-select[aria-pressed="true"]{font-weight:600}.workspace-preset-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .workspace-preset-dot{width:10.5px;height:10.5px;border-radius:50%;background:#b8c0bd;flex:0 0 auto}.workspace-preset-dot.recording{background:#d7263d;box-shadow:0 0 0 0 rgba(215,38,61,.5);animation:workspacePulse 1.3s infinite}.workspace-preset-dot.generating{background:#7b61c9;animation:workspaceSpin 1.2s linear infinite}.workspace-preset-dot.transcribing{background:#2c7bd9}.workspace-preset-dot.complete{background:#2f9d61}
-    .workspace-preset-close{border:0;background:transparent;color:#87918d;padding:0 2px;line-height:1;font-size:19px;cursor:pointer}.workspace-preset-close:hover{color:#a4001e}.workspace-preset-add{width:47px;height:47px;padding:0;border:1px dashed #aebbb5;border-radius:50%;background:#fff;color:#426857;font-size:26px;line-height:1;cursor:pointer;flex:0 0 auto}
+    .workspace-preset-clone,.workspace-preset-close{position:relative;flex:0 0 auto;border:0;background:transparent;color:#87918d;padding:0;cursor:pointer}.workspace-preset-clone{width:25px;height:29px;border-radius:5px}.workspace-preset-clone::before,.workspace-preset-clone::after{content:"";position:absolute;width:9px;height:9px;border:1.5px solid currentColor;border-radius:2px;box-sizing:border-box}.workspace-preset-clone::before{left:7px;top:7px}.workspace-preset-clone::after{left:10px;top:10px}.workspace-preset-clone:hover,.workspace-preset-clone:focus-visible{background:rgba(90,169,153,.12);color:#46705f;outline:none}.workspace-preset-close{width:24px;height:29px;border-radius:5px;line-height:1;font-size:19px}.workspace-preset-close:hover,.workspace-preset-close:focus-visible{background:rgba(164,0,30,.07);color:#a4001e;outline:none}.workspace-preset-add{width:47px;height:47px;padding:0;border:1px dashed #aebbb5;border-radius:50%;background:#fff;color:#426857;font-size:26px;line-height:1;cursor:pointer;flex:0 0 auto}
     .workspace-preset-frame-host{position:relative;width:100%}.workspace-preset-frame{border:0;background:#f8f8f8}.workspace-preset-frame.is-active{position:relative;display:block;width:100%;min-height:600px;opacity:1;pointer-events:auto}.workspace-preset-frame.is-parked{position:fixed;left:-10000px;top:0;width:2px!important;height:2px!important;opacity:0;pointer-events:none}
     .workspace-preset-toast{position:fixed;z-index:10020;left:50%;bottom:18px;transform:translateX(-50%);padding:8px 13px;border-radius:8px;background:#24352d;color:white;font-size:13px;box-shadow:0 5px 20px rgba(0,0,0,.2)}
     .workspace-backdrop{position:fixed;z-index:10010;inset:0;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.4)}.workspace-backdrop[hidden]{display:none}.workspace-modal{width:min(480px,94vw);max-height:88vh;overflow:auto;background:#fff;border-radius:12px;padding:16px;box-shadow:0 16px 48px rgba(0,0,0,.3)}.workspace-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.workspace-modal-head h2{font-size:18px;margin:0}.workspace-modal-close{border:0;background:transparent;color:#a4001e;padding:2px 6px;font-size:22px;cursor:pointer}.workspace-modal-notice{padding:9px;border:1px solid #b8d6ca;border-radius:8px;background:#f3faf7;font-size:12px;line-height:1.4}.workspace-modal-option{display:block;width:100%;margin-top:10px!important;padding:9px;border:1px solid #9bc4b2;border-radius:8px;background:#fff;color:#2e5544;text-align:left;cursor:pointer}.workspace-modal-option:hover{background:#f1f8f5;color:#2e5544}.workspace-modal-field{display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:8px;border:1px solid #cbd5d1;border-radius:7px}.workspace-modal-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.workspace-modal-actions button{padding:7px 11px;border-radius:7px;font-size:12px}.workspace-modal-status{min-height:18px;font-size:12px}.workspace-import-preview{margin-top:10px;padding:9px;border:1px solid #d8dfdc;border-radius:8px;background:#fafafa;font-size:12px}
     @keyframes workspacePulse{0%{box-shadow:0 0 0 0 rgba(215,38,61,.48)}70%{box-shadow:0 0 0 5px rgba(215,38,61,0)}100%{box-shadow:0 0 0 0 rgba(215,38,61,0)}}@keyframes workspaceSpin{50%{opacity:.35}}
-    @media(max-width:700px){.workspace-preset-label{margin-left:4px}.workspace-preset-io{min-height:35px;font-size:11px;padding:4px 6px}.workspace-preset-bar{min-height:69px;padding:10px 12px;gap:3.5px}.workspace-preset-help{width:34px;height:34px}.workspace-preset-chip{min-height:46px;padding:8px 11px 8px 14px}.workspace-preset-add{width:44px;height:44px;font-size:24px}}
+    @media(max-width:700px){.workspace-preset-label{margin-left:4px}.workspace-preset-io{min-height:35px;font-size:11px;padding:4px 6px}.workspace-preset-bar{min-height:69px;padding:10px 12px;gap:3.5px}.workspace-preset-help{width:34px;height:34px}.workspace-preset-chip{min-height:46px;padding-right:7px}.workspace-preset-select{padding:8px 5px 8px 14px;max-width:210px}.workspace-preset-clone,.workspace-preset-close{height:27px}.workspace-preset-add{width:44px;height:44px;font-size:24px}}
   `;
   document.head.appendChild(style);
 }
@@ -416,6 +420,7 @@ function initTopLevelManager() {
   if (!nativeRecording || !nativeBottom) return;
 
   const runtimes = new Map();
+  const workspaceUi = new Map();
   let definitions = loadDefinitions();
   let primaryPresetId = definitions[0].id;
   let activeId = readSessionRaw(ACTIVE_KEY) || primaryPresetId;
@@ -462,9 +467,9 @@ function initTopLevelManager() {
         const definition = findDefinition(runtime.id);
         if (definition?.config) runtime.win.__workspacePresetBridge.applyConfig(definition.config);
         runtime.win.__workspacePresetBridge.setGeneralTerms(lastGeneralTerms);
-        if (runtime.pendingHistoryDraft) {
-          runtime.win.__workspacePresetBridge.applyDraft(runtime.pendingHistoryDraft);
-          runtime.pendingHistoryDraft = null;
+        if (runtime.pendingDraft) {
+          runtime.win.__workspacePresetBridge.applyDraft(runtime.pendingDraft);
+          runtime.pendingDraft = null;
         }
       }
       scheduleConfigSave(runtime.id);
@@ -671,7 +676,7 @@ function initTopLevelManager() {
       definitions.push(definition);
       createFrameRuntime(definition);
       const runtime = runtimes.get(definition.id);
-      if (runtime) runtime.pendingHistoryDraft = draft;
+      if (runtime) runtime.pendingDraft = draft;
       persistDefinitions();
       switchPreset(definition.id);
       return { ok: true, workspaceId: definition.id };
@@ -811,26 +816,68 @@ function initTopLevelManager() {
     toolbar.help.setAttribute("aria-label", copy.help); toolbar.helpContent.innerHTML = copy.helpHtml;
     toolbar.importButton.textContent = copy.import; toolbar.exportButton.textContent = copy.export;
     toolbar.label.textContent = copy.presets; toolbar.add.setAttribute("aria-label", copy.add); toolbar.add.title = copy.add;
-    toolbar.list.replaceChildren();
-    definitions.forEach((definition) => {
+
+    const liveIds = new Set(definitions.map((definition) => definition.id));
+    workspaceUi.forEach((ui, id) => {
+      if (liveIds.has(id)) return;
+      ui.chip.remove();
+      workspaceUi.delete(id);
+    });
+
+    definitions.forEach((definition, index) => {
       const runtime = runtimes.get(definition.id);
       const snapshot = runtimeSnapshot(runtime);
-      const state = snapshot.state || {};
-      const chip = document.createElement("button");
-      chip.type = "button"; chip.className = "workspace-preset-chip";
-      chip.classList.toggle("is-active", definition.id === activeId);
-      const dot = document.createElement("span"); dot.className = `workspace-preset-dot ${statusClass(snapshot)}`;
-      const name = document.createElement("span"); name.className = "workspace-preset-name"; name.textContent = definition.name;
-      const close = document.createElement("span"); close.className = "workspace-preset-close"; close.textContent = "×";
-      close.setAttribute("role", "button"); close.setAttribute("aria-label", copy.close); close.title = copy.close;
-      chip.title = statusTitle(snapshot, copy);
-      chip.append(dot, name, close);
-      chip.addEventListener("click", (event) => {
-        if (event.target === close) { event.stopPropagation(); closePreset(definition.id); return; }
-        switchPreset(definition.id);
-      });
-      toolbar.list.appendChild(chip);
+      let ui = workspaceUi.get(definition.id);
+      if (!ui) {
+        ui = createWorkspaceUi(definition.id);
+        workspaceUi.set(definition.id, ui);
+      }
+
+      const expectedNode = toolbar.list.children[index] || null;
+      if (expectedNode !== ui.chip) toolbar.list.insertBefore(ui.chip, expectedNode);
+
+      const active = definition.id === activeId;
+      ui.chip.classList.toggle("is-active", active);
+      ui.select.setAttribute("aria-pressed", active ? "true" : "false");
+      ui.select.title = statusTitle(snapshot, copy);
+      ui.dot.className = `workspace-preset-dot ${statusClass(snapshot)}`;
+      ui.name.textContent = definition.name;
+      ui.clone.setAttribute("aria-label", copy.clone);
+      ui.clone.title = copy.clone;
+      ui.close.setAttribute("aria-label", copy.close);
+      ui.close.title = copy.close;
     });
+  }
+
+  function createWorkspaceUi(id) {
+    const chip = document.createElement("div");
+    chip.className = "workspace-preset-chip";
+    chip.dataset.workspaceId = id;
+
+    const select = document.createElement("button");
+    select.type = "button";
+    select.className = "workspace-preset-select";
+    const dot = document.createElement("span");
+    dot.className = "workspace-preset-dot";
+    dot.setAttribute("aria-hidden", "true");
+    const name = document.createElement("span");
+    name.className = "workspace-preset-name";
+    select.append(dot, name);
+    select.addEventListener("click", () => switchPreset(id));
+
+    const clone = document.createElement("button");
+    clone.type = "button";
+    clone.className = "workspace-preset-clone";
+    clone.addEventListener("click", () => clonePreset(id));
+
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "workspace-preset-close";
+    close.textContent = "×";
+    close.addEventListener("click", () => closePreset(id));
+
+    chip.append(select, clone, close);
+    return { chip, select, dot, name, clone, close };
   }
 
   function syncDefinitionNames() {
@@ -880,6 +927,32 @@ function initTopLevelManager() {
     const definition = { id: uid(), name: suggested, config: {} };
     definitions.push(definition);
     createFrameRuntime(definition);
+    persistDefinitions();
+    switchPreset(definition.id);
+  }
+
+  function clonePreset(id) {
+    const copy = t();
+    const source = findDefinition(id);
+    const sourceRuntime = runtimes.get(id);
+    if (!source || !sourceRuntime?.ready) { toast(copy.cloneLoading, true); return; }
+    if (runtimeSnapshot(sourceRuntime).busy) { toast(copy.busyClone, true); return; }
+    if (definitions.length >= MAX_PRESETS) { toast(copy.max, true); return; }
+
+    source.config = captureRuntimeConfig(sourceRuntime);
+    const draft = captureRuntimeDraft(sourceRuntime);
+    const definition = {
+      id: uid(),
+      name: safeName(
+        fmt(copy.cloneName, { name: source.name }),
+        fmt(copy.defaultName, { n: definitions.length + 1 })
+      ),
+      config: sanitizeConfig(source.config),
+    };
+    definitions.push(definition);
+    createFrameRuntime(definition);
+    const runtime = runtimes.get(definition.id);
+    if (runtime) runtime.pendingDraft = draft;
     persistDefinitions();
     switchPreset(definition.id);
   }
