@@ -359,6 +359,7 @@
       background: #f6f7f7;
     }
     .note-history-modal-title {
+      flex: 1 1 auto;
       min-width: 0;
       margin: 0;
       overflow: hidden;
@@ -368,9 +369,69 @@
       line-height: 1.3;
       font-weight: 600;
     }
+    .note-history-modal-actions {
+      position: relative;
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+    }
+    .note-history-restore-button {
+      margin: 0;
+      padding: 7px 12px;
+      border: 1px solid #7cab98;
+      border-radius: 7px;
+      background: #fff;
+      color: #315f4b;
+      font: 600 13px/1.25 'Roboto', sans-serif;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .note-history-restore-button:hover,
+    .note-history-restore-button:focus-visible,
+    .note-history-restore-button[aria-expanded="true"] {
+      background: #edf7f2;
+      border-color: #5a9;
+      outline: none;
+    }
+    .note-history-restore-menu {
+      position: absolute;
+      z-index: 2;
+      top: calc(100% + 8px);
+      right: 42px;
+      width: min(290px, calc(100vw - 48px));
+      padding: 6px;
+      border: 1px solid #cbd5d1;
+      border-radius: 9px;
+      background: #fff;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
+    }
+    .note-history-restore-menu[hidden] {
+      display: none;
+    }
+    .note-history-restore-option {
+      display: block;
+      width: 100%;
+      margin: 0;
+      padding: 9px 10px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: #2d3d36;
+      font: 500 13px/1.3 'Roboto', sans-serif;
+      text-align: left;
+      cursor: pointer;
+    }
+    .note-history-restore-option:hover,
+    .note-history-restore-option:focus-visible {
+      background: #edf7f2;
+      color: #244f3c;
+      outline: none;
+    }
     .note-history-modal-close {
       flex: 0 0 auto;
-      margin: 0 0 0 auto;
+      margin: 0;
       padding: 0 6px;
       border: 0;
       background: transparent;
@@ -435,6 +496,16 @@
       .note-history-modal-panel {
         width: 96vw;
         height: 94vh;
+      }
+      .note-history-modal-header {
+        gap: 8px;
+      }
+      .note-history-restore-button {
+        padding: 6px 9px;
+        font-size: 12px;
+      }
+      .note-history-restore-menu {
+        right: 38px;
       }
       .note-history-modal-body {
         grid-template-columns: minmax(0, 1fr);
@@ -3182,14 +3253,49 @@
     <div class="note-history-modal-panel">
       <div class="note-history-modal-header">
         <h2 id="noteHistoryModalTitle" class="note-history-modal-title">Note</h2>
-        <button
-          id="noteHistoryModalClose"
-          class="note-history-modal-close"
-          type="button"
-          aria-label="Close"
-        >
-          ×
-        </button>
+        <div class="note-history-modal-actions">
+          <button
+            id="noteHistoryRestoreButton"
+            class="note-history-restore-button"
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            aria-controls="noteHistoryRestoreMenu"
+          >
+            Restore to Workspace
+          </button>
+          <div
+            id="noteHistoryRestoreMenu"
+            class="note-history-restore-menu"
+            role="menu"
+            hidden
+          >
+            <button
+              id="noteHistoryRestoreCurrent"
+              class="note-history-restore-option"
+              type="button"
+              role="menuitem"
+            >
+              Replace current workspace
+            </button>
+            <button
+              id="noteHistoryRestoreNew"
+              class="note-history-restore-option"
+              type="button"
+              role="menuitem"
+            >
+              Open in new workspace
+            </button>
+          </div>
+          <button
+            id="noteHistoryModalClose"
+            class="note-history-modal-close"
+            type="button"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
       </div>
       <div class="note-history-modal-body">
         <section class="note-history-modal-section">
