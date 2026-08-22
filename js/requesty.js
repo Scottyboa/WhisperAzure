@@ -44,7 +44,11 @@ import {
   startNoteTimer,
   streamChatCompletionsSse
 } from "./core/note-runner.js";
-import { normalizeOpenAiReasoning, normalizeRequestyNanoReasoning } from "./core/provider-registry.js";
+import {
+  getDefaultRequestyReasoning,
+  normalizeOpenAiReasoning,
+  normalizeRequestyNanoReasoning
+} from "./core/provider-registry.js";
 
 // EU router: Requesty processing/storage stays in Frankfurt. Combined with
 // the EU-region model ids below, no request data leaves the EU.
@@ -103,7 +107,7 @@ const VARIANTS = Object.freeze({
   },
   "gemini-3.7-flash": {
     // Google Vertex AI EU deployment. The supported reasoning levels are
-    // low | medium | high, with medium as the model default.
+    // low | medium | high. The app intentionally defaults to low.
     requestyModelId: "vertex/gemini-3.7-flash@eu",
     pricingModelId: "gemini-3.7-flash",
     reasoningSelector: "dedicated"
@@ -145,7 +149,7 @@ function resolveReasoningLevel(variantKey, variantConfig) {
   // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
     return normalizeRequestyNanoReasoning(
-      getSelectValue("requestyNanoReasoning", "medium"),
+      getSelectValue("requestyNanoReasoning", getDefaultRequestyReasoning(variantKey)),
       variantKey
     );
   }

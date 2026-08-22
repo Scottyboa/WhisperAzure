@@ -29,6 +29,7 @@ import {
 } from "../core/note-runner.js";
 import {
   DEFAULTS,
+  getDefaultRequestyReasoning,
   getNoteUiVisibility,
   listBedrockModelOptions,
   listGeminiApiModelOptions,
@@ -413,6 +414,7 @@ function getSelections() {
   const requestyModel = normalizeRequestyModel(
     readSession(STORAGE_KEYS.requestyModel, DEFAULTS.requestyModel)
   );
+  const storedRequestyReasoning = readSession(STORAGE_KEYS.requestyNanoReasoning, null);
 
   return {
     provider,
@@ -430,7 +432,9 @@ function getSelections() {
     bedrockModel,
     requestyModel,
     requestyNanoReasoning: normalizeRequestyNanoReasoning(
-      readSession(STORAGE_KEYS.requestyNanoReasoning, DEFAULTS.requestyNanoReasoning),
+      storedRequestyReasoning == null
+        ? getDefaultRequestyReasoning(requestyModel)
+        : storedRequestyReasoning,
       requestyModel
     ),
     promptSlot: (() => {
@@ -1435,7 +1439,9 @@ function initSecondaryNoteModule() {
     onChange: (modelId) => {
       clearSecondaryUsageAndCost();
       const reasoningSelect = el("secondaryNanoReasoning");
-      const previous = String(reasoningSelect?.value || "");
+      const previous = modelId === "gemini-3.7-flash"
+        ? getDefaultRequestyReasoning(modelId)
+        : String(reasoningSelect?.value || "");
       setSelectOptions(
         reasoningSelect,
         listRequestyNanoReasoningOptions(modelId)

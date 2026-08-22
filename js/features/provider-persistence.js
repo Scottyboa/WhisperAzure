@@ -12,6 +12,7 @@
 import {
   DEFAULTS,
   deriveNoteUiStateFromEffectiveProvider,
+  getDefaultRequestyReasoning,
   getNoteUiVisibility,
   getTranscribeActiveApiKeyStorageKey,
   listBedrockModelOptions,
@@ -228,6 +229,7 @@ import {
     const requestyModel = normalizeRequestyModel(
       readSession(STORAGE_KEYS.requestyModel, ui.requestyModel || DEFAULTS.requestyModel)
     );
+    const storedRequestyReasoning = readSession(STORAGE_KEYS.requestyNanoReasoning, null);
 
     return {
       effectiveProvider: ui.effectiveProvider,
@@ -255,7 +257,9 @@ import {
       ),
       requestyModel,
       requestyNanoReasoning: normalizeRequestyNanoReasoning(
-        readSession(STORAGE_KEYS.requestyNanoReasoning, DEFAULTS.requestyNanoReasoning),
+        storedRequestyReasoning == null
+          ? getDefaultRequestyReasoning(requestyModel)
+          : storedRequestyReasoning,
         requestyModel
       ),
     };
@@ -651,7 +655,8 @@ import {
         bedrockModel: bedrockModelSelect?.value || DEFAULTS.bedrockModel,
         requestyModel: requestyModelSelect?.value || DEFAULTS.requestyModel,
         requestyNanoReasoning:
-          requestyNanoReasoningSelect?.value || DEFAULTS.requestyNanoReasoning,
+          requestyNanoReasoningSelect?.value ||
+          getDefaultRequestyReasoning(requestyModelSelect?.value || DEFAULTS.requestyModel),
       });
 
       applyNoteProviderUI({
@@ -695,7 +700,17 @@ import {
     // Switching the Requesty model changes the EFFECTIVE provider
     // (requesty-claude <-> requesty-gpt55 <-> requesty-gpt56-*), so run the full
     // persist-and-switch path — same as the OpenAI model selector.
-    requestyModelSelect?.addEventListener('change', persistAndSwitchNoteProvider);
+    requestyModelSelect?.addEventListener('change', async () => {
+      const modelId = normalizeRequestyModel(requestyModelSelect.value);
+      ensureSelectOptions(
+        requestyNanoReasoningSelect,
+        listRequestyNanoReasoningOptions(modelId)
+      );
+      if (requestyNanoReasoningSelect && modelId === 'gemini-3.7-flash') {
+        requestyNanoReasoningSelect.value = getDefaultRequestyReasoning(modelId);
+      }
+      await persistAndSwitchNoteProvider();
+    });
     // Changing the dedicated Requesty reasoning effort does not change the
     // effective provider, so just persist it.
     requestyNanoReasoningSelect?.addEventListener('change', () => {

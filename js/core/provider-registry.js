@@ -300,8 +300,8 @@ const REQUESTY_GPT56_REASONING_OPTIONS = [
   { value: 'xhigh', label: 'X-high' },
 ];
 
-// Gemini 3.7 Flash supports exactly low | medium | high. Google documents
-// medium as the default and explicitly rejects the minimal level.
+// Gemini 3.7 Flash supports exactly low | medium | high. The upstream model
+// defaults to medium, but the app intentionally defaults it to low.
 const REQUESTY_GEMINI37_REASONING_OPTIONS = [
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
@@ -464,6 +464,13 @@ export function listRequestyNanoReasoningOptions(
   return options.map((item) => ({ ...item }));
 }
 
+export function getDefaultRequestyReasoning(modelId = 'gpt-5-nano') {
+  const normalizedModel = normalizeRequestyModel(modelId);
+  return normalizedModel === 'gemini-3.7-flash' || normalizedModel === 'kimi-k3'
+    ? 'low'
+    : DEFAULTS.requestyNanoReasoning;
+}
+
 export function normalizeRequestyNanoReasoning(
   value,
   modelId = 'gpt-5-nano'
@@ -473,9 +480,7 @@ export function normalizeRequestyNanoReasoning(
   const options = listRequestyNanoReasoningOptions(modelId);
   return options.some((item) => item.value === raw)
     ? raw
-    : normalizedModel === 'kimi-k3'
-      ? 'low'
-      : DEFAULTS.requestyNanoReasoning;
+    : getDefaultRequestyReasoning(normalizedModel);
 }
 
 // Maps a Requesty UI model value to its effective note provider by scanning

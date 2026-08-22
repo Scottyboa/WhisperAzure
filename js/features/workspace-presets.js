@@ -15,9 +15,10 @@ const VALUE_IDS = [
   "vertexModel", "bedrockModel", "requestyModel", "gpt5Reasoning",
   "requestyNanoReasoning", "geminiReasoning", "promptSlot",
   "autoCopyModeSelect", "secondaryProvider", "secondaryMode",
-  "secondaryOpenaiModel", "secondaryOpenaiReasoning", "secondaryNanoReasoning",
+  "secondaryOpenaiModel", "secondaryOpenaiReasoning",
   "secondaryGeminiModel", "secondaryGeminiReasoning", "secondaryVertexModel",
-  "secondaryBedrockModel", "secondaryRequestyModel", "secondaryPromptSelect",
+  "secondaryBedrockModel", "secondaryRequestyModel", "secondaryNanoReasoning",
+  "secondaryPromptSelect",
 ];
 
 const CHECKBOX_IDS = [
