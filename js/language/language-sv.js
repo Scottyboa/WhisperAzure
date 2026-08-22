@@ -10,214 +10,157 @@ export const indexTranslations = {
   aboutButton: "Om",
   adRevenueMessage: "Eftersom denna webbplats är gratis att använda och uteslutande finansieras av annonsintäkter, uppskattar vi mycket om du godkänner annonser för att stödja tjänsten.",
   
+  // Accordion tab #1 (left): AI models
+  modelsModalHeading: "AI-modeller",
+  modelsModalText: `
+<div>
+  <p><strong>Modellval i Transcribe Notes</strong></p>
+  <p>Appen låter dig välja separata modeller för <strong>tal-till-text (STT)</strong> och <strong>anteckningsgenerering</strong>. En korrekt transkription ger textmodellen ett bättre underlag, medan en stark anteckningsmodell är bättre på att strukturera innehållet och följa vald prompt.</p>
+
+  <hr><br>
+  <p><strong>1) Tal-till-text-modeller</strong></p>
+  <ul>
+    <li><strong>Soniox</strong> – batch- eller realtidstranskription, med valfria talaretiketter</li>
+    <li><strong>OpenAI</strong> – gpt-4o-transcribe</li>
+    <li><strong>Mistral</strong> – Voxtral Mini Transcribe</li>
+  </ul>
+  <p><strong>Praktisk STT-rangordning</strong></p>
+  <ol>
+    <li><strong>Soniox</strong> – rekommenderat. Mycket god kvalitet, stöd för talaretiketter och möjlighet till EU-regional slutpunkt.</li>
+    <li><strong>OpenAI gpt-4o-transcribe</strong> – ett starkt alternativ, men standardkonfigurationen ger inte samma enkla väg till EU-dataresidens.</li>
+    <li><strong>Mistral Voxtral Mini</strong> – ett prisvärt europeiskt alternativ när kostnaden väger tyngst.</li>
+  </ol>
+  <p>För att hålla ljud och transkriptionsinnehåll inom EU med Soniox måste du använda en API-nyckel från ett Soniox-projekt i EU-regionen och välja EU-slutpunkten i appen. Talaretiketter kan hjälpa anteckningsmodellen att skilja mellan personer i ett samtal.</p>
+
+  <hr><br>
+  <p><strong>2) Leverantörer och modeller för anteckningsgenerering</strong></p>
+  <p><strong>Requesty — rekommenderas för nya användare</strong></p>
+  <p>Requesty ger tillgång till modeller från flera utvecklare genom en enda API-nyckel. Valen i appen är avsiktligt begränsade till utvalda driftsättningar som är avsedda för behandling inom EU, utan återanvändning för modellträning och med lämpliga inställningar för lagring.</p>
+  <ul>
+    <li>Claude Opus 5</li><li>Claude Sonnet 5</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 3.7 Flash</li><li>Kimi K3</li>
+  </ul>
+  <p><strong>Andra leverantörer som stöds</strong></p>
+  <ul>
+    <li><strong>OpenAI</strong> – GPT-5.1, GPT-5.2, GPT-5.4 och GPT-5.5</li>
+    <li><strong>AWS Bedrock</strong> – Claude Haiku 4.5, Claude Sonnet 4.5/4.6 och Claude Opus 4.5/4.6/4.7</li>
+    <li><strong>Mistral</strong> – Mistral Large</li>
+  </ul>
+  <p>AWS Bedrock finns kvar för användare som redan har AWS-åtkomst eller vill hantera en egen AWS-miljö. Installationen är betydligt mer komplicerad och modellutbudet kan ligga efter de senaste lanseringarna. Det är därför <strong>inte den rekommenderade startpunkten för nya användare</strong>.</p>
+
+  <p><strong>Praktisk vägledning för Requesty-modeller</strong></p>
+  <ul>
+    <li><strong>Högsta kvalitet:</strong> Claude Opus 5 och GPT-5.6 Sol</li>
+    <li><strong>Starka allroundval:</strong> Claude Sonnet 5, GPT-5.6 Terra och GPT-5.5</li>
+    <li><strong>Snabbhet och värde:</strong> GPT-5.6 Luna och Gemini 3.7 Flash</li>
+    <li><strong>Billigast för sammanfattning och förbehandling:</strong> GPT-5 Nano</li>
+    <li><strong>Ytterligare alternativ:</strong> Kimi K3</li>
+  </ul>
+  <p>För långa dokument kan en billigare modell, till exempel GPT-5 Nano, först skapa en kort sammanfattning för Kompletterande information. En starkare huvudmodell kan sedan skapa slutanteckningen utan att ta emot hela dokumentet, vilket kan sänka kostnaden avsevärt.</p>
+
+  <hr><br>
+  <p><strong>Pris kontra kvalitet</strong></p>
+  <p>De starkaste modellerna kostar oftast mer per token. Appen visar ungefärligt USD-pris per en miljon input- och output-token bredvid vald modell och, när användningsdata finns, en uppskattad kostnad efter genereringen.</p>
+
+  <hr><br>
+  <p><strong>Rekommenderad konfiguration för nya kliniska användare</strong></p>
+  <p>Börja med <strong>Soniox med EU-projekt, EU-API-nyckel och EU-slutpunkt</strong> för tal-till-text, kombinerat med <strong>Requesty</strong> för anteckningsgenerering.</p>
+  <p>Ingen leverantör eller modell gör arbetsflödet automatiskt GDPR-kompatibelt. Verksamheten måste fortfarande kontrollera DPA, slutpunkt och lagringsinställningar, genomföra nödvändiga DPIA/TIA-bedömningar och granska varje anteckning före klinisk användning.</p>
+</div>
+`,
+
   securityModalHeading: "Integritet",
   securityModalText: `
 <strong>Integritet och databehandling</strong><br><br>
-Denna webbapp är skapad som ett verktyg för tal-till-text och anteckningsgenerering. Det är ditt fulla ansvar som vårdpersonal/behandlingsansvarig att säkerställa att all användning sker i enlighet med GDPR, Helsepersonelloven och Normen för informationssäkerhet.<br><br>
+Denna webbapp är ett verktyg för tal-till-text och anteckningsgenerering. Som vårdpersonal och personuppgiftsansvarig ansvarar du för att användningen följer tillämplig lagstiftning, inklusive GDPR, hälso- och sjukvårdsregler och organisationens krav på informationssäkerhet.<br><br>
 
-Du är ensam ansvarig för att användningen av denna app uppfyller alla krav i:<br>
-- GDPR<br>
-- Helsepersonelloven<br>
-- Normen för informationssäkerhet<br><br>
+Detta omfattar bland annat att:<br>
+- ingå nödvändiga personuppgiftsbiträdesavtal (DPA),<br>
+- genomföra och dokumentera DPIA och, när det är relevant, TIA,<br>
+- välja rätt regionala slutpunkter och lagringsinställningar,<br>
+- säkerställa rättslig grund, åtkomstkontroll samt eventuell patientinformation eller samtycke,<br>
+- granska varje transkription och genererad anteckning före klinisk användning.<br><br>
 
-Detta innebär bland annat:<br>
-- Ingå nödvändiga avtal (DPA)<br>
-- Genomföra grundliga riskbedömningar (DPIA och TIA)<br><br>
-
-– Mer information om detta längre ned i denna text.<br><br>
-
-Utvecklaren av denna webbapp tar inget ansvar för din användning eller bristande efterlevnad. Detta är inte juridisk rådgivning; du måste själv involvera dataskyddsombud/juridisk rådgivare vid behov.<br><br>
+Utvecklaren kan inte avgöra om en organisations användning är laglig. Detta är inte juridisk rådgivning; involvera dataskyddsombud eller juridisk rådgivare vid behov.<br><br>
 
 <hr><br>
+<strong>1. Rekommenderad konfiguration för nya användare</strong><br><br>
+<strong>Tal-till-text:</strong> <strong>Soniox med EU-projekt, EU-API-nyckel och EU-slutpunkt</strong>. Soniox uppger att ljud- och transkriptionsinnehåll stannar i vald region när regional projektnyckel och matchande API-domän används, och att innehållet inte används för modellträning. Konto-, fakturerings- och användningsmetadata kan ändå behandlas utanför regionen.<br><br>
 
-<strong>1. Praktiska rekommendationer för modellval i denna app</strong><br><br>
+<strong>Anteckningsgenerering:</strong> <strong>Requesty</strong>. Appen använder Requestys EU-gateway och ett begränsat urval namngivna modelldistributioner avsedda för EU-behandling, utan återanvändning för modellträning och med lämpliga lagringskontroller.<br><br>
 
-Webbappen ger tillgång till flera olika leverantörer och modeller. Nedan finns en praktisk, något normativ översikt som gör det enklare att välja. Du måste ändå göra din egen juridiska och tekniska bedömning.<br><br>
+Appens modellval aktiverar inte automatiskt Zero Data Retention för ditt Requesty-konto. Requesty dokumenterar att loggning av prompt och svar är aktiverad som standard för self-service-planer med 30 dagars lagring. Loggning kan stängas av per API-nyckel och organisationsomfattande ZDR kan begäras. Kontrollera detta, aktuell modelldistribution, underbiträden och DPA innan identifierbara patientuppgifter används.<br><br>
 
-<strong>Tal-till-text (STT)</strong><br>
-- Kvalitetsmässigt är de starkaste tal-till-text-modellerna i denna app som regel OpenAI gpt-4o-transcribe och Soniox.<br>
-- För rutinmässig användning på identifierbara patientdata är <strong>Soniox med EU-endpunkt och noll datalagring</strong> det alternativ som passar bäst in i ett strikt GDPR-/hälso-regim. OpenAI använder typiskt globala endpunkter och har tillfällig lagring; detta hamnar ofta i en juridisk «gråzon» om du inte har särskilda avtal och explicit EU-dataresidens på plats.<br><br>
-
-<strong>Anteckningsgenerering (LLM)</strong><br>
--Till själva anteckningsgenereringen är det ofta <strong>ChatGPT-modellerna (GPT-5.1 / GPT-5.2)</strong>, <strong>Claude-modellerna (via AWS Bedrock)</strong> och <strong>Gemini-modellerna (Gemini 3 och Gemini 2.5 Pro)</strong> som ger bäst kvalitet i denna app. <br>
--Sett ur ett GDPR-perspektiv är det <strong>AWS Bedrock (Claude)</strong> som ofta är den mest rekommenderade uppsättningen, eftersom den kan konfigureras med EU/EES-regionval, zero data retention och därmed ge en mycket GDPR-anpassad lösning. <br>
--En stark alternativ lösning är <strong>Google Vertex AI med Gemini 2.5 Pro</strong> i EU-region. Detta kräver att du skapar ett eget Google Cloud/Vertex-projekt, deployar en liten backend (Cloud Run) och klistrar in backend-URL + hemlig nyckel i fälten för «Google Vertex» på startsidan.<br>
--För instruktioner/guide för uppsättning av AWS Bedrock och Google Vertex, klicka på "Guide"-knappen bredvid nyckelfälten här på startsidan.<br>
-
-<strong>Andra leverantörer i denna app</strong><br>
-- <strong>Lemonfox</strong>, <strong>Mistral</strong> och <strong>Deepgram</strong> är i huvudsak inkluderade för test/experimentering och eventuell icke-klinisk användning. För krävande klinisk diktering och anteckningsskrivning är kvaliteten deras generellt lägre än Soniox/OpenAI/Gemini, och hur «GDPR-vänliga» de är beror helt på vilka endpunkter (EU/globalt) och eventuella ZDR-inställningar du faktiskt har aktiverat hos leverantören.<br>
-- GPT-modellerna från <strong>OpenAI</strong>, <strong>Deepgram</strong> sina standard/globalt hostade STT-endpunkter och <strong>Gemini 3 via Google AI Studio</strong> kommer ofta att ha global infrastruktur och tillfällig datalagring. Dessa uppsättningar är inte automatiskt GDPR-kompatibla för identifierbara patientdata och bör betraktas som «gråzoner» om du inte har explicita avtal, EU-dataresidens och ZDR dokumenterat.<br><br>
-
-<strong>Mest GDPR-optimal kombination i denna app</strong><br>
-Om du använder <strong>Soniox med EU-endpunkt</strong> för tal-till-text, och <strong>Google Vertex AI (Gemini 2.5 Pro med EU-endpunkt) eller AWS Bedrock(Claude)</strong> för anteckningsgenerering, kan den tekniska dataflödet i denna app hållas inom EU utan återanvändning för träning hos leverantören. Laglighet och efterlevnad beror ändå på dina egna DPA:er, DPIA/TIA och lokala krav, men rent tekniskt är detta den mest GDPR-optimerade konfigurationen som appen stödjer per i dag.<br><br>
+Ingen teknisk konfiguration är automatiskt ”GDPR-kompatibel”. Avtal, konfiguration, ändamål, riskbedömning och arbetsrutiner är avgörande.<br><br>
 
 <hr><br>
+<strong>2. Så behandlar webbappen data</strong><br><br>
+- Ljud spelas in och behandlas tillfälligt i webbläsarens minne.<br>
+- Ljudet skickas via krypterad HTTPS till vald STT-leverantör: Soniox, OpenAI eller Mistral/Voxtral.<br>
+- Transkriptionen visas i valt Workspace i webbläsaren.<br>
+- Vid anteckningsgenerering skickas transkription, vald prompt och eventuell Kompletterande information till vald anteckningsleverantör.<br>
+- Requesty-anrop går till EU-gatewayen och vidare till den specifikt valda modelldistributionen.<br>
+- Utkastet returneras till webbläsaren via en krypterad anslutning.<br><br>
 
-<strong>2. Hur fungerar webbappen?</strong><br>
-- Spelar in ljud via webbläsarens inspelningsfunktion.<br>
-- Bearbetar ljud i webbläsarens minne (RAM).<br>
-- Laddar upp ljudfil via säker HTTPS-anslutning till vald tal-till-text-leverantör (t.ex. OpenAI, Soniox, Lemonfox, Mistral/Voxtral, Deepgram) med hjälp av din egen API-nyckel från leverantören.<br>
-- Skickar transkriptionen (och eventuell tilläggstext/prompt) vidare till vald textmodell (t.ex. GPT-5.1, GPT-4o, Gemini 3, Mistral Large, Lemonfox LLM eller Gemini 2.5 Pro via din egen Vertex-backend).<br>
-- Webbläsaren tar emot anteckningsutkastet direkt från aktuell leverantör (eller via din Vertex-backend) via en säker/krypterad anslutning.<br><br>
-
-Dina API-nycklar lagras endast tillfälligt i webbläsarens minne (SessionStorage). Stänger du av webbappen eller stänger webbläsaren raderas API-nycklarna från webbläsarens minne. För att använda webbappen igen måste du klistra in nycklarna på nytt. Detta ger ett extra säkerhetslager mot obehörig åtkomst till dina nycklar.<br><br>
-
-Webbappen har ingen egen server som lagrar ljud eller text; all kommunikation går direkt mellan din webbläsare och de tjänster du själv har valt (eller, för Google Vertex, via backend-URL:en du själv har satt upp i ditt eget Google Cloud-projekt).<br><br>
+Webbappen har ingen egen applikationsserver som lagrar ljud, transkriptioner eller anteckningar. Kommunikationen sker mellan webbläsaren och valda tjänster. AWS Bedrock nås via användarens separat konfigurerade AWS-backend.<br><br>
 
 <hr><br>
+<strong>3. API-nycklar och autentiseringsuppgifter</strong><br><br>
+Du använder egna leverantörsnycklar eller, för AWS Bedrock, egen backend-URL och hemlighet. Utvecklaren får inte dessa uppgifter eller det kliniska innehållet.<br><br>
 
-<strong>3. Dina egna API-nycklar krävs</strong><br>
-All kommunikation med modell-leverantörerna (OpenAI, Google Gemini, Soniox, Lemonfox, Deepgram, Mistral m.fl.) sker direkt från din webbläsare med dina personliga API-nycklar, eller via din egen Google Cloud-backend (URL + hemlig nyckel) när du använder Vertex-integrationen.<br><br>
+Nycklar på startsidan lagras tillfälligt i webbläsarens SessionStorage och tas bort när fliken/sessionen stängs eller när du väljer Rensa nycklar. Vid export av en krypterad nyckelbackup används lösenordet lokalt i webbläsaren för att kryptera filen innan den sparas eller laddas upp.<br><br>
 
-Utvecklaren av denna webbapp har ingen åtkomst till dina API-nycklar, din backend-URL/hemliga nyckel eller till innehållet du skickar till leverantörerna.<br><br>
-
-<hr><br>
-
-<strong>4. Personuppgiftsbiträdesavtal (DPA) med leverantörerna</strong><br>
-Om du ska använda API-tjänsterna för behandling av personuppgifter (särskilt patientuppgifter) rekommenderas att du ingår personuppgiftsbiträdesavtal (DPA) med varje leverantör du faktiskt använder, till exempel:<br>
-- OpenAI (tal-till-text och textgenerering)<br>
-- Google (Gemini 3 via Google AI Studio, Gemini 2.5 Pro via Vertex AI)<br>
-- Soniox (tal-till-text)<br>
-- Deepgram (tal-till-text)<br>
-- Mistral (Voxtral för tal-till-text, Mistral Large för text)<br>
-- Lemonfox (Whisper v3 tal-till-text och Llama 3-baserade textmodeller)<br><br>
-
-För OpenAI finns det ett standard personuppgiftsbiträdesavtal (DPA) och en egen organisationsprofil där verksamhetsinformation (t.ex. organisationsnummer) registreras. Motsvarande avtal och dokument finns hos de andra leverantörerna.<br><br>
-
-När DPA:er är på plats är utgångspunkten att du/verksamheten är personuppgiftsansvarig, medan leverantörerna (OpenAI, Google, Soniox, Mistral, Deepgram, Lemonfox osv.) är personuppgiftsbiträden. Du måste själv kontrollera att avtalen faktiskt täcker din användning (hälso, forskning, etc.).<br><br>
+Behandla nycklar, backupfiler och lösenord som konfidentiella. Använd separata nycklar, utgiftsgränser och åtkomstbegränsningar där det finns, och återkalla omedelbart en nyckel som kan ha exponerats.<br><br>
 
 <hr><br>
-
-<strong>5. DPIA och TIA – nödvändiga riskbedömningar</strong><br><br>
-
-<strong>DPIA (Data Protection Impact Assessment)</strong><br>
-Krävs enligt GDPR artikel 35 när ny teknik används för att behandla särskilda kategorier av uppgifter (som hälsouppgifter). Syftet är att identifiera och minska integritetsrisker kopplade till själva behandlingen.<br><br>
-
-Du bör bland annat:<br>
-- Kartlägga vilka data som behandlas (ljud, text, metadata).<br>
-- Beskriva syfte (klinisk dokumentation, kvalitet, forskning osv.).<br>
-- Bedöma risk för patienternas rättigheter och friheter.<br>
-- Besluta tekniska och organisatoriska åtgärder (kryptering, åtkomststyrning, loggning, utbildning osv.).<br><br>
-
-<strong>TIA (Transfer Impact Assessment)</strong><br>
-Krävs när personuppgifter överförs till länder utanför EES (till exempel USA). Syftet är att dokumentera att överföringen ändå ger ett «väsentligen likvärdigt» skydd som i EU/EES (Schrems II, GDPR artikel 44–49).<br><br>
-
-Du bör bland annat:<br>
-- Bedöma relevant lagstiftning i mottagarlandet (t.ex. FISA 702, CLOUD Act).<br>
-- Ställa detta mot hur känsliga uppgifterna är och vilka tekniska/kontraktuella åtgärder du använder (kryptering, pseudonymisering, SCC, ZDR, EU-endpunkt osv.).<br>
-- Explicit dra slutsats om överföringen är försvarlig och om restrisken är acceptabel.<br><br>
-
-Både DPIA och TIA bör vara genomförda, dokumenterade och godkända av dig/verksamheten innan webbappen används på verkliga patientdata.<br><br>
+<strong>4. Personuppgiftsbiträdesavtal</strong><br><br>
+Bedöm och teckna lämpliga DPA med de tjänster du faktiskt använder: Soniox, Requesty och dokumenterade underbiträden/modelldistributioner, OpenAI, Mistral och eventuellt AWS. Kontrollera att avtalen täcker organisationen, vårdanvändning, säkerhet, lagring, radering, underbiträden och internationella överföringar. Villkor och tekniska inställningar kan ändras och bör granskas regelbundet.<br><br>
 
 <hr><br>
+<strong>5. DPIA och TIA</strong><br><br>
+<strong>DPIA:</strong> krävs normalt enligt GDPR artikel 35 när ny teknik behandlar särskilda kategorier av uppgifter som hälsodata. Kartlägg ljud, text och metadata, dokumentera ändamålet, bedöm risker och bestäm tekniska och organisatoriska skyddsåtgärder.<br><br>
 
-<strong>6. Databehandling, datalagring och «GDPR-vänlighet» hos olika leverantörer</strong><br><br>
+<strong>TIA:</strong> kan krävas när personuppgifter överförs utanför EES. Bedöm destination, lagstiftning, avtalsmässiga skydd och kompletterande åtgärder som kryptering, pseudonymisering, EU-slutpunkter och lagringskontroller. Om hela den dokumenterade behandlingskedjan stannar i EU/EES ska även den slutsatsen dokumenteras.<br><br>
 
-Nedan finns en grov översikt över hur tjänsterna typiskt fungerar i dag. Detta kan förändras, och du måste alltid kontrollera uppdaterad dokumentation och avtalsverk hos leverantören innan du drar slutsatser.<br><br>
-
-<strong>Lemonfox (tal-till-text och textgenerering)</strong><br>
-Lemonfox är EU-baserat och marknadsför sig som fullt GDPR-kompatibelt.<br>
-Tal-till-text (Whisper v3) och Llama 3-baserade textmodeller processas i EU, och de uppger att ljud/text raderas kort tid efter processering (ingen återanvändning för träning).<br>
-Detta gör Lemonfox till ett relativt «GDPR-vänligt» alternativ för både tal-till-text och textgenerering, förutsatt att du ändå gör DPIA/TIA och har tillräckliga avtal.<br><br>
-
-<strong>Soniox (med EU-endpunkt)</strong><br>
-Soniox erbjuder dataresidens i både USA och EU.<br>
-När ett projekt är konfigurerat med EU-region behandlas ljud och transkriptioner inom denna region; systemdata som kontodata och fakturadata kan ändå hanteras globalt.<br>
-För att ta i bruk EU-endpunkten i klinisk miljö måste du typiskt kontakta Soniox (till exempel via e-post till <strong>sales@soniox.com</strong>) och be om tillgång till EU-projekt/API-nyckel och dokumentation på dataresidens. Tillgång till EU-endpunkt kan ta 1–2 dagar att få efter kontakt.<br>
-Med EU-endpunkten aktiverad är Soniox ett bra alternativ för GDPR-anpassad tal-till-text, men du måste fortfarande göra DPIA/TIA och ingå nödvändigt DPA.<br><br>
-
-<strong>Mistral (Voxtral för tal-till-text, Mistral Large för text)</strong><br>
-Mistral är EU-baserat och standarduppsättningen deras är att API-data hostas i EU som utgångspunkt. Det finns egna USA-endpunkter om man explicit väljer det.<br>
-Mistral erbjuder möjlighet till Zero Data Retention (ZDR) efter ansökan, dvs. att data inte lagras utöver det som är strikt nödvändigt för att leverera svaret. Detta kan göra det enklare att argumentera för användning på hälsodata, men måste dokumenteras i DPIA/TIA.<br>
-Kombinationen EU-endpunkt + ZDR (där detta faktiskt är beviljat och konfigurerat) gör Mistral (Voxtral + Mistral Large) till ett av de mest «GDPR-vänliga» alternativen i denna app.<br><br>
-
-<strong>Google Vertex AI (Gemini 2.5 Pro via EU-backend)</strong><br>
-I denna app används Google Vertex AI endast via din egen backend-URL och hemliga nyckel, som du lägger in under «Google Vertex» på startsidan.<br>
-När ditt Vertex-projekt är konfigurerat till en EU-region (till exempel europe-west1) och med zero data retention / ingen återanvändning av data för träning, kommer förfrågningar och svar att behandlas inom EU och förfrågningsdata lagras inte längre än nödvändigt för att leverera svaret, enligt Googles dokumentation.<br>
-Denna uppsättning kan därmed användas som ett EU-resident, noll-retentionsalternativ för anteckningsgenerering, förutsatt att du också har giltigt DPA med Google och har genomfört DPIA/TIA som explicit täcker denna användning.<br>
-För en praktisk genomgång av hur du skapar projektet, väljer region och deployar backend:en som används av denna app kan du klicka på guide-knappen i rubriken «Google Vertex» på startsidan; detta öppnar en egen ChatGPT-vägledning där du kan ställa följdfrågor.<br><br>
-
-<strong>Gemini 3 (Google AI Studio)</strong><br>
-Gemini 3 som används via Google AI Studio / Gemini API med ren API-nyckel behandlas normalt på Googles globala infrastruktur, vilket typiskt innebär att data kan överföras utanför EU/EES.<br>
-Google kan lagra förfrågningsdata tillfälligt för missbruksdetektion, stabilitet och förbättring, beroende på inställningar och avtal, och endpunkten är som huvudregel inte explicit låst till EU-region.<br>
-Användning av Gemini 3 via Google AI Studio kommer därför ofta att vara ett juridiskt «gråområde» för identifierbara patientdata, om du inte har explicita kontraktuella garantier om EU-dataresidens och lagringstid, dokumenterat i DPIA/TIA. Denna app erbjuder i stället en egen Google Vertex-integration för EU-region (se ovan).<br><br>
-
-<strong>OpenAI</strong><br>
-OpenAI uppger att API-data inte används för modellträning som standard, men kan lagras tillfälligt (typiskt upp till 30 dagar) för missbruksdetektion och felsökning.<br>
-OpenAI har introducerat dataresidens i Europa för vissa API-kunder och produkter, men detta kräver specifika avtal/konfiguration.<br>
-Så som denna webbapp normalt är uppsatt kommer anrop till OpenAI ofta att gå till globala endpunkter (typiskt USA), vilket innebär överföring utanför EU/EES.<br><br>
-
-Användning av OpenAI med patientdata befinner sig därmed ofta i ett juridiskt «gråområde» om du inte har:<br>
-- ett tydligt DPA,<br>
-- dokumenterad DPIA/TIA som explicit täcker överföringen, och<br>
-- eventuella specialordningar om EU-residens/ZDR om detta är tillgängligt och faktiskt aktiverat.<br><br>
-
-<strong>Deepgram (Nova-3)</strong><br>
-Deepgram har historiskt använt globala endpunkter, men erbjuder nu dedikerade och EU-specifika endpunkter.<br>
-Om du endast använder standard/global endpunkt kommer ljuddata typiskt att processas utanför EU/EES.<br>
-Deepgram har också EU-hostade tjänster och beskriver olika compliance-upplägg (inklusive för vård), men det kräver att du medvetet konfigurerar rätt endpunkt (t.ex. api.eu.deepgram.com) och har avtal som täcker dataresidens och eventuella lagringstider.<br>
-Så som appen ofta används i dag kan Deepgram därför – på samma sätt som OpenAI – innebära att data skickas utanför EU om du inte explicit konfigurerar EU-endpunkt och har juridiska bedömningar på plats.<br><br>
-
-<strong>Kort sammanfattat om modellerna i denna app:</strong><br><br>
-
-Mest «GDPR-optimala» kombination i denna app (om korrekt konfigurerat och med DPA + DPIA/TIA på plats):<br>
-- Soniox med EU-endpunkt för tal-till-text.<br>
-- Google Vertex AI med Gemini 2.5 Pro i EU-region och zero data retention för anteckningsgenerering.<br><br>
-
-Andra relativt «GDPR-vänliga» alternativ (förutsatt att EU-endpunkt och eventuella ZDR-inställningar faktiskt är aktiverade och dokumenterade):<br>
-- Lemonfox (EU-baserad STT + LLM, snabb radering).<br>
-- Mistral (Voxtral + Mistral Large) med standard EU-hosting och eventuellt ZDR.<br><br>
-
-Mer krävande/«gråzoner» för patientdata (om du inte har specialavtal och EU-residens/ZDR på plats):<br>
-- OpenAI via globala endpunkter.<br>
-- Deepgram via globala endpunkter.<br>
-- Gemini 3 via globalt Google AI Studio/Gemini API utan explicit EU-låsning.<br><br>
-
-I alla fall är det du/verksamheten som måste dokumentera att lösning och leverantörsval är i linje med GDPR, Helsepersonelloven och Normen.<br><br>
+Båda bedömningarna bör vara genomförda och godkända innan verkliga patientuppgifter används.<br><br>
 
 <hr><br>
+<strong>6. Leverantörsspecifika överväganden</strong><br><br>
+<strong>Soniox EU:</strong> EU-dataresidens kräver ett EU-regionprojekt, dess API-nyckel och matchande EU-API-domän i appen. Kontrollera lagring/radering och nödvändigt avtal.<br><br>
 
-<strong>7. Förutsättningar för potentiell klinisk användning</strong><br>
-Din bedömning är avgörande: Lagligheten av att använda detta verktyg med patientdata beror uteslutande på din egen grundliga bedömning av både appen och varje enskild leverantör du kopplar till (OpenAI, Gemini, Soniox, Lemonfox, Mistral, Deepgram osv.).<br><br>
+<strong>Requesty:</strong> Appen använder EU-gatewayen och fasta, utvalda modellrutter. Requesty uppger att promptar och svar inte används för träning. Fullständig EU-residens beror också på att en EU-hostad uppströmsdistribution används. Kontrollera aktuella modelldetaljer och stäng av prompt-/svarsloggning för nyckeln eller skaffa organisationsomfattande ZDR.<br><br>
 
-Minimikrav före användning med patientdata bör vara:<br>
-- Giltiga personuppgiftsbiträdesavtal (DPA) med alla leverantörer du faktiskt använder.<br>
-- Verksamhetsspecifik DPIA och TIA som är genomförd, godkänd och som drar slutsatsen att restrisken är acceptabel.<br>
-- Tydligt beslut om vilka modeller/endpunkter som kan användas för patientdata (till exempel att begränsa patientrelaterad användning till Soniox med EU-endpunkt för tal-till-text och Google Vertex AI med Gemini 2.5 Pro i EU-region och zero data retention för anteckningsgenerering, samt eventuellt Lemonfox/Mistral om detta enligt din bedömning är försvarligt).<br>
-- Ansvar för innehåll: Du är ansvarig för allt innehåll du skickar till leverantörerna via dina API-nycklar/backend, och för att kvalitetssäkra anteckningsutkastet innan det eventuellt kopieras in i patientjournal.<br><br>
+<strong>AWS Bedrock:</strong> Finns kvar för befintliga AWS-användare. Det kräver egen backend och noggrann regional konfiguration. Det är mer komplicerat och rekommenderas inte som startpunkt för nya användare.<br><br>
 
-<hr><br>
+<strong>Mistral:</strong> Ger Voxtral för STT och Mistral Large för anteckningar. Kontrollera aktuell region, DPA, lagring och träningsinställningar. Dokumentera ZDR om organisationen kräver det.<br><br>
 
-<strong>8. Översikt över datalagring</strong><br><br>
-
-(Detta gäller hur webbappen hanterar data; utöver detta tillkommer lagring hos varje API-leverantör, vilket du måste kontrollera själv.)<br><br>
-
-<strong>Dina API-nycklar och Vertex-backend (OpenAI, Soniox, Gemini, Lemonfox, Deepgram, Mistral osv.)</strong><br>
-- Var lagras de? I SessionStorage-minne i din webbläsare.<br>
-- Hur länge? Tills du avslutar webbappen eller stänger webbläsaren.<br>
-- Vem har åtkomst? Endast du och din webbläsare.<br><br>
-
-<strong>Ljudsegment under inspelning</strong><br>
-- Var lagras de? Webbläsarens minne (RAM).<br>
-- Hur länge? Endast under inspelning/processering. Webbappen lagrar inte ljud permanent.<br>
-- Vem har åtkomst? Endast du och din webbläsare innan de skickas till vald tal-till-text-API.<br><br>
-
-<strong>Transkriberad text/anteckningsutkast hos leverantörerna</strong><br>
-- Var lagras det? Hos vald API-leverantör (OpenAI, Google, Soniox, Lemonfox, Mistral, Deepgram osv.) i deras molninfrastruktur, eller i ditt eget Google Cloud-projekt när du använder Vertex-backend.<br>
-- Hur länge? Varierar – t.ex. uppger OpenAI att data kan lagras upp till cirka 30 dagar för missbruksdetektion; vissa EU-baserade leverantörer (som Lemonfox/Mistral med ZDR, Soniox EU och Vertex med zero data retention) raderar snabbare. Du måste själv kontrollera gällande policy för varje leverantör och din egen Vertex-konfiguration.<br>
-- Vem har åtkomst? Du via API-/backend-svaren, samt aktuell leverantör (eller ditt eget Google Cloud-projekt) under den period data tekniskt sett lagras.<br><br>
-
-<strong>Instruktioner/prompter i själva webbappen</strong><br>
-- Var lagras de? Lokalt i din webbläsare (typiskt LocalStorage/SessionStorage). Om du använder samma webbläsare, samma PC och samma nycklar/backend kommer prompterna fortfarande att vara tillgängliga för dig nästa gång.<br>
-- Hur länge? Tills du raderar dem eller rensar webbläsardata.<br>
-- Vem har åtkomst? Du och din webbläsare.<br><br>
+<strong>OpenAI:</strong> Finns kvar för direkt STT och anteckningsgenerering. Standard-API-data används inte för träning som utgångspunkt, men regional behandling och lagring beror på produkt, konto och avtal. Anta inte att en vanlig API-nyckel automatiskt ger enbart EU-behandling eller ZDR.<br><br>
 
 <hr><br>
+<strong>7. Minimikrav före klinisk användning</strong><br><br>
+- Använd endast godkända leverantörer och slutpunkter.<br>
+- Ha giltiga DPA och aktuell översikt över underbiträden.<br>
+- Genomför och godkänn relevant DPIA/TIA.<br>
+- Konfigurera EU-routing och lagring/ZDR korrekt.<br>
+- Minimera patientinformationen och pseudonymisera där det är praktiskt.<br>
+- Skydda API-nycklar och exporterade backupfiler.<br>
+- Kontrollera varje transkription och anteckning före journalföring.<br><br>
 
-<strong>9. Källkod</strong><br>
-Källkoden är öppen och körs lokalt i din webbläsare. Det finns inga dolda bakdörrar som skickar data till utvecklarens servrar, utöver statistik kring hur ofta appen används, via antal klick osv., men ingen känslig information om användare eller data som användaren skickar/tar emot.<br>
+<hr><br>
+<strong>8. Lokal och extern lagring</strong><br><br>
+<strong>API-nycklar/backenduppgifter:</strong> lagras i SessionStorage tills fliken/sessionen stängs eller nycklarna rensas.<br><br>
+<strong>Ljud:</strong> finns tillfälligt i webbläsarminnet under inspelning/behandling och skickas till vald STT-leverantör. Appen behåller inget permanent lokalt ljudarkiv.<br><br>
+<strong>Transkriptioner, Kompletterande information och anteckningar:</strong> finns i den aktiva fliksessionen och dess Workspace-/historikfunktioner, normalt tills sessionen stängs eller innehållet rensas. Relevant text skickas externt först när generering begärs.<br><br>
+<strong>Promptar och Workspace Set-inställningar:</strong> kan sparas lokalt. En Workspace Set-export innehåller konfiguration som ordning, promptar, leverantörer/modeller och relevanta reglage, men inte transkriptioner, Kompletterande information, anteckningar, historik, ljud, API-nycklar eller lösenord. Molnexport krypteras i webbläsaren; lokal JSON är läsbar och måste förvaras säkert.<br><br>
+
+Leverantörernas egen behandling och lagring är separat och måste kontrolleras för varje tjänst.<br><br>
+
+<hr><br>
+<strong>9. Källkod och ansvar</strong><br><br>
+Källkoden är öppen och huvudappen körs i webbläsaren. Utvecklaren tar inte emot klinisk text via en egen applikationsbackend. Grundläggande icke-klinisk användningsstatistik kan samlas in enligt webbplatsens information.<br><br>
+
+Genererat innehåll är ett utkast. Vårdpersonalen ansvarar för medicinsk granskning, korrigering och beslut om vad som förs in i patientjournalen.
 `,
-  
+
   aboutModalHeading: "Om",
   aboutModalText: `Denna webbplats skapades för att ge vårdpersonal och andra användare direkt tillgång till tal-till-text av hög kvalitet och klinisk anteckningsgenerering – utan onödiga kostnader eller mellanhänder.<br><br>
 Genom att använda dina egna API-nycklar till leverantörer av tal-till-text och textgenereringsmodeller kopplar du dig direkt till källan för tekniken. Detta innebär att du endast betalar det faktiska användningspriset som fastställs av varje leverantör, utan påslag eller abonnemangsavgifter från denna webbplats.<br><br>
@@ -228,262 +171,108 @@ Många befintliga leverantörer erbjuder liknande tjänster, men tar betydligt m
 • Själva webbplatsen är helt gratis att använda.<br><br>
 `,
  
-  guideModalHeading: "API-nyckel - Hur du skapar",
-  guideModalText: `Hur man skaffar API-nycklar:<br><br>
-För att använda tal-till-text och anteckningsgenereringsmodellerna i denna app måste du skaffa en eller flera API-nycklar (OpenAI, Soniox, Google Gemini, Lemonfox, Deepgram, Mistral).<br><br>
+  guideModalHeading: "API-nyckel – så kommer du igång",
+  guideModalText: `
+<strong>API-nycklar — kom igång</strong><br><br>
+Den enklaste rekommenderade konfigurationen för nya användare är:<br>
+1. <strong>Soniox med EU-regionnyckel</strong> för tal-till-text.<br>
+2. <strong>Requesty</strong> för anteckningsgenerering.<br><br>
 
-<strong>Tal-till-text-modeller i appen:</strong><br>
-- OpenAI: gpt-4o-transcribe<br>
-- Soniox<br>
-- Soniox (speaker labels)<br>
-- Lemonfox Speech-to-Text (Whisper v3-baserad)<br>
-- Voxtral Mini<br>
-- Deepgram Nova-3<br><br>
+<strong>STT-alternativ:</strong> Soniox batch, Soniox batch med talaretiketter, Soniox realtid, OpenAI gpt-4o-transcribe och Mistral Voxtral Mini Transcribe.<br><br>
+<strong>Anteckningsleverantörer:</strong> Requesty (Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.7 Flash och Kimi K3), OpenAI (GPT-5.1/5.2/5.4/5.5), AWS Bedrock (Claude Haiku/Sonnet/Opus) och Mistral Large.<br><br>
 
-<strong>Textgenereringsmodeller i appen:</strong><br>
-- GPT-5.4<br>
-- GPT-5.2<br>
-- GPT-5.1<br>
-- Lemonfox textgenerering (Llama 3-baserade modeller)<br>
-- Mistral Large<br>
-- Gemini 3<br><br>
+<hr><br>
+<strong>Soniox — rekommenderad STT-konfiguration</strong><br>
+1. Skapa konto på <a href="https://soniox.com" target="_blank" rel="noopener noreferrer">soniox.com</a> och lägg till betalning/krediter.<br>
+2. Begär åtkomst till regionala driftsättningar via <a href="mailto:support@soniox.com">support@soniox.com</a>.<br>
+3. Skapa eller välj ett projekt i regionen <strong>European Union</strong> och kopiera dess regionspecifika nyckel.<br>
+4. Klistra in nyckeln i fältet <strong>Soniox API key</strong> och välj <strong>EU</strong> som Soniox-slutpunkt. Både EU-nyckeln och EU-slutpunkten krävs.<br><br>
+Använd länken <strong>Guide</strong> bredvid Soniox-fältet för fullständig steg-för-steg-hjälp och läs Soniox aktuella dokumentation om dataresidens.<br><br>
 
+<hr><br>
+<strong>Requesty — rekommenderad anteckningskonfiguration</strong><br>
+1. Skapa konto på <a href="https://requesty.ai" target="_blank" rel="noopener noreferrer">requesty.ai</a> och lägg till krediter eller betalning.<br>
+2. Öppna <strong>API Keys</strong>, skapa en ny nyckel och begränsa den till godkända modeller/Access Lists där det är möjligt.<br>
+3. Kopiera nyckeln säkert och klistra in den i fältet <strong>Requesty API key</strong>.<br>
+4. Stäng av prompt-/svarsloggning för nyckeln eller begär organisationsomfattande Zero Data Retention innan identifierbara patientuppgifter används. Kontrollera DPA och modellrutter.<br><br>
+Använd länken <strong>Guide</strong> bredvid Requesty-fältet för detaljer om konto, krediter, nyckel, modellåtkomst, EU-routing och sekretessinställningar.<br><br>
+
+<hr><br>
 <strong>OpenAI</strong><br>
-– Skapa ett konto hos OpenAI:<br>
-https://platform.openai.com<br><br>
-– Generera en API-nyckel och sätt in kredit på ditt konto<br>
-– Spara API-nyckeln på ett säkert ställe (lokalt på PC:n, textfil, lösenordshanterare, Dropbox osv.)<br>
-– Klistra in nyckeln i fältet «OpenAI API key» på startsidan<br>
-– Du kan nu använda OpenAI-modellerna i appen:<br>
-• Tal-till-text: gpt-4o-transcribe (välj «OpenAI» i inspelningsmodulens rullgardinsmeny på huvudsidan)<br>
-• Textgenerering: chatgpt-4-latest, GPT-5.1<br><br>
-
-<strong>Soniox</strong><br>
-– Skapa ett konto hos Soniox:<br>
-https://soniox.com<br><br>
-– Generera en Soniox API-nyckel och köp/ladda upp credits (samma princip som hos OpenAI)<br>
-– Spara nyckeln säkert och klistra in den i fältet «Soniox API key (EU or US)» på startsidan<br>
-– Du kan nu använda tal-till-text-modellen Soniox (mycket bra och billig tal-till-text-modell, rekommenderas)<br>
-– För att få EU-endpunkt (GDPR-vänligt): skicka e-post till sales@soniox.com och be om EU API-nyckel för användning av tal-till-text i klinisk patient–läkar-sammanhang<br>
-– På huvudsidan kan du välja mellan EU- och USA-endpunkt i rullgardinsmenyn när du använder Soniox<br><br>
-
-<strong>Google Gemini</strong><br>
-– Skapa konto / logga in i Google AI Studio:<br>
-https://aistudio.google.com<br><br>
-– Generera en Gemini API-nyckel<br>
-– Du får normalt några gratis credits vid skapande av konto (se översikten inne i AI Studio)<br>
-– Spara nyckeln säkert och klistra in den i fältet «Google Gemini API key» på startsidan<br>
-– Textmodell: Gemini 3 (för närvarande en av de allra bästa textmodellerna för textgenerering)<br><br>
-
-<strong>Google Vertex (Gemini 2.5 Pro – EU-endpunkt)</strong><br>
-– Detta är en mer avancerad uppsättning för dig som vill använda Gemini via Google Cloud / Vertex AI med regional EU-endpunkt (t.ex. europe-west1 eller europe-west4).<br>
-– Kort sagt: du skapar ett eget Google Cloud-projekt, aktiverar Vertex AI, kopplar det till ett faktureringskonto och deployar en liten backend-funktion (Cloud Run) som ger dig en HTTPS-adress (https://…run.app).<br>
-– I denna webbapp klistrar du in denna adress i fältet «Vertex backend URL (https://…run.app)» och den hemliga nyckeln (BACKEND_SECRET) i fältet «Vertex backend secret» på startsidan.<br>
-– All användning av Gemini 2.5 Pro går då via ditt eget projekt; både fakturering och databehandling styrs av dig, och du kan välja EU-region för bättre GDPR-anpassning.<br>
-– Uppsättningen kan upplevas som lite teknisk, så för en detaljerad steg-för-steg-guide kan du klicka på «Guide»-länken bredvid «Google Vertex»-rubriken ovanför dessa fält på startsidan.<br><br>
-
-<strong>AWS Bedrock (avancerad uppsättning – kan ge full GDPR-efterlevnad)</strong><br>
-– Detta är en något mer avancerad uppsättning än de flesta andra alternativ i appen, men kan konfigureras så att det ger en fullt GDPR-anpassad lösning.<br>
-– För komplett steg-för-steg-uppsättning: klicka på <strong>«Guide»</strong>-länken bredvid <strong>AWS Bedrock</strong>-rubriken på startsidan (index.html).<br>
-– När uppsättningen är klar kommer du att få en <strong>backend URL</strong> och en <strong>secret key</strong>, som du måste klistra in i <strong>AWS Bedrock</strong>-fälten på startsidan av webbappen.<br><br>
-
-<strong>Lemonfox</strong><br>
-– Skapa ett konto hos Lemonfox:<br>
-https://www.lemonfox.ai<br><br>
-– Generera en API-nyckel i Lemonfox-dashboarden (för tal-till-text och/eller textmodell, beroende på vad du använder i appen)<br>
-– Lemonfox erbjuder en mycket billig speech-to-text-API, ofta med gratis användning första månaden – se pris-/produktsidan för detaljer. EU-endpunkt (GDPR-vänligt)<br>
-– Spara nyckeln säkert och klistra in den i «Lemonfox API key»-fältet på startsidan<br>
-– Du kan nu använda:<br>
-• Tal-till-text-modell: Lemonfox Speech-to-Text (Whisper v3-baserad, billig och snabb)<br>
-• Textgenerering: Lemonfox LLM (Llama 3-baserade modeller)<br><br>
-
-<strong>Deepgram</strong><br>
-– Skapa ett konto hos Deepgram:<br>
-https://deepgram.com<br><br>
-– Gå till utvecklar-/API-sidorna («Developers» / «Docs») och generera en API-nyckel i Deepgram-konsolen<br>
-– Spara nyckeln säkert och klistra in den i fältet «Deepgram API key» på startsidan<br>
-– Du kan nu använda tal-till-text-modellen Deepgram Nova-3 i appen<br><br>
+Skapa konto på <a href="https://platform.openai.com" target="_blank" rel="noopener noreferrer">platform.openai.com</a>, konfigurera betalning, skapa en API-nyckel och klistra in den i OpenAI-fältet. Kontrollera aktuell DPA, lagring och regional behandling; en standardnyckel ska inte automatiskt betraktas som EU-only eller ZDR.<br><br>
 
 <strong>Mistral</strong><br>
-– Skapa ett konto hos Mistral AI och logga in i konsolen:<br>
-https://console.mistral.ai<br><br>
-– Ställ in betalning vid behov och gå sedan till «API keys» i konsolen för att generera en Mistral API-nyckel<br>
-– Spara nyckeln säkert och klistra in den i fältet «Mistral API key» på startsidan<br>
-– Textmodell: Mistral Large<br>
-– EU-endpunkt / europeisk datalagring som standard – väl lämpat för GDPR-vänlig användning<br>
-`,  
+Skapa konto på <a href="https://console.mistral.ai" target="_blank" rel="noopener noreferrer">console.mistral.ai</a>, konfigurera betalning och skapa en nyckel. Den kan användas med Voxtral Mini och Mistral Large. Kontrollera EU-hosting, DPA, lagring och ZDR.<br><br>
+
+<strong>AWS Bedrock — valfritt för befintliga AWS-användare</strong><br>
+Bedrock kräver AWS-konto, regional modellåtkomst och en separat backend-URL/hemlighet. Det är mer komplicerat och rekommenderas inte som normal startpunkt för nya användare. Använd <a href="#" data-open-guide="bedrock"><strong>Guide</strong></a> bredvid AWS-fälten om du väljer denna lösning.<br><br>
+
+<hr><br>
+<strong>Innan patientuppgifter matas in</strong><br>
+En API-nyckel gör inte en tjänst automatiskt GDPR-kompatibel. Kontrollera DPA, underbiträden, slutpunkt, dataresidens, lagring/ZDR och träningsinställningar, genomför DPIA/TIA, skydda uppgifterna, minimera patientinformationen och granska varje genererad anteckning.
+`,
+
   priceButton: "Pris",
   priceModalHeading: "Kostnadsinformation",
   priceModalText: `
 <div>
   <p><strong>Kostnadsinformation</strong></p>
+  <p>Appen har ingen abonnemangsavgift eller marginal. Du betalar vald leverantör direkt för faktisk API-användning. Priser kan ändras; leverantörens kontrollpanel och faktura gäller.</p>
 
-  <p>
-    Du betalar endast för det du faktiskt använder, direkt till varje leverantör (OpenAI, Soniox, Google Gemini,
-    Lemonfox, Deepgram, Mistral). Det finns inga abonnemang eller påslag i denna app. Priserna nedan är
-    cirka-belopp i USD med omräkning till NOK (här används ungefär 1 USD ≈ 11 NOK).
-  </p>
-
-  <p><strong>1. Tal-till-text<br>(pris per minut ljud)</strong></p>
-
-  <p><strong>OpenAI – gpt-4o-transcribe</strong><br>
-  Ca. 0.006 USD per minut (≈ 0,07 NOK/min).<br>
-  15 minuters konsultation: ca. 0.09 USD ≈ 1,00 NOK.</p>
-
-  <p><strong>Soniox (rekommenderas – bäst kvalitet och pris)</strong><br>
-  Ca 0.0017 USD per minut.<br>
-  15 minuters konsultation: ca. 0.025 USD ≈ 0,30 NOK.</p>
-
-  <p><strong>Lemonfox – Whisper v3</strong><br>
-  Ca. 0.50 USD för 3 timmar ljud ≈ 0.17 USD per timme ≈ 0.0028 USD per minut.<br>
-  15 minuters konsultation: ca. 0.042 USD ≈ 0,45 NOK.</p>
-
-  <p><strong>Mistral</strong><br>
-  API-prissättning börjar runt 0.001 USD per minut.<br>
-  15 minuters konsultation: ca. 0.015 USD ≈ 0,17 NOK.</p>
-
-  <p><strong>Deepgram – Nova-3</strong><br>
-  Ca 0.004 USD per minut.<br>
-  15 minuters konsultation = 0,60 NOK.</p>
-
-  <p><strong>2. Textgenerering – typiska priser (per 1 miljon tokens)</strong></p>
-
-  <p><strong>OpenAI – GPT-5.1</strong><br>
-  Input: 1.25 USD (≈ 13,75 NOK)<br>
-  Output: 10 USD (≈ 110 NOK)</p>
-
-  <p><strong>OpenAI – chatgpt-4o-latest</strong><br>
-  Input: 5 USD (≈ 55 NOK)<br>
-  Output: 15 USD (≈ 165 NOK)</p>
-
-  <p><strong>Google Gemini 3</strong><br>
-  Input: ca. 2 USD (≈ 22 NOK)<br>
-  Output: ca. 12 USD (≈ 132 NOK)</p>
-
-  <p><strong>AWS Bedrock – Claude Sonnet 4</strong><br>
-  Input: 3 USD (≈ 33 NOK)<br>
-  Output: 15 USD (≈ 165 NOK)</p>
-
-  <p><strong>AWS Bedrock – Claude Sonnet 4.5</strong><br>
-  Input: 3 USD (≈ 33 NOK)<br>
-  Output: 15 USD (≈ 165 NOK)</p>
-
-  <p><strong>AWS Bedrock – Claude Haiku 4.5</strong><br>
-  Input: 1 USD (≈ 11 NOK)<br>
-  Output: 5 USD (≈ 55 NOK)</p>
-
-
-  <p><strong>Mistral – Mistral Large</strong><br>
-  Ca. 2 USD per 1M input-tokens och 6 USD per 1M output-tokens (≈ 22 och 66 NOK).</p>
-
-  <p><strong>Lemonfox – Llama 3-baserade modeller</strong><br>
-  Typiskt runt 0.50 USD per 1M LLM-tokens input och output (≈ 5,50 NOK).</p>
-
-  <p><strong>3. Vad är tokens – och hur mycket kostar 1 konsultation?</strong></p>
-
-  <p>Modellerna räknar text i tokens, inte i rena ord.</p>
-
+  <p><strong>Prisvisning i appen</strong></p>
   <ul>
-    <li>1 token ≈ 4 tecken ≈ ¾ ord</li>
-    <li>100 tokens ≈ 75 ord</li>
-    <li>1 000 tokens ≈ 750 ord</li>
+    <li>Ungefärligt USD-pris per en miljon input- och output-token visas bredvid vald anteckningsmodell.</li>
+    <li>Efter generering visas tokenanvändning och uppskattad kostnad när leverantören returnerar tillräckliga data.</li>
+    <li>Reasoning-token, cache, rabatter, gatewayavgifter, växelkurs och särskilda faktureringsregler kan påverka slutbeloppet.</li>
   </ul>
 
-  <p>
-    15 min konsultation ca:<br>
-    2200 input-tokens per 15-minuters konsultation (hela transkriptionen + strukturerad text som skickas in),<br>
-    450 output-tokens i den färdiga anteckningen,<br>
-    totalt ca. 2650 tokens per konsultation.<br><br>
-    Detta innebär att 1 miljon tokens ger ungefär 350–400 konsultationer i denna användning
-    (beroende på längd och detaljer).
-  </p>
+  <hr><br>
+  <p><strong>1. Tal-till-text</strong> (ungefärligt pris per ljudminut)</p>
+  <p><strong>Soniox — rekommenderas:</strong> cirka 0,0017 USD/minut; 15 minuter cirka 0,026 USD.</p>
+  <p><strong>OpenAI gpt-4o-transcribe:</strong> cirka 0,006 USD/minut; 15 minuter cirka 0,09 USD.</p>
+  <p><strong>Mistral Voxtral Mini:</strong> kontrollera Mistrals aktuella officiella pris.</p>
 
-  <p><strong>4. Exempel: kostnad per 15-minuters konsultation</strong></p>
-
-  <p><em>Tal-till-text (ca.-priser per 15 min):</em></p>
+  <hr><br>
+  <p><strong>2. Anteckningsgenerering</strong> (USD per en miljon input-/output-token)</p>
   <ul>
-    <li>OpenAI gpt-4o-transcribe: ≈ 1,00 NOK</li>
-    <li>Soniox: ≈ 0,30 NOK</li>
-    <li>Lemonfox (Whisper v3): ≈ 0,45 NOK</li>
-    <li>Voxtral (Mistral): ≈ 0,17 NOK</li>
-    <li>Deepgram Nova-3 (batch): ≈ 0,70 NOK</li>
+    <li>Claude Opus 5: cirka 5,50 / 27,50 USD</li>
+    <li>Claude Sonnet 5: cirka 2,20 / 11,00 USD</li>
+    <li>GPT-5.6 Sol: cirka 5,50 / 33,00 USD</li>
+    <li>GPT-5.6 Terra: cirka 2,20 / 13,20 USD</li>
+    <li>GPT-5.6 Luna: cirka 0,22 / 1,32 USD</li>
+    <li>GPT-5.5: cirka 5,00 / 30,00 USD</li>
+    <li>GPT-5 Nano: cirka 0,05 / 0,40 USD</li>
+    <li>Gemini 3.7 Flash: cirka 0,66 / 3,30 USD</li>
+    <li>Kimi K3: cirka 3,00 / 15,00 USD</li>
   </ul>
+  <p>Beloppen motsvarar appens nuvarande uppskattningar och kan ändras när Requesty eller uppströmsleverantören ändrar pris. Kontrollera priset bredvid modellen och Requestys användningsrapport.</p>
+  <p>Andra leverantörer som stöds är direkt OpenAI (GPT-5.1/5.2/5.4/5.5), AWS Bedrock (Claude Haiku/Sonnet/Opus, främst för befintliga AWS-användare) och Mistral Large. Aktuella modellpriser visas i appen.</p>
 
-  <p><em>Anteckningsgenerering (2200 input + 450 output tokens):</em></p>
+  <hr><br>
+  <p><strong>3. Vad är token?</strong></p>
+  <p>Som grov tumregel motsvarar 1 token omkring 4 tecken eller tre fjärdedels ord; 1 000 token är omkring 750 engelska ord. Medicinska termer, svenska, formatering och långa promptar ändrar förhållandet. Input omfattar prompt, transkription, Kompletterande information och annan kontext. Output omfattar anteckningen och eventuell debiterbar reasoning/output.</p>
+
+  <hr><br>
+  <p><strong>4. Exempel: 15 minuters konsultation</strong></p>
+  <p>Med cirka 2 200 input-token och 450 output-token för huvudanteckningen:</p>
   <ul>
-    <li>GPT-5.1: ≈ 0,08 NOK per anteckning</li>
-    <li>chatgpt-4o-latest: ≈ 0,20 NOK per anteckning</li>
-    <li>Gemini 3: ≈ 0,11 NOK per anteckning</li>
-    <li>Mistral Large: ≈ 0,08 NOK per anteckning</li>
-    <li>Lemonfox LLM: ≈ 0,02 NOK per anteckning</li>
-    <li>AWS Bedrock – Claude Sonnet 4 / 4.5: ≈ 0,15 NOK per anteckning</li>
-    <li>AWS Bedrock – Claude Haiku 4.5: ≈ 0,05 NOK per anteckning</li>
+    <li>Soniox-transkription: cirka 0,026 USD</li>
+    <li>GPT-5 Nano-anteckning: cirka 0,0003 USD</li>
+    <li>Gemini 3.7 Flash: cirka 0,003 USD</li>
+    <li>Claude Sonnet 5: cirka 0,010 USD</li>
+    <li>Claude Opus 5: cirka 0,025 USD</li>
+    <li>GPT-5.6 Sol: cirka 0,027 USD</li>
   </ul>
+  <p>Verklig kostnad beror på transkriptionslängd, prompt, Kompletterande information och reasoning-nivå.</p>
 
-  <p><em>Några typiska kombinationer för en 15-minuters konsultation:</em></p>
+  <hr><br>
+  <p><strong>5. Sänk kostnaden för långa dokument</strong></p>
+  <p>Secondary Note Generation kan låta en billig modell, exempelvis GPT-5 Nano, sammanfatta ett långt dokument. Sammanfattningen kan läggas i Kompletterande information innan en starkare huvudmodell skapar slutanteckningen. Det kan vara betydligt billigare än att skicka exempelvis 50 sidor direkt till en dyrare modell.</p>
 
-  <ul>
-    <li>OpenAI (gpt-4o-transcribe) + GPT-5.1<br>
-      ≈ 1,00 NOK (STT) + 0,08 NOK (anteckning) ≈ 1,10 NOK per konsultation
-    </li>
-    <li>Soniox + GPT-5.1<br>
-      ≈ 0,30 NOK (STT) + 0,08 NOK (anteckning) ≈ 0,40 NOK per konsultation
-    </li>
-    <li>Voxtral + Mistral Large<br>
-      ≈ 0,17 NOK (STT) + 0,08 NOK (anteckning) ≈ 0,25 NOK per konsultation
-    </li>
-    <li>Soniox + Claude Sonnet 4 / 4.5<br>
-      ≈ 0,30 NOK (STT) + 0,15 NOK (anteckning) ≈ 0,45 NOK per konsultation
-    </li>
-    <li>Soniox + Claude Haiku 4.5<br>
-      ≈ 0,30 NOK (STT) + 0,05 NOK (anteckning) ≈ 0,35 NOK per konsultation
-    </li>
-  </ul>
-
-  <p>
-    Med andra ord: textmodellen är extremt billig – det är tal-till-text-delen som dominerar kostnaden.
-  </p>
-
-  <p><strong>5. Exempel: månadskostnad vid jämn användning</strong></p>
-
-  <p>
-    Anta:<br>
-    20 konsultationer per dag<br>
-    4 dagar per vecka<br>
-    4 veckor per månad<br>
-    ⇒ ca. 320 konsultationer per månad (≈ 80 timmar ljud).
-  </p>
-
-  <p>Då får du ungefär:</p>
-
-  <ul>
-    <li>OpenAI gpt-4o-transcribe + GPT-5.1<br>
-      ≈ 31 USD ≈ 340 NOK per månad
-    </li>
-    <li>Soniox + GPT-5.1<br>
-      ≈ 10 USD ≈ 110 NOK per månad
-    </li>
-    <li>Voxtral + Mistral Large<br>
-      ≈ 7 USD ≈ 80 NOK per månad
-    </li>
-    <li>Lemonfox (Whisper v3 + Llama 3)<br>
-      ≈ 14 USD ≈ 150 NOK per månad
-    </li>
-    <li>Deepgram Nova-3 + GPT-5.1<br>
-      ≈ 23 USD ≈ 250 NOK per månad
-    </li>
-    <li>Soniox + Claude Sonnet 4 / 4.5<br>
-      ≈ 12 USD ≈ 130 NOK per månad
-    </li>
-    <li>Soniox + Claude Haiku 4.5<br>
-      ≈ 9 USD ≈ 100 NOK per månad
-    </li>
-  </ul>
-
-  <p>
-    Om du inte använder tjänsten (semester, sjukdom, ledighet osv.) tillkommer inga fasta kostnader,
-    du betalar endast för faktisk användning hos respektive leverantör.
-  </p>
+  <hr><br>
+  <p><strong>6. Månadsexempel</strong></p>
+  <p>20 konsultationer per dag, 4 dagar per vecka och 4 veckor ger cirka 320 konsultationer. Vid 15 minuter per konsultation blir det cirka 80 ljudtimmar. Med 0,0017 USD/minut blir Soniox-transkription cirka 8,16 USD före skatt och prisändringar. Anteckningskostnaden tillkommer efter modell och faktisk tokenanvändning.</p>
+  <p>Ingen API-användning innebär ingen användningskostnad från appen. Leverantörernas minimibelopp, förbetalda krediter, skatter eller andra villkor kan ändå gälla.</p>
 </div>
 `,
 };

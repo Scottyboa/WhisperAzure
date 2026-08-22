@@ -1,0 +1,124 @@
+============================================================
+SONIOX — EU TAL-TILL-TEXT FÖR DEN HÄR APPEN
+============================================================
+
+Den här guiden visar hur du skapar ett Soniox-konto, ordnar betalning,
+ansöker om EU-åtkomst och skapar en API-nyckel för ett EU-projekt.
+
+VARFÖR BÅDE EU-PROJEKT OCH EU-ENDPOINT KRÄVS
+
+Soniox konfigurerar datalagringsregion per projekt. Enligt Soniox krävs både:
+
+  • en API-nyckel från ett projekt med regionen European Union
+  • Soniox motsvarande EU-endpoint
+
+När båda används uppger Soniox att ljud och transkript stannar i vald EU-region
+för behandling och lagring. Innehållet används inte för att träna modellerna.
+Konto-, användnings- och faktureringsmetadata kan behandlas utanför regionen.
+
+
+STEG 1 — SKAPA KONTO
+
+1) Öppna https://console.soniox.com
+2) Skapa konto och verifiera e-postadressen vid behov.
+3) Logga in i Soniox Console.
+
+
+STEG 2 — BETALNING ELLER KREDITER
+
+1) Öppna Billing, Usage eller Credits.
+2) Lägg till betalningsmetod eller krediter om kontot kräver det.
+3) Överväg en låg kostnadsgräns medan du testar.
+
+Namnen i kontrollpanelen kan ändras. Transcribe Notes lägger inte på någon
+prenumerationsavgift eller marginal.
+
+
+STEG 3 — ANSÖK OM EU-ÅTKOMST
+
+Soniox dokumentation hänvisar användare till:
+
+  support@soniox.com
+
+Förslag på ämne:
+
+  Request for EU regional deployment access
+
+Förslag på meddelande:
+
+  Hello,
+
+  I am a healthcare professional in Sweden and would like to use the Soniox
+  Speech-to-Text API for clinical consultations. I need an EU-region project
+  and API key so that audio and transcript content is processed and stored
+  within the European Union.
+
+  Could you enable EU regional deployment access for my organisation and
+  provide the relevant DPA and security documentation?
+
+  Kind regards,
+  [Name / organisation]
+
+Skicka inga patientuppgifter i meddelandet.
+
+
+STEG 4 — SKAPA EU-PROJEKT OCH API-NYCKEL
+
+När regional åtkomst har aktiverats:
+
+1) Skapa ett nytt projekt i Soniox Console.
+2) Välj European Union som region.
+3) Ge projektet ett tydligt namn, till exempel Transcribe Notes — EU.
+4) Öppna API Keys i EU-projektet.
+5) Skapa ny nyckel, kopiera den direkt och förvara den säkert.
+
+Använd inte en nyckel från ett äldre standard-/USA-projekt om EU-lagring krävs.
+
+
+STEG 5 — ANVÄND NYCKELN I APPEN
+
+1) Klistra in nyckeln i fältet Soniox API key på startsidan.
+2) Öppna transkriptionsverktyget.
+3) Välj Soniox som tal-till-text-leverantör.
+4) Välj EU som Soniox-region/endpoint.
+
+Appen använder då EU-domänerna för batch- eller realtidstranskribering.
+Speaker Labels finns för Soniox batch och kan skilja talarna åt, men både
+transkript och talaridentifiering måste alltid kontrolleras.
+
+
+CHECKLISTA FÖRE KLINISK ANVÄNDNING
+
+  □ Regional EU-åtkomst är aktiverad
+  □ Nyckeln tillhör ett EU-projekt
+  □ EU är valt som endpoint i appen
+  □ DPA och aktuell lagrings-/raderingspolicy är granskade
+  □ Nödvändig DPIA/TIA är genomförd
+  □ Nyckeln och kostnadsgränserna är korrekt skyddade
+  □ Varje transkript kommer att kontrolleras
+
+En EU-endpoint gör inte ensam hela arbetsflödet automatiskt GDPR-kompatibelt.
+
+
+OFFICIELLA LÄNKAR
+
+Soniox Console: https://console.soniox.com
+Data residency: https://soniox.com/docs/data-residency
+Security and privacy: https://soniox.com/docs/security-and-privacy
+API reference: https://soniox.com/docs/api-reference
+EU-åtkomst: support@soniox.com
+
+
+FELSÖKNING
+
+Autentiseringsfel:
+  Kontrollera att hela nyckeln kopierats och inte har återkallats.
+
+EU fungerar inte:
+  Kontrollera att Soniox har aktiverat regional åtkomst och att nyckeln kommer
+  från ett EU-projekt. Kontakta support@soniox.com om EU-regionen saknas.
+
+Ingen transkribering:
+  Kontrollera mikrofonbehörighet, vald Soniox-modell, betalning/krediter,
+  Soniox användningsöversikt och webbläsarkonsolen.
+

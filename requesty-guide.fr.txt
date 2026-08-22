@@ -1,0 +1,120 @@
+============================================================
+REQUESTY — GÉNÉRATION DE NOTES POUR CETTE APPLICATION
+============================================================
+
+Requesty est le fournisseur recommandé aux nouveaux utilisateurs. Un compte et
+une clé API donnent accès aux modèles sélectionnés de plusieurs développeurs.
+
+CONFIGURATION REQUESTY DE L’APPLICATION
+
+L’application utilise automatiquement la passerelle européenne de Requesty :
+
+  https://router.eu.requesty.ai/v1
+
+Le menu comprend Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol/Terra/Luna,
+GPT-5.5, GPT-5 Nano, Gemini 3.7 Flash et Kimi K3. L’application utilise des
+déploiements fixes orientés UE plutôt que l’intégralité du catalogue Requesty.
+
+
+ÉTAPE 1 — CRÉER LE COMPTE
+
+1) Ouvrez https://app.requesty.ai
+2) Sélectionnez Get started / Sign up.
+3) Créez le compte, confirmez l’e-mail et connectez-vous.
+
+Requesty indique actuellement offrir des crédits d’essai aux nouveaux comptes.
+Le solde affiché dans votre propre tableau de bord reste la référence.
+
+
+ÉTAPE 2 — AJOUTER DES CRÉDITS
+
+1) Ouvrez Billing, Credits ou Wallet.
+2) Sélectionnez Add credits / Top up ou ajoutez un moyen de paiement.
+3) Confirmez le montant et vérifiez le nouveau solde.
+4) Commencez de préférence avec un petit montant et une limite basse.
+
+
+ÉTAPE 3 — CRÉER LA CLÉ API
+
+1) Ouvrez API Keys.
+2) Sélectionnez Create API Key / Create New API Key.
+3) Nommez-la, par exemple Transcribe Notes — EU.
+4) Définissez si nécessaire une expiration et une limite de dépenses.
+5) Choisissez une Access List si votre organisation restreint les modèles.
+6) Créez la clé, copiez-la immédiatement et conservez-la en lieu sûr.
+
+Avec une Access List, les routes exactes utilisées par l’application doivent être autorisées :
+
+  bedrock/claude-opus-5@eu-north-1
+  vertex/claude-sonnet-5@eu
+  azure/gpt-5.6-sol@swedencentral
+  azure/gpt-5.6-terra@swedencentral
+  azure/gpt-5.6-luna@swedencentral
+  azure/gpt-5.5@swedencentral
+  azure/gpt-5-nano@swedencentral
+  vertex/gemini-3.7-flash@eu
+  nebius/kimi-k3
+
+
+ÉTAPE 4 — JOURNALISATION ET ZERO DATA RETENTION
+
+Requesty indique ne pas utiliser les requêtes ni les réponses pour entraîner
+des modèles. Ses informations DPA précisent toutefois que la journalisation du
+contenu des prompts/réponses est activée par défaut pendant 30 jours sur les
+offres en libre-service.
+
+Avant d’utiliser des données patients identifiables :
+
+1) Ouvrez les paramètres de confidentialité/journalisation de la clé API.
+2) Désactivez l’enregistrement du contenu des prompts et réponses.
+3) Vérifiez que le réglage est enregistré.
+
+Une Zero Data Retention à l’échelle de l’organisation peut aussi être demandée
+par écrit à Requesty. Contact DPA : sales@requesty.ai
+
+La passerelle UE maintient le traitement propre à Requesty dans l’UE. Le trajet
+complet exige également un déploiement de modèle hébergé dans l’UE. L’application
+utilise les routes ci-dessus, mais les fiches modèles, sous-traitants et accords
+doivent toujours être vérifiés.
+
+
+ÉTAPE 5 — UTILISER LA CLÉ DANS L’APPLICATION
+
+1) Collez la clé dans Requesty API key sur la page d’accueil.
+2) Ouvrez l’outil de transcription et sélectionnez Requesty.
+3) Choisissez le modèle et le niveau de reasoning.
+4) Effectuez d’abord un test sans donnée patient.
+5) Vérifiez la requête et son coût dans Usage/Analytics chez Requesty.
+
+Il n’est pas nécessaire de saisir une URL de base : l’application utilise la
+passerelle UE automatiquement.
+
+
+LISTE DE CONTRÔLE AVANT UTILISATION CLINIQUE
+
+  □ La clé API est conservée de façon sécurisée
+  □ La journalisation du contenu est désactivée ou le ZDR organisationnel est actif
+  □ Access List/Approved Models autorise les routes utilisées
+  □ La passerelle UE et les déploiements UE sont vérifiés
+  □ DPA, sous-traitants et AIPD/DPIA-TIA sont examinés
+  □ Chaque note générée sera contrôlée médicalement
+
+
+DÉPANNAGE
+
+401 : vérifiez la clé et qu’elle n’a pas été révoquée.
+403 : vérifiez Access List et Approved Models.
+412 : vérifiez la limite de dépenses.
+429 : attendez, réessayez ou vérifiez la limite du modèle.
+500/lenteur : consultez les journaux/statut Requesty ou choisissez un autre modèle.
+
+
+LIENS OFFICIELS
+
+Tableau de bord : https://app.requesty.ai
+Quickstart : https://docs.requesty.ai/quickstart
+Routage UE : https://docs.requesty.ai/features/eu-routing
+Access Lists : https://docs.requesty.ai/features/access-lists
+Approved Models : https://docs.requesty.ai/features/approved-models
+DPA/ZDR : https://www.requesty.ai/dpa
+

@@ -2478,18 +2478,18 @@
       }
 
 
-      // Soniox and Requesty guides use the same modal pattern as Bedrock,
-      // with Norwegian text when the selected site language is Norwegian.
+      // Soniox and Requesty guides use the same modal pattern as Bedrock and
+      // load the guide matching the selected site language (English fallback).
       function createProviderGuideController({
         linkId,
         viewId,
         closeId,
         headingId,
         textId,
-        englishFile,
-        norwegianFile,
-        englishHeading,
-        norwegianHeading,
+        filesByLanguage,
+        headingsByLanguage,
+        loadingByLanguage,
+        errorByLanguage,
         analyticsAction
       }) {
         const link = document.getElementById(linkId);
@@ -2506,14 +2506,16 @@
           const lang = getCurrentLang();
           if (loadedLanguage === lang) return;
 
+          const englishFile = filesByLanguage.en;
+          const selectedFile = filesByLanguage[lang] || englishFile;
           if (heading) {
-            heading.textContent = lang === "no" ? norwegianHeading : englishHeading;
+            heading.textContent = headingsByLanguage[lang] || headingsByLanguage.en;
           }
-          textElement.textContent = lang === "no" ? "Laster…" : "Loading…";
+          textElement.textContent = loadingByLanguage[lang] || loadingByLanguage.en;
 
-          const candidates = lang === "no"
-            ? [norwegianFile, englishFile]
-            : [englishFile];
+          const candidates = selectedFile === englishFile
+            ? [englishFile]
+            : [selectedFile, englishFile];
 
           try {
             let loaded = false;
@@ -2528,9 +2530,7 @@
             loadedLanguage = lang;
           } catch (error) {
             console.error(`Failed to load ${viewId}:`, error);
-            textElement.textContent = lang === "no"
-              ? "Kunne ikke laste guideteksten. Kontroller at guidefilen finnes ved siden av index.html."
-              : "Could not load the guide text. Make sure the guide file exists next to index.html.";
+            textElement.textContent = errorByLanguage[lang] || errorByLanguage.en;
             loadedLanguage = null;
           }
         }
@@ -2578,10 +2578,34 @@
         closeId: "sonioxGuideClose",
         headingId: "sonioxGuideHeading",
         textId: "sonioxGuideText",
-        englishFile: "./soniox-guide.txt",
-        norwegianFile: "./soniox-guide.no.txt",
-        englishHeading: "Soniox setup guide",
-        norwegianHeading: "Oppsettsguide for Soniox",
+        filesByLanguage: {
+          en: "./soniox-guide.txt",
+          no: "./soniox-guide.no.txt",
+          sv: "./soniox-guide.sv.txt",
+          de: "./soniox-guide.de.txt",
+          fr: "./soniox-guide.fr.txt",
+          it: "./soniox-guide.it.txt"
+        },
+        headingsByLanguage: {
+          en: "Soniox setup guide",
+          no: "Oppsettsguide for Soniox",
+          sv: "Installationsguide för Soniox",
+          de: "Einrichtungsanleitung für Soniox",
+          fr: "Guide de configuration de Soniox",
+          it: "Guida alla configurazione di Soniox"
+        },
+        loadingByLanguage: {
+          en: "Loading…", no: "Laster…", sv: "Läser in…",
+          de: "Wird geladen…", fr: "Chargement…", it: "Caricamento…"
+        },
+        errorByLanguage: {
+          en: "Could not load the guide text. Make sure the guide file exists next to index.html.",
+          no: "Kunne ikke laste guideteksten. Kontroller at guidefilen finnes ved siden av index.html.",
+          sv: "Det gick inte att läsa in guiden. Kontrollera att guidefilen finns bredvid index.html.",
+          de: "Der Leitfaden konnte nicht geladen werden. Prüfen Sie, ob die Datei neben index.html vorhanden ist.",
+          fr: "Impossible de charger le guide. Vérifiez que le fichier se trouve à côté de index.html.",
+          it: "Impossibile caricare la guida. Verificare che il file sia presente accanto a index.html."
+        },
         analyticsAction: "Soniox guide"
       });
 
@@ -2591,10 +2615,34 @@
         closeId: "requestyGuideClose",
         headingId: "requestyGuideHeading",
         textId: "requestyGuideText",
-        englishFile: "./requesty-guide.txt",
-        norwegianFile: "./requesty-guide.no.txt",
-        englishHeading: "Requesty setup guide",
-        norwegianHeading: "Oppsettsguide for Requesty",
+        filesByLanguage: {
+          en: "./requesty-guide.txt",
+          no: "./requesty-guide.no.txt",
+          sv: "./requesty-guide.sv.txt",
+          de: "./requesty-guide.de.txt",
+          fr: "./requesty-guide.fr.txt",
+          it: "./requesty-guide.it.txt"
+        },
+        headingsByLanguage: {
+          en: "Requesty setup guide",
+          no: "Oppsettsguide for Requesty",
+          sv: "Installationsguide för Requesty",
+          de: "Einrichtungsanleitung für Requesty",
+          fr: "Guide de configuration de Requesty",
+          it: "Guida alla configurazione di Requesty"
+        },
+        loadingByLanguage: {
+          en: "Loading…", no: "Laster…", sv: "Läser in…",
+          de: "Wird geladen…", fr: "Chargement…", it: "Caricamento…"
+        },
+        errorByLanguage: {
+          en: "Could not load the guide text. Make sure the guide file exists next to index.html.",
+          no: "Kunne ikke laste guideteksten. Kontroller at guidefilen finnes ved siden av index.html.",
+          sv: "Det gick inte att läsa in guiden. Kontrollera att guidefilen finns bredvid index.html.",
+          de: "Der Leitfaden konnte nicht geladen werden. Prüfen Sie, ob die Datei neben index.html vorhanden ist.",
+          fr: "Impossible de charger le guide. Vérifiez que le fichier se trouve à côté de index.html.",
+          it: "Impossibile caricare la guida. Verificare che il file sia presente accanto a index.html."
+        },
         analyticsAction: "Requesty guide"
       });
 

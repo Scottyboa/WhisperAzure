@@ -1,0 +1,118 @@
+============================================================
+REQUESTY — NOTIZERSTELLUNG FÜR DIESE APP
+============================================================
+
+Requesty ist der empfohlene Anbieter für neue Nutzer. Ein Konto und ein
+API-Schlüssel ermöglichen den Zugriff auf ausgewählte Modelle mehrerer Entwickler.
+
+REQUESTY-KONFIGURATION DER APP
+
+Die App verwendet automatisch Requestys EU-Gateway:
+
+  https://router.eu.requesty.ai/v1
+
+Das Modellmenü enthält Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol/Terra/Luna,
+GPT-5.5, GPT-5 Nano, Gemini 3.7 Flash und Kimi K3. Die App nutzt feste,
+EU-orientierte Bereitstellungen statt des gesamten Requesty-Modellkatalogs.
+
+
+SCHRITT 1 — KONTO ERSTELLEN
+
+1) Öffnen Sie https://app.requesty.ai
+2) Wählen Sie Get started / Sign up.
+3) Erstellen Sie das Konto, bestätigen Sie die E-Mail und melden Sie sich an.
+
+Requesty gibt derzeit an, dass neue Konten Testguthaben erhalten. Maßgeblich ist
+jedoch immer der aktuelle Kontostand im eigenen Dashboard.
+
+
+SCHRITT 2 — GUTHABEN HINZUFÜGEN
+
+1) Öffnen Sie Billing, Credits oder Wallet.
+2) Wählen Sie Add credits / Top up oder hinterlegen Sie eine Zahlungsmethode.
+3) Bestätigen Sie den Betrag und prüfen Sie den neuen Kontostand.
+4) Beginnen Sie möglichst mit einem kleinen Betrag und niedrigem Ausgabenlimit.
+
+
+SCHRITT 3 — API-SCHLÜSSEL ERSTELLEN
+
+1) Öffnen Sie API Keys.
+2) Wählen Sie Create API Key / Create New API Key.
+3) Benennen Sie ihn z. B. Transcribe Notes — EU.
+4) Legen Sie bei Bedarf Ablaufdatum und Ausgabenlimit fest.
+5) Wählen Sie eine Access List, wenn die Organisation Modelle beschränkt.
+6) Erstellen und kopieren Sie den Schlüssel sofort; bewahren Sie ihn sicher auf.
+
+Bei Nutzung von Access Lists müssen die von der App verwendeten Routen erlaubt sein:
+
+  bedrock/claude-opus-5@eu-north-1
+  vertex/claude-sonnet-5@eu
+  azure/gpt-5.6-sol@swedencentral
+  azure/gpt-5.6-terra@swedencentral
+  azure/gpt-5.6-luna@swedencentral
+  azure/gpt-5.5@swedencentral
+  azure/gpt-5-nano@swedencentral
+  vertex/gemini-3.7-flash@eu
+  nebius/kimi-k3
+
+
+SCHRITT 4 — PROTOKOLLIERUNG UND ZERO DATA RETENTION
+
+Requesty erklärt, Anfragen und Antworten nicht zum Modelltraining zu verwenden.
+Laut DPA-Information ist Prompt-/Output-Protokollierung bei Self-Service-Konten
+jedoch standardmäßig mit 30 Tagen Aufbewahrung aktiviert.
+
+Vor Nutzung identifizierbarer Patientendaten:
+
+1) Öffnen Sie die Datenschutz-/Logging-Einstellungen des API-Schlüssels.
+2) Deaktivieren Sie die Speicherung von Prompt- und Output-Inhalten.
+3) Prüfen Sie, ob die Änderung gespeichert wurde.
+
+Alternativ kann organisationsweite Zero Data Retention schriftlich bei Requesty
+beantragt werden. DPA-Kontakt: sales@requesty.ai
+
+Das EU-Gateway hält Requestys eigene Verarbeitung in der EU. Für den gesamten
+Datenweg ist zusätzlich eine EU-gehostete Modellbereitstellung erforderlich.
+Die App verwendet die oben genannten Routen; dennoch müssen Modellkarten,
+Unterauftragsverarbeiter und Verträge aktuell geprüft werden.
+
+
+SCHRITT 5 — SCHLÜSSEL IN DER APP VERWENDEN
+
+1) Fügen Sie den Schlüssel auf der Startseite in Requesty API key ein.
+2) Öffnen Sie das Transkriptionswerkzeug und wählen Sie Requesty.
+3) Wählen Sie Modell und Reasoning-Stufe.
+4) Testen Sie zunächst ohne Patientendaten.
+5) Prüfen Sie Anfrage und Kosten unter Usage/Analytics bei Requesty.
+
+Eine Base URL muss nicht eingegeben werden; die App nutzt automatisch das EU-Gateway.
+
+
+CHECKLISTE VOR KLINISCHER NUTZUNG
+
+  □ API-Schlüssel wird sicher aufbewahrt
+  □ Inhaltsprotokollierung ist aus oder organisationsweites ZDR ist aktiv
+  □ Access List/Approved Models erlaubt die Modellrouten
+  □ EU-Gateway und EU-Bereitstellungen sind verifiziert
+  □ DPA, Unterauftragsverarbeiter und DPIA/TIA wurden geprüft
+  □ Jede erzeugte Notiz wird medizinisch kontrolliert
+
+
+FEHLERBEHEBUNG
+
+401: Schlüssel und Widerrufsstatus prüfen.
+403: Access List und Approved Models prüfen.
+412: Ausgabenlimit prüfen.
+429: warten, erneut versuchen oder Modell-Limit prüfen.
+500/langsam: Requesty-Protokolle/Status prüfen oder anderes Modell wählen.
+
+
+OFFIZIELLE LINKS
+
+Dashboard: https://app.requesty.ai
+Quickstart: https://docs.requesty.ai/quickstart
+EU-Routing: https://docs.requesty.ai/features/eu-routing
+Access Lists: https://docs.requesty.ai/features/access-lists
+Approved Models: https://docs.requesty.ai/features/approved-models
+DPA/ZDR: https://www.requesty.ai/dpa
+

@@ -11,122 +11,155 @@ export const indexTranslations = {
   securityButton: "Sicurezza",
   aboutButton: "Informazioni",
   adRevenueMessage: "Poiché questo sito è gratuito e si basa esclusivamente sui ricavi pubblicitari, ti preghiamo di acconsentire alla visualizzazione di annunci personalizzati per sostenere il servizio.",
+  // Accordion tab #1 (left): AI models
+  modelsModalHeading: "Modelli di IA",
+  modelsModalText: `
+<div>
+  <p><strong>Scelta dei modelli in Transcribe Notes</strong></p>
+  <p>L’app consente di scegliere separatamente i modelli per <strong>speech-to-text (STT)</strong> e <strong>generazione della nota</strong>. Una trascrizione accurata offre una base migliore; un modello di nota potente struttura e prioritizza meglio il contenuto e segue meglio il prompt selezionato.</p>
+
+  <hr><br>
+  <p><strong>1) Modelli speech-to-text</strong></p>
+  <ul>
+    <li><strong>Soniox</strong> – trascrizione batch o in tempo reale, con etichette dei parlanti facoltative</li>
+    <li><strong>OpenAI</strong> – gpt-4o-transcribe</li>
+    <li><strong>Mistral</strong> – Voxtral Mini Transcribe</li>
+  </ul>
+  <p><strong>Classifica STT pratica</strong></p>
+  <ol>
+    <li><strong>Soniox</strong> – consigliato: qualità eccellente, etichette dei parlanti ed endpoint regionale UE.</li>
+    <li><strong>OpenAI gpt-4o-transcribe</strong> – ottima alternativa, ma la configurazione standard non offre lo stesso percorso semplice per la residenza dei dati nell’UE.</li>
+    <li><strong>Mistral Voxtral Mini</strong> – alternativa europea economica quando il costo è prioritario.</li>
+  </ol>
+  <p>Per mantenere nell’UE audio e trascrizione con Soniox, usa una chiave appartenente a un progetto Soniox nella regione UE e seleziona l’endpoint UE nell’app. Le etichette aiutano il modello di nota a distinguere i partecipanti.</p>
+
+  <hr><br>
+  <p><strong>2) Provider e modelli per la generazione delle note</strong></p>
+  <p><strong>Requesty — consigliato ai nuovi utenti</strong></p>
+  <p>Requesty offre, con una sola chiave API, modelli di più sviluppatori. L’app limita intenzionalmente la scelta a deployment selezionati, destinati all’elaborazione nell’UE, senza riutilizzo per l’addestramento e con controlli di conservazione appropriati.</p>
+  <ul>
+    <li>Claude Opus 5</li><li>Claude Sonnet 5</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 3.7 Flash</li><li>Kimi K3</li>
+  </ul>
+  <p><strong>Altri provider supportati</strong></p>
+  <ul>
+    <li><strong>OpenAI</strong> – GPT-5.1, GPT-5.2, GPT-5.4 e GPT-5.5</li>
+    <li><strong>AWS Bedrock</strong> – Claude Haiku 4.5, Claude Sonnet 4.5/4.6 e Claude Opus 4.5/4.6/4.7</li>
+    <li><strong>Mistral</strong> – Mistral Large</li>
+  </ul>
+  <p>AWS Bedrock resta disponibile per chi ha già accesso AWS o vuole gestire la propria infrastruttura. La configurazione è più complessa e i modelli più recenti possono arrivare in ritardo. Non è quindi <strong>il punto di partenza consigliato ai nuovi utenti</strong>.</p>
+
+  <p><strong>Guida pratica ai modelli Requesty</strong></p>
+  <ul>
+    <li><strong>Qualità massima:</strong> Claude Opus 5 e GPT-5.6 Sol</li>
+    <li><strong>Ottime scelte generali:</strong> Claude Sonnet 5, GPT-5.6 Terra e GPT-5.5</li>
+    <li><strong>Velocità e convenienza:</strong> GPT-5.6 Luna e Gemini 3.7 Flash</li>
+    <li><strong>Riepilogo/pre-elaborazione al minor costo:</strong> GPT-5 Nano</li>
+    <li><strong>Altra alternativa:</strong> Kimi K3</li>
+  </ul>
+  <p>Per documenti lunghi, un modello economico come GPT-5 Nano può creare prima un breve riepilogo per le Informazioni supplementari. Il modello principale più potente genera poi la nota senza ricevere l’intero documento, riducendo sensibilmente il costo.</p>
+
+  <hr><br>
+  <p><strong>Prezzo e qualità</strong></p>
+  <p>I modelli più potenti in genere costano di più per token. L’app mostra il prezzo USD approssimativo per un milione di token input/output vicino al modello selezionato e, quando disponibili dati di utilizzo, una stima dopo la generazione.</p>
+
+  <hr><br>
+  <p><strong>Configurazione consigliata ai nuovi utenti clinici</strong></p>
+  <p>La scelta iniziale consigliata è <strong>Soniox con progetto UE, chiave API UE ed endpoint UE</strong> per STT, insieme a <strong>Requesty</strong> per le note.</p>
+  <p>Nessun provider rende automaticamente conforme al GDPR un flusso di lavoro. L’organizzazione deve verificare DPA, endpoint e conservazione, completare DPIA/TIA e controllare ogni nota prima dell’uso clinico.</p>
+</div>
+`,
+
   securityModalHeading: "Privacy",
-securityModalText: 
-`<strong>Privacy e Trattamento dei Dati</strong><br><br>
-Questa web-app è uno strumento per la trascrizione vocale e la generazione di appunti. Come professionista sanitario / titolare del trattamento, è tua piena responsabilità garantire che ogni utilizzo sia conforme al GDPR, alla Helsepersonelloven e alla Norma norvegese per la sicurezza delle informazioni.<br><br>
+  securityModalText: `
+<strong>Privacy e trattamento dei dati</strong><br><br>
+Questa web app è uno strumento per speech-to-text e generazione di note. Come professionista sanitario e titolare del trattamento, sei responsabile di assicurare che l’uso rispetti le leggi applicabili, incluso il GDPR, e i requisiti di sicurezza della tua organizzazione.<br><br>
 
-Sei l’unico responsabile del rispetto di:<br>
-- GDPR<br>
-- Helsepersonelloven<br>
-- Norma per la sicurezza delle informazioni<br><br>
+Ciò include, tra l’altro:<br>
+- stipulare i necessari accordi sul trattamento dei dati (DPA);<br>
+- completare e documentare DPIA e, se pertinente, TIA;<br>
+- scegliere endpoint regionali e impostazioni di conservazione corretti;<br>
+- garantire base giuridica, controllo degli accessi e informativa/consenso richiesti;<br>
+- verificare ogni trascrizione e nota prima dell’uso clinico.<br><br>
 
-Ciò implica, tra l’altro:<br>
-- Stipulare gli accordi necessari (DPA)<br>
-- Eseguire approfondite valutazioni dei rischi (DPIA e TIA)<br><br>
+Lo sviluppatore non può stabilire se l’uso di una specifica organizzazione sia legittimo. Queste informazioni non sono consulenza legale; coinvolgi DPO o consulente legale quando necessario.<br><br>
 
-- Maggiori informazioni più avanti in questo testo.<br><br>
-
-Lo sviluppatore di questa web-app declina ogni responsabilità per il tuo utilizzo o per l’eventuale mancata conformità.<br><br>
 <hr><br>
+<strong>1. Configurazione consigliata ai nuovi utenti</strong><br><br>
+<strong>Speech-to-text:</strong> <strong>Soniox con progetto UE, chiave UE ed endpoint UE</strong>. Soniox dichiara che audio e trascrizioni restano nella regione selezionata quando si usano chiave regionale e dominio API corrispondente, e che i contenuti non vengono usati per addestrare i modelli. Metadati di account, fatturazione e utilizzo possono comunque essere trattati fuori regione.<br><br>
 
-<strong>1. Come funziona la web-app?</strong><br>
-- Registra l’audio tramite la funzione di registrazione del browser.<br>
-- Elabora l’audio nella memoria (RAM) del browser.<br>
-- Carica il file audio, tramite connessione sicura HTTPS, all’API Whisper di OpenAI per la trascrizione, utilizzando la tua chiave API personale.<br>
-- Invia la trascrizione (ed eventuale testo aggiuntivo / prompt) all’API di OpenAI che genera una bozza di appunto, sempre con la tua chiave API.<br>
-- Il browser riceve l’appunto direttamente da OpenAI tramite connessione sicura/crittografata.<br>
-- La tua chiave API viene conservata solo temporaneamente nella memoria del browser (SessionStorage). Quando chiudi la web-app o il browser, la chiave viene cancellata dalla memoria. Per riutilizzare la web-app dovrai incollare di nuovo la tua chiave API. Ciò aggiunge un ulteriore livello di sicurezza alla chiave e previene accessi non autorizzati.<br><br>
+<strong>Generazione delle note:</strong> <strong>Requesty</strong>. L’app usa il gateway UE e una selezione curata di deployment nominati, destinati all’elaborazione UE, senza riutilizzo per l’addestramento e con controlli di conservazione appropriati.<br><br>
+
+La selezione del modello nell’app non attiva automaticamente Zero Data Retention nell’account Requesty. Requesty documenta che nei piani self-service la registrazione di prompt/risposte è attiva per impostazione predefinita per 30 giorni. Può essere disattivata per chiave; è possibile richiedere ZDR per l’organizzazione. Prima di dati identificabili, verifica impostazione, deployment, sub-responsabili e DPA.<br><br>
+
+Nessuna configurazione tecnica è automaticamente “conforme al GDPR”. Restano determinanti contratti, configurazione, finalità, valutazione del rischio e procedure.<br><br>
+
 <hr><br>
+<strong>2. Flusso dei dati nell’app</strong><br><br>
+- L’audio viene registrato ed elaborato temporaneamente nella memoria del browser.<br>
+- Viene inviato tramite HTTPS cifrato al provider STT scelto: Soniox, OpenAI o Mistral/Voxtral.<br>
+- La trascrizione resta visibile nel Workspace selezionato.<br>
+- Per generare una nota, trascrizione, prompt e Informazioni supplementari vengono inviati al provider scelto.<br>
+- Le richieste Requesty passano dal gateway UE al deployment specifico selezionato.<br>
+- La bozza ritorna al browser tramite connessione cifrata.<br><br>
 
-<strong>2. È richiesta la tua chiave API di OpenAI</strong><br>
-Tutta la comunicazione con OpenAI avviene direttamente dal tuo browser usando la tua chiave API personale. Lo sviluppatore non ha accesso alla tua chiave né ai tuoi dati.<br><br>
+L’app non dispone di un proprio server applicativo che conservi audio, trascrizioni o note. AWS Bedrock viene raggiunto tramite il backend AWS configurato separatamente dall’utente.<br><br>
+
 <hr><br>
+<strong>3. Chiavi API e credenziali</strong><br><br>
+Usi chiavi proprie oppure, per Bedrock, URL backend e segreto propri. Lo sviluppatore non riceve credenziali o contenuti clinici.<br><br>
 
-<strong>3. Accordo sul trattamento dei dati (DPA) con OpenAI</strong><br>
-Se utilizzi i servizi API per trattare dati personali, si raccomanda di stipulare un DPA con OpenAI. Il modello standard è disponibile qui: <a href="https://ironcladapp.com/public-launch/63ffefa2bed6885f4536d0fe" style="color:blue;" target="_blank">Accordo sul trattamento dei dati di OpenAI (DPA)</a>. Trova il tuo numero di organizzazione qui: <a href="https://platform.openai.com/settings/organization/general" style="color:blue;" target="_blank">profilo organizzazione OpenAI</a>. Una volta firmato, tu e OpenAI riconoscete che sei tu, in qualità di utente, a rivestire il ruolo di responsabile del trattamento – non OpenAI.<br><br>
+Le chiavi inserite nella pagina iniziale sono conservate temporaneamente in SessionStorage e rimosse chiudendo scheda/sessione o con Cancella chiavi. Per un backup cifrato, la password cifra localmente il file nel browser prima del salvataggio o caricamento.<br><br>
+
+Tratta chiavi, backup e password come informazioni riservate. Usa chiavi separate, limiti di spesa e restrizioni di accesso e revoca subito una chiave esposta.<br><br>
+
 <hr><br>
+<strong>4. Accordi sul trattamento dei dati</strong><br><br>
+Valuta e sottoscrivi DPA appropriati con i servizi effettivamente usati: Soniox, Requesty e i sub-responsabili/deployment documentati, OpenAI, Mistral ed eventualmente AWS. Verifica che coprano organizzazione, uso sanitario, sicurezza, conservazione, cancellazione, sub-responsabili e trasferimenti internazionali. Condizioni e impostazioni vanno riesaminate periodicamente.<br><br>
 
-<strong>4. DPIA e TIA – Valutazioni dei rischi necessarie</strong><br><br>
-
-<strong>DPIA (Data Protection Impact Assessment):</strong> Obbligatoria ai sensi dell’art. 35 GDPR quando si utilizza nuova tecnologia per trattare categorie particolari di dati. L’obiettivo è identificare e ridurre i rischi per la privacy connessi al trattamento.<br>
-Analizza cosa viene trattato, perché e quali misure sono necessarie per tutelare i diritti dei pazienti.<br>
-Modello di esempio disponibile qui: <a href="https://transcribe-notes.netlify.app/dpia" style="color:blue;" target="_blank">Esempio di DPIA</a><br><br>
-
-<strong>TIA (Transfer Impact Assessment):</strong> Richiesta dopo la sentenza Schrems II e gli art. 44–49 GDPR per i trasferimenti di dati personali verso Paesi extra SEE (come gli USA). Serve a documentare che il trasferimento garantisca un livello di tutela «essenzialmente equivalente».<br>
-Valuta la normativa statunitense (FISA 702, CLOUD Act ecc.) rispetto alla natura dei dati e alle tue misure tecniche/contrattuali supplementari.<br>
-Concludi se il trasferimento – insieme alle Clausole Contrattuali Standard e alla certificazione di OpenAI al Data Privacy Framework UE-USA – rimanga comunque lecito.<br>
-Modello di esempio disponibile qui: <a href="https://transcribe-notes.netlify.app/tia.html" style="color:blue;" target="_blank">Esempio di TIA</a><br><br>
-
-Entrambe le valutazioni devono essere completate, documentate e approvate da te prima di utilizzare la web-app.<br><br>
 <hr><br>
+<strong>5. DPIA e TIA</strong><br><br>
+<strong>DPIA:</strong> generalmente richiesta dall’articolo 35 GDPR quando nuove tecnologie trattano categorie particolari come i dati sanitari. Mappa audio, testo e metadati, documenta finalità, rischi e misure tecniche/organizzative.<br><br>
 
-<strong>5. Conservazione zero dei dati (ZDR) e archiviazione presso OpenAI</strong><br><br>
+<strong>TIA:</strong> può essere necessaria per trasferimenti fuori SEE. Valuta destinazione, legge applicabile, garanzie contrattuali e misure supplementari: cifratura, pseudonimizzazione, endpoint UE e conservazione. Se l’intero percorso documentato resta in UE/SEE, documenta anche questa conclusione.<br><br>
 
-<strong>Policy standard di OpenAI</strong><br>
-Secondo la API Data Usage Policy di OpenAI, i dati inviati non vengono usati per addestrare i modelli. Tuttavia possono essere conservati temporaneamente (fino a 30 giorni) per monitoraggio abusi e debug, quindi eliminati.<br><br>
+Entrambe le valutazioni dovrebbero essere completate e approvate prima di usare dati reali dei pazienti.<br><br>
 
-<strong>Zero Data Retention (ZDR)</strong><br>
-OpenAI offre ZDR solo ad alcuni clienti enterprise su accordo specifico; non è prevista per l’uso API ordinario e quindi non è attiva in questa app.<br><br>
-
-<strong>Prospettive future</strong><br>
-Versioni future dell’app potrebbero supportare provider di IA alternativi che offrano ZDR di default (ad es. alcuni servizi di Microsoft Azure). Eventuali aggiornamenti verranno comunicati tramite la web-app.<br><br>
 <hr><br>
+<strong>6. Considerazioni sui provider</strong><br><br>
+<strong>Soniox UE:</strong> richiede progetto UE, relativa chiave e dominio API UE corrispondente. Verifica conservazione/cancellazione e accordo necessario.<br><br>
 
-<strong>6. Prerequisiti per un potenziale uso clinico</strong><br><br>
-La tua valutazione è determinante: la liceità di usare questo strumento con dati dei pazienti dipende esclusivamente dalla tua analisi approfondita. Devi concludere – sulla base del DPA con OpenAI, DPIA e TIA – se l’uso sia adeguato e se il rischio residuo sia accettabile per la tua pratica.<br><br>
+<strong>Requesty:</strong> l’app usa gateway UE e route fisse e curate. Requesty dichiara di non addestrare sui prompt o sulle risposte. La residenza UE completa dipende anche da un deployment upstream ospitato nell’UE. Verifica i dettagli attuali e disattiva il logging per chiave o ottieni ZDR a livello di organizzazione.<br><br>
 
-<strong>Requisiti minimi prima di usare dati di pazienti:</strong><br>
-- DPA valido con OpenAI.<br>
-- DPIA e TIA specifiche per l’organizzazione completate, approvate e concludenti per un rischio residuo accettabile.<br>
-- Responsabilità sul contenuto: sei responsabile di tutte le informazioni inviate a OpenAI tramite la tua chiave API e della verifica della bozza di appunto generata, prima di eventuale inserimento nella cartella clinica.<br><br>
+<strong>AWS Bedrock:</strong> resta per utenti AWS esistenti; richiede backend separato e configurazione regionale accurata. È più complesso e non è il punto di partenza consigliato.<br><br>
+
+<strong>Mistral:</strong> offre Voxtral per STT e Mistral Large per le note. Verifica regione, DPA, conservazione, addestramento e ZDR se necessario.<br><br>
+
+<strong>OpenAI:</strong> resta disponibile per accesso diretto. Per impostazione predefinita i dati API non vengono usati per l’addestramento, ma regione e conservazione dipendono da prodotto, account e contratto. Una chiave standard non significa automaticamente solo UE o ZDR.<br><br>
+
 <hr><br>
+<strong>7. Requisiti minimi prima dell’uso clinico</strong><br><br>
+- Usa soltanto provider ed endpoint approvati.<br>
+- Mantieni DPA validi ed elenco aggiornato dei sub-responsabili.<br>
+- Completa e approva DPIA/TIA.<br>
+- Configura correttamente routing UE e conservazione/ZDR.<br>
+- Riduci e, dove possibile, pseudonimizza i dati dei pazienti.<br>
+- Proteggi chiavi API e file esportati.<br>
+- Controlla ogni trascrizione e nota prima della cartella clinica.<br><br>
 
-<strong>7. Panoramica sulla conservazione dei dati</strong><br><br>
-<table style="border-collapse:collapse;width:100%;">
-  <thead>
-    <tr>
-      <th style="border:1px solid #ccc;padding:4px;">Tipo di dato</th>
-      <th style="border:1px solid #ccc;padding:4px;">Dove viene conservato?</th>
-      <th style="border:1px solid #ccc;padding:4px;">Per quanto tempo?</th>
-      <th style="border:1px solid #ccc;padding:4px;">Chi ha accesso?</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="border:1px solid #ccc;padding:4px;">La tua chiave API di OpenAI</td>
-      <td style="border:1px solid #ccc;padding:4px;">Memoria SessionStorage del tuo browser</td>
-      <td style="border:1px solid #ccc;padding:4px;">Fino a quando chiudi la web-app o il browser</td>
-      <td style="border:1px solid #ccc;padding:4px;">Solo tu e il tuo browser</td>
-    </tr>
-    <tr>
-      <td style="border:1px solid #ccc;padding:4px;">Segmenti audio durante la registrazione</td>
-      <td style="border:1px solid #ccc;padding:4px;">RAM del browser</td>
-      <td style="border:1px solid #ccc;padding:4px;">Solo durante registrazione/elaborazione. Non archiviati da OpenAI dopo la fine del processo</td>
-      <td style="border:1px solid #ccc;padding:4px;">Solo tu e il tuo browser</td>
-    </tr>
-    <tr>
-      <td style="border:1px solid #ccc;padding:4px;">Testo / bozza di appunto</td>
-      <td style="border:1px solid #ccc;padding:4px;">API di OpenAI (temporaneamente)</td>
-      <td style="border:1px solid #ccc;padding:4px;">Max 30 giorni da OpenAI</td>
-      <td style="border:1px solid #ccc;padding:4px;">Tu, OpenAI (temporaneamente)</td>
-    </tr>
-    <tr>
-      <td style="border:1px solid #ccc;padding:4px;">Istruzioni / prompt</td>
-      <td style="border:1px solid #ccc;padding:4px;">Localmente nel tuo browser. Se effettui di nuovo l’accesso con lo stesso browser, computer e chiave API, i tuoi prompt personalizzati saranno nuovamente disponibili</td>
-      <td style="border:1px solid #ccc;padding:4px;">Finché non li elimini</td>
-      <td style="border:1px solid #ccc;padding:4px;">Tu e il tuo browser</td>
-    </tr>
-  </tbody>
-</table><br><br>
 <hr><br>
+<strong>8. Archiviazione locale ed esterna</strong><br><br>
+<strong>Chiavi API/credenziali backend:</strong> in SessionStorage fino a chiusura o cancellazione.<br><br>
+<strong>Audio:</strong> temporaneamente nella memoria del browser e inviato al provider STT; nessun archivio audio locale permanente.<br><br>
+<strong>Trascrizioni, Informazioni supplementari e note:</strong> nella sessione della scheda e nelle funzioni Workspace/cronologia, normalmente fino a chiusura o cancellazione. Il testo pertinente viene inviato al provider di note quando si richiede la generazione.<br><br>
+<strong>Prompt e impostazioni del Workspace Set:</strong> possono essere salvati localmente. L’export include ordine, prompt, provider/modelli e opzioni, ma non trascrizioni, Informazioni supplementari, note, cronologia, audio, chiavi API o password. Gli export cloud sono cifrati nel browser; il JSON locale è leggibile e va protetto.<br><br>
 
-<strong>8. Codice sorgente</strong><br><br>
-- Il codice sorgente è aperto e gira localmente nel tuo browser.<br><br>
+Il trattamento e la conservazione presso ogni provider devono essere verificati separatamente.<br><br>
+
 <hr><br>
+<strong>9. Codice sorgente e responsabilità</strong><br><br>
+Il codice è aperto e l’app principale funziona nel browser. Lo sviluppatore non riceve testo clinico tramite un proprio backend. Possono essere raccolte statistiche elementari non cliniche come descritto nel sito.<br><br>
 
-<strong>9. Cookie e annunci</strong><br><br>
-Utilizziamo cookie esclusivamente per mostrare annunci pertinenti tramite Google Ads e per le preferenze linguistiche, il consenso e la memorizzazione dei prompt personalizzati che hai creato. I cookie non memorizzano dati personali oltre quanto necessario per funzionalità e personalizzazione. I cookie di Google non hanno accesso ai dati relativi a registrazioni audio e testo generato (dati dei pazienti).
+L’output è una bozza. Il professionista sanitario resta responsabile della verifica medica, delle correzioni e della decisione su cosa inserire nella cartella clinica.
 `,
 
   aboutModalHeading: "Informazioni",
@@ -138,49 +171,96 @@ Molti fornitori offrono servizi simili, ma applicano prezzi significativamente p
 • Paghi solo OpenAI per ciò che utilizzi.<br>
 • Il sito stesso è completamente gratuito.<br><br>
 Per continuare a offrire questo servizio gratuito, ti saremmo molto grati se accettassi la visualizzazione degli annunci Google Ads. I ricavi pubblicitari ci aiutano a coprire i costi di hosting e gestione, permettendo al servizio di rimanere accessibile a tutti.`,
-  guideModalHeading: "Come si usa",
-guideModalText: `Per utilizzare questa webapp, devi prima creare un profilo OpenAI API, generare una chiave API e assicurarti che il tuo portafoglio OpenAI abbia fondi sufficienti. Copia quindi la chiave API e incollala nel campo designato. Quando premi "Invio", la webapp salva temporaneamente la chiave API per la sessione: questa chiave ti connette ai server OpenAI affinché la trascrizione vocale e la generazione di note possano funzionare. Si prega di notare che verrai addebitato immediatamente per ogni operazione effettuata (trascrizione vocale e/o generazione di note). Per ulteriori informazioni sui costi, consulta la sezione "Informazioni sui costi" nella pagina iniziale. Ti consigliamo di leggere l’informativa sulla privacy e sulle informazioni riportata nella pagina iniziale prima di utilizzare l’app.
-<br><br>
-<strong>1. Crea il tuo profilo OpenAI API</strong><br>
-Per iniziare, devi creare un profilo sulla piattaforma OpenAI API. Questo profilo fungerà da account per la gestione delle chiavi API e della fatturazione. Per avviare la registrazione, visita <a href="https://platform.openai.com/signup" style="color:blue;">Registrazione OpenAI API</a>. Segui le istruzioni e crea il tuo utente. Una volta registrato, potrai accedere alla tua dashboard, generare una chiave API personale e caricare credito nel tuo portafoglio OpenAI.
-<br><br>
-<strong>2. Genera una chiave API</strong><br>
-Dopo aver creato il tuo profilo, genera una chiave API accedendo a <a href="https://platform.openai.com/account/api-keys" style="color:blue;">Gestione chiavi API</a>. Clicca sul pulsante per creare una nuova chiave API. Importante: vedrai la chiave una sola volta. Copiala immediatamente e conservala in un luogo sicuro (ad esempio in un file di testo). Se perdi la chiave o sospetti che sia stata compromessa, potrai disattivarla o eliminarla dallo stesso pannello e crearne una nuova.
-<br><br>
-<strong>3. Carica fondi nel tuo portafoglio OpenAI</strong><br>
-Per utilizzare la webapp, il tuo portafoglio OpenAI deve contenere fondi sufficienti. Visita <a href="https://platform.openai.com/account/billing/overview" style="color:blue;">Pagina di fatturazione e pagamenti</a> per aggiungere credito. Puoi trasferire qualsiasi importo in qualsiasi momento. Finché il tuo saldo è positivo, potrai usufruire delle funzionalità della webapp: ogni operazione verrà addebitata immediatamente. Per una panoramica dettagliata dei prezzi, consulta la sezione "Informazioni sui costi".
-<br><br>
-<strong>Avvertenza sulla sicurezza della sessione</strong><br>
-Quando inserisci la chiave API nel campo sulla pagina iniziale e premi Invio, essa viene salvata solo temporaneamente nella sessione del browser. Questo significa che se lasci la pagina, chiudi il browser o spegni il computer, la chiave non verrà memorizzata. Dovrai quindi incollarla nuovamente alla prossima visita, garantendo così la sicurezza della tua chiave.`,
+  guideModalHeading: "Chiavi API – come iniziare",
+  guideModalText: `
+<strong>Chiavi API — primi passi</strong><br><br>
+La configurazione più semplice consigliata ai nuovi utenti è:<br>
+1. <strong>Soniox con chiave di regione UE</strong> per speech-to-text.<br>
+2. <strong>Requesty</strong> per la generazione delle note.<br><br>
+
+<strong>Opzioni STT:</strong> Soniox batch, batch con etichette dei parlanti, tempo reale, OpenAI gpt-4o-transcribe e Mistral Voxtral Mini.<br><br>
+<strong>Provider di note:</strong> Requesty (Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.7 Flash, Kimi K3), OpenAI (GPT-5.1/5.2/5.4/5.5), AWS Bedrock (Claude Haiku/Sonnet/Opus) e Mistral Large.<br><br>
+
+<hr><br>
+<strong>Soniox — configurazione STT consigliata</strong><br>
+1. Crea un account su <a href="https://soniox.com" target="_blank" rel="noopener noreferrer">soniox.com</a> e configura fatturazione/crediti.<br>
+2. Richiedi l’accesso regionale a <a href="mailto:support@soniox.com">support@soniox.com</a>.<br>
+3. Crea/seleziona un progetto nella regione <strong>European Union</strong> e copia la chiave regionale.<br>
+4. Incollala in <strong>Soniox API key</strong> e seleziona l’endpoint <strong>EU</strong>. Sono necessari sia chiave UE sia endpoint UE.<br><br>
+Il link <strong>Guide</strong> vicino al campo Soniox apre le istruzioni dettagliate.<br><br>
+
+<hr><br>
+<strong>Requesty — configurazione note consigliata</strong><br>
+1. Crea un account su <a href="https://requesty.ai" target="_blank" rel="noopener noreferrer">requesty.ai</a> e configura crediti/fatturazione.<br>
+2. In <strong>API Keys</strong> crea una chiave e, se possibile, limitala a modelli/Access Lists approvati.<br>
+3. Copiala in modo sicuro e incollala in <strong>Requesty API key</strong>.<br>
+4. Disattiva il logging prompt/risposta o richiedi ZDR organizzativo; verifica DPA e route prima dei dati identificabili.<br><br>
+Il link <strong>Guide</strong> vicino a Requesty spiega account, crediti, chiave, accesso modelli, routing UE e privacy.<br><br>
+
+<hr><br>
+<strong>OpenAI:</strong> crea account su <a href="https://platform.openai.com" target="_blank" rel="noopener noreferrer">platform.openai.com</a>, fatturazione e chiave API. Verifica DPA, conservazione e regione; una chiave standard non è automaticamente solo UE o ZDR.<br><br>
+
+<strong>Mistral:</strong> crea account su <a href="https://console.mistral.ai" target="_blank" rel="noopener noreferrer">console.mistral.ai</a>, fatturazione e chiave utilizzabile con Voxtral Mini e Mistral Large. Verifica hosting UE, DPA, conservazione e ZDR.<br><br>
+
+<strong>AWS Bedrock — opzionale per utenti AWS esistenti:</strong> richiede account AWS, accesso regionale e backend separato. È più complesso e non è consigliato come punto di partenza. Usa il link <a href="#" data-open-guide="bedrock"><strong>Guide</strong></a> vicino ai campi AWS.<br><br>
+
+<hr><br>
+<strong>Prima di inserire dati dei pazienti</strong><br>
+Una chiave API non rende automaticamente un servizio conforme al GDPR. Verifica DPA, sub-responsabili, endpoint, residenza, conservazione/ZDR e addestramento; completa DPIA/TIA, proteggi le credenziali, minimizza i dati e controlla ogni nota.
+`,
 
   priceButton: "Prezzo",
-  priceModalHeading: "Prezzo",
-priceModalText: `
+  priceModalHeading: "Informazioni sui costi",
+  priceModalText: `
 <div>
   <p><strong>Informazioni sui costi</strong></p>
-  <p>Paghi solo per ciò che usi – direttamente alla fonte, senza intermediari costosi. Nessun abbonamento. Nessun vincolo.</p>
-
-  <p><strong>Prezzi:</strong></p>
+  <p>L’app non applica abbonamenti o maggiorazioni. Paghi direttamente il provider per l’uso effettivo dell’API. I prezzi possono cambiare; fanno fede dashboard e fattura del provider.</p>
+  <p><strong>Prezzi nell’app</strong></p>
   <ul>
-    <li>Trascrizione audio: $0.006 al minuto</li>
-    <li>Generazione note: $5 per 1 milione di token (input) e $10 per 1 milione di token (output)</li>
+    <li>Il prezzo USD approssimativo per un milione di token input/output appare vicino al modello selezionato.</li>
+    <li>Dopo la generazione vengono mostrati token e costo stimato se il provider restituisce dati sufficienti.</li>
+    <li>Token di reasoning, cache, sconti, costi gateway, cambio e regole di fatturazione possono modificare il totale.</li>
   </ul>
 
-  <p><strong>Esempio – Consulto di 15 minuti:</strong></p>
-  <ul>
-    <li>Trascrizione: 15 × $0.006 = $0.09</li>
-    <li>Generazione nota: solitamente tra $0.005 e $0.01</li>
-    <li>Totale: circa $0.10 per l’intero consulto</li>
-  </ul>
+  <hr><br>
+  <p><strong>1. Speech-to-text</strong> (prezzo approssimativo per minuto audio)</p>
+  <p><strong>Soniox — consigliato:</strong> circa 0,0017 USD/minuto; 15 minuti circa 0,026 USD.</p>
+  <p><strong>OpenAI gpt-4o-transcribe:</strong> circa 0,006 USD/minuto; 15 minuti circa 0,09 USD.</p>
+  <p><strong>Mistral Voxtral Mini:</strong> verifica il prezzo ufficiale Mistral attuale.</p>
 
-  <p><strong>Esempio di costo mensile con uso regolare:</strong></p>
+  <hr><br>
+  <p><strong>2. Generazione delle note</strong> (USD per un milione di token input/output)</p>
   <ul>
-    <li>20 consulti al giorno × 4 giorni a settimana × 4 settimane = 320 consulti</li>
-    <li>Costo mensile totale: circa $30–31</li>
+    <li>Claude Opus 5: circa 5,50 / 27,50 USD</li><li>Claude Sonnet 5: circa 2,20 / 11,00 USD</li>
+    <li>GPT-5.6 Sol: circa 5,50 / 33,00 USD</li><li>GPT-5.6 Terra: circa 2,20 / 13,20 USD</li>
+    <li>GPT-5.6 Luna: circa 0,22 / 1,32 USD</li><li>GPT-5.5: circa 5,00 / 30,00 USD</li>
+    <li>GPT-5 Nano: circa 0,05 / 0,40 USD</li><li>Gemini 3.7 Flash: circa 0,66 / 3,30 USD</li><li>Kimi K3: circa 3,00 / 15,00 USD</li>
   </ul>
+  <p>I valori rispecchiano le stime attuali dell’app e possono cambiare con Requesty o il deployment upstream. Controlla il prezzo vicino al modello e il rapporto d’uso Requesty.</p>
+  <p>Altri provider: OpenAI diretto (GPT-5.1/5.2/5.4/5.5), AWS Bedrock (Claude Haiku/Sonnet/Opus, soprattutto per utenti AWS esistenti) e Mistral Large. I prezzi attuali sono mostrati nell’app.</p>
 
-  <p><strong>Paghi solo in base all'utilizzo:</strong><br>
-  Se non utilizzi il servizio per ferie, malattia o congedo, non paghi nulla.</p>
+  <hr><br>
+  <p><strong>3. Cosa sono i token?</strong></p>
+  <p>Come stima, 1 token equivale a circa 4 caratteri o tre quarti di una parola inglese; 1.000 token a circa 750 parole inglesi. Terminologia medica, italiano, formattazione e prompt lunghi modificano il rapporto. L’input include prompt, trascrizione, Informazioni supplementari e contesto; l’output include nota e reasoning/output fatturabili.</p>
+
+  <hr><br>
+  <p><strong>4. Esempio: consulto di 15 minuti</strong></p>
+  <p>Con circa 2.200 token input e 450 output:</p>
+  <ul>
+    <li>Trascrizione Soniox: circa 0,026 USD</li><li>GPT-5 Nano: circa 0,0003 USD</li>
+    <li>Gemini 3.7 Flash: circa 0,003 USD</li><li>Claude Sonnet 5: circa 0,010 USD</li>
+    <li>Claude Opus 5: circa 0,025 USD</li><li>GPT-5.6 Sol: circa 0,027 USD</li>
+  </ul>
+  <p>Il costo reale dipende da lunghezza, prompt, Informazioni supplementari e livello di reasoning.</p>
+
+  <hr><br>
+  <p><strong>5. Ridurre il costo dei documenti lunghi</strong></p>
+  <p>Secondary Note Generation può riassumere un documento lungo con un modello economico come GPT-5 Nano. Il riepilogo viene inserito nelle Informazioni supplementari prima che il modello principale crei la nota finale. Può costare molto meno che inviare, per esempio, 50 pagine direttamente a un modello costoso.</p>
+
+  <hr><br>
+  <p><strong>6. Esempio mensile</strong></p>
+  <p>20 consulti al giorno, 4 giorni a settimana per 4 settimane equivalgono a circa 320 consulti e 80 ore audio. A 0,0017 USD/minuto, la trascrizione Soniox costa circa 8,16 USD prima di tasse e variazioni. La generazione si aggiunge secondo modello e token effettivi.</p>
+  <p>Senza uso delle API, l’app non genera costi d’uso. Possono comunque applicarsi minimi, crediti prepagati, tasse o altre condizioni del provider.</p>
 </div>
 `,
 };
