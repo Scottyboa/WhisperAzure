@@ -1,127 +1,28 @@
-============================================================
-SONIOX — EU-SPRACHERKENNUNG FÜR DIESE APP
-============================================================
+SONIOX – API-SCHLÜSSEL UND EU-ZUGANG
 
-Diese Anleitung erklärt, wie Sie ein Soniox-Konto anlegen, die Abrechnung
-einrichten, EU-Zugang beantragen und einen API-Schlüssel für ein EU-Projekt erstellen.
+1. Konto erstellen und Guthaben aufladen
 
-WARUM EU-PROJEKT UND EU-ENDPUNKT ERFORDERLICH SIND
+Rufen Sie https://console.soniox.com auf, erstellen Sie ein Konto und öffnen Sie Billing oder Credits. Hinterlegen Sie eine Zahlungsmethode und laden Sie das gewünschte Guthaben auf.
 
-Bei Soniox wird die Datenregion pro Projekt festgelegt. Laut Dokumentation sind
-für EU-Datenresidenz beide Punkte erforderlich:
+2. EU-Zugang beantragen
 
-  • ein API-Schlüssel aus einem Projekt mit Region European Union
-  • der dazugehörige EU-API-Endpunkt
+Senden Sie eine E-Mail an support@soniox.com und bitten Sie um Zugang zu Soniox’ EU regional deployment. Erklären Sie, dass Sie ein EU-Projekt und einen EU-API-Schlüssel benötigen. Senden Sie keine Patientendaten.
 
-Dann bleiben Audio- und Transkriptinhalte laut Soniox zur Verarbeitung und
-Speicherung in der gewählten EU-Region. Inhalte werden nicht zum Trainieren der
-Modelle verwendet. Konto-, Nutzungs- und Abrechnungsmetadaten können außerhalb
-der Region verarbeitet werden.
+Vorschlag für die Nachricht:
 
+Hello,
 
-SCHRITT 1 — KONTO ERSTELLEN
+I would like to use the Soniox Speech-to-Text API for clinical consultations. Could you enable access to the European Union regional deployment for my account so that I can create an EU project and API key?
 
-1) Öffnen Sie https://console.soniox.com
-2) Erstellen Sie ein Konto und bestätigen Sie gegebenenfalls Ihre E-Mail-Adresse.
-3) Melden Sie sich in der Soniox Console an.
+Kind regards,
+[Name / Organisation]
 
+3. EU-Projekt und API-Schlüssel erstellen
 
-SCHRITT 2 — ABRECHNUNG ODER GUTHABEN
+Nachdem der EU-Zugang aktiviert wurde, erstellen Sie in der Soniox Console ein neues Projekt und wählen European Union als Region. Öffnen Sie anschließend API Keys im EU-Projekt, erstellen Sie einen Schlüssel und kopieren Sie ihn sofort.
 
-1) Öffnen Sie Billing, Usage oder Credits.
-2) Hinterlegen Sie eine Zahlungsmethode oder laden Sie Guthaben auf, falls nötig.
-3) Nutzen Sie während der Erprobung möglichst ein niedriges Ausgabenlimit.
+4. Schlüssel in der App verwenden
 
-Die Bezeichnungen im Dashboard können sich ändern. Transcribe Notes erhebt
-keine eigene Abonnementgebühr und keinen Preisaufschlag.
+Fügen Sie den Schlüssel auf der Startseite in das Feld Soniox API key ein. Öffnen Sie das Transkriptionswerkzeug, wählen Sie Soniox als Spracherkennungsanbieter und EU als Endpunkt.
 
-
-SCHRITT 3 — EU-ZUGANG BEANTRAGEN
-
-Soniox verweist für regionale Bereitstellungen auf:
-
-  support@soniox.com
-
-Betreffvorschlag:
-
-  Request for EU regional deployment access
-
-Textvorschlag:
-
-  Hello,
-
-  I am a healthcare professional in Germany and would like to use the Soniox
-  Speech-to-Text API for clinical consultations. I need an EU-region project
-  and API key so that audio and transcript content is processed and stored
-  within the European Union.
-
-  Could you enable EU regional deployment access for my organisation and
-  provide the relevant DPA and security documentation?
-
-  Kind regards,
-  [Name / organisation]
-
-Senden Sie in dieser E-Mail keine Patientendaten.
-
-
-SCHRITT 4 — EU-PROJEKT UND API-SCHLÜSSEL ERSTELLEN
-
-Nach Freischaltung des regionalen Zugangs:
-
-1) Erstellen Sie in der Soniox Console ein neues Projekt.
-2) Wählen Sie European Union als Region.
-3) Vergeben Sie einen eindeutigen Namen, z. B. Transcribe Notes — EU.
-4) Öffnen Sie im EU-Projekt API Keys.
-5) Erstellen Sie einen Schlüssel, kopieren Sie ihn sofort und bewahren Sie ihn sicher auf.
-
-Verwenden Sie keinen Schlüssel aus einem älteren Standard-/US-Projekt, wenn
-EU-Datenresidenz erforderlich ist.
-
-
-SCHRITT 5 — SCHLÜSSEL IN DER APP VERWENDEN
-
-1) Fügen Sie den Schlüssel auf der Startseite in Soniox API key ein.
-2) Öffnen Sie das Transkriptionswerkzeug.
-3) Wählen Sie Soniox als Spracherkennungsanbieter.
-4) Wählen Sie EU als Soniox-Region/Endpunkt.
-
-Die App verwendet dann die EU-Domains für Batch- oder Echtzeittranskription.
-Speaker Labels können bei Batch-Transkription Sprecher unterscheiden. Prüfen Sie
-jedoch stets sowohl den Text als auch die Sprecherzuordnung.
-
-
-CHECKLISTE VOR KLINISCHER NUTZUNG
-
-  □ Regionaler EU-Zugang ist aktiviert
-  □ Der Schlüssel gehört zu einem EU-Projekt
-  □ In der App ist der EU-Endpunkt gewählt
-  □ DPA und aktuelle Speicher-/Löschbedingungen wurden geprüft
-  □ Erforderliche DPIA/TIA wurde durchgeführt
-  □ Schlüssel und Ausgabenlimits sind angemessen geschützt
-  □ Jede Transkription wird kontrolliert
-
-Ein EU-Endpunkt macht den gesamten Arbeitsablauf nicht automatisch DSGVO-konform.
-
-
-OFFIZIELLE LINKS
-
-Soniox Console: https://console.soniox.com
-Datenresidenz: https://soniox.com/docs/data-residency
-Sicherheit und Datenschutz: https://soniox.com/docs/security-and-privacy
-API-Referenz: https://soniox.com/docs/api-reference
-EU-Zugang: support@soniox.com
-
-
-FEHLERBEHEBUNG
-
-Authentifizierungsfehler:
-  Prüfen Sie, ob der vollständige Schlüssel kopiert und nicht widerrufen wurde.
-
-EU funktioniert nicht:
-  Prüfen Sie, ob der regionale Zugang aktiviert ist und der Schlüssel aus einem
-  EU-Projekt stammt. Fehlt die Region, kontaktieren Sie support@soniox.com.
-
-Keine Transkription:
-  Prüfen Sie Mikrofonberechtigung, Soniox-Modus, Guthaben/Abrechnung,
-  Nutzungsübersicht und Browserkonsole.
-
+Datenschutz: Mit einem API-Schlüssel aus einem Soniox-EU-Projekt und dem in der App ausgewählten EU-Endpunkt wird der Dienst mit ZDR, ausschließlicher Datenverarbeitung in der EU und ohne Modelltraining genutzt.

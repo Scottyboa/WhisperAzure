@@ -1,127 +1,28 @@
-============================================================
-SONIOX — TRASCRIZIONE UE PER QUESTA APP
-============================================================
+SONIOX – CHIAVE API E ACCESSO UE
 
-Questa guida spiega come creare un account Soniox, configurare la fatturazione,
-richiedere l’accesso europeo e creare una chiave API collegata a un progetto UE.
+1. Crea un account e aggiungi crediti
 
-PERCHÉ SERVONO SIA IL PROGETTO UE SIA L’ENDPOINT UE
+Vai su https://console.soniox.com, crea un account e apri Billing o Credits. Aggiungi un metodo di pagamento e ricarica il saldo desiderato.
 
-In Soniox la regione di residenza dei dati è impostata per progetto. Secondo la
-documentazione Soniox sono necessari entrambi:
+2. Richiedi l’accesso UE
 
-  • una chiave API creata in un progetto con regione European Union
-  • il corrispondente endpoint API europeo
-
-Soniox dichiara che in questo caso audio e trascrizioni rimangono nella regione
-UE scelta per elaborazione e archiviazione. I contenuti non vengono usati per
-addestrare i modelli. I metadati di account, utilizzo e fatturazione possono
-comunque essere trattati fuori dalla regione scelta.
-
-
-PASSAGGIO 1 — CREARE L’ACCOUNT
-
-1) Apri https://console.soniox.com
-2) Crea un account e verifica l’e-mail se richiesto.
-3) Accedi alla Soniox Console.
-
-
-PASSAGGIO 2 — FATTURAZIONE O CREDITI
-
-1) Apri Billing, Usage o Credits.
-2) Aggiungi un metodo di pagamento o crediti se richiesto.
-3) Durante i test valuta un limite di spesa basso.
-
-Le voci del pannello possono cambiare. Transcribe Notes non aggiunge abbonamenti
-né maggiorazioni proprie.
-
-
-PASSAGGIO 3 — RICHIEDERE L’ACCESSO UE
-
-La documentazione Soniox indica di contattare:
-
-  support@soniox.com
-
-Oggetto suggerito:
-
-  Request for EU regional deployment access
+Invia un’e-mail a support@soniox.com e richiedi l’accesso al EU regional deployment di Soniox. Spiega che ti servono un progetto UE e una chiave API europea. Non inviare dati dei pazienti.
 
 Messaggio suggerito:
 
-  Hello,
+Hello,
 
-  I am a healthcare professional in Italy and would like to use the Soniox
-  Speech-to-Text API for clinical consultations. I need an EU-region project
-  and API key so that audio and transcript content is processed and stored
-  within the European Union.
+I would like to use the Soniox Speech-to-Text API for clinical consultations. Could you enable access to the European Union regional deployment for my account so that I can create an EU project and API key?
 
-  Could you enable EU regional deployment access for my organisation and
-  provide the relevant DPA and security documentation?
+Kind regards,
+[Nome / organizzazione]
 
-  Kind regards,
-  [Name / organisation]
+3. Crea un progetto UE e una chiave API
 
-Non inserire dati dei pazienti nell’e-mail.
+Dopo l’attivazione dell’accesso UE, crea un nuovo progetto nella Soniox Console e seleziona European Union come regione. Apri quindi API Keys nel progetto UE, crea una chiave e copiala immediatamente.
 
+4. Usa la chiave nell’app
 
-PASSAGGIO 4 — CREARE PROGETTO UE E CHIAVE API
+Incolla la chiave nel campo Soniox API key della pagina iniziale. Apri lo strumento di trascrizione, seleziona Soniox come provider speech-to-text e scegli EU come endpoint.
 
-Dopo l’attivazione dell’accesso regionale:
-
-1) Crea un nuovo progetto nella Soniox Console.
-2) Seleziona European Union come regione.
-3) Assegna un nome chiaro, ad esempio Transcribe Notes — EU.
-4) Apri API Keys nel progetto UE.
-5) Crea la chiave, copiala subito e conservala in modo sicuro.
-
-Non usare la chiave di un vecchio progetto predefinito/USA se è richiesta la
-residenza dei dati nell’UE.
-
-
-PASSAGGIO 5 — USARE LA CHIAVE NELL’APP
-
-1) Incolla la chiave nel campo Soniox API key della pagina iniziale.
-2) Apri lo strumento di trascrizione.
-3) Seleziona Soniox come provider speech-to-text.
-4) Seleziona EU come regione/endpoint Soniox.
-
-L’app utilizzerà i domini europei per trascrizione batch o in tempo reale.
-Speaker Labels può distinguere gli interlocutori in modalità batch, ma testo e
-attribuzione del parlante devono sempre essere controllati.
-
-
-CHECKLIST PRIMA DELL’USO CLINICO
-
-  □ L’accesso regionale UE è attivo
-  □ La chiave appartiene a un progetto UE
-  □ Nell’app è selezionato l’endpoint UE
-  □ DPA e condizioni attuali di conservazione/cancellazione sono verificati
-  □ DPIA/TIA necessarie sono state completate
-  □ Chiave e limiti di spesa sono protetti adeguatamente
-  □ Ogni trascrizione sarà controllata
-
-Un endpoint UE non rende da solo l’intero flusso automaticamente conforme al GDPR.
-
-
-LINK UFFICIALI
-
-Soniox Console: https://console.soniox.com
-Residenza dei dati: https://soniox.com/docs/data-residency
-Sicurezza e privacy: https://soniox.com/docs/security-and-privacy
-Riferimento API: https://soniox.com/docs/api-reference
-Accesso UE: support@soniox.com
-
-
-RISOLUZIONE DEI PROBLEMI
-
-Errore di autenticazione:
-  Verifica che la chiave sia stata copiata integralmente e non sia revocata.
-
-L’UE non funziona:
-  Verifica che l’accesso regionale sia attivo e che la chiave provenga da un
-  progetto UE. Se la regione manca, contatta support@soniox.com.
-
-Nessuna trascrizione:
-  Controlla microfono, modalità Soniox, crediti/fatturazione, pagina Usage di
-  Soniox e console del browser.
-
+Privacy: con una chiave API proveniente da un progetto Soniox UE e l’endpoint europeo selezionato nell’app, il servizio viene utilizzato con ZDR, trattamento dei dati esclusivamente nell’UE e nessun addestramento dei modelli.

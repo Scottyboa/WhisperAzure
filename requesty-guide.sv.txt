@@ -1,118 +1,19 @@
-============================================================
-REQUESTY — ANTECKNINGSGENERERING FÖR DEN HÄR APPEN
-============================================================
+REQUESTY – API-NYCKEL OCH INTEGRITET
 
-Requesty är rekommenderad leverantör för nya användare. Ett konto och en
-API-nyckel ger tillgång till appens utvalda modeller från flera utvecklare.
+1. Skapa ett konto och fyll på krediter
 
-APPENS REQUESTY-UPPSÄTTNING
+Gå till https://app.requesty.ai, skapa ett konto och öppna betalningsinställningarna. Lägg till en betalningsmetod och fyll på önskat saldo.
 
-Appen använder automatiskt Requestys EU-gateway:
+2. Skapa en API-nyckel
 
-  https://router.eu.requesty.ai/v1
+Öppna API Keys, välj Create New API Key, ge nyckeln ett namn och skapa den. Kopiera nyckeln direkt, eftersom hela nyckeln bara visas när den skapas.
 
-Modellmenyn innehåller Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol/Terra/Luna,
-GPT-5.5, GPT-5 Nano, Gemini 3.7 Flash och Kimi K3. Appen använder fasta,
-EU-inriktade modellutrullningar i stället för Requestys hela modellkatalog.
+3. Stäng av loggning av prompts och svar
 
+Hitta nyckeln under API Keys, öppna inställningarna och sätt Logging till Off. Requesty lagrar då inte innehållet i prompts eller svar som skickas med denna nyckel.
 
-STEG 1 — SKAPA KONTO
+4. Använd nyckeln i appen
 
-1) Öppna https://app.requesty.ai
-2) Välj Get started / Sign up.
-3) Skapa konto, verifiera e-post och logga in.
+Klistra in nyckeln i fältet Requesty API key på startsidan. Öppna sedan transkriptionsverktyget, välj Requesty som leverantör för anteckningsgenerering och välj önskad modell.
 
-Requesty uppger för närvarande att nya konton får provkrediter. Kontrollera
-alltid saldot i den egna kontrollpanelen eftersom kampanjer kan ändras.
-
-
-STEG 2 — LÄGG TILL KREDITER
-
-1) Öppna Billing, Credits eller Wallet.
-2) Välj Add credits / Top up eller lägg till betalningsmetod.
-3) Bekräfta beloppet och kontrollera att saldot uppdateras.
-4) Börja gärna med ett litet belopp och en låg kostnadsgräns.
-
-
-STEG 3 — SKAPA API-NYCKEL
-
-1) Öppna API Keys.
-2) Välj Create API Key / Create New API Key.
-3) Ge nyckeln ett tydligt namn, till exempel Transcribe Notes — EU.
-4) Ange utgångsdatum och kostnadsgräns om det är lämpligt.
-5) Välj Access List om organisationen begränsar modeller.
-6) Skapa nyckeln, kopiera den direkt och förvara den säkert.
-
-Om Access Lists används måste de exakta modellrutterna som appen använder vara
-tillåtna:
-
-  bedrock/claude-opus-5@eu-north-1
-  vertex/claude-sonnet-5@eu
-  azure/gpt-5.6-sol@swedencentral
-  azure/gpt-5.6-terra@swedencentral
-  azure/gpt-5.6-luna@swedencentral
-  azure/gpt-5.5@swedencentral
-  azure/gpt-5-nano@swedencentral
-  vertex/gemini-3.7-flash@eu
-  nebius/kimi-k3
-
-
-STEG 4 — LOGGNING OCH ZERO DATA RETENTION
-
-Requesty uppger att förfrågningar och svar inte används för modellträning.
-Requestys DPA-information anger dock att prompt-/output-loggning på self-service-
-konton är aktiv som standard med 30 dagars lagring.
-
-Innan identifierbara patientuppgifter används:
-
-1) Öppna API-nyckelns integritets-/loggningsinställningar.
-2) Stäng av lagring av prompt- och output-innehåll för nyckeln.
-3) Kontrollera att inställningen har sparats.
-
-Alternativt kan organisationstäckande Zero Data Retention begäras skriftligt
-från Requesty. DPA-kontakt: sales@requesty.ai
-
-EU-gatewayen håller Requestys egen behandling i EU. Hela datavägen kräver också
-en EU-hostad modellutrullning. Appen använder rutterna ovan, men organisationen
-måste ändå granska aktuella modellkort, underbiträden och avtal.
-
-
-STEG 5 — ANVÄND NYCKELN I APPEN
-
-1) Klistra in nyckeln i fältet Requesty API key på startsidan.
-2) Öppna transkriptionsverktyget och välj Requesty för anteckningsgenerering.
-3) Välj modell och reasoning-nivå.
-4) Gör först ett test utan patientuppgifter.
-5) Kontrollera anrop och kostnad i Requestys Usage/Analytics.
-
-Du behöver inte ange någon base URL; appen använder EU-gatewayen automatiskt.
-
-
-CHECKLISTA FÖRE KLINISK ANVÄNDNING
-
-  □ API-nyckeln förvaras säkert
-  □ Innehållsloggning är avstängd eller organisations-ZDR är aktivt
-  □ Modellrutterna är tillåtna av Access List/Approved Models
-  □ EU-gateway och EU-hostade utrullningar är verifierade
-  □ DPA, underbiträden och DPIA/TIA är granskade
-  □ Varje genererad anteckning kommer att kontrolleras medicinskt
-
-
-FELSÖKNING
-
-401: kontrollera nyckeln och att den inte har återkallats.
-403: kontrollera Access List och Approved Models.
-412: kontrollera kostnadsgränsen.
-429: vänta och försök igen eller kontrollera modellens rate limit.
-500/långsam begäran: kontrollera Requestys loggar/status eller välj annan modell.
-
-
-OFFICIELLA LÄNKAR
-
-Dashboard: https://app.requesty.ai
-Quickstart: https://docs.requesty.ai/quickstart
-EU routing: https://docs.requesty.ai/features/eu-routing
-Access Lists: https://docs.requesty.ai/features/access-lists
-Approved Models: https://docs.requesty.ai/features/approved-models
-DPA/ZDR: https://www.requesty.ai/dpa
-
+Integritet: Alla Requesty-modeller som är tillgängliga i den här appen är valda för behandling endast inom EU, utan datalagring och utan modellträning; loggning av prompts och svar bör vara avstängd för API-nyckeln.

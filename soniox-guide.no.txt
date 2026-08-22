@@ -1,203 +1,28 @@
-============================================================
-SONIOX-OPPSETT — EU TALE-TIL-TEKST FOR DENNE APPEN
-============================================================
+SONIOX – API-NØKKEL OG EU-TILGANG
 
-Denne guiden forklarer hvordan du:
+1. Opprett konto og fyll på kreditter
 
-  1) Oppretter en Soniox-konto
-  2) Konfigurerer betaling eller kreditter
-  3) Søker om tilgang til Soniox' regionale utrullinger
-  4) Oppretter et EU-prosjekt og en EU-API-nøkkel
-  5) Bruker nøkkelen med EU-endepunktet i Transcribe Notes
+Gå til https://console.soniox.com, opprett en konto og åpne Billing eller Credits. Legg inn betalingsmåte og fyll på ønsket saldo.
 
+2. Søk om EU-tilgang
 
-------------------------------------------------------------
-HVORFOR BÅDE EU-PROSJEKT OG EU-ENDEPUNKT ER NØDVENDIG
-------------------------------------------------------------
-
-Soniox konfigurerer datalokalisering per prosjekt.
-
-Ifølge Soniox' dokumentasjon krever EU-datalokalisering av innhold BEGGE deler:
-
-  • En API-nøkkel opprettet i et Soniox-prosjekt med region European Union
-  • Det tilhørende EU-API-domenet
-
-Når begge brukes, opplyser Soniox at lyd- og transkripsjonsinnhold forblir i
-valgt EU-region for behandling og lagring. Soniox opplyser også at innsendt
-innhold ikke brukes til å trene eller forbedre modellene.
-
-Kontoinformasjon, prosjektmetadata, bruksstatistikk og faktureringsdata regnes
-som systemdata og kan fortsatt behandles utenfor valgt region.
-
-
-============================================================
-STEG-FOR-STEG-OPPSETT
-============================================================
-
----------------------------------
-STEG 1 — OPPRETT SONIOX-KONTO
----------------------------------
-
-1) Åpne Soniox Console:
-
-   https://console.soniox.com
-
-2) Opprett konto og bekreft e-postadressen dersom du blir bedt om det.
-3) Logg inn i kontrollpanelet.
-
-
-----------------------------------------------
-STEG 2 — KONFIGURER BETALING ELLER KREDITTER
-----------------------------------------------
-
-1) Åpne Billing, Usage eller Credits i Soniox Console.
-2) Legg til betalingsmetode eller kjøp/legg til kreditter dersom kontoen krever det.
-3) Vurder en lav forbruksgrense eller et varsel mens du tester.
-
-De nøyaktige navnene i kontrollpanelet kan endres. Du betaler Soniox for faktisk
-API-bruk. Transcribe Notes legger ikke til abonnement eller prispåslag.
-
-
--------------------------------------------------
-STEG 3 — BE OM TILGANG TIL EU endepunkt
--------------------------------------------------
-
-Soniox ber for tiden brukere kontakte support for tilgang til regionale
-utrullinger:
-
-   support@soniox.com
-
-Forslag til emne:
-
-   Request for EU regional API-key
+Send en e-post til support@soniox.com og be om tilgang til Soniox’ EU regional deployment. Opplys at du trenger et EU-prosjekt og en EU-API-nøkkel. Ikke send pasientopplysninger.
 
 Forslag til melding:
 
-   Hello,
+Hello,
 
-   I am a healthcare professional in Norway and would like to use the Soniox
-   Speech-to-Text API for clinical doctor–patient consultations. I need an
-   EU-region project/API key so that audio and transcript content is processed
-   and stored within the European Union.
+I would like to use the Soniox Speech-to-Text API for clinical consultations. Could you enable access to the European Union regional deployment for my account so that I can create an EU project and API key?
 
-   I hope this is possible, as I am highly satisfied with the transcription quality of your speech-to-text model so far.
+Kind regards,
+[Navn / virksomhet]
 
-   Kind regards,
-   [Name / organisation]
+3. Opprett EU-prosjekt og API-nøkkel
 
+Når EU-tilgangen er aktivert, oppretter du et nytt prosjekt i Soniox Console og velger European Union som region. Åpne deretter API Keys i EU-prosjektet, opprett en nøkkel og kopier den med én gang.
 
--------------------------------------
-STEG 4 — OPPRETT ET EU-PROSJEKT
--------------------------------------
+4. Bruk nøkkelen i appen
 
-Når Soniox har bekreftet at tilgang til EU API-nøkkel:
+Lim nøkkelen inn i feltet Soniox API key på forsiden. Åpne transkripsjonsverktøyet, velg Soniox som tale-til-tekst-leverandør og velg EU som endepunkt.
 
-1) Logg inn i Soniox Console.
-2) Opprett et nytt prosjekt eller åpne prosjektopprettelsen.
-3) Velg EU som prosjektregion.
-4) Gi prosjektet et tydelig navn, for eksempel:
-
-   Transcribe Notes — EU
-
-5) Lagre prosjektet.
-
-Regionen er knyttet til prosjektet. Ikke bruk en nøkkel fra et eldre US-/
-standardprosjekt dersom EU-datalokalisering er nødvendig.
-
-
-----------------------------------
-STEG 5 — OPPRETT EU-API-NØKKELEN
-----------------------------------
-
-1) Åpne EU-prosjektet.
-2) Åpne API Keys.
-3) Opprett/generer en ny API-nøkkel.
-4) Gi nøkkelen et tydelig navn.
-5) Kopier den med én gang og oppbevar den sikkert.
-
-Behandle nøkkelen som et passord. Ikke send den på e-post, legg den i journalen
-eller del den med andre brukere. Sperr den i Soniox Console dersom den kan ha
-blitt eksponert.
-
-
-------------------------------------------------
-STEG 6 — LEGG NØKKELEN INN I TRANSCRIBE NOTES
-------------------------------------------------
-
-1) Gå tilbake til forsiden av Transcribe Notes.
-2) Lim EU-prosjektnøkkelen inn i feltet Soniox API key.
-3) Åpne transkripsjonsverktøyet.
-4) Velg Soniox som tale-til-tekst-leverandør.
-5) Velg EU som Soniox-endepunkt/region.
-
-Appen bruker da Soniox' EU-domener for valgt modus, inkludert EU REST-endepunkt
-for batch-transkripsjon og EU WebSocket-endepunkt for sanntidstranskripsjon.
-
-
-------------------------------------------------------------
-SONIOX-MODUSER I APPEN
-------------------------------------------------------------
-
-  • Soniox batch: transkriberer ferdige lydsegmenter
-  • Soniox batch med Speaker Labels: forsøker å identifisere talerne
-  • Soniox sanntid: returnerer tekst mens samtalen pågår
-
-Speaker Labels kan være nyttig i lege–pasient-samtaler. Kontroller alltid
-transkripsjonen. Både taleridentifikasjon og medisinske uttrykk kan bli feil.
-
-
-------------------------------------------------------------
-PERSONVERNSJEKK FØR KLINISK BRUK
-------------------------------------------------------------
-
-  □ Soniox har aktivert regional EU-tilgang
-  □ API-nøkkelen tilhører et prosjekt i EU-regionen
-  □ EU er valgt som endepunkt i Transcribe Notes
-  □ Egnet DPA er gjennomgått/signert
-  □ Virksomheten har gjennomført nødvendig DPIA/TIA
-  □ Lagrings- og slettepraksis er vurdert
-  □ Tilgang og forbruksgrenser for API-nøkkelen er passende
-  □ Brukerne vet at hver transkripsjon må kontrolleres
-
-Et EU-endepunkt er et viktig teknisk tiltak, men gjør ikke alene hele
-arbeidsflyten automatisk GDPR-kompatibel.
-
-
-------------------------------------------------------------
-OFFISIELL DOKUMENTASJON
-------------------------------------------------------------
-
-Soniox Console:
-https://console.soniox.com
-
-Datalokalisering:
-https://soniox.com/docs/data-residency
-
-Sikkerhet og personvern:
-https://soniox.com/docs/security-and-privacy
-
-API-dokumentasjon:
-https://soniox.com/docs/api-reference
-
-Kontakt for regionale utrullinger:
-support@soniox.com
-
-
-------------------------------------------------------------
-FEILSØKING
-------------------------------------------------------------
-
-Autentiseringsfeil:
-  Kontroller at hele nøkkelen ble kopiert, og at den ikke er sperret.
-
-EU-kall feiler mens US virker:
-  Kontroller at regional tilgang er aktivert og at nøkkelen tilhører et
-  EU-prosjekt. En nøkkel fra standard-/US-prosjekt kan ikke brukes som EU-nøkkel.
-
-EU-regionen vises ikke når du oppretter prosjekt:
-  Kontakt support@soniox.com og be dem aktivere regionale utrullinger.
-
-Ingen transkripsjon returneres:
-  Kontroller nettleserkonsollen, Soniox' bruksoversikt, kreditter/betaling,
-  valgt leverandørmodus og mikrofontillatelsen.
-
+Personvern: Med en API-nøkkel fra et Soniox EU-prosjekt og EU-endepunktet valgt i appen, brukes tjenesten med ZDR, behandling kun i EU og ingen modelltrening.

@@ -1,118 +1,19 @@
-============================================================
-REQUESTY — GENERAZIONE DI NOTE PER QUESTA APP
-============================================================
+REQUESTY – CHIAVE API E PRIVACY
 
-Requesty è il provider consigliato ai nuovi utenti. Un account e una chiave API
-consentono di usare i modelli selezionati di più sviluppatori.
+1. Crea un account e aggiungi crediti
 
-CONFIGURAZIONE REQUESTY DELL’APP
+Vai su https://app.requesty.ai, crea un account e apri le impostazioni di fatturazione. Aggiungi un metodo di pagamento e ricarica il saldo desiderato.
 
-L’app utilizza automaticamente il gateway europeo di Requesty:
+2. Crea una chiave API
 
-  https://router.eu.requesty.ai/v1
+Apri API Keys, seleziona Create New API Key, assegna un nome alla chiave e creala. Copiala immediatamente, perché la chiave completa viene mostrata solo al momento della creazione.
 
-Il menu include Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol/Terra/Luna,
-GPT-5.5, GPT-5 Nano, Gemini 3.7 Flash e Kimi K3. L’app usa deployment fissi
-orientati all’UE invece dell’intero catalogo Requesty.
+3. Disattiva la registrazione di prompt e risposte
 
+Trova la chiave sotto API Keys, apri le impostazioni e imposta Logging su Off. Requesty non conserverà quindi il contenuto dei prompt o delle risposte inviati con questa chiave.
 
-PASSAGGIO 1 — CREARE L’ACCOUNT
+4. Usa la chiave nell’app
 
-1) Apri https://app.requesty.ai
-2) Seleziona Get started / Sign up.
-3) Crea l’account, verifica l’e-mail e accedi.
+Incolla la chiave nel campo Requesty API key della pagina iniziale. Apri quindi lo strumento di trascrizione, seleziona Requesty come provider per la generazione delle note e scegli il modello desiderato.
 
-Requesty dichiara attualmente che i nuovi account ricevono crediti di prova.
-Fa fede il saldo visualizzato nel proprio pannello, poiché le promozioni cambiano.
-
-
-PASSAGGIO 2 — AGGIUNGERE CREDITI
-
-1) Apri Billing, Credits o Wallet.
-2) Seleziona Add credits / Top up oppure aggiungi un metodo di pagamento.
-3) Conferma l’importo e verifica il nuovo saldo.
-4) È prudente iniziare con un importo e un limite di spesa ridotti.
-
-
-PASSAGGIO 3 — CREARE LA CHIAVE API
-
-1) Apri API Keys.
-2) Seleziona Create API Key / Create New API Key.
-3) Assegna un nome, ad esempio Transcribe Notes — EU.
-4) Configura scadenza e limite di spesa se opportuno.
-5) Scegli una Access List se l’organizzazione limita i modelli.
-6) Crea la chiave, copiala subito e conservala in modo sicuro.
-
-Con Access Lists devono essere consentite le esatte route usate dall’app:
-
-  bedrock/claude-opus-5@eu-north-1
-  vertex/claude-sonnet-5@eu
-  azure/gpt-5.6-sol@swedencentral
-  azure/gpt-5.6-terra@swedencentral
-  azure/gpt-5.6-luna@swedencentral
-  azure/gpt-5.5@swedencentral
-  azure/gpt-5-nano@swedencentral
-  vertex/gemini-3.7-flash@eu
-  nebius/kimi-k3
-
-
-PASSAGGIO 4 — LOG E ZERO DATA RETENTION
-
-Requesty dichiara di non usare richieste o risposte per addestrare modelli.
-Le informazioni DPA precisano però che nei piani self-service la registrazione
-del contenuto di prompt/output è attiva per impostazione predefinita per 30 giorni.
-
-Prima di usare dati identificabili dei pazienti:
-
-1) Apri le impostazioni privacy/log della chiave API.
-2) Disattiva la memorizzazione del contenuto di prompt e output.
-3) Verifica che l’impostazione sia stata salvata.
-
-In alternativa si può richiedere per iscritto a Requesty la Zero Data Retention
-per tutta l’organizzazione. Contatto DPA: sales@requesty.ai
-
-Il gateway UE mantiene nell’UE l’elaborazione propria di Requesty. L’intero
-percorso richiede anche un deployment del modello ospitato nell’UE. L’app usa le
-route sopra elencate, ma devono comunque essere verificati model card,
-sub-responsabili e accordi aggiornati.
-
-
-PASSAGGIO 5 — USARE LA CHIAVE NELL’APP
-
-1) Incolla la chiave in Requesty API key nella pagina iniziale.
-2) Apri lo strumento di trascrizione e seleziona Requesty.
-3) Scegli modello e livello di reasoning.
-4) Esegui prima un test senza dati dei pazienti.
-5) Verifica richiesta e costo in Usage/Analytics di Requesty.
-
-Non occorre inserire una base URL: l’app usa automaticamente il gateway UE.
-
-
-CHECKLIST PRIMA DELL’USO CLINICO
-
-  □ La chiave API è conservata in modo sicuro
-  □ Il logging dei contenuti è disattivato oppure è attivo ZDR organizzativo
-  □ Access List/Approved Models consente le route dell’app
-  □ Gateway UE e deployment UE sono verificati
-  □ DPA, sub-responsabili e DPIA/TIA sono stati esaminati
-  □ Ogni nota generata sarà controllata clinicamente
-
-
-RISOLUZIONE DEI PROBLEMI
-
-401: controlla la chiave e che non sia stata revocata.
-403: controlla Access List e Approved Models.
-412: controlla il limite di spesa.
-429: attendi, riprova o controlla i limiti del modello.
-500/lentezza: controlla log/stato Requesty o scegli un altro modello.
-
-
-LINK UFFICIALI
-
-Dashboard: https://app.requesty.ai
-Quickstart: https://docs.requesty.ai/quickstart
-Routing UE: https://docs.requesty.ai/features/eu-routing
-Access Lists: https://docs.requesty.ai/features/access-lists
-Approved Models: https://docs.requesty.ai/features/approved-models
-DPA/ZDR: https://www.requesty.ai/dpa
-
+Privacy: tutti i modelli Requesty disponibili in questa app sono selezionati per il trattamento esclusivamente nell’UE, senza conservazione dei dati e senza addestramento dei modelli; la registrazione di prompt e risposte deve essere disattivata per la chiave API.

@@ -1,126 +1,28 @@
-============================================================
-SONIOX — TRANSCRIPTION UE POUR CETTE APPLICATION
-============================================================
+SONIOX – CLÉ API ET ACCÈS UE
 
-Ce guide explique comment créer un compte Soniox, configurer la facturation,
-demander l’accès européen et créer une clé API rattachée à un projet UE.
+1. Créer un compte et ajouter des crédits
 
-POURQUOI LE PROJET UE ET LE POINT D’ACCÈS UE SONT NÉCESSAIRES
+Rendez-vous sur https://console.soniox.com, créez un compte et ouvrez Billing ou Credits. Ajoutez un moyen de paiement et créditez le solde souhaité.
 
-Chez Soniox, la région de résidence des données est définie par projet. Selon
-la documentation Soniox, il faut réunir les deux conditions suivantes :
+2. Demander l’accès européen
 
-  • une clé API créée dans un projet dont la région est European Union
-  • le point d’accès API européen correspondant
-
-Soniox indique alors que l’audio et les transcriptions restent dans la région UE
-sélectionnée pour leur traitement et leur stockage. Le contenu n’est pas utilisé
-pour entraîner les modèles. Les métadonnées de compte, d’utilisation et de
-facturation peuvent néanmoins être traitées en dehors de cette région.
-
-
-ÉTAPE 1 — CRÉER LE COMPTE
-
-1) Ouvrez https://console.soniox.com
-2) Créez un compte et confirmez votre adresse e-mail si nécessaire.
-3) Connectez-vous à la console Soniox.
-
-
-ÉTAPE 2 — FACTURATION OU CRÉDITS
-
-1) Ouvrez Billing, Usage ou Credits.
-2) Ajoutez un moyen de paiement ou des crédits si le compte l’exige.
-3) Envisagez une limite de dépenses basse pendant les essais.
-
-Les intitulés du tableau de bord peuvent évoluer. Transcribe Notes n’ajoute
-aucun abonnement ni majoration.
-
-
-ÉTAPE 3 — DEMANDER L’ACCÈS À LA RÉGION UE
-
-La documentation Soniox invite à contacter :
-
-  support@soniox.com
-
-Objet suggéré :
-
-  Request for EU regional deployment access
+Envoyez un e-mail à support@soniox.com pour demander l’accès au EU regional deployment de Soniox. Précisez que vous avez besoin d’un projet UE et d’une clé API européenne. N’envoyez aucune donnée patient.
 
 Message suggéré :
 
-  Hello,
+Hello,
 
-  I am a healthcare professional in France and would like to use the Soniox
-  Speech-to-Text API for clinical consultations. I need an EU-region project
-  and API key so that audio and transcript content is processed and stored
-  within the European Union.
+I would like to use the Soniox Speech-to-Text API for clinical consultations. Could you enable access to the European Union regional deployment for my account so that I can create an EU project and API key?
 
-  Could you enable EU regional deployment access for my organisation and
-  provide the relevant DPA and security documentation?
+Kind regards,
+[Nom / organisation]
 
-  Kind regards,
-  [Name / organisation]
+3. Créer un projet UE et une clé API
 
-N’envoyez aucune donnée patient dans ce message.
+Une fois l’accès européen activé, créez un nouveau projet dans la console Soniox et sélectionnez European Union comme région. Ouvrez ensuite API Keys dans le projet UE, créez une clé et copiez-la immédiatement.
 
+4. Utiliser la clé dans l’application
 
-ÉTAPE 4 — CRÉER LE PROJET UE ET LA CLÉ API
+Collez la clé dans le champ Soniox API key de la page d’accueil. Ouvrez l’outil de transcription, sélectionnez Soniox comme fournisseur de transcription et choisissez EU comme point d’accès.
 
-Une fois l’accès régional activé :
-
-1) Créez un nouveau projet dans la console Soniox.
-2) Sélectionnez European Union comme région.
-3) Donnez-lui un nom clair, par exemple Transcribe Notes — EU.
-4) Ouvrez API Keys dans ce projet UE.
-5) Créez une clé, copiez-la immédiatement et conservez-la en lieu sûr.
-
-N’utilisez pas la clé d’un ancien projet par défaut/USA si la résidence UE est requise.
-
-
-ÉTAPE 5 — UTILISER LA CLÉ DANS L’APPLICATION
-
-1) Collez la clé dans le champ Soniox API key de la page d’accueil.
-2) Ouvrez l’outil de transcription.
-3) Sélectionnez Soniox comme fournisseur de transcription.
-4) Sélectionnez EU comme région/point d’accès Soniox.
-
-L’application utilise alors les domaines européens pour la transcription par
-lots ou en temps réel. Speaker Labels peut distinguer les interlocuteurs en
-mode par lots, mais le texte et l’attribution des locuteurs doivent être vérifiés.
-
-
-LISTE DE CONTRÔLE AVANT UTILISATION CLINIQUE
-
-  □ L’accès régional UE est activé
-  □ La clé appartient à un projet UE
-  □ Le point d’accès UE est sélectionné dans l’application
-  □ Le DPA et les règles actuelles de conservation/suppression sont vérifiés
-  □ L’AIPD/DPIA et, si nécessaire, la TIA sont terminées
-  □ La clé et les limites de dépenses sont correctement protégées
-  □ Chaque transcription sera vérifiée
-
-Un point d’accès UE ne rend pas à lui seul l’ensemble du traitement conforme au RGPD.
-
-
-LIENS OFFICIELS
-
-Console Soniox : https://console.soniox.com
-Résidence des données : https://soniox.com/docs/data-residency
-Sécurité et confidentialité : https://soniox.com/docs/security-and-privacy
-Référence API : https://soniox.com/docs/api-reference
-Accès UE : support@soniox.com
-
-
-DÉPANNAGE
-
-Erreur d’authentification :
-  Vérifiez que la clé complète a été copiée et qu’elle n’a pas été révoquée.
-
-L’UE ne fonctionne pas :
-  Vérifiez que l’accès régional est actif et que la clé provient d’un projet UE.
-  Contactez support@soniox.com si la région UE n’est pas proposée.
-
-Pas de transcription :
-  Vérifiez le microphone, le mode Soniox, les crédits/la facturation, le tableau
-  d’utilisation Soniox et la console du navigateur.
-
+Confidentialité : avec une clé API provenant d’un projet Soniox UE et le point d’accès européen sélectionné dans l’application, le service est utilisé avec ZDR, un traitement des données exclusivement dans l’UE et aucun entraînement des modèles.
