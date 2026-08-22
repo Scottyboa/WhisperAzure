@@ -59,7 +59,7 @@ API-bruk. Transcribe Notes legger ikke til abonnement eller prispåslag.
 
 
 -------------------------------------------------
-STEG 3 — BE OM TILGANG TIL EU-UTRULLINGEN
+STEG 3 — BE OM TILGANG TIL EU endepunkt
 -------------------------------------------------
 
 Soniox ber for tiden brukere kontakte support for tilgang til regionale
@@ -69,7 +69,7 @@ utrullinger:
 
 Forslag til emne:
 
-   Request for EU regional deployment access
+   Request for EU regional API-key
 
 Forslag til melding:
 
@@ -80,25 +80,21 @@ Forslag til melding:
    EU-region project/API key so that audio and transcript content is processed
    and stored within the European Union.
 
-   Could you please enable access to the European Union regional deployment
-   for my Soniox organisation/account and provide any relevant DPA or security
-   documentation for our compliance review?
+   I hope this is possible, as I am highly satisfied with the transcription quality of your speech-to-text model so far.
 
    Kind regards,
    [Name / organisation]
-
-Ikke send pasientopplysninger i e-posten.
 
 
 -------------------------------------
 STEG 4 — OPPRETT ET EU-PROSJEKT
 -------------------------------------
 
-Når Soniox har bekreftet at regionale utrullinger er aktivert:
+Når Soniox har bekreftet at tilgang til EU API-nøkkel:
 
 1) Logg inn i Soniox Console.
 2) Opprett et nytt prosjekt eller åpne prosjektopprettelsen.
-3) Velg European Union som prosjektregion.
+3) Velg EU som prosjektregion.
 4) Gi prosjektet et tydelig navn, for eksempel:
 
    Transcribe Notes — EU
