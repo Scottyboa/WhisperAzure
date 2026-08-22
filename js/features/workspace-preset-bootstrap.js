@@ -1,4 +1,14 @@
 (function bootstrapWorkspacePresetRuntime() {
+  [
+    "lemonfox_api_key",
+    "deepgram_api_key",
+    "gemini_api_key",
+    "vertex_backend_url",
+    "vertex_backend_secret",
+  ].forEach((key) => {
+    try { sessionStorage.removeItem(key); } catch {}
+  });
+
   const params = new URLSearchParams(window.location.search || "");
   const runtimeId = String(params.get("workspacePresetFrame") || "").trim();
   const isFrame = Boolean(runtimeId) && window.parent !== window;
@@ -12,13 +22,8 @@
   const sharedSessionKeys = new Set([
     "openai_api_key",
     "soniox_api_key",
-    "lemonfox_api_key",
     "mistral_api_key",
-    "deepgram_api_key",
-    "gemini_api_key",
     "requesty_api_key",
-    "vertex_backend_url",
-    "vertex_backend_secret",
     "bedrock_backend_url",
     "bedrock_backend_secret",
     "redactor_general_terms_session",

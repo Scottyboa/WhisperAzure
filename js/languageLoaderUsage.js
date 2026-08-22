@@ -375,14 +375,11 @@ function updateSecondaryNoteUI(trans) {
   setAttrIfPresent("secondarySourceText", "aria-label", s.sourceLabel);
   setTextIfPresent("secondaryProviderLabel", s.providerLabel);
   setTextIfPresent("secondaryOpenaiModelLabel", s.modelLabel);
-  setTextIfPresent("secondaryGeminiModelLabel", s.modelLabel);
-  setTextIfPresent("secondaryVertexModelLabel", s.modelLabel);
   setTextIfPresent("secondaryBedrockModelLabel", s.modelLabel);
   setTextIfPresent("secondaryRequestyModelLabel", s.modelLabel);
   setTextIfPresent("secondaryModeLabel", s.modeLabel);
   setTextIfPresent("secondaryOpenaiReasoningLabel", s.reasoningLabel);
   setTextIfPresent("secondaryNanoReasoningLabel", s.reasoningLabel);
-  setTextIfPresent("secondaryGeminiReasoningLabel", s.thinkingLabel);
   setTextIfPresent("secondaryPromptLabel", s.promptLabel);
   setTextIfPresent("secondaryGenerateButton", s.generateButton);
   setTextIfPresent("secondaryAbortButton", s.abortButton);

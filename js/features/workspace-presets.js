@@ -11,12 +11,11 @@ const MAX_PRESETS = 12;
 
 const VALUE_IDS = [
   "transcribeProvider", "sonioxSpeakerLabels", "sonioxRegion",
-  "noteProvider", "noteProviderMode", "openaiModel", "geminiModel",
-  "vertexModel", "bedrockModel", "requestyModel", "gpt5Reasoning",
-  "requestyNanoReasoning", "geminiReasoning", "promptSlot",
+  "noteProvider", "noteProviderMode", "openaiModel",
+  "bedrockModel", "requestyModel", "gpt5Reasoning",
+  "requestyNanoReasoning", "promptSlot",
   "autoCopyModeSelect", "secondaryProvider", "secondaryMode",
   "secondaryOpenaiModel", "secondaryOpenaiReasoning",
-  "secondaryGeminiModel", "secondaryGeminiReasoning", "secondaryVertexModel",
   "secondaryBedrockModel", "secondaryRequestyModel", "secondaryNanoReasoning",
   "secondaryPromptSelect",
 ];
@@ -41,7 +40,7 @@ const DELEGATED_APP_ACTIONS = [
   "getAutoGenerateEnabled", "setAutoCopyMode", "getAutoCopyMode",
   "setUsePromptEnabled", "getUsePromptEnabled", "switchNoteProvider",
   "switchTranscribeProvider", "setSonioxSpeakerLabels", "setOpenAiModel",
-  "setGeminiModel", "setVertexModel", "setBedrockModel", "setRequestyModel",
+  "setBedrockModel", "setRequestyModel",
   "setNoteProviderMode", "setSelectedPromptSlot", "selectPromptSlot",
   "getMiniPanelState", "getMiniPanelPromptOptions", "getSelectedPromptSlot",
   "getCurrentPromptSlotTitle",

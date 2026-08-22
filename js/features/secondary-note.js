@@ -24,7 +24,6 @@ import {
   extractResponsesOutputText,
   formatTime,
   streamChatCompletionsSse,
-  streamGeminiSse,
   streamResponsesSse
 } from "../core/note-runner.js";
 import {
@@ -32,16 +31,12 @@ import {
   getDefaultRequestyReasoning,
   getNoteUiVisibility,
   listBedrockModelOptions,
-  listGeminiApiModelOptions,
-  listGeminiReasoningOptions,
   listNoteModeOptions,
   listNoteUiProviderOptions,
   listOpenAiModelOptions,
   listOpenAiReasoningOptions,
   listRequestyModelOptions,
   listRequestyNanoReasoningOptions,
-  listVertexModelOptions,
-  normalizeGeminiReasoning,
   normalizeNoteMode,
   normalizeNoteUiProvider,
   normalizeOpenAiReasoning,
@@ -59,9 +54,6 @@ const STORAGE_KEYS = {
   mode: "secondary_note_provider_mode",
   openaiModel: "secondary_openai_model",
   openaiReasoning: "secondary_openai_reasoning",
-  geminiModel: "secondary_gemini_model",
-  geminiReasoning: "secondary_gemini_reasoning",
-  vertexModel: "secondary_vertex_model",
   bedrockModel: "secondary_bedrock_model",
   requestyModel: "secondary_requesty_model",
   requestyNanoReasoning: "secondary_requesty_nano_reasoning",
@@ -137,13 +129,6 @@ const REQUESTY_VARIANTS = {
     pricingModelId: "kimi-k3",
     reasoningSelector: "dedicated"
   }
-};
-
-// Mirrors GeminiVertex.js model → backend modelVariant mapping.
-const VERTEX_MODEL_VARIANTS = {
-  "gemini-2.5-pro": "g25",
-  "gemini-3.5-flash": "g35-flash",
-  "gemini-3.1-flash-lite": "g31-flash-lite"
 };
 
 // -----------------------------------------------------------------------------
@@ -399,14 +384,6 @@ function getSelections() {
     const raw = String(readSession(STORAGE_KEYS.openaiModel, DEFAULTS.openaiModel)).trim().toLowerCase();
     return OPENAI_MODEL_IDS[raw] ? raw : DEFAULTS.openaiModel;
   })();
-  const geminiModel = (() => {
-    const raw = String(readSession(STORAGE_KEYS.geminiModel, DEFAULTS.geminiModel)).trim().toLowerCase();
-    return listGeminiApiModelOptions().some((o) => o.value === raw) ? raw : DEFAULTS.geminiModel;
-  })();
-  const vertexModel = (() => {
-    const raw = String(readSession(STORAGE_KEYS.vertexModel, DEFAULTS.vertexModel)).trim().toLowerCase();
-    return VERTEX_MODEL_VARIANTS[raw] ? raw : DEFAULTS.vertexModel;
-  })();
   const bedrockModel = (() => {
     const raw = String(readSession(STORAGE_KEYS.bedrockModel, DEFAULTS.bedrockModel)).trim();
     return ALLOWED_BEDROCK_MODEL_KEYS.has(raw) ? raw : DEFAULTS.bedrockModel;
@@ -423,12 +400,6 @@ function getSelections() {
     openaiReasoning: normalizeOpenAiReasoning(
       readSession(STORAGE_KEYS.openaiReasoning, DEFAULTS.openaiReasoning)
     ),
-    geminiModel,
-    geminiReasoning: normalizeGeminiReasoning(
-      readSession(STORAGE_KEYS.geminiReasoning, DEFAULTS.geminiReasoning),
-      geminiModel
-    ),
-    vertexModel,
     bedrockModel,
     requestyModel,
     requestyNanoReasoning: normalizeRequestyNanoReasoning(
@@ -460,15 +431,15 @@ function syncVisibility() {
   setDisplay(el("secondaryModeContainer"), visibility.showOpenAiMode);
   setDisplay(el("secondaryOpenaiReasoningContainer"), visibility.showOpenAiReasoning);
   setDisplay(el("secondaryNanoReasoningContainer"), visibility.showRequestyNanoReasoning);
-  setDisplay(el("secondaryGeminiModelContainer"), visibility.showGeminiApi);
-  setDisplay(el("secondaryGeminiReasoningContainer"), visibility.showGeminiReasoning);
-  setDisplay(el("secondaryVertexModelContainer"), visibility.showVertex);
   setDisplay(el("secondaryBedrockModelContainer"), visibility.showBedrock);
   setDisplay(el("secondaryRequestyModelContainer"), visibility.showRequesty);
 }
 
 function hydrateSelectors() {
   const selections = getSelections();
+  // Existing sessions may still contain a provider that is no longer
+  // available. Persist the normalized fallback during hydration.
+  writeSession(STORAGE_KEYS.provider, selections.provider);
 
   setSelectOptions(el("secondaryProvider"), listNoteUiProviderOptions());
   setSelectOptions(el("secondaryOpenaiModel"), listOpenAiModelOptions());
@@ -478,12 +449,6 @@ function hydrateSelectors() {
     el("secondaryNanoReasoning"),
     listRequestyNanoReasoningOptions(selections.requestyModel)
   );
-  setSelectOptions(el("secondaryGeminiModel"), listGeminiApiModelOptions());
-  setSelectOptions(
-    el("secondaryGeminiReasoning"),
-    listGeminiReasoningOptions(selections.geminiModel)
-  );
-  setSelectOptions(el("secondaryVertexModel"), listVertexModelOptions());
   setSelectOptions(el("secondaryBedrockModel"), listBedrockModelOptions());
   setSelectOptions(el("secondaryRequestyModel"), listRequestyModelOptions());
 
@@ -497,9 +462,6 @@ function hydrateSelectors() {
   assign("secondaryMode", selections.mode);
   assign("secondaryOpenaiReasoning", selections.openaiReasoning);
   assign("secondaryNanoReasoning", selections.requestyNanoReasoning);
-  assign("secondaryGeminiModel", selections.geminiModel);
-  assign("secondaryGeminiReasoning", selections.geminiReasoning);
-  assign("secondaryVertexModel", selections.vertexModel);
   assign("secondaryBedrockModel", selections.bedrockModel);
   assign("secondaryRequestyModel", selections.requestyModel);
 
@@ -666,9 +628,6 @@ const LOCKABLE_CONTROL_IDS = [
   "secondaryMode",
   "secondaryOpenaiReasoning",
   "secondaryNanoReasoning",
-  "secondaryGeminiModel",
-  "secondaryGeminiReasoning",
-  "secondaryVertexModel",
   "secondaryBedrockModel",
   "secondaryRequestyModel",
   "secondaryPromptSelect"
@@ -780,45 +739,6 @@ async function generateOpenAi({ selections, sourceText, promptText, outputField,
   return { ok: true };
 }
 
-async function generateLemonfox({ sourceText, promptText, outputField, signal }) {
-  const apiKey = requireSecondarySessionKey(
-    "lemonfox_api_key",
-    "No API key available for note generation."
-  );
-  if (!apiKey) return { ok: false, silent: true };
-
-  const resp = await fetch("https://eu-api.lemonfox.ai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model: "llama-70b-chat",
-      messages: [
-        { role: "system", content: buildStandardNotePrompt(promptText) },
-        { role: "user", content: sourceText }
-      ],
-      stream: true
-    }),
-    signal
-  });
-
-  await streamChatCompletionsSse(resp, {
-    signal,
-    errorLabel: "Lemonfox",
-    onDelta: (textChunk) => {
-      outputField.value += textChunk;
-    },
-    onDone: () => {},
-    onError: (error) => {
-      throw error;
-    }
-  });
-
-  return { ok: true };
-}
-
 async function generateMistral({ sourceText, promptText, outputField, signal }) {
   const apiKey = requireSecondarySessionKey(
     "mistral_api_key",
@@ -863,149 +783,6 @@ async function generateMistral({ sourceText, promptText, outputField, signal }) 
   });
 
   return { ok: true };
-}
-
-function buildSecondaryGeminiPrompt({ promptText, sourceText }) {
-  const baseInstruction = [
-    "Do not use bold text. Do not use asterisks (*) or Markdown formatting anywhere in the output.",
-    "All headings should be plain text with a colon."
-  ].join("\n");
-
-  return [promptText || "", baseInstruction, `TRANSCRIPTION:\n${sourceText}`]
-    .filter(Boolean)
-    .join("\n\n");
-}
-
-async function generateGeminiApi({ selections, sourceText, promptText, outputField, signal, controller }) {
-  const apiKey = requireSecondarySessionKey(
-    "gemini_api_key",
-    "No Gemini API key available for note generation."
-  );
-  if (!apiKey) return { ok: false, silent: true };
-
-  const modelId = selections.geminiModel;
-  const thinkingLevel = normalizeGeminiReasoning(selections.geminiReasoning, modelId);
-  const finalPromptText = buildSecondaryGeminiPrompt({ promptText, sourceText });
-
-  const makeUrl = (apiVersion) =>
-    `https://generativelanguage.googleapis.com/${apiVersion}/models/${modelId}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`;
-
-  const requestBody = JSON.stringify({
-    contents: [{ parts: [{ text: finalPromptText }] }],
-    generationConfig: {
-      thinkingConfig: { thinkingLevel }
-    }
-  });
-
-  const GEMINI_TIMEOUT_MS = 120_000;
-  const timeoutId = setTimeout(() => {
-    try {
-      controller.abort();
-    } catch (_) {}
-  }, GEMINI_TIMEOUT_MS);
-
-  try {
-    let response = await fetch(makeUrl("v1beta"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: requestBody,
-      signal
-    });
-
-    if (response.status === 404) {
-      response = await fetch(makeUrl("v1alpha"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: requestBody,
-        signal
-      });
-    }
-
-    if (!response.ok || !response.body) {
-      const text = await response.text().catch(() => "");
-      throw new Error("Gemini stream HTTP " + response.status + ": " + text);
-    }
-
-    let finalUsage = null;
-    await streamGeminiSse(response.body, {
-      signal,
-      onDelta: (textChunk) => {
-        outputField.value += textChunk;
-      },
-      onDone: (usage) => {
-        finalUsage = usage || null;
-      },
-      onError: (error) => {
-        throw error;
-      }
-    });
-
-    pushSecondaryUsage({
-      providerKey: "gemini3",
-      modelId,
-      usage: finalUsage
-    });
-  } finally {
-    clearTimeout(timeoutId);
-  }
-
-  return { ok: true };
-}
-
-async function generateVertex({ selections, sourceText, promptText, outputField, signal }) {
-  const backendUrl = readSession("vertex_backend_url", "").trim();
-  const backendSecret = readSession("vertex_backend_secret", "").trim();
-  if (!backendUrl || !backendSecret) {
-    alert("Vertex backend URL/secret is missing. Open the Vertex setup guide and configure both values first.");
-    return { ok: false, silent: true };
-  }
-
-  const modelId = selections.vertexModel;
-
-  const resp = await fetch(backendUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Proxy-Secret": backendSecret
-    },
-    body: JSON.stringify({
-      transcription: sourceText,
-      customPrompt: promptText,
-      provider: "gemini",
-      modelVariant: VERTEX_MODEL_VARIANTS[modelId] || "g25"
-    }),
-    signal
-  });
-
-  if (!resp.ok) {
-    const text = await resp.text().catch(() => "");
-    throw new Error(`Vertex backend error ${resp.status}: ${text}`);
-  }
-
-  const data = await resp.json().catch(() => ({}));
-  const noteText =
-    (Array.isArray(data?.candidates) &&
-      data.candidates
-        .flatMap((candidate) =>
-          Array.isArray(candidate?.content?.parts) ? candidate.content.parts : []
-        )
-        .map((part) => (typeof part?.text === "string" ? part.text : ""))
-        .join("")
-        .trim()) ||
-    data?.noteText ||
-    data?.text ||
-    data?.output ||
-    "";
-
-  outputField.value = noteText || "[No text returned from Vertex backend]";
-
-  pushSecondaryUsage({
-    providerKey: "gemini3-vertex",
-    modelId: data?.modelId || data?.model || modelId,
-    usage: data?.usage || null
-  });
-
-  return { ok: true, noteText: outputField.value };
 }
 
 async function generateBedrock({ selections, sourceText, promptText, outputField, signal }) {
@@ -1217,17 +994,8 @@ async function generateSecondaryNote() {
       case "openai":
         result = await generateOpenAi(context);
         break;
-      case "lemonfox":
-        result = await generateLemonfox(context);
-        break;
       case "mistral":
         result = await generateMistral(context);
-        break;
-      case "gemini3":
-        result = await generateGeminiApi(context);
-        break;
-      case "gemini3-vertex":
-        result = await generateVertex(context);
         break;
       case "aws-bedrock":
         result = await generateBedrock(context);
@@ -1409,26 +1177,6 @@ function initSecondaryNoteModule() {
   bindPersistedSelect("secondaryNanoReasoning", STORAGE_KEYS.requestyNanoReasoning, {
     normalize: (value) =>
       normalizeRequestyNanoReasoning(value, getSelections().requestyModel)
-  });
-  bindPersistedSelect("secondaryGeminiModel", STORAGE_KEYS.geminiModel, {
-    onChange: (modelId) => {
-      clearSecondaryUsageAndCost();
-      // Flash models support "minimal"; refresh the thinking-level options
-      // for the newly selected model, keeping the value when still valid.
-      const reasoningSelect = el("secondaryGeminiReasoning");
-      const previous = String(reasoningSelect?.value || "");
-      setSelectOptions(reasoningSelect, listGeminiReasoningOptions(modelId));
-      const normalized = normalizeGeminiReasoning(previous, modelId);
-      if (reasoningSelect) reasoningSelect.value = normalized;
-      writeSession(STORAGE_KEYS.geminiReasoning, normalized);
-    }
-  });
-  bindPersistedSelect("secondaryGeminiReasoning", STORAGE_KEYS.geminiReasoning, {
-    normalize: (v) => normalizeGeminiReasoning(v, getSelections().geminiModel)
-  });
-  bindPersistedSelect("secondaryVertexModel", STORAGE_KEYS.vertexModel, {
-    normalize: (v) => (VERTEX_MODEL_VARIANTS[v] ? v : DEFAULTS.vertexModel),
-    onChange: () => clearSecondaryUsageAndCost()
   });
   bindPersistedSelect("secondaryBedrockModel", STORAGE_KEYS.bedrockModel, {
     normalize: (v) => (ALLOWED_BEDROCK_MODEL_KEYS.has(v) ? v : DEFAULTS.bedrockModel),

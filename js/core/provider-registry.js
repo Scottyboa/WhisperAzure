@@ -16,9 +16,6 @@ export const DEFAULTS = {
   openaiModel: 'gpt5',
   openaiReasoning: 'low',
   noteMode: 'streaming',
-  geminiModel: 'gemini-3-pro-preview',
-  geminiReasoning: 'high',
-  vertexModel: 'gemini-2.5-pro',
   bedrockModel: 'opus-4-5',
   requestyModel: 'claude-opus-5',
   requestyNanoReasoning: 'medium',
@@ -54,26 +51,12 @@ const TRANSCRIBE_PROVIDER_REGISTRY = {
     // Reuse the same API key as plain Soniox so the user only enters it once.
     activeApiKeyStorageKey: 'soniox_api_key',
   },
-  lemonfox: {
-    id: 'lemonfox',
-    label: 'Lemonfox',
-    shortLabel: 'Lemonfox',
-    modulePath: './LemonfoxSTT.js',
-    activeApiKeyStorageKey: 'lemonfox_api_key',
-  },
   voxtral: {
     id: 'voxtral',
     label: 'Mistral (Voxtral Mini Transcribe)',
     shortLabel: 'Mistral',
     modulePath: './VoxtralminiSTT.js',
     activeApiKeyStorageKey: 'mistral_api_key',
-  },
-  deepgram: {
-    id: 'deepgram',
-    label: 'Deepgram Nova-3',
-    shortLabel: 'Deepgram',
-    modulePath: './deepgram_nova3.js',
-    activeApiKeyStorageKey: 'deepgram_api_key',
   },
 };
 
@@ -141,29 +124,11 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './noteGeneration_openai.js',
     initExportName: 'initGpt55NonStreaming',
   },
-  lemonfox: {
-    id: 'lemonfox',
-    label: 'Lemonfox',
-    uiProvider: 'lemonfox',
-    modulePath: './LemonfoxTXT.js',
-  },
   mistral: {
     id: 'mistral',
     label: 'Mistral',
     uiProvider: 'mistral',
     modulePath: './MistralTXT.js',
-  },
-  gemini3: {
-    id: 'gemini3',
-    label: 'Google AI Studio',
-    uiProvider: 'gemini3',
-    modulePath: './Gemini3.js',
-  },
-  'gemini3-vertex': {
-    id: 'gemini3-vertex',
-    label: 'Google Vertex',
-    uiProvider: 'gemini3-vertex',
-    modulePath: './GeminiVertex.js',
   },
   'aws-bedrock': {
     id: 'aws-bedrock',
@@ -259,10 +224,7 @@ const NOTE_PROVIDER_REGISTRY = {
 
 const NOTE_UI_PROVIDER_OPTIONS = [
   { value: 'openai', label: 'OpenAI' },
-  { value: 'lemonfox', label: 'Lemonfox' },
   { value: 'mistral', label: 'Mistral' },
-  { value: 'gemini3', label: 'Google AI Studio' },
-  { value: 'gemini3-vertex', label: 'Google Vertex' },
   { value: 'aws-bedrock', label: 'AWS Bedrock' },
   { value: 'requesty', label: 'Requesty' },
 ];
@@ -339,36 +301,6 @@ const OPENAI_REASONING_OPTIONS = [
   { value: 'high', label: 'High' },
 ];
 
-const GEMINI_REASONING_OPTIONS_COMMON = [
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-];
-
-const GEMINI_REASONING_OPTIONS_FLASH = [
-  { value: 'minimal', label: 'Minimal' },
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-];
-
-function isGeminiFlashModel(modelId) {
-  return String(modelId || '').trim().toLowerCase().includes('flash');
-}
-
-
-const GEMINI_API_MODEL_OPTIONS = [
-  { value: 'gemini-3-pro-preview', label: 'Gemini 3 Pro' },
-  { value: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro' },
-  { value: 'gemini-3-flash-preview', label: 'Gemini 3 Flash' },
-];
-
-const VERTEX_MODEL_OPTIONS = [
-  { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
-  { value: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash' },
-  { value: 'gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash-Lite' },
-];
-
 const BEDROCK_MODEL_OPTIONS = [
   { value: 'haiku-4-5', label: 'Claude Haiku 4.5' },
   { value: 'sonnet-4-5', label: 'Claude Sonnet 4.5' },
@@ -417,21 +349,6 @@ export function listNoteModeOptions() {
 
 export function listOpenAiReasoningOptions() {
   return OPENAI_REASONING_OPTIONS.map((item) => ({ ...item }));
-}
-
-export function listGeminiReasoningOptions(modelId = DEFAULTS.geminiModel) {
-  const options = isGeminiFlashModel(modelId)
-    ? GEMINI_REASONING_OPTIONS_FLASH
-    : GEMINI_REASONING_OPTIONS_COMMON;
-  return options.map((item) => ({ ...item }));
-}
-
-export function listGeminiApiModelOptions() {
-  return GEMINI_API_MODEL_OPTIONS.map((item) => ({ ...item }));
-}
-
-export function listVertexModelOptions() {
-  return VERTEX_MODEL_OPTIONS.map((item) => ({ ...item }));
 }
 
 export function listBedrockModelOptions() {
@@ -641,17 +558,6 @@ export function normalizeOpenAiReasoning(value) {
     : DEFAULTS.openaiReasoning;
 }
 
-export function normalizeGeminiReasoning(value, modelId = DEFAULTS.geminiModel) {
-  const raw = String(value || '').trim().toLowerCase();
-  const options = isGeminiFlashModel(modelId)
-    ? GEMINI_REASONING_OPTIONS_FLASH
-    : GEMINI_REASONING_OPTIONS_COMMON;
-
-  return options.some((item) => item.value === raw)
-    ? raw
-    : DEFAULTS.geminiReasoning;
-}
-
 export function getNoteProviderConfig(effectiveProvider) {
   const normalized = normalizeNoteEffectiveProvider(effectiveProvider);
   return {
@@ -667,7 +573,7 @@ export function resolveNoteModulePath(effectiveProvider) {
 // Returns the name of the named export to call on the loaded module
 // (e.g. 'initGpt5Streaming'). Falls back to 'initNoteGeneration' for
 // providers that don't specify an explicit export, so non-OpenAI
-// modules (Gemini, Lemonfox, Mistral, AWS Bedrock) keep their existing
+// modules (Mistral and AWS Bedrock) keep their existing
 // loader behaviour.
 export function resolveNoteInitExportName(effectiveProvider) {
   const config = getNoteProviderConfig(effectiveProvider);
@@ -677,8 +583,6 @@ export function resolveNoteInitExportName(effectiveProvider) {
 export function getNoteProviderLogLabel({
   effectiveProvider,
   openaiModel,
-  geminiModel,
-  vertexModel,
   bedrockModel,
 } = {}) {
   const normalized = normalizeNoteEffectiveProvider(effectiveProvider);
@@ -687,9 +591,6 @@ export function getNoteProviderLogLabel({
     return `requesty:${config.requestyModel || DEFAULTS.requestyModel}`;
   }
   if (normalized === 'aws-bedrock' && bedrockModel) return String(bedrockModel).toLowerCase();
-  if (normalized === 'gemini3' && geminiModel) return String(geminiModel).toLowerCase();
-  if (normalized === 'gemini3-vertex' && vertexModel) return String(vertexModel).toLowerCase();
-
   const config = getNoteProviderConfig(normalized);
   if (config.uiProvider === 'openai') {
     const derived = deriveNoteUiStateFromEffectiveProvider(normalized);
@@ -707,14 +608,6 @@ export function isMistralEffectiveNoteProvider(effectiveProvider) {
   return normalizeNoteEffectiveProvider(effectiveProvider) === 'mistral';
 }
 
-export function isGeminiApiEffectiveNoteProvider(effectiveProvider) {
-  return normalizeNoteEffectiveProvider(effectiveProvider) === 'gemini3';
-}
-
-export function isVertexEffectiveNoteProvider(effectiveProvider) {
-  return normalizeNoteEffectiveProvider(effectiveProvider) === 'gemini3-vertex';
-}
-
 export function isBedrockEffectiveNoteProvider(effectiveProvider) {
   return normalizeNoteEffectiveProvider(effectiveProvider) === 'aws-bedrock';
 }
@@ -726,8 +619,6 @@ export function isRequestyEffectiveNoteProvider(effectiveProvider) {
 export function getDefaultModelIdForEffectiveNoteProvider({
   effectiveProvider,
   openaiModel,
-  geminiModel,
-  vertexModel,
   bedrockModel,
 } = {}) {
   const normalized = normalizeNoteEffectiveProvider(effectiveProvider);
@@ -741,20 +632,8 @@ export function getDefaultModelIdForEffectiveNoteProvider({
     return String(bedrockModel || DEFAULTS.bedrockModel || '').trim() || null;
   }
 
-  if (isVertexEffectiveNoteProvider(normalized)) {
-    return String(vertexModel || DEFAULTS.vertexModel || '').trim() || null;
-  }
-
-  if (isGeminiApiEffectiveNoteProvider(normalized)) {
-    return String(geminiModel || DEFAULTS.geminiModel || '').trim() || null;
-  }
-
   if (isMistralEffectiveNoteProvider(normalized)) {
     return 'mistral-large-latest';
-  }
-
-  if (normalized === 'lemonfox') {
-    return 'llama-70b-chat';
   }
 
   switch (normalized) {
@@ -802,9 +681,6 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
     showOpenAiMode: isGpt5x || isRequesty,
     showOpenAiReasoning: isGpt5x || (isRequesty && !usesDedicatedRequestyReasoning),
     showRequestyNanoReasoning: usesDedicatedRequestyReasoning,
-    showGeminiApi: uiProvider === 'gemini3',
-    showGeminiReasoning: uiProvider === 'gemini3',
-    showVertex: uiProvider === 'gemini3-vertex',
     showBedrock: uiProvider === 'aws-bedrock',
     showRequesty: isRequesty,
   };

@@ -2321,9 +2321,7 @@
               <option value="openai">OpenAI</option>
               <option value="soniox">Soniox</option>
               <option value="soniox_rt">Soniox (real-time)</option>
-              <option value="lemonfox">Lemonfox</option>
               <option value="voxtral">Mistral (Voxtral Mini Transcribe)</option>
-              <option value="deepgram">Deepgram Nova-3</option>
             </select>
           </div>
           <!-- Soniox Speaker Labels selector (shown only for Soniox) -->
@@ -2477,16 +2475,6 @@
                 <select id="secondaryOpenaiModel"></select>
                 <span id="secondaryOpenaiModelPrice" class="model-price-label"></span>
               </span>
-              <span class="secondary-inline-control" id="secondaryGeminiModelContainer" style="display:none;">
-                <label for="secondaryGeminiModel" id="secondaryGeminiModelLabel">Model:</label>
-                <select id="secondaryGeminiModel"></select>
-                <span id="secondaryGeminiModelPrice" class="model-price-label"></span>
-              </span>
-              <span class="secondary-inline-control" id="secondaryVertexModelContainer" style="display:none;">
-                <label for="secondaryVertexModel" id="secondaryVertexModelLabel">Model:</label>
-                <select id="secondaryVertexModel"></select>
-                <span id="secondaryVertexModelPrice" class="model-price-label"></span>
-              </span>
               <span class="secondary-inline-control" id="secondaryBedrockModelContainer" style="display:none;">
                 <label for="secondaryBedrockModel" id="secondaryBedrockModelLabel">Model:</label>
                 <select id="secondaryBedrockModel"></select>
@@ -2506,10 +2494,6 @@
               <span class="secondary-inline-control" id="secondaryNanoReasoningContainer" style="display:none;">
                 <label for="secondaryNanoReasoning" id="secondaryNanoReasoningLabel">Reasoning effort:</label>
                 <select id="secondaryNanoReasoning"></select>
-              </span>
-              <span class="secondary-inline-control" id="secondaryGeminiReasoningContainer" style="display:none;">
-                <label for="secondaryGeminiReasoning" id="secondaryGeminiReasoningLabel">Thinking level:</label>
-                <select id="secondaryGeminiReasoning"></select>
               </span>
             </div>
 
@@ -2800,10 +2784,7 @@
             <label for="noteProvider" id="noteProviderLabel">Provider:</label>
             <select id="noteProvider">
               <option value="openai">OpenAI</option>
-              <option value="lemonfox">Lemonfox</option>
               <option value="mistral">Mistral</option>
-              <option value="gemini3">Google AI Studio</option> <!-- Gemini via public API -->
-              <option value="gemini3-vertex">Google Vertex</option> <!-- Vertex-backed models (e.g. Gemini 2.5 Pro) -->
               <option value="aws-bedrock" selected>AWS Bedrock</option>
               <option value="requesty">Requesty</option> <!-- GDPR: EU router + EU-region models -->
             </select>
@@ -2826,29 +2807,6 @@
                 <option value="gpt55">GPT-5.5</option>
               </select>
               <span id="openaiModelPrice" class="model-price-label"></span>
-            </div>
-
-            <div id="gemini-model-container"
-                 style="display:none; align-items:center; gap:6px; margin-left:8px;">
-              <label for="geminiModel" id="geminiModelLabel">Model:</label>
-              <select id="geminiModel">
-                <option value="gemini-3-pro-preview" selected>gemini-3-pro-preview</option>
-                <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview</option>
-                <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
-              </select>
-              <span id="geminiModelPrice" class="model-price-label"></span>
-            </div>
-
-            <!-- New: Vertex model selector (shown only when Note Provider = Google Vertex) -->
-            <div id="vertex-model-container"
-                 style="display:none; align-items:center; gap:6px; margin-left:8px;">
-              <label for="vertexModel" id="vertexModelLabel">Model:</label>
-              <select id="vertexModel">
-                <option value="gemini-2.5-pro" selected>Gemini 2.5 Pro</option>
-                <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
-                <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite</option>
-              </select>
-              <span id="vertexModelPrice" class="model-price-label"></span>
             </div>
 
             <!-- AWS Bedrock model selector (shown only when Note Provider = AWS Bedrock) -->
@@ -2927,17 +2885,6 @@
               <option value="low">Low</option>
               <option value="medium" selected>Medium</option>
               <option value="high">High</option>
-            </select>
-          </div>
-
-          <!-- Gemini thinking level selector (shown only when Provider = Google AI Studio) -->
-          <div id="gemini-reasoning-container"
-               style="display:none; align-items:center; gap:8px; margin: 0 0 10px;">
-            <label for="geminiReasoning" id="geminiReasoningLabel">Thinking level:</label>
-            <select id="geminiReasoning">
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high" selected>High</option>
             </select>
           </div>
 

@@ -3,12 +3,10 @@ import {
   getNoteUiVisibility,
   getTranscribeProviderShortLabel,
   listBedrockModelOptions,
-  listGeminiApiModelOptions,
   listNoteModeOptions,
   listNoteUiProviderOptions,
   listOpenAiModelOptions,
   listRequestyModelOptions,
-  listVertexModelOptions,
 } from '../core/provider-registry.js';
 
 // js/features/mini-controller.js
@@ -1559,8 +1557,6 @@ function syncMiniNoteProviderOptions() {
   ensureSelectOptions('miniNoteProviderSelect', listNoteUiProviderOptions());
   ensureSelectOptions('miniOpenAiModelSelect', listOpenAiModelOptions());
   ensureSelectOptions('miniNoteProviderModeSelect', listNoteModeOptions());
-  ensureSelectOptions('miniGeminiModelSelect', listGeminiApiModelOptions());
-  ensureSelectOptions('miniVertexModelSelect', listVertexModelOptions());
   ensureSelectOptions('miniBedrockModelSelect', listBedrockModelOptions());
   ensureSelectOptions('miniRequestyModelSelect', listRequestyModelOptions());
 }
@@ -1634,8 +1630,6 @@ function syncMiniNoteProviderControls(state, snapshot) {
   const noteProvider = normalizeLower(state?.noteProviderUi, 'aws-bedrock');
   const openaiModel = normalizeLower(state?.openaiModel, DEFAULTS.openaiModel);
   const noteMode = normalizeLower(state?.noteProviderMode, DEFAULTS.noteMode);
-  const geminiModel = normalizeLower(state?.geminiModel, DEFAULTS.geminiModel);
-  const vertexModel = normalizeLower(state?.vertexModel, DEFAULTS.vertexModel);
   const bedrockModel = normalizeLower(state?.bedrockModel, DEFAULTS.bedrockModel);
   const requestyModel = normalizeLower(state?.requestyModel, DEFAULTS.requestyModel);
   const hasSnapshot = !!snapshot;
@@ -1647,8 +1641,6 @@ function syncMiniNoteProviderControls(state, snapshot) {
   setValue('miniNoteProviderSelect', noteProvider);
   setValue('miniOpenAiModelSelect', openaiModel);
   setValue('miniNoteProviderModeSelect', noteMode);
-  setValue('miniGeminiModelSelect', geminiModel);
-  setValue('miniVertexModelSelect', vertexModel);
   setValue('miniBedrockModelSelect', bedrockModel);
   setValue('miniRequestyModelSelect', requestyModel);
 
@@ -1659,16 +1651,12 @@ function syncMiniNoteProviderControls(state, snapshot) {
 
   setHidden('miniOpenAiModelSelect', !visibility.showOpenAi);
   setHidden('miniNoteProviderModeSelect', !visibility.showOpenAiMode);
-  setHidden('miniGeminiModelSelect', !visibility.showGeminiApi);
-  setHidden('miniVertexModelSelect', !visibility.showVertex);
   setHidden('miniBedrockModelSelect', !visibility.showBedrock);
   setHidden('miniRequestyModelSelect', !visibility.showRequesty);
 
   setDisabled('miniNoteProviderSelect', !hasSnapshot);
   setDisabled('miniOpenAiModelSelect', !hasSnapshot || !visibility.showOpenAi);
   setDisabled('miniNoteProviderModeSelect', !hasSnapshot || !visibility.showOpenAiMode);
-  setDisabled('miniGeminiModelSelect', !hasSnapshot || !visibility.showGeminiApi);
-  setDisabled('miniVertexModelSelect', !hasSnapshot || !visibility.showVertex);
   setDisabled('miniBedrockModelSelect', !hasSnapshot || !visibility.showBedrock);
   setDisabled('miniRequestyModelSelect', !hasSnapshot || !visibility.showRequesty);
 }
@@ -2682,8 +2670,6 @@ function bindMiniPanelEvents() {
   const miniNoteProviderSelect = $('miniNoteProviderSelect');
   const miniOpenAiModelSelect = $('miniOpenAiModelSelect');
   const miniNoteProviderModeSelect = $('miniNoteProviderModeSelect');
-  const miniGeminiModelSelect = $('miniGeminiModelSelect');
-  const miniVertexModelSelect = $('miniVertexModelSelect');
   const miniBedrockModelSelect = $('miniBedrockModelSelect');
   const miniRequestyModelSelect = $('miniRequestyModelSelect');
   const miniSonioxSpeakerLabelsSelect = $('miniSonioxSpeakerLabels');
@@ -2697,8 +2683,7 @@ function bindMiniPanelEvents() {
   [
     autoGenerateToggle, autoCopyModeSelect, usePromptToggle, promptSelect,
     miniNoteProviderSelect, miniOpenAiModelSelect, miniNoteProviderModeSelect,
-    miniGeminiModelSelect, miniVertexModelSelect, miniBedrockModelSelect,
-    miniRequestyModelSelect, miniSonioxSpeakerLabelsSelect,
+    miniBedrockModelSelect, miniRequestyModelSelect, miniSonioxSpeakerLabelsSelect,
   ].forEach(stabilizeMiniValueControl);
 
   if (startButton) {
@@ -2900,32 +2885,6 @@ function bindMiniPanelEvents() {
       updateSelectedHubSnapshot((prev) => ({
         ...prev,
         state: { ...(prev.state || {}), noteProviderMode: next },
-      }));
-      requestUiRefresh();
-    });
-  }
-
-  if (miniGeminiModelSelect) {
-    miniGeminiModelSelect.addEventListener('change', () => {
-      const next = String(miniGeminiModelSelect.value || '').trim().toLowerCase();
-      if (!next) return;
-      dispatchPanelAction('setGeminiModel', next);
-      updateSelectedHubSnapshot((prev) => ({
-        ...prev,
-        state: { ...(prev.state || {}), geminiModel: next },
-      }));
-      requestUiRefresh();
-    });
-  }
-
-  if (miniVertexModelSelect) {
-    miniVertexModelSelect.addEventListener('change', () => {
-      const next = String(miniVertexModelSelect.value || '').trim().toLowerCase();
-      if (!next) return;
-      dispatchPanelAction('setVertexModel', next);
-      updateSelectedHubSnapshot((prev) => ({
-        ...prev,
-        state: { ...(prev.state || {}), vertexModel: next },
       }));
       requestUiRefresh();
     });
@@ -4007,22 +3966,6 @@ function renderMiniPanelDocument(targetWindow) {
       flex: 1 1 0;
     }
 
-    .note-config-right[data-note-provider="gemini3"] .note-config-select--provider {
-      flex-basis: 112px;
-    }
-
-    .note-config-right[data-note-provider="gemini3"] #miniGeminiModelSelect {
-      flex: 1 1 0;
-    }
-
-    .note-config-right[data-note-provider="gemini3-vertex"] .note-config-select--provider {
-      flex-basis: 92px;
-    }
-
-    .note-config-right[data-note-provider="gemini3-vertex"] #miniVertexModelSelect {
-      flex: 1 1 0;
-    }
-
     .prompt-left {
       display: flex;
       align-items: center;
@@ -4228,8 +4171,6 @@ function renderMiniPanelDocument(targetWindow) {
           <select id="miniNoteProviderSelect" class="prompt-select note-config-select note-config-select--provider" aria-label="Note provider"></select>
           <select id="miniOpenAiModelSelect" class="prompt-select note-config-select note-config-select--model" aria-label="OpenAI model" hidden></select>
           <select id="miniNoteProviderModeSelect" class="prompt-select note-config-select note-config-select--mode" aria-label="Note mode" hidden></select>
-          <select id="miniGeminiModelSelect" class="prompt-select note-config-select note-config-select--model" aria-label="Google AI Studio model" hidden></select>
-          <select id="miniVertexModelSelect" class="prompt-select note-config-select note-config-select--model" aria-label="Vertex model" hidden></select>
           <select id="miniBedrockModelSelect" class="prompt-select note-config-select note-config-select--model" aria-label="Bedrock model" hidden></select>
           <select id="miniRequestyModelSelect" class="prompt-select note-config-select note-config-select--model" aria-label="Requesty model" hidden></select>
         </div>

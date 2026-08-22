@@ -9,14 +9,12 @@ import {
   inferNoteProviderUi,
   normalizeNoteUiProvider,
   listBedrockModelOptions,
-  listGeminiApiModelOptions,
   listNoteModeOptions,
   listNoteUiProviderOptions,
   listOpenAiModelOptions,
   listSonioxRegionOptions,
   listSonioxSpeakerLabelOptions,
   listTranscribeProviderOptions,
-  listVertexModelOptions,
   normalizeTranscribeProvider,
   resolveEffectiveNoteProvider,
   resolveNoteInitExportName as resolveNoteInitExportNameFromRegistry,
@@ -896,11 +894,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const noteProviderSelect = document.getElementById('noteProvider');
     const openaiModelSelect = document.getElementById('openaiModel');
     const noteModeSelect = document.getElementById('noteProviderMode');
-    const geminiModelSelect = document.getElementById('geminiModel');
-    const vertexModelSelect = document.getElementById('vertexModel');
     const bedrockModelSelect = document.getElementById('bedrockModel');
     const requestyModelSelect = document.getElementById('requestyModel');
-    const geminiReasoningSelect = document.getElementById('geminiReasoning');
     const openaiReasoningSelect = document.getElementById('gpt5Reasoning');
     const requestyNanoReasoningSelect = document.getElementById('requestyNanoReasoning');
     const busy = !!getApp().noteGenerationInFlight;
@@ -919,11 +914,8 @@ document.addEventListener('DOMContentLoaded', () => {
       noteProviderSelect,
       openaiModelSelect,
       noteModeSelect,
-      geminiModelSelect,
-      vertexModelSelect,
       bedrockModelSelect,
       requestyModelSelect,
-      geminiReasoningSelect,
       openaiReasoningSelect,
       requestyNanoReasoningSelect,
     ].forEach((el) => {
@@ -1512,20 +1504,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return getDerivedNoteUiState().openaiModel;
   }
 
-  function getSelectedGeminiModel() {
-    return String(
-      document.getElementById('geminiModel')?.value ||
-        readSession('gemini_model', DEFAULTS.geminiModel)
-    ).toLowerCase();
-  }
-
-  function getSelectedVertexModel() {
-    return String(
-      document.getElementById('vertexModel')?.value ||
-        readSession('vertex_model', '')
-    ).toLowerCase();
-  }
-
   function getSelectedBedrockModel() {
     return String(
       document.getElementById('bedrockModel')?.value ||
@@ -1561,8 +1539,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function getNoteProviderSnapshot() {
     const effective = getSelectedEffectiveNoteProvider();
     const uiProvider = getSelectedNoteProviderUi();
-    const geminiModel = getSelectedGeminiModel();
-    const vertexModel = getSelectedVertexModel();
     const bedrockModel = getSelectedBedrockModel();
     const requestyModel = getSelectedRequestyModel();
     const openaiModel = getSelectedOpenAiModel();
@@ -1573,15 +1549,11 @@ document.addEventListener('DOMContentLoaded', () => {
       noteProviderEffective: effective,
       noteProviderMode,
       openaiModel,
-      geminiModel,
-      vertexModel,
       bedrockModel,
       requestyModel,
       noteProviderLogLabel: getNoteProviderLogLabel({
         effectiveProvider: effective,
         openaiModel,
-        geminiModel,
-        vertexModel,
         bedrockModel,
       }),
     };
@@ -1768,9 +1740,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const RECORDING_UI_ABORT_KEYS = [
     '__recordingUIAbort_openai',
-    '__recordingUIAbort_lemonfox',
     '__recordingUIAbort_voxtral',
-    '__recordingUIAbort_deepgram',
     // The merged Soniox module (js/soniox.js) handles all three modes
     // (async-plain, async-diarized, realtime) and registers a single
     // window-level UI abort controller.
@@ -1830,7 +1800,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Prefer the registry-specified named export (e.g. 'initGpt5Streaming'
     // on the consolidated noteGeneration_openai.js). Fall back to the
     // legacy 'initNoteGeneration' export for modules that don't declare
-    // initExportName (Gemini, Lemonfox, Mistral, AWS Bedrock).
+    // initExportName (Mistral, AWS Bedrock).
     const callInit = (mod, name) => {
       if (mod && typeof mod[name] === 'function') {
         mod[name]();
@@ -2324,8 +2294,6 @@ document.addEventListener('DOMContentLoaded', () => {
       noteProviderEffective: getSelectedEffectiveNoteProvider(),
       noteProviderMode: getSelectedNoteProviderMode(),
       openaiModel: getSelectedOpenAiModel(),
-      geminiModel: getSelectedGeminiModel(),
-      vertexModel: getSelectedVertexModel(),
       bedrockModel: getSelectedBedrockModel(),
       requestyModel: getSelectedRequestyModel(),
     };
@@ -2611,8 +2579,6 @@ document.addEventListener('DOMContentLoaded', () => {
   app.getSelectedEffectiveNoteProvider = getSelectedEffectiveNoteProvider;
   app.getSelectedNoteProviderUi = getSelectedNoteProviderUi;
   app.getSelectedOpenAiModel = getSelectedOpenAiModel;
-  app.getSelectedGeminiModel = getSelectedGeminiModel;
-  app.getSelectedVertexModel = getSelectedVertexModel;
   app.getSelectedBedrockModel = getSelectedBedrockModel;
   app.getSelectedNoteProviderMode = getSelectedNoteProviderMode;
   app.getTranscribeProviderSnapshot = getTranscribeProviderSnapshot;
@@ -2634,7 +2600,6 @@ document.addEventListener('DOMContentLoaded', () => {
     getTranscribeProviderShortLabel,
     inferNoteProviderUi,
     listBedrockModelOptions,
-    listGeminiApiModelOptions,
     listNoteModeOptions,
     listNoteUiProviderOptions,
     normalizeNoteUiProvider,
@@ -2642,7 +2607,6 @@ document.addEventListener('DOMContentLoaded', () => {
     listSonioxRegionOptions,
     listSonioxSpeakerLabelOptions,
     listTranscribeProviderOptions,
-    listVertexModelOptions,
     normalizeTranscribeProvider,
     resolveTranscribeModulePath,
     resolveNoteModulePath,
@@ -2721,7 +2685,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const normalizedNext = String(next || '').trim().toLowerCase();
     if (!normalizedNext) return false;
 
-    // Callers may pass either a UI provider ('openai', 'lemonfox',
+    // Callers may pass either a UI provider ('openai', 'mistral',
     // 'aws-bedrock', ...) or an EFFECTIVE provider ('gpt5', 'gpt52-ns',
     // ...). A raw UI value like 'openai' must stay 'openai' here; if we
     // feed it through inferNoteProviderUi() it gets treated like an
@@ -2823,42 +2787,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     writeSession('openai_model', normalizedNext);
     emitAppStateChanged('openai-model-set-programmatically', {
-      model: normalizedNext,
-    });
-    return true;
-  };
-
-  app.setGeminiModel = function setGeminiModel(next) {
-    const normalizedNext = String(next || '').trim().toLowerCase();
-    if (!normalizedNext) return false;
-
-    const el = document.getElementById('geminiModel');
-    if (el && el.value !== normalizedNext) {
-      el.value = normalizedNext;
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-      return true;
-    }
-
-    writeSession('gemini_model', normalizedNext);
-    emitAppStateChanged('gemini-model-set-programmatically', {
-      model: normalizedNext,
-    });
-    return true;
-  };
-
-  app.setVertexModel = function setVertexModel(next) {
-    const normalizedNext = String(next || '').trim().toLowerCase();
-    if (!normalizedNext) return false;
-
-    const el = document.getElementById('vertexModel');
-    if (el && el.value !== normalizedNext) {
-      el.value = normalizedNext;
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-      return true;
-    }
-
-    writeSession('vertex_model', normalizedNext);
-    emitAppStateChanged('vertex-model-set-programmatically', {
       model: normalizedNext,
     });
     return true;
@@ -3078,14 +3006,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const vertexModelSelect = document.getElementById('vertexModel');
-  if (vertexModelSelect) {
-    vertexModelSelect.addEventListener('change', () => {
-      writeSession('vertex_model', vertexModelSelect.value);
-      emitAppStateChanged('vertex-model-changed', { model: vertexModelSelect.value });
-    });
-  }
-
   const bedrockModelSelect = document.getElementById('bedrockModel');
   if (bedrockModelSelect) {
     bedrockModelSelect.addEventListener('change', () => {
@@ -3144,5 +3064,4 @@ document.addEventListener('DOMContentLoaded', () => {
   void initNoteProvider(getSelectedEffectiveNoteProvider());
   void initMiniControllerFeature();
 });
-
 

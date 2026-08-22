@@ -438,106 +438,6 @@ function extractResponsesOutputText(json) {
   return "";
 }
 
-
-async function streamGeminiSse(body, {
-  signal,
-  onDelta = () => {},
-  onDone = () => {},
-  onError = (e) => { console.error(e); }
-} = {}) {
-  const reader = body.getReader();
-  const decoder = new TextDecoder("utf-8");
-  let buffer = "";
-  let lastUsage = null;
-
-  const abortReader = () => {
-    try { reader.cancel(); } catch (_) {}
-  };
-
-  if (signal) {
-    if (signal.aborted) {
-      abortReader();
-      throw new DOMException("Aborted", "AbortError");
-    }
-    signal.addEventListener("abort", abortReader, { once: true });
-  }
-
-  try {
-    while (true) {
-      if (signal?.aborted) {
-        throw new DOMException("Aborted", "AbortError");
-      }
-
-      const { value, done } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split(/\r?\n/);
-      buffer = lines.pop() || "";
-
-      for (const line of lines) {
-        if (signal?.aborted) {
-          throw new DOMException("Aborted", "AbortError");
-        }
-
-        const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith(":")) {
-          continue;
-        }
-
-        if (trimmed === "data: [DONE]") {
-          onDone(lastUsage);
-          return;
-        }
-
-        if (!trimmed.startsWith("data:")) continue;
-
-        const jsonStr = trimmed.slice(5).trim();
-        if (!jsonStr) continue;
-
-        let payload;
-        try {
-          payload = JSON.parse(jsonStr);
-        } catch (error) {
-          console.warn("Failed to parse Gemini SSE JSON chunk:", error, jsonStr);
-          continue;
-        }
-
-        if (payload && payload.usageMetadata) {
-          lastUsage = payload.usageMetadata;
-        }
-
-        try {
-          const candidates = Array.isArray(payload?.candidates) ? payload.candidates : [];
-          if (!candidates.length) continue;
-
-          const parts = Array.isArray(candidates[0]?.content?.parts)
-            ? candidates[0].content.parts
-            : [];
-
-          const textChunk = parts
-            .map((part) => (typeof part?.text === "string" ? part.text : ""))
-            .join("");
-
-          if (textChunk) {
-            onDelta(textChunk);
-          }
-        } catch (error) {
-          console.warn("Error extracting text from Gemini SSE payload:", error, payload);
-        }
-      }
-    }
-
-    onDone(lastUsage);
-  } catch (error) {
-    onError(error);
-  } finally {
-    if (signal) {
-      try { signal.removeEventListener("abort", abortReader); } catch (_) {}
-    }
-  }
-}
-
 function bindGenerateNoteButton(handler) {
   const generateNoteButton = document.getElementById("generateNoteButton");
   if (!generateNoteButton || typeof handler !== "function") return;
@@ -571,6 +471,5 @@ export {
   resolveCommonNoteInputs,
   startNoteTimer,
   streamChatCompletionsSse,
-  streamGeminiSse,
   streamResponsesSse
 };

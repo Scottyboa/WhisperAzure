@@ -184,24 +184,9 @@ function initOverlays() {
       billing: "https://admin.mistral.ai/organization/billing",
     },
     {
-      name: "Deepgram",
-      usage: "https://console.deepgram.com/project/f9ec9a40-fad9-4177-9c43-b3158db65247/usage/overview",
-      billing: "https://console.deepgram.com/",
-    },
-    {
       name: "Soniox",
       usage: "https://console.soniox.com/org/69ace8f7-b612-43df-80f3-1332b27475d4/projects/5c561548-5248-4cad-acd7-fc6af7b93c60/usage/cost/",
       billing: "https://console.soniox.com/",
-    },
-    {
-      name: "Google AI Studio",
-      usage: "https://aistudio.google.com/usage?timeRange=last-28-days",
-      billing: "https://aistudio.google.com/usage?tab=billing",
-    },
-    {
-      name: "Google Vertex / Cloud",
-      usage: "https://console.cloud.google.com/billing",
-      billing: "https://console.cloud.google.com/billing/credits",
     },
   ];
 

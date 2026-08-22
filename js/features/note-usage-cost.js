@@ -3,11 +3,9 @@ import {
   DEFAULTS,
   getDefaultModelIdForEffectiveNoteProvider,
   isBedrockEffectiveNoteProvider,
-  isGeminiApiEffectiveNoteProvider,
   isMistralEffectiveNoteProvider,
   isOpenAiEffectiveNoteProvider,
   isRequestyEffectiveNoteProvider,
-  isVertexEffectiveNoteProvider,
   normalizeNoteEffectiveProvider,
   resolveRequestyEffectiveProvider,
 } from '../core/provider-registry.js';
@@ -37,18 +35,6 @@ import {
       }
     } catch (_) {}
     return {};
-  }
-
-  function getSelectedGeminiModelKey() {
-    const app = getApp();
-    if (typeof app.getSelectedGeminiModel === "function") {
-      const value = app.getSelectedGeminiModel();
-      return value ? String(value).trim() : null;
-    }
-
-    const sel = document.getElementById("geminiModel");
-    const value = (sel && sel.value) || readSession("gemini_model", DEFAULTS.geminiModel) || "";
-    return value ? String(value).trim() : null;
   }
 
   function getSelectedBedrockModelKey() {
@@ -124,11 +110,6 @@ import {
     return getDefaultModelIdForEffectiveNoteProvider({
       effectiveProvider: providerKey,
       openaiModel: snapshot.openaiModel || readSession("openai_model", "") || DEFAULTS.openaiModel,
-      geminiModel:
-        snapshot.geminiModel ||
-        getSelectedGeminiModelKey() ||
-        DEFAULTS.geminiModel,
-      vertexModel: snapshot.vertexModel || readSession("vertex_model", "") || DEFAULTS.vertexModel,
       bedrockModel:
         snapshot.bedrockModel ||
         getSelectedBedrockModelKey() ||
@@ -172,11 +153,6 @@ import {
     "mistral-large-latest": { input: 0.5, output: 1.5 },
   };
 
-  // Lemonfox Llama 3.3 70B uses one flat per-token rate for both directions.
-  const LEMONFOX_USD_PER_MTOK = {
-    "llama-70b-chat": { input: 1.25, output: 1.25 },
-  };
-
   // Requesty (EU router) — published endpoint rates, USD per 1M tokens.
   // claude-opus-5: bedrock/claude-opus-5@eu-north-1 rates
   // claude-sonnet-5: vertex/claude-sonnet-5@eu rates (EU regional pricing)
@@ -202,37 +178,6 @@ import {
   // Completed Requesty calls prefer usage.cost, so the displayed final cost
   // reflects the actual charge, caching, and any current account markup.
 
-  // Gemini API (AI Studio): USD per 1M billable tokens.
-  const GEMINI_API_USD_PER_MTOK = {
-    "gemini-3-pro-preview": {
-      thresholdInputTokens: 200_000,
-      short: { input: 2.0, output: 12.0 },
-      long: { input: 4.0, output: 18.0 },
-    },
-    "gemini-3.1-pro-preview": {
-      thresholdInputTokens: 200_000,
-      short: { input: 2.0, output: 12.0 },
-      long: { input: 4.0, output: 18.0 },
-    },
-    "gemini-3-flash-preview": {
-      rates: { input: 0.5, output: 3.0 },
-    },
-  };
-
-  // Vertex AI: USD per 1M tokens, keyed by model id.
-  // Flash/Flash-Lite use flat rates; Pro uses 200K short/long tiers.
-  // NOTE: verify the 3.1 Flash-Lite rate against the live Vertex pricing page
-  // (public sources conflicted: $0.25/$1.50 at launch vs $0.30/$2.50 post-GA).
-  const VERTEX_USD_PER_MTOK = {
-    "gemini-2.5-pro": {
-      thresholdInputTokens: 200_000,
-      short: { input: 1.25, output: 10.0 },
-      long: { input: 2.5, output: 15.0 },
-    },
-    "gemini-3.5-flash": { rates: { input: 1.5, output: 9.0 } },
-    "gemini-3.1-flash-lite": { rates: { input: 0.3, output: 2.5 } },
-  };
-
   const OPENAI_UI_MODEL_IDS = {
     gpt5: "gpt-5.1",
     gpt52: "gpt-5.2",
@@ -243,8 +188,6 @@ import {
   function getModelPricing({
     provider,
     openaiModel,
-    geminiModel,
-    vertexModel,
     bedrockModel,
     requestyModel,
   } = {}) {
@@ -257,22 +200,8 @@ import {
       return rates ? { rates } : null;
     }
 
-    if (providerKey === "lemonfox") {
-      return { rates: LEMONFOX_USD_PER_MTOK["llama-70b-chat"] };
-    }
-
     if (providerKey === "mistral") {
       return { rates: MISTRAL_USD_PER_MTOK["mistral-large-latest"] };
-    }
-
-    if (providerKey === "gemini3") {
-      const modelId = String(geminiModel || DEFAULTS.geminiModel).trim().toLowerCase();
-      return GEMINI_API_USD_PER_MTOK[modelId] || null;
-    }
-
-    if (providerKey === "gemini3-vertex") {
-      const modelId = String(vertexModel || DEFAULTS.vertexModel).trim().toLowerCase();
-      return VERTEX_USD_PER_MTOK[modelId] || null;
     }
 
     if (providerKey === "aws-bedrock") {
@@ -339,8 +268,6 @@ import {
     ).toLowerCase();
     const mainSelections = {
       openaiModel: readSelectValue("openaiModel", DEFAULTS.openaiModel),
-      geminiModel: readSelectValue("geminiModel", DEFAULTS.geminiModel),
-      vertexModel: readSelectValue("vertexModel", DEFAULTS.vertexModel),
       bedrockModel: readSelectValue("bedrockModel", DEFAULTS.bedrockModel),
       requestyModel: readSelectValue("requestyModel", DEFAULTS.requestyModel),
     };
@@ -348,14 +275,6 @@ import {
     setModelPriceLabel(
       "openaiModelPrice",
       formatModelPricing(getModelPricing({ provider: "openai", ...mainSelections }))
-    );
-    setModelPriceLabel(
-      "geminiModelPrice",
-      formatModelPricing(getModelPricing({ provider: "gemini3", ...mainSelections }))
-    );
-    setModelPriceLabel(
-      "vertexModelPrice",
-      formatModelPricing(getModelPricing({ provider: "gemini3-vertex", ...mainSelections }))
     );
     setModelPriceLabel(
       "bedrockModelPrice",
@@ -367,7 +286,7 @@ import {
     );
 
     const mainFixedPrice =
-      mainProvider === "lemonfox" || mainProvider === "mistral"
+      mainProvider === "mistral"
         ? formatModelPricing(getModelPricing({ provider: mainProvider }))
         : "";
     setModelPriceLabel("fixedNoteModelPrice", mainFixedPrice, {
@@ -380,8 +299,6 @@ import {
     ).toLowerCase();
     const secondarySelections = {
       openaiModel: readSelectValue("secondaryOpenaiModel", DEFAULTS.openaiModel),
-      geminiModel: readSelectValue("secondaryGeminiModel", DEFAULTS.geminiModel),
-      vertexModel: readSelectValue("secondaryVertexModel", DEFAULTS.vertexModel),
       bedrockModel: readSelectValue("secondaryBedrockModel", DEFAULTS.bedrockModel),
       requestyModel: readSelectValue("secondaryRequestyModel", DEFAULTS.requestyModel),
     };
@@ -389,14 +306,6 @@ import {
     setModelPriceLabel(
       "secondaryOpenaiModelPrice",
       formatModelPricing(getModelPricing({ provider: "openai", ...secondarySelections }))
-    );
-    setModelPriceLabel(
-      "secondaryGeminiModelPrice",
-      formatModelPricing(getModelPricing({ provider: "gemini3", ...secondarySelections }))
-    );
-    setModelPriceLabel(
-      "secondaryVertexModelPrice",
-      formatModelPricing(getModelPricing({ provider: "gemini3-vertex", ...secondarySelections }))
     );
     setModelPriceLabel(
       "secondaryBedrockModelPrice",
@@ -408,7 +317,7 @@ import {
     );
 
     const secondaryFixedPrice =
-      secondaryProvider === "lemonfox" || secondaryProvider === "mistral"
+      secondaryProvider === "mistral"
         ? formatModelPricing(getModelPricing({ provider: secondaryProvider }))
         : "";
     setModelPriceLabel("secondaryFixedModelPrice", secondaryFixedPrice, {
@@ -489,15 +398,6 @@ import {
       });
     }
 
-    if (pk === "lemonfox") {
-      const rates = LEMONFOX_USD_PER_MTOK["llama-70b-chat"];
-      return estimateUsdFromRates({
-        rates,
-        inputTokens: payload.inputTokens,
-        outputTokens: payload.outputTokens,
-      });
-    }
-
     if (isBedrockEffectiveNoteProvider(pk)) {
       const modelKeyRaw = payload.modelId || getSelectedBedrockModelKey();
       const modelKey = modelKeyRaw ? String(modelKeyRaw).trim() : null;
@@ -507,93 +407,6 @@ import {
         rates,
         inputTokens: payload.inputTokens,
         outputTokens: payload.outputTokens,
-      });
-    }
-
-    if (isGeminiApiEffectiveNoteProvider(pk)) {
-      const promptTokens = Number(payload.inputTokens);
-      const outTokens = Number(payload.outputTokens);
-      if (!Number.isFinite(promptTokens) || !Number.isFinite(outTokens)) return null;
-
-      const geminiMeta = payload.meta && payload.meta.gemini ? payload.meta.gemini : null;
-      const toolUsePrompt =
-        geminiMeta && typeof geminiMeta.toolUsePromptTokenCount === "number"
-          ? geminiMeta.toolUsePromptTokenCount
-          : 0;
-      const thoughts =
-        geminiMeta && typeof geminiMeta.thoughtsTokenCount === "number"
-          ? geminiMeta.thoughtsTokenCount
-          : 0;
-
-      const billableInput = promptTokens + toolUsePrompt;
-      const billableOutput = outTokens + thoughts;
-      const modelId = String(
-        payload.modelId || getSelectedGeminiModelKey() || DEFAULTS.geminiModel
-      ).trim().toLowerCase();
-      const pricing = GEMINI_API_USD_PER_MTOK[modelId];
-      if (!pricing) return null;
-
-      if (pricing.rates) {
-        return estimateUsdFromRates({
-          rates: pricing.rates,
-          inputTokens: billableInput,
-          outputTokens: billableOutput,
-        });
-      }
-
-      const tier =
-        promptTokens > Number(pricing.thresholdInputTokens || 0) ? "long" : "short";
-      const rates = pricing[tier];
-      if (!rates) return null;
-
-      return estimateUsdFromRates({
-        rates,
-        inputTokens: billableInput,
-        outputTokens: billableOutput,
-      });
-    }
-
-    if (isVertexEffectiveNoteProvider(pk)) {
-      const promptTokens = Number(payload.inputTokens);
-      const outTokens = Number(payload.outputTokens);
-      if (!Number.isFinite(promptTokens) || !Number.isFinite(outTokens)) return null;
-
-      const vertexMeta = payload.meta && payload.meta.vertex ? payload.meta.vertex : null;
-      const toolUsePrompt =
-        vertexMeta && typeof vertexMeta.toolUsePromptTokenCount === "number"
-          ? vertexMeta.toolUsePromptTokenCount
-          : 0;
-      const thoughts =
-        vertexMeta && typeof vertexMeta.thoughtsTokenCount === "number"
-          ? vertexMeta.thoughtsTokenCount
-          : 0;
-
-      const billableInput = promptTokens + toolUsePrompt;
-      const billableOutput = outTokens + thoughts;
-
-      const modelId = String(
-        payload.modelId || readSession("vertex_model", "") || DEFAULTS.vertexModel
-      ).trim().toLowerCase();
-      const pricing = VERTEX_USD_PER_MTOK[modelId];
-      if (!pricing) return null;
-
-      if (pricing.rates) {
-        return estimateUsdFromRates({
-          rates: pricing.rates,
-          inputTokens: billableInput,
-          outputTokens: billableOutput,
-        });
-      }
-
-      const tier =
-        promptTokens > Number(pricing.thresholdInputTokens || 0) ? "long" : "short";
-      const rates = pricing[tier];
-      if (!rates) return null;
-
-      return estimateUsdFromRates({
-        rates,
-        inputTokens: billableInput,
-        outputTokens: billableOutput,
       });
     }
 
@@ -706,24 +519,6 @@ import {
         totalTokens = toFiniteInt(usage.total_tokens);
       }
 
-      if (inputTokens == null && ("promptTokenCount" in usage || "candidatesTokenCount" in usage)) {
-        inputTokens = toFiniteInt(usage.promptTokenCount);
-        outputTokens = toFiniteInt(usage.candidatesTokenCount);
-        totalTokens = toFiniteInt(usage.totalTokenCount);
-        outMeta.gemini = {
-          thoughtsTokenCount: toFiniteInt(usage.thoughtsTokenCount),
-          toolUsePromptTokenCount: toFiniteInt(usage.toolUsePromptTokenCount),
-          cachedContentTokenCount: toFiniteInt(usage.cachedContentTokenCount),
-        };
-      }
-
-      if (inputTokens == null && ("promptTokens" in usage || "outputTokens" in usage)) {
-        inputTokens = toFiniteInt(usage.promptTokens);
-        outputTokens = toFiniteInt(usage.outputTokens);
-        totalTokens = toFiniteInt(usage.totalTokens);
-        if (usage.raw && typeof usage.raw === "object") outMeta.vertex = { ...usage.raw };
-      }
-
       if (inputTokens == null && ("inputTokens" in usage || "outputTokens" in usage)) {
         inputTokens = toFiniteInt(usage.inputTokens);
         outputTokens = toFiniteInt(usage.outputTokens);
@@ -804,47 +599,6 @@ import {
         notes.push(`${fmtTokens(reasoningTokens)} reasoning`);
       }
 
-      if (isGeminiApiEffectiveNoteProvider(pk)) {
-        const geminiMeta = payload.meta && payload.meta.gemini ? payload.meta.gemini : null;
-        const toolUsePrompt =
-          geminiMeta && typeof geminiMeta.toolUsePromptTokenCount === "number"
-            ? geminiMeta.toolUsePromptTokenCount
-            : 0;
-        const thoughts =
-          geminiMeta && typeof geminiMeta.thoughtsTokenCount === "number"
-            ? geminiMeta.thoughtsTokenCount
-            : 0;
-
-        if (Number.isFinite(toolUsePrompt) && toolUsePrompt > 0) {
-          billableInputTokens = Number(billableInputTokens ?? 0) + toolUsePrompt;
-          notes.push(`${fmtTokens(toolUsePrompt)} tool-use prompt`);
-        }
-        if (Number.isFinite(thoughts) && thoughts > 0) {
-          billableOutputTokens = Number(billableOutputTokens ?? 0) + thoughts;
-          notes.push(`${fmtTokens(thoughts)} thinking`);
-        }
-      }
-
-      if (isVertexEffectiveNoteProvider(pk)) {
-        const vertexMeta = payload.meta && payload.meta.vertex ? payload.meta.vertex : null;
-        const toolUsePrompt =
-          vertexMeta && typeof vertexMeta.toolUsePromptTokenCount === "number"
-            ? vertexMeta.toolUsePromptTokenCount
-            : 0;
-        const thoughts =
-          vertexMeta && typeof vertexMeta.thoughtsTokenCount === "number"
-            ? vertexMeta.thoughtsTokenCount
-            : 0;
-
-        if (Number.isFinite(toolUsePrompt) && toolUsePrompt > 0) {
-          billableInputTokens = Number(billableInputTokens ?? 0) + toolUsePrompt;
-          notes.push(`${fmtTokens(toolUsePrompt)} tool-use prompt`);
-        }
-        if (Number.isFinite(thoughts) && thoughts > 0) {
-          billableOutputTokens = Number(billableOutputTokens ?? 0) + thoughts;
-          notes.push(`${fmtTokens(thoughts)} thinking`);
-        }
-      }
     } catch (_) {}
 
     try {
@@ -892,8 +646,6 @@ import {
       "noteProvider",
       "openaiModel",
       "noteProviderMode",
-      "geminiModel",
-      "vertexModel",
       "bedrockModel",
       "requestyModel",
     ].forEach((id) => {
@@ -904,14 +656,10 @@ import {
     [
       "noteProvider",
       "openaiModel",
-      "geminiModel",
-      "vertexModel",
       "bedrockModel",
       "requestyModel",
       "secondaryProvider",
       "secondaryOpenaiModel",
-      "secondaryGeminiModel",
-      "secondaryVertexModel",
       "secondaryBedrockModel",
       "secondaryRequestyModel",
     ].forEach((id) => {

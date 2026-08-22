@@ -942,32 +942,6 @@
           >
         </div>
 
-        <!-- New: Vertex Cloud Run configuration (per-user) -->
-        <p id="vertex-text">
-          Google Vertex (
-          <button
-            type="button"
-            id="vertex-guide-link"
-            class="inline-guide-link"
-          >Guide</button>
-          ):
-        </p>
-        <div class="credentials-row">
-          <input
-            type="text"
-            id="vertexBackendUrlInput"
-            placeholder="Vertex backend URL (https://…run.app)"
-            autocomplete="off"
-            class="masked-input"
-          >
-          <input
-            type="text"
-            id="vertexBackendSecretInput"
-            placeholder="Vertex backend secret"
-            autocomplete="off"
-            class="masked-input"
-          >
-        </div>
         <!-- New: Optional Mistral (Voxtral) API Key -->
         <p id="mistral-text">Mistral API key:</p>
         <input type="text" id="mistralKeyInput" placeholder="Enter Mistral API Key here" autocomplete="off" class="masked-input">
@@ -989,28 +963,6 @@
         <input type="text" id="apiKeyInput" placeholder="Enter API Key here" autocomplete="off" class="masked-input">
         <br>
 
-        <!-- New: Optional Google Gemini / Vertex Credentials -->
-        <p id="gemini-text">Google Gemini API key:</p>
-        <div class="credentials-row">
-          <input
-            type="text"
-            id="geminiKeyInput"
-            placeholder="Enter Google Gemini API Key here"
-            autocomplete="off"
-            class="masked-input"
-          >
-        </div>
-        <br>
-
-        <!-- New: Optional Lemonfox API Key -->
-        <p id="lemonfox-text">Lemonfox API key:</p>
-        <input type="text" id="lemonfoxKeyInput" placeholder="Enter Lemonfox API Key here" autocomplete="off" class="masked-input">
-        <br>
-      
-        <!-- New: Optional Deepgram API Key -->
-        <p id="deepgram-text">Deepgram API key:</p>
-        <input type="text" id="deepgramKeyInput" placeholder="Enter Deepgram API Key here" autocomplete="off" class="masked-input">
-        <br>
       </fieldset>
     </div>
     
@@ -1084,13 +1036,8 @@
         var promptProfileId      = ((document.getElementById("promptProfileInput")      || {}).value || "").trim();
         var openaiKey            = ((document.getElementById("apiKeyInput")             || {}).value || "").trim();
         var sonioxKey            = ((document.getElementById("sonioxKeyInput")          || {}).value || "").trim();
-        var lemonKey             = ((document.getElementById("lemonfoxKeyInput")        || {}).value || "").trim();
         var mistralKey           = ((document.getElementById("mistralKeyInput")         || {}).value || "").trim();
-        var deepgramKey          = ((document.getElementById("deepgramKeyInput")        || {}).value || "").trim();
-        var geminiKey            = ((document.getElementById("geminiKeyInput")           || {}).value || "").trim();
         var requestyKey          = ((document.getElementById("requestyKeyInput")         || {}).value || "").trim();
-        var vertexBackendUrl     = ((document.getElementById("vertexBackendUrlInput")    || {}).value || "").trim();
-        var vertexBackendSecret  = ((document.getElementById("vertexBackendSecretInput") || {}).value || "").trim();
         var bedrockBackendUrl   = ((document.getElementById("bedrockBackendUrlInput")   || {}).value || "").trim();
         var bedrockBackendSecret= ((document.getElementById("bedrockBackendSecretInput")|| {}).value || "").trim();
 
@@ -1098,13 +1045,8 @@
         // Store all keys (even if empty) for later provider selection
         sessionStorage.setItem("openai_api_key", openaiKey);
         sessionStorage.setItem("soniox_api_key", sonioxKey);
-        sessionStorage.setItem("lemonfox_api_key", lemonKey);
         sessionStorage.setItem("mistral_api_key", mistralKey);
-        sessionStorage.setItem("deepgram_api_key", deepgramKey);
-        sessionStorage.setItem("gemini_api_key", geminiKey);
         sessionStorage.setItem("requesty_api_key", requestyKey);
-        sessionStorage.setItem("vertex_backend_url", vertexBackendUrl);
-        sessionStorage.setItem("vertex_backend_secret", vertexBackendSecret);
         sessionStorage.setItem("bedrock_backend_url", bedrockBackendUrl);
         sessionStorage.setItem("bedrock_backend_secret", bedrockBackendSecret);
         
@@ -1136,17 +1078,22 @@
     })();
 
   document.addEventListener("DOMContentLoaded", function() {
+    [
+      "lemonfox_api_key",
+      "deepgram_api_key",
+      "gemini_api_key",
+      "vertex_backend_url",
+      "vertex_backend_secret"
+    ].forEach((key) => {
+      try { sessionStorage.removeItem(key); } catch {}
+    });
+
     const enterTranscriptionBtn    = document.getElementById("enterTranscriptionBtn");
     const promptProfileInput       = document.getElementById("promptProfileInput");
     const apiKeyInput              = document.getElementById("apiKeyInput");
     const sonioxKeyInput           = document.getElementById("sonioxKeyInput");
-    const lemonfoxKeyInput         = document.getElementById("lemonfoxKeyInput");
     const mistralKeyInput          = document.getElementById("mistralKeyInput");
-    const deepgramKeyInput         = document.getElementById("deepgramKeyInput");
-    const geminiKeyInput           = document.getElementById("geminiKeyInput");
     const requestyKeyInput         = document.getElementById("requestyKeyInput");
-    const vertexBackendUrlInput    = document.getElementById("vertexBackendUrlInput");
-    const vertexBackendSecretInput = document.getElementById("vertexBackendSecretInput");
     const bedrockBackendUrlInput    = document.getElementById("bedrockBackendUrlInput");
     const bedrockBackendSecretInput = document.getElementById("bedrockBackendSecretInput");
 
@@ -1174,36 +1121,14 @@
       const storedSoniox = sessionStorage.getItem("soniox_api_key") || "";
       if (storedSoniox && !sonioxKeyInput.value) sonioxKeyInput.value = storedSoniox;
     }
-    if (lemonfoxKeyInput) {
-      const storedLemon = sessionStorage.getItem("lemonfox_api_key") || "";
-      if (storedLemon && !lemonfoxKeyInput.value) lemonfoxKeyInput.value = storedLemon;
-    }
     if (mistralKeyInput) {
       const storedMistral = sessionStorage.getItem("mistral_api_key") || "";
       if (storedMistral && !mistralKeyInput.value) mistralKeyInput.value = storedMistral;
-    }
-    if (deepgramKeyInput) {
-      const storedDeepgram = sessionStorage.getItem("deepgram_api_key") || "";
-      if (storedDeepgram && !deepgramKeyInput.value) deepgramKeyInput.value = storedDeepgram;
-    }
-    if (geminiKeyInput) {
-      const storedGemini = sessionStorage.getItem("gemini_api_key") || "";
-      if (storedGemini && !geminiKeyInput.value) geminiKeyInput.value = storedGemini;
     }
     if (requestyKeyInput) {
       const storedRequesty = sessionStorage.getItem("requesty_api_key") || "";
       if (storedRequesty && !requestyKeyInput.value) requestyKeyInput.value = storedRequesty;
     }
-    // Vertex backend URL / secret
-    if (vertexBackendUrlInput) {
-      const storedUrl = sessionStorage.getItem("vertex_backend_url") || "";
-      if (storedUrl && !vertexBackendUrlInput.value) vertexBackendUrlInput.value = storedUrl;
-    }
-    if (vertexBackendSecretInput) {
-      const storedSecret = sessionStorage.getItem("vertex_backend_secret") || "";
-      if (storedSecret && !vertexBackendSecretInput.value) vertexBackendSecretInput.value = storedSecret;
-    }
-
     // Bedrock backend URL / secret
     if (bedrockBackendUrlInput) {
       const storedUrl = sessionStorage.getItem("bedrock_backend_url") || "";
@@ -1239,13 +1164,8 @@
     const KEY_FIELDS = [
       { id: "apiKeyInput",               storageKey: "openai_api_key" },
       { id: "sonioxKeyInput",            storageKey: "soniox_api_key" },
-      { id: "lemonfoxKeyInput",          storageKey: "lemonfox_api_key" },
       { id: "mistralKeyInput",           storageKey: "mistral_api_key" },
-      { id: "deepgramKeyInput",          storageKey: "deepgram_api_key" },
-      { id: "geminiKeyInput",            storageKey: "gemini_api_key" },
       { id: "requestyKeyInput",          storageKey: "requesty_api_key" },
-      { id: "vertexBackendUrlInput",     storageKey: "vertex_backend_url" },
-      { id: "vertexBackendSecretInput",  storageKey: "vertex_backend_secret" },
       { id: "bedrockBackendUrlInput",    storageKey: "bedrock_backend_url" },
       { id: "bedrockBackendSecretInput", storageKey: "bedrock_backend_secret" }
     ];
@@ -2290,6 +2210,7 @@
 </div>
 
   <!-- Google Vertex Guide Modal -->
+  <button id="vertex-guide-link" type="button" hidden aria-hidden="true" tabindex="-1">Guide</button>
   <div id="vertexGuideView" aria-hidden="true">
     <button id="vertexGuideClose" type="button" aria-label="Close">&times;</button>
     <h3>Google Vertex setup guide</h3>

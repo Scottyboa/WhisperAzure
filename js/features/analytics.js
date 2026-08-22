@@ -84,7 +84,6 @@ function getNoteProviderSnapshot() {
           snapshot.noteProviderLogLabel || snapshot.noteProviderEffective || '',
         noteProviderMode: snapshot.noteProviderMode || '',
         openaiModel: snapshot.openaiModel || '',
-        vertexModel: snapshot.vertexModel || '',
         bedrockModel: snapshot.bedrockModel || '',
       };
     } catch (_) {}
@@ -106,11 +105,6 @@ function getNoteProviderSnapshot() {
       DEFAULTS.noteMode
   );
 
-  const vertexModel =
-    document.getElementById('vertexModel')?.value ||
-    safeSessionStorageGet('vertex_model') ||
-    DEFAULTS.vertexModel;
-
   const bedrockModel =
     document.getElementById('bedrockModel')?.value ||
     safeSessionStorageGet('bedrock_model') ||
@@ -127,12 +121,10 @@ function getNoteProviderSnapshot() {
     noteProviderEffective: getNoteProviderLogLabel({
       effectiveProvider,
       openaiModel,
-      vertexModel,
       bedrockModel,
     }),
     noteProviderMode,
     openaiModel,
-    vertexModel,
     bedrockModel,
   };
 }
