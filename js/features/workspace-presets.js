@@ -145,7 +145,10 @@ function captureConfig(doc) {
   const checks = {};
   VALUE_IDS.forEach((id) => {
     const el = doc.getElementById(id);
-    if (el && "value" in el) values[id] = String(el.value || "");
+    if (!el || !("value" in el)) return;
+    values[id] = id === "autoCopyModeSelect"
+      ? String(el.dataset.workspaceConfiguredMode || el.value || "off")
+      : String(el.value || "");
   });
   CHECKBOX_IDS.forEach((id) => {
     const el = doc.getElementById(id);
@@ -161,12 +164,40 @@ function captureConfig(doc) {
   };
 }
 
+function normalizeAutoCopyMode(value) {
+  const mode = String(value || "").trim().toLowerCase();
+  if (mode === "both") return "note";
+  return ["off", "transcript", "note"].includes(mode) ? mode : "off";
+}
+
+async function applyConfiguredAutoCopyMode(win, doc, values) {
+  if (!Object.prototype.hasOwnProperty.call(values, "autoCopyModeSelect")) return;
+  const el = doc.getElementById("autoCopyModeSelect");
+  if (!el || !("value" in el)) return;
+
+  const desired = normalizeAutoCopyMode(values.autoCopyModeSelect);
+  el.dataset.workspaceConfiguredMode = desired;
+
+  let available = Boolean(win.__app?.isAutoCopyExtensionAvailable?.());
+  if (!available && typeof win.__app?.pingAutoCopyExtension === "function") {
+    try { available = Boolean(await win.__app.pingAutoCopyExtension()); } catch {}
+  }
+
+  el.value = available ? desired : "off";
+  dispatchChange(win, el);
+  // A synthetic change while the extension is unavailable must not erase the
+  // imported per-workspace preference merely because the visible control is Off.
+  el.dataset.workspaceConfiguredMode = desired;
+}
+
 async function applyConfig(win, doc, config = {}) {
   const values = config?.values && typeof config.values === "object" ? config.values : {};
   const checks = config?.checks && typeof config.checks === "object" ? config.checks : {};
   const orderedValues = [
     "transcribeProvider", "noteProvider", "secondaryProvider",
-    ...VALUE_IDS.filter((id) => !["transcribeProvider", "noteProvider", "secondaryProvider"].includes(id)),
+    ...VALUE_IDS.filter((id) => ![
+      "transcribeProvider", "noteProvider", "secondaryProvider", "autoCopyModeSelect",
+    ].includes(id)),
   ];
   orderedValues.forEach((id) => {
     if (!Object.prototype.hasOwnProperty.call(values, id)) return;
@@ -184,6 +215,8 @@ async function applyConfig(win, doc, config = {}) {
     el.checked = Boolean(checked);
     dispatchChange(win, el);
   });
+
+  await applyConfiguredAutoCopyMode(win, doc, values);
 
   await new Promise((resolve) => win.setTimeout(resolve, 30));
   const panePairs = [
@@ -205,11 +238,25 @@ function captureDraft(doc) {
     const el = doc.getElementById(id);
     if (el && "value" in el) fields[id] = String(el.value || "");
   });
-  return { version: 1, fields, savedAt: new Date().toISOString() };
+  return {
+    version: 1,
+    fields,
+    preserveSupplementaryDate:
+      doc.getElementById("supplementaryInfo")?.dataset.preserveHistoricalDate === "1",
+    savedAt: new Date().toISOString(),
+  };
 }
 
 function applyDraft(win, doc, draft) {
   const fields = draft?.fields && typeof draft.fields === "object" ? draft.fields : {};
+  const supplementary = doc.getElementById("supplementaryInfo");
+  if (supplementary) {
+    if (draft?.preserveSupplementaryDate) {
+      supplementary.dataset.preserveHistoricalDate = "1";
+    } else {
+      delete supplementary.dataset.preserveHistoricalDate;
+    }
+  }
   DRAFT_FIELD_IDS.forEach((id) => {
     if (!Object.prototype.hasOwnProperty.call(fields, id)) return;
     const el = doc.getElementById(id);
@@ -415,6 +462,10 @@ function initTopLevelManager() {
         const definition = findDefinition(runtime.id);
         if (definition?.config) runtime.win.__workspacePresetBridge.applyConfig(definition.config);
         runtime.win.__workspacePresetBridge.setGeneralTerms(lastGeneralTerms);
+        if (runtime.pendingHistoryDraft) {
+          runtime.win.__workspacePresetBridge.applyDraft(runtime.pendingHistoryDraft);
+          runtime.pendingHistoryDraft = null;
+        }
       }
       scheduleConfigSave(runtime.id);
       render();
@@ -453,6 +504,9 @@ function initTopLevelManager() {
       const cleared = clearRuntimeHistory(runtime);
       if (cleared && runtime?.id === activeId) notifyHistoryUpdated("cleared", runtime.id);
       return cleared;
+    },
+    restoreHistoryEntry(entry, target = "current") {
+      return restoreHistoryEntry(entry, target);
     },
     getContent(kind, presetId = activeId) {
       const requestedId = String(presetId || activeId);
@@ -580,6 +634,55 @@ function initTopLevelManager() {
     if (runtime.kind === "frame") return runtime.win?.__workspacePresetBridge?.runAction(actionName, ...args);
     const original = originalActions[String(actionName || "")];
     return typeof original === "function" ? original(...args) : false;
+  }
+
+  function historyEntryDraft(entry) {
+    return {
+      version: 1,
+      fields: {
+        transcription: String(entry?.transcript || ""),
+        supplementaryInfo: String(entry?.supplementary || ""),
+        generatedNote: String(entry?.note || ""),
+      },
+      preserveSupplementaryDate: true,
+      savedAt: new Date().toISOString(),
+    };
+  }
+
+  function applyHistoryDraft(runtime, draft) {
+    if (!runtime?.ready) return false;
+    if (runtime.kind === "frame") {
+      runtime.win?.__workspacePresetBridge?.applyDraft(draft);
+    } else {
+      applyDraft(window, document, draft);
+    }
+    return true;
+  }
+
+  function restoreHistoryEntry(entry, target) {
+    const draft = historyEntryDraft(entry);
+    if (target === "new") {
+      if (definitions.length >= MAX_PRESETS) return { ok: false, reason: "max" };
+      const definition = {
+        id: uid(),
+        name: fmt(t().defaultName, { n: definitions.length + 1 }),
+        config: {},
+      };
+      definitions.push(definition);
+      createFrameRuntime(definition);
+      const runtime = runtimes.get(definition.id);
+      if (runtime) runtime.pendingHistoryDraft = draft;
+      persistDefinitions();
+      switchPreset(definition.id);
+      return { ok: true, workspaceId: definition.id };
+    }
+
+    const runtime = runtimes.get(activeId);
+    if (!runtime?.ready) return { ok: false, reason: "not-ready" };
+    if (runtimeSnapshot(runtime).busy) return { ok: false, reason: "busy" };
+    return applyHistoryDraft(runtime, draft)
+      ? { ok: true, workspaceId: activeId }
+      : { ok: false, reason: "not-ready" };
   }
 
   function runtimeHistorySnapshot(runtime) {

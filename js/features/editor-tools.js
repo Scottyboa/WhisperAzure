@@ -92,6 +92,7 @@
 
     const resetSupplementaryTextareaSticky = ({ focus = false } = {}) => {
       if (!supplementaryInfoEl) return;
+      delete supplementaryInfoEl.dataset.preserveHistoricalDate;
       resetTextareaToDefault(supplementaryInfoEl);
       if (getSupplementaryDateToggleState()) {
         supplementaryInfoEl.value = normalizeSupplementaryDateLine('', { enabled: true });
@@ -104,8 +105,13 @@
       if (!supplementaryInfoEl || supplementaryInfoEl.dataset.stickyDateBlurBound === '1') return;
       supplementaryInfoEl.dataset.stickyDateBlurBound = '1';
 
+      supplementaryInfoEl.addEventListener('input', (event) => {
+        if (event.isTrusted) delete supplementaryInfoEl.dataset.preserveHistoricalDate;
+      });
+
       supplementaryInfoEl.addEventListener('blur', () => {
         if (!getSupplementaryDateToggleState()) return;
+        if (supplementaryInfoEl.dataset.preserveHistoricalDate === '1') return;
         syncSupplementaryStickyDate({ focus: false });
       });
     };
@@ -2152,6 +2158,7 @@
       syncSupplementaryStickyDate({ focus: false, resetView: true });
 
       supplementaryDateToggle.addEventListener('change', () => {
+        if (supplementaryInfoEl) delete supplementaryInfoEl.dataset.preserveHistoricalDate;
         try {
           sessionStorage.setItem(
             SUPPLEMENTARY_DATE_TOGGLE_KEY,
@@ -2166,6 +2173,7 @@
     if (insertSupplementaryDateButton) {
       insertSupplementaryDateButton.addEventListener('click', () => {
         if (!supplementaryInfoEl) return;
+        delete supplementaryInfoEl.dataset.preserveHistoricalDate;
         supplementaryInfoEl.value = normalizeSupplementaryDateLine(supplementaryInfoEl.value, {
           enabled: true,
         });

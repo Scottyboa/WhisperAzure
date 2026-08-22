@@ -144,16 +144,36 @@ If notifications are allowed in Chrome/Windows, you may also get a notification 
     writeSession(AUTO_COPY_STORAGE_KEY, stored);
   }
   selectEl.value = stored;
-  selectEl.addEventListener("change", () => {
+  selectEl.dataset.workspaceConfiguredMode = stored;
+  selectEl.addEventListener("change", (event) => {
     const next = normalizeAutoCopyMode(selectEl.value);
     selectEl.value = next;
     writeSession(AUTO_COPY_STORAGE_KEY, next);
+    if (event.isTrusted || isAutoCopyExtensionAvailable()) {
+      selectEl.dataset.workspaceConfiguredMode = next;
+    }
   });
 
-  const syncAvailabilityUi = () => {
+  const syncAvailabilityUi = (event) => {
     const available = isAutoCopyExtensionAvailable();
     const storedMode = normalizeAutoCopyMode(readSession(AUTO_COPY_STORAGE_KEY, "off"));
-    const appliedMode = available ? storedMode : "off";
+    const reason = String(event?.detail?.reason || "");
+    // A real app-side mode change (including Mini Panel and Auto-generate)
+    // becomes the new per-workspace preference. An extension-availability
+    // change instead restores the preference that was imported earlier.
+    const configuredMode = reason === "auto-copy-mode-changed"
+      ? storedMode
+      : normalizeAutoCopyMode(selectEl.dataset.workspaceConfiguredMode || storedMode);
+    let appliedMode = "off";
+
+    if (available) {
+      appliedMode = configuredMode;
+      if (storedMode !== configuredMode) {
+        const applied = getApp().setAutoCopyMode?.(configuredMode);
+        appliedMode = normalizeAutoCopyMode(applied ?? configuredMode);
+      }
+      selectEl.dataset.workspaceConfiguredMode = appliedMode;
+    }
 
     selectEl.disabled = !available;
     selectEl.value = appliedMode;

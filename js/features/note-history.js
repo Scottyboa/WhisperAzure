@@ -19,6 +19,15 @@ const STRINGS = {
     openEntry: "Open",
     collapse: "Collapse history column",
     expand: "Expand history column",
+    restore: "Restore to Workspace",
+    replaceCurrent: "Replace current workspace",
+    openNew: "Open in new workspace",
+    confirmReplace:
+      "Replace the Transcript, Supplementary Information and Note in the current workspace? Existing text in these fields will be overwritten.",
+    restoreBusy:
+      "Stop or cancel the active recording, transcription or note generation before replacing text in this workspace.",
+    restoreMax: "You can have up to 12 open Workspaces.",
+    restoreFailed: "The history entry could not be restored.",
   },
   no: {
     history: "Historikk",
@@ -36,6 +45,15 @@ const STRINGS = {
     openEntry: "Åpne",
     collapse: "Minimer historikkolonnen",
     expand: "Åpne historikkolonnen",
+    restore: "Gjenopprett i Workspace",
+    replaceCurrent: "Erstatt innhold i aktivt Workspace",
+    openNew: "Åpne i nytt Workspace",
+    confirmReplace:
+      "Erstatt transkripsjon, supplerende informasjon og notat i aktivt Workspace? Eksisterende tekst i disse feltene blir overskrevet.",
+    restoreBusy:
+      "Stopp eller avbryt aktivt opptak, transkribering eller notatgenerering før teksten i dette Workspace-et erstattes.",
+    restoreMax: "Du kan ha opptil 12 åpne Workspaces.",
+    restoreFailed: "Historikkinnlegget kunne ikke gjenopprettes.",
   },
   sv: {
     history: "Historik",
@@ -53,6 +71,15 @@ const STRINGS = {
     openEntry: "Öppna",
     collapse: "Minimera historikkolumnen",
     expand: "Öppna historikkolumnen",
+    restore: "Återställ till arbetsyta",
+    replaceCurrent: "Ersätt innehållet i aktuell arbetsyta",
+    openNew: "Öppna i ny arbetsyta",
+    confirmReplace:
+      "Ersätt transkriptionen, den kompletterande informationen och anteckningen i den aktuella arbetsytan? Befintlig text i dessa fält skrivs över.",
+    restoreBusy:
+      "Stoppa eller avbryt aktiv inspelning, transkribering eller anteckningsgenerering innan texten i den här arbetsytan ersätts.",
+    restoreMax: "Du kan ha upp till 12 öppna arbetsytor.",
+    restoreFailed: "Historikposten kunde inte återställas.",
   },
   de: {
     history: "Verlauf",
@@ -70,6 +97,15 @@ const STRINGS = {
     openEntry: "Öffnen",
     collapse: "Verlaufsspalte minimieren",
     expand: "Verlaufsspalte öffnen",
+    restore: "Im Arbeitsbereich wiederherstellen",
+    replaceCurrent: "Aktuellen Arbeitsbereich ersetzen",
+    openNew: "In neuem Arbeitsbereich öffnen",
+    confirmReplace:
+      "Transkript, ergänzende Informationen und Notiz im aktuellen Arbeitsbereich ersetzen? Der vorhandene Text in diesen Feldern wird überschrieben.",
+    restoreBusy:
+      "Beenden oder brechen Sie die aktive Aufnahme, Transkription oder Notizerstellung ab, bevor Sie den Text in diesem Arbeitsbereich ersetzen.",
+    restoreMax: "Sie können bis zu 12 Arbeitsbereiche öffnen.",
+    restoreFailed: "Der Verlaufseintrag konnte nicht wiederhergestellt werden.",
   },
   fr: {
     history: "Historique",
@@ -87,6 +123,15 @@ const STRINGS = {
     openEntry: "Ouvrir",
     collapse: "Réduire la colonne d’historique",
     expand: "Ouvrir la colonne d’historique",
+    restore: "Restaurer dans l’espace de travail",
+    replaceCurrent: "Remplacer l’espace de travail actuel",
+    openNew: "Ouvrir dans un nouvel espace de travail",
+    confirmReplace:
+      "Remplacer la transcription, les informations complémentaires et la note dans l’espace de travail actuel ? Le texte existant dans ces champs sera écrasé.",
+    restoreBusy:
+      "Arrêtez ou annulez l’enregistrement, la transcription ou la génération de note en cours avant de remplacer le texte de cet espace de travail.",
+    restoreMax: "Vous pouvez ouvrir jusqu’à 12 espaces de travail.",
+    restoreFailed: "L’entrée d’historique n’a pas pu être restaurée.",
   },
   it: {
     history: "Cronologia",
@@ -104,6 +149,15 @@ const STRINGS = {
     openEntry: "Apri",
     collapse: "Riduci la colonna della cronologia",
     expand: "Apri la colonna della cronologia",
+    restore: "Ripristina nell’area di lavoro",
+    replaceCurrent: "Sostituisci l’area di lavoro corrente",
+    openNew: "Apri in una nuova area di lavoro",
+    confirmReplace:
+      "Sostituire trascrizione, informazioni supplementari e nota nell’area di lavoro corrente? Il testo esistente in questi campi verrà sovrascritto.",
+    restoreBusy:
+      "Interrompi o annulla la registrazione, la trascrizione o la generazione della nota prima di sostituire il testo in quest’area di lavoro.",
+    restoreMax: "Puoi avere fino a 12 aree di lavoro aperte.",
+    restoreFailed: "Non è stato possibile ripristinare la voce della cronologia.",
   },
 };
 
@@ -452,6 +506,67 @@ function syncModalContent() {
   }
 }
 
+function isRestoreMenuOpen() {
+  return !byId("noteHistoryRestoreMenu")?.hidden;
+}
+
+function setRestoreMenuOpen(open, { focus = false } = {}) {
+  const menu = byId("noteHistoryRestoreMenu");
+  const button = byId("noteHistoryRestoreButton");
+  if (!menu || !button) return;
+
+  const shouldOpen = Boolean(open);
+  menu.hidden = !shouldOpen;
+  button.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+  if (shouldOpen && focus) byId("noteHistoryRestoreCurrent")?.focus();
+}
+
+function toggleRestoreMenu() {
+  setRestoreMenuOpen(!isRestoreMenuOpen(), { focus: !isRestoreMenuOpen() });
+}
+
+function historyEntryText(entry) {
+  return {
+    transcript: String(entry?.transcript || ""),
+    supplementary: String(entry?.supplementary || ""),
+    note: String(entry?.note || ""),
+  };
+}
+
+function showRestoreError(reason) {
+  const copy = strings();
+  const message = reason === "busy"
+    ? copy.restoreBusy
+    : reason === "max"
+      ? copy.restoreMax
+      : copy.restoreFailed;
+  window.alert(message);
+}
+
+function restoreActiveEntry(target) {
+  const entry = findVisibleEntry(state.activeEntryId);
+  if (!entry) return;
+
+  if (target === "current" && !window.confirm(strings().confirmReplace)) return;
+
+  let result = null;
+  try {
+    result = window.__workspacePresets?.restoreHistoryEntry?.(
+      historyEntryText(entry),
+      target
+    );
+  } catch (_) {
+    result = null;
+  }
+
+  if (!result?.ok) {
+    showRestoreError(result?.reason);
+    return;
+  }
+
+  closeModal();
+}
+
 function openEntry(entryId) {
   const entry = findVisibleEntry(entryId);
   const modal = byId("noteHistoryModal");
@@ -474,6 +589,7 @@ function closeModal() {
     return;
   }
 
+  setRestoreMenuOpen(false);
   modal.classList.remove("active");
   modal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("note-history-modal-open");
@@ -573,6 +689,9 @@ function updateLanguage(language) {
   const transcriptTitle = byId("noteHistoryTranscriptTitle");
   const supplementaryTitle = byId("noteHistorySupplementaryTitle");
   const noteTitle = byId("noteHistoryNoteTitle");
+  const restoreButton = byId("noteHistoryRestoreButton");
+  const restoreCurrent = byId("noteHistoryRestoreCurrent");
+  const restoreNew = byId("noteHistoryRestoreNew");
 
   if (title) title.textContent = copy.history;
   if (clearButton) clearButton.textContent = copy.clear;
@@ -583,6 +702,12 @@ function updateLanguage(language) {
   if (transcriptTitle) transcriptTitle.textContent = copy.transcript;
   if (supplementaryTitle) supplementaryTitle.textContent = copy.supplementary;
   if (noteTitle) noteTitle.textContent = copy.note;
+  if (restoreButton) {
+    restoreButton.textContent = copy.restore;
+    restoreButton.title = copy.restore;
+  }
+  if (restoreCurrent) restoreCurrent.textContent = copy.replaceCurrent;
+  if (restoreNew) restoreNew.textContent = copy.openNew;
 
   renderHistory();
   syncModalContent();
@@ -593,13 +718,35 @@ function bindEvents() {
   byId("noteHistoryCollapseButton")?.addEventListener("click", toggleCollapsedState);
   byId("noteHistoryClearButton")?.addEventListener("click", clearVisibleHistory);
   byId("noteHistoryModalClose")?.addEventListener("click", closeModal);
+  byId("noteHistoryRestoreButton")?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    toggleRestoreMenu();
+  });
+  byId("noteHistoryRestoreCurrent")?.addEventListener("click", () => {
+    setRestoreMenuOpen(false);
+    restoreActiveEntry("current");
+  });
+  byId("noteHistoryRestoreNew")?.addEventListener("click", () => {
+    setRestoreMenuOpen(false);
+    restoreActiveEntry("new");
+  });
 
   byId("noteHistoryModal")?.addEventListener("click", (event) => {
     if (event.target === event.currentTarget) closeModal();
   });
 
+  document.addEventListener("click", (event) => {
+    if (!isRestoreMenuOpen()) return;
+    const actions = event.target?.closest?.(".note-history-modal-actions");
+    if (!actions) setRestoreMenuOpen(false);
+  });
+
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && byId("noteHistoryModal")?.classList.contains("active")) {
+    if (event.key === "Escape" && isRestoreMenuOpen()) {
+      event.preventDefault();
+      setRestoreMenuOpen(false);
+      byId("noteHistoryRestoreButton")?.focus();
+    } else if (event.key === "Escape" && byId("noteHistoryModal")?.classList.contains("active")) {
       event.preventDefault();
       closeModal();
     }
