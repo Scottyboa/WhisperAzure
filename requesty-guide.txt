@@ -99,35 +99,6 @@ STEP 3 — CREATE AN API KEY
 Treat the API key like a password. Revoke it immediately if it may have been
 exposed.
 
-
-------------------------------------------------------------
-ACCESS LISTS / APPROVED MODELS
-------------------------------------------------------------
-
-For the simplest personal setup, a key without an Access List can be used if
-your Requesty organisation permits the app's named models.
-
-For stricter governance, create an Access List containing only the model
-deployments you intend to use. Search Requesty's Model Library for the models
-shown in Transcribe Notes and select the matching EU/provider-specific endpoint.
-
-The exact routes currently called by the app are:
-
-  bedrock/claude-opus-5@eu-north-1
-  vertex/claude-sonnet-5@eu
-  azure/gpt-5.6-sol@swedencentral
-  azure/gpt-5.6-terra@swedencentral
-  azure/gpt-5.6-luna@swedencentral
-  azure/gpt-5.5@swedencentral
-  azure/gpt-5-nano@swedencentral
-  vertex/gemini-3.7-flash@eu
-  nebius/kimi-k3
-
-If Requesty returns HTTP 403 for one model while other models work, the key's
-Access List or the organisation's Approved Models setting is the first thing to
-check.
-
-
 -------------------------------------------------
 STEP 4 — CONFIGURE PRIVACY AND RETENTION
 -------------------------------------------------
