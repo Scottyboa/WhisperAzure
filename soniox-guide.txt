@@ -69,7 +69,7 @@ regional deployments:
 
 Suggested subject:
 
-   Request for EU regional deployment access
+   Request for EU regional API key
 
 Suggested message:
 
@@ -80,15 +80,10 @@ Suggested message:
    EU-region project/API key so that audio and transcript content is processed
    and stored within the European Union.
 
-   Could you please enable access to the European Union regional deployment
-   for my Soniox organisation/account and provide any relevant DPA or security
-   documentation for our compliance review?
+   I hope this is possible, as I am highly satisfied with the transcription quality of your speech-to-text model so far.
 
    Kind regards,
    [Name / organisation]
-
-Do not send patient information in this email.
-
 
 -------------------------------------
 STEP 4 — CREATE AN EU-REGION PROJECT
