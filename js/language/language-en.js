@@ -19,126 +19,103 @@ export const indexTranslations = {
   // Accordion tab #1 (left): AI models
   modelsModalHeading: "AI models",
   modelsModalText: `
-  <div>
+<div>
   <p><strong>Model selection in Transcribe Notes</strong></p>
-
   <p>
-    This web app lets you choose different models from multiple providers – both for <strong>speech-to-text (STT)</strong>
-    and for <strong>note/text generation</strong>. The result you get depends on both choices: first the quality of
-    the transcription, and then how good the text model is at transforming the transcription (plus any prompt/additional info)
-    into a structured note.
+    The app lets you choose separate models for <strong>speech-to-text (STT)</strong> and <strong>note generation</strong>.
+    The final note depends on both stages: an accurate transcript provides the text model with a better foundation, while a capable
+    note model is better able to structure, prioritise and follow the selected prompt.
   </p>
 
   <hr><br>
 
-  <p><strong>1) Speech-to-text (STT) – providers/models in the app</strong></p>
+  <p><strong>1) Speech-to-text models</strong></p>
   <ul>
-    <li><strong>Soniox</strong> (with optional speaker diarization)</li>
+    <li><strong>Soniox</strong> – batch or real-time transcription, with optional speaker labels</li>
     <li><strong>OpenAI</strong> – gpt-4o-transcribe</li>
-    <li><strong>Voxtral Mini</strong> (Mistral)</li>
-    <li><strong>Deepgram</strong> – Nova-3</li>
-    <li><strong>Lemonfox</strong> – Speech-to-Text (Whisper v3-based)</li>
+    <li><strong>Mistral</strong> – Voxtral Mini Transcribe</li>
   </ul>
 
-  <br>
-  <p><strong>2) Note/text generation – providers/models in the app</strong></p>
-  <ul>
-    <li><strong>AWS Bedrock (Claude)</strong> – Claude Haiku 4.5, Claude Sonnet 4.5, Claude Opus 4.5</li>
-    <li><strong>OpenAI</strong> – GPT-5.4, GPT-5.2, GPT-5.1</li>
-    <li><strong>Google Gemini (AI Studio)</strong> – Gemini 3</li>
-    <li><strong>Google Vertex</strong> – Gemini 2.5 Pro</li>
-    <li><strong>Mistral</strong> – Mistral Large (Large 3)</li>
-    <li><strong>Lemonfox</strong> – Llama 3-based models</li>
-  </ul>
-
-  <hr><br>
-
-  <p><strong>Quality</strong></p>
+  <p><strong>Practical STT ranking</strong></p>
+  <ol>
+    <li><strong>Soniox</strong> – the recommended choice. It generally provides excellent transcription quality, supports speaker labels and can use an EU regional endpoint.</li>
+    <li><strong>OpenAI gpt-4o-transcribe</strong> – a strong alternative, but the standard API setup does not provide the same straightforward EU-residency path.</li>
+    <li><strong>Mistral Voxtral Mini</strong> – an inexpensive European alternative that may be suitable when cost is the main priority.</li>
+  </ol>
   <p>
-    The models do <strong>not</strong> produce the same output. Some models are older/weaker, and quality often tracks both model generation
-    and price level. In practice, note quality is almost always a product of two things:
-  </p>
-  <ul>
-    <li><strong>1) How good the transcription is</strong> (STT quality, error rate, punctuation, and optional speaker labels)</li>
-    <li><strong>2) How good the text model is</strong> at “understanding” the transcription and following the instruction/prompt</li>
-  </ul>
-
-  <p>
-    That means: If you have a <strong>weak transcription</strong> but a <strong>very strong text model</strong>, the model will still be limited
-    by missing/incorrect information in the transcription. And conversely: A <strong>very good transcription</strong> helps a lot, but a
-    <strong>weak text model</strong> can still produce a worse note because it fails to structure, prioritize, and follow the instruction
-    as precisely.
-  </p>
-
-  <br>
-  <p><strong>Practical “ranking” of note generation (quality)</strong></p>
-  <p>
-    Below is a practical, somewhat opinionated overview based on typical note quality in clinical use:
-  </p>
-  <ul>
-    <li>
-      <strong>Top tier:</strong> <strong>Claude Opus 4.5</strong> (usually best for notes).
-      In the same “top class” you will often find <strong>GPT-5.2</strong> and <strong>Gemini 3</strong> – but these can be more challenging in clinical use
-      depending on data flow/region and GDPR setup.
-    </li>
-    <li>
-      <strong>Tier 2 (strong quality + simpler GDPR setup):</strong>
-      <strong>Claude Sonnet 4.5</strong> (AWS Bedrock) and <strong>Gemini 2.5 Pro</strong> (Google Vertex).
-      These can be set up via EU regions and with stricter control of data processing (depending on your setup).
-    </li>
-    <li>
-      <strong>Tier 3 (good value for money):</strong> <strong>Mistral Large</strong>.
-      Often very inexpensive and good enough for a lot, but typically a notch below the top models on precision/structure in demanding notes.
-    </li>
-    <li>
-      <strong>Last:</strong> <strong>Lemonfox (Llama 3)</strong>.
-      Very cheap, but uses an older/weaker model for note generation and is primarily included for testing/experimentation.
-      Generally not recommended for the best possible clinical note quality.
-    </li>
-  </ul>
-
-  <br>
-  <p><strong>Practical “ranking” of speech-to-text (quality)</strong></p>
-  <ul>
-    <li>
-      <strong>1. Soniox</strong> – very high transcription quality. With <strong>speaker labels</strong> you often get a much better foundation
-      for note generation (e.g., “Speaker 1”/“Speaker 2” in doctor–patient conversations). At the same time, Soniox is often among the cheapest STT options, with an easy option for an EU endpoint (see API guide for more info).
-    </li>
-    <li>
-      <strong>2. OpenAI gpt-4o-transcribe</strong> – also very good, but often a slightly higher error rate than Soniox in practice.
-      In clinical use you must also be extra mindful of GDPR/setup (region, retention, and agreements).
-    </li>
-    <li>
-      <strong>Other alternatives:</strong> Deepgram Nova-3, Voxtral Mini, and Lemonfox Whisper v3 can work well for many cases,
-      but often produce more variable results than the top choices above – especially in demanding medical conversations.
-    </li>
-  </ul>
-
-  <hr><br>
-
-  <p><strong>Price vs. quality</strong></p>
-  <p>
-    The best text models often cost more per token than simpler models. For example, <strong>Claude Opus 4.5</strong> is usually the most expensive
-    text model in the app – but it often provides the best note quality. Even so, total monthly cost in normal use will often be
-    surprisingly low when you compare it to subscription services on the market such as <strong>MedBric</strong>, <strong>Noteless</strong>,
-    <strong>Stenoly</strong>, and <strong>Journalia</strong>.
-  </p>
-  <p>
-    See the “Cost information” section for concrete pricing examples and usage.
+    To keep Soniox audio and transcript content in the EU, use an API key belonging to an EU-region Soniox project and select the EU endpoint in the app.
+    Speaker labels can be particularly useful in doctor–patient conversations because they help the note model distinguish between speakers.
   </p>
 
   <hr><br>
 
-  <p><strong>Recommended setup for clinical use</strong></p>
+  <p><strong>2) Note-generation providers and models</strong></p>
+
+  <p><strong>Requesty — recommended for new users</strong></p>
   <p>
-    If the goal is <strong>the best possible note quality</strong> and at the same time a setup that is GDPR-friendly, then
-    the strongest combination is often:
-    <strong>Soniox (EU endpoint) + AWS Bedrock (Claude Opus 4.5)</strong>.
-    Alternatively <strong>Soniox + Google Vertex (Gemini 2.5 Pro)</strong>, <strong>Soniox + AWS Bedrock(Claude Sonnet 4.5)</strong> or <strong>Soniox + Mistral</strong> (EU setup).
+    Requesty provides access to models from several developers through one API key. The Requesty choices in this app are deliberately limited
+    to selected deployments intended for EU processing, no model-training reuse and suitable retention controls.
+  </p>
+  <ul>
+    <li>Claude Opus 5</li>
+    <li>Claude Sonnet 5</li>
+    <li>GPT-5.6 Sol</li>
+    <li>GPT-5.6 Terra</li>
+    <li>GPT-5.6 Luna</li>
+    <li>GPT-5.5</li>
+    <li>GPT-5 Nano</li>
+    <li>Gemini 3.7 Flash</li>
+    <li>Kimi K3</li>
+  </ul>
+
+  <p><strong>Other supported providers</strong></p>
+  <ul>
+    <li><strong>OpenAI</strong> – GPT-5.1, GPT-5.2, GPT-5.4 and GPT-5.5</li>
+    <li><strong>AWS Bedrock</strong> – Claude Haiku 4.5, Claude Sonnet 4.5/4.6 and Claude Opus 4.5/4.6/4.7</li>
+    <li><strong>Mistral</strong> – Mistral Large</li>
+  </ul>
+
+  <p>
+    AWS Bedrock is retained for users who already have AWS access or specifically want to manage their own AWS deployment.
+    Its setup is considerably more complicated and its available model selection may lag behind the newest releases. It is therefore
+    <strong>not the recommended starting point for new users</strong>.
+  </p>
+
+  <br>
+  <p><strong>Practical Requesty model guide</strong></p>
+  <p>This is an opinionated guide for typical note-generation use rather than an objective medical benchmark:</p>
+  <ul>
+    <li><strong>Maximum quality:</strong> Claude Opus 5 and GPT-5.6 Sol</li>
+    <li><strong>Strong general-purpose choices:</strong> Claude Sonnet 5, GPT-5.6 Terra and GPT-5.5</li>
+    <li><strong>Faster/value-oriented choices:</strong> GPT-5.6 Luna and Gemini 3.7 Flash</li>
+    <li><strong>Lowest-cost summarisation and preprocessing:</strong> GPT-5 Nano</li>
+    <li><strong>Additional alternative:</strong> Kimi K3</li>
+  </ul>
+  <p>
+    For long source documents, a less expensive model such as GPT-5 Nano can first create a short summary for Supplementary Information.
+    A stronger primary model can then generate the final note without receiving the full long document, which may substantially reduce cost.
+  </p>
+
+  <hr><br>
+
+  <p><strong>Price versus quality</strong></p>
+  <p>
+    The strongest models usually cost more per token, but note generation is often still inexpensive compared with subscription-based clinical
+    documentation services. The app shows the approximate USD price per one million input and output tokens beside the selected model and,
+    when usage data are available, an estimated cost after generation. See the Price section for examples.
+  </p>
+
+  <hr><br>
+
+  <p><strong>Recommended setup for new clinical users</strong></p>
+  <p>
+    The recommended starting point is <strong>Soniox with an EU-region project, EU API key and EU endpoint</strong> for speech-to-text,
+    combined with <strong>Requesty</strong> for note generation. This gives high transcription quality and simple access to a curated selection
+    of newer note models through one Requesty key.
   </p>
   <p>
-    Remember: GDPR/compliance depends on your organization, agreements (DPA), risk assessments (DPIA/TIA), and the actual region/retention settings
-    with the vendors. Read the “Privacy” section for more details.
+    No provider or model makes a workflow automatically GDPR-compliant. Your organisation must still verify the DPA, endpoint and retention settings,
+    complete the necessary DPIA/TIA assessments and review every generated note before clinical use. See the Privacy section for details.
   </p>
 </div>
 `,
@@ -146,255 +123,138 @@ export const indexTranslations = {
   securityModalHeading: "Privacy",
 securityModalText: `
 <strong>Privacy and Data Processing</strong><br><br>
-This web app is designed as a tool for speech-to-text and note generation. It is your full responsibility as a healthcare professional/data controller to ensure that all use complies with GDPR, the Health Personnel Act, and the Norwegian “Normen” for information security.<br><br>
-
-You alone are responsible for ensuring that the use of this app meets all requirements under:<br>
-- GDPR<br>
-- The Health Personnel Act<br>
-- The Norwegian Information Security Norm (“Normen”)<br><br>
+This web app is a tool for speech-to-text and note generation. As a healthcare professional and data controller, you are responsible for ensuring that your use complies with applicable legislation, including GDPR, the Health Personnel Act and the Norwegian Information Security Norm (“Normen”).<br><br>
 
 This includes, among other things:<br>
-- Entering necessary agreements (DPAs)<br>
-- Performing thorough risk assessments (DPIA and TIA)<br><br>
+- Entering into the necessary Data Processing Agreements (DPAs).<br>
+- Completing and documenting appropriate DPIA and, when relevant, TIA assessments.<br>
+- Selecting the correct regional endpoints and retention settings.<br>
+- Ensuring a lawful basis, suitable access control and any required patient information or consent.<br>
+- Reviewing every transcript and generated note before clinical use.<br><br>
 
-– More information about this is found further down in this text.<br><br>
-
-The developer of this web app assumes no responsibility for your use or lack of compliance. This is not legal advice; you must involve a data protection officer/legal advisor as needed.<br><br>
+The developer cannot determine whether a particular organisation's use is lawful. This information is not legal advice; involve your data protection officer or legal adviser when necessary.<br><br>
 
 <hr><br>
 
+<strong>1. Recommended setup for new users</strong><br><br>
 
-<strong>1. Practical model recommendations in this app</strong><br><br>
-
-This app exposes several different providers and models. Below is a practical, opinionated overview to make model choice easier. You must still do your own legal and technical assessment.<br><br>
-
-<strong>Speech-to-text (STT)</strong><br>
-- For raw transcription quality, the strongest STT models in this app are generally OpenAI gpt-4o-transcribe and Soniox.<br>
-- For routine use with identifiable patient data, Soniox with an EU endpoint and zero data retention is the best aligned with strict GDPR and health-sector requirements. OpenAI typically uses global endpoints with temporary retention and will often end up in a legal “gray zone” unless you have special contracts and EU data residency explicitly in place.<br><br>
+<strong>Speech-to-text</strong><br>
+The recommended option is <strong>Soniox with an EU-region project, EU API key and EU endpoint</strong>. Soniox states that audio and transcript content remains in the selected region when the regional project key and matching API domain are used. Soniox also states that submitted content is not used to train its models. Account, billing and usage metadata may still be processed outside the selected region.<br><br>
 
 <strong>Note generation</strong><br>
-- The best note-generation quality in this app typically comes from the ChatGPT models (GPT-5.1 / GPT-4o), Mistral (Mistral Large 3), the Claude models (via AWS Bedrock), and the Gemini models (Gemini 3 and Gemini 2.5 Pro).<br>
-- From a GDPR standpoint, the recommended setup in this app is <strong>AWS Bedrock (Claude)</strong>, because it can be configured for strong data-residency controls (EU/EEA regions), zero data retention, and no-training reuse—making it a highly “GDPR-optimized” path for note generation when set up correctly.<br>
-- A strong alternative is <strong>Google Vertex AI with Gemini 2.5 Pro</strong> in an EU region. This requires that you set up your own Google Cloud/Vertex project, deploy a backend, and paste the backend URL and secret into the “Google Vertex” fields on the front page.<br>
-- <strong>Mistral (EU)</strong> can also be a GDPR-friendly option for note generation when you (1) use EU processing, (2) request <strong>Zero Data Retention</strong> from Mistral support (<a href="https://mistral.ai/contact" target="_blank" rel="noopener noreferrer">mistral.ai/contact</a>), and (3) <strong>opt out of model training</strong> in your Mistral account privacy settings (<a href="https://admin.mistral.ai/plateforme/privacy" target="_blank" rel="noopener noreferrer">admin.mistral.ai/plateforme/privacy</a>). If you have not activated these, treat Mistral as a “gray zone” for identifiable patient data.<br>
-- For setup guidance related to Google Vertex and AWS Bedrock, click on the "Guide" hyperlink next to the input fields on the front page.<br>
+The recommended option for new users is <strong>Requesty</strong>. The app sends Requesty requests through its EU gateway and exposes a deliberately curated selection of named model deployments intended for EU processing, no model-training reuse and suitable retention controls. This gives access to several newer models through one Requesty API key.<br><br>
 
-<strong>Other providers in this app</strong><br>
-- Lemonfox and Deepgram are included mainly for testing/experimentation and possible non-clinical use. For demanding clinical dictation and note generation, their quality is generally lower than Soniox/OpenAI/Gemini, and their GDPR status depends entirely on which endpoints (EU/global) and options (such as Zero Data Retention) you actually have activated with the provider.<br>
-- The GPT models from OpenAI, Deepgram’s default/global endpoints, and Gemini 3 used via Google AI Studio typically involve global infrastructure and temporary data retention. These setups are not automatically GDPR-compliant for identifiable patient data and should be treated as “gray zones” unless you have explicit agreements and EU data residency/ZDR documented.<br>
-- Likewise, any non-EU endpoint/region choice (for any provider) can move processing outside the EU/EEA, so make sure your endpoint/region choices match your compliance requirements.<br><br>
+The app's model selection does not by itself activate Zero Data Retention for your Requesty account. Requesty documents that prompt/output logging on self-service plans is enabled by default with a 30-day retention period. Logging can be disabled per API key, and organisation-wide Zero Data Retention can be requested from Requesty. Before using identifiable patient data, verify this setting, the selected model deployment, the current subprocessor information and your DPA.<br><br>
 
-<strong>“Most GDPR-optimized” combination in this app</strong><br>
-If you use Soniox with an EU endpoint for speech-to-text and Google Vertex og AWS Bedrock for note generation, the technical data flow in this app can be kept inside the EU with zero data retention and no training reuse at provider side.<br>
-A strong alternative is Soniox (EU endpoint) + Mistral (EU processing + approved Zero Data Retention + training opt-out enabled).<br><br>
+No technical setup is automatically “GDPR compliant”. Your organisation's agreements, configuration, purpose, risk assessment and working procedures remain decisive.<br><br>
 
 <hr><br>
 
-<strong>2. How does the web app work?</strong><br>
-- Records audio through the browser’s recording functionality.<br>
-- Processes audio in the browser’s memory (RAM).<br>
-- Uploads the audio file via secure HTTPS to the selected speech-to-text provider (e.g., OpenAI, Soniox, Lemonfox, Mistral/Voxtral, Deepgram) using your own API key from that provider.<br>
-- Sends the transcription (and any additional prompt/text) to the selected text model (e.g., GPT-5.1, GPT-4o, Gemini 3, Mistral Large, Lemonfox LLM, Gemini 2.5 Pro via Vertex) via their API, also using your own API key or backend URL/secret.<br>
-- Your browser receives the draft note directly from the provider through a secure/encrypted connection.<br><br>
+<strong>2. How the web app processes data</strong><br><br>
+- Audio is recorded and temporarily processed in the browser's memory.<br>
+- The audio is sent over encrypted HTTPS to the selected speech-to-text provider: Soniox, OpenAI or Mistral/Voxtral.<br>
+- The resulting transcript remains visible in the selected Workspace in the browser.<br>
+- When you generate a note, the transcript, selected prompt and any Supplementary Information are sent to the selected note provider.<br>
+- For Requesty, the browser sends the request to Requesty's EU gateway, which forwards it to the specifically selected model deployment.<br>
+- The draft note is returned to the browser over an encrypted connection.<br><br>
 
-Your API keys are stored only temporarily in the browser’s memory (SessionStorage). When you close the app or browser, the keys are deleted. To use the web app again, you must paste the keys again. This provides an additional layer of security against unauthorized access.<br><br>
-
-The web app has no server that stores audio or text; all communication is directly between your browser and the services you choose (or, in the case of Google Vertex, via the backend URL you have configured in your own Google Cloud project).<br><br>
-
-<hr><br>
-
-<strong>3. Your own API keys are required</strong><br>
-All communication with the model providers (OpenAI, Google Gemini, Soniox, Lemonfox, Deepgram, Mistral, etc.) happens directly from your browser using your personal API keys, or via your own Google Cloud backend URL/secret for Vertex.<br><br>
-
-The developer of this web app has no access to your API keys, your backend URL/secret, or the content you send to the providers.<br><br>
+The web app itself has no application server that stores your audio, transcript or note. Communication takes place between your browser and the services you choose. AWS Bedrock is an exception in the sense that it is accessed through the user's own separately configured AWS backend.<br><br>
 
 <hr><br>
 
-<strong>4. Data Processing Agreements (DPA) with providers</strong><br>
-If you will use API services to process personal data (especially patient data), you are advised to enter a Data Processing Agreement (DPA) with each provider you actually use, for example:<br>
-- OpenAI (speech-to-text and text generation)<br>
-- Google (Gemini 3 via Google AI Studio, Gemini 2.5 Pro via Vertex AI)<br>
-- Soniox (speech-to-text)<br>
-- Deepgram (speech-to-text)<br>
-- Mistral (Voxtral for speech-to-text, Mistral Large for text)<br>
-- Lemonfox (Whisper v3 speech-to-text and Llama 3-based text models)<br><br>
+<strong>3. API keys and credentials</strong><br><br>
+You use your own provider keys or, for AWS Bedrock, your own backend URL and secret. The developer of this web app does not receive these credentials or the clinical content sent through them.<br><br>
 
-OpenAI provides a standard DPA and an organization profile where company information is registered. Equivalent agreements and documents exist for other providers.<br><br>
+API keys entered on the front page are stored temporarily in the browser's SessionStorage and are removed when that browser tab/session is closed or when you use Clear keys. If you export an encrypted key backup, the password is used locally in the browser to encrypt the file before it is saved or uploaded.<br><br>
 
-Once DPAs are in place, you/your organization are the data controller, while the providers (OpenAI, Google, Soniox, Mistral, Deepgram, Lemonfox, etc.) are data processors. You must verify that the agreements adequately cover your specific use (healthcare, research, etc.).<br><br>
+Treat API keys, backup files and passwords as confidential information. Use individual keys, provider-side spending limits and access restrictions where available, and revoke a key immediately if it may have been exposed.<br><br>
 
 <hr><br>
 
-<strong>5. DPIA and TIA – required risk assessments</strong><br><br>
+<strong>4. Data Processing Agreements</strong><br><br>
+Before processing personal or patient data, assess and enter into appropriate DPAs with the services you actually use. Depending on your configuration, this may include:<br>
+- Soniox for speech-to-text.<br>
+- Requesty for gateway processing and its documented subprocessors/model deployments.<br>
+- OpenAI for direct speech-to-text or note generation.<br>
+- Mistral for Voxtral or Mistral Large.<br>
+- AWS for a separately configured Bedrock setup.<br><br>
 
-<strong>DPIA (Data Protection Impact Assessment)</strong><br>
-Required under GDPR Article 35 when new technology is used to process special-category data (such as health data). The purpose is to identify and reduce privacy risks related to the processing.<br><br>
-
-You should, among other things:<br>
-- Map which data are processed (audio, text, metadata).<br>
-- Describe purpose (clinical documentation, quality, research, etc.).<br>
-- Assess risks to patients’ rights and freedoms.<br>
-- Decide on technical and organizational measures (encryption, access control, logging, training, etc.).<br><br>
-
-<strong>TIA (Transfer Impact Assessment)</strong><br>
-Required when personal data is transferred outside the EEA (e.g., to the USA). The purpose is to document that the transfer still provides a “essentially equivalent” level of protection (Schrems II, GDPR Art. 44–49).<br><br>
-
-You should, among other things:<br>
-- Assess relevant laws in the recipient country (e.g., FISA 702, CLOUD Act).<br>
-- Compare this with the sensitivity of the data and the technical/contractual measures used (encryption, pseudonymization, SCC, ZDR, EU endpoints, etc.).<br>
-- Conclude whether the transfer is acceptable and whether the residual risk is tolerable.<br><br>
-
-Both DPIA and TIA should be completed, documented, and approved before using the web app with real patient data.<br><br>
+Confirm that each agreement covers your organisation, healthcare use, security requirements, retention, deletion, subprocessors and any international transfers. Provider terms and technical settings can change, so they must be reviewed regularly.<br><br>
 
 <hr><br>
 
-<strong>6. Data processing, storage, and “GDPR-friendliness” of different providers</strong><br><br>
+<strong>5. DPIA and TIA</strong><br><br>
 
-Below is a rough overview of how services typically operate today. This may change. You must always check current documentation and agreements from each provider.<br><br>
+<strong>DPIA — Data Protection Impact Assessment</strong><br>
+A DPIA is generally required under GDPR Article 35 when new technology is used to process special-category data such as health information. Map the audio, text and metadata being processed; document the purpose; assess risks to patients; and decide on technical and organisational safeguards such as data minimisation, access control, deletion and incident handling.<br><br>
 
+<strong>TIA — Transfer Impact Assessment</strong><br>
+A TIA may be required when personal data is transferred outside the EEA. Assess the destination, applicable law, contractual safeguards and supplementary measures, including encryption, pseudonymisation, EU endpoints and retention controls. If the entire documented processing path remains in the EU/EEA, explain and document that conclusion as part of the assessment.<br><br>
 
-<strong>Soniox (with EU endpoint)</strong><br>
-Soniox offers data residency in both the US and EU.<br>
-When a project is configured for the EU region, audio and transcripts are processed within that region; some system data (account/billing data) may still be handled globally.<br>
-To use the EU endpoint clinically, you typically must contact Soniox and request EU-project access/API key and documentation. Access may take 1–2 days after contact.<br>
-With the EU endpoint enabled, Soniox is a strong GDPR-aligned option for speech-to-text, though DPIA/TIA and DPAs remain required.<br><br>
-<ul>
-  <li><strong>EU region:</strong> Yes</li>
-  <li><strong>Zero data retention:</strong> Yes – in this app, the audio is deleted immediately after the transcription is received back from Soniox.</li>
-  <li><strong>Training:</strong> Not used</li>
-</ul><br><br>
+Both assessments should be completed and approved before real patient data are used.<br><br>
 
-<strong>AWS Bedrock (Claude via EU backend)</strong><br>
-In this app, AWS Bedrock is used only through your own backend URL and secret, entered under “AWS Bedrock” on the front page.<br>
-If you follow the setup guide, your Bedrock deployment can be configured to an EU region with zero data retention and no training reuse. Requests and responses are processed within the EU, and request data is not retained longer than necessary to deliver the response, according to AWS documentation and your chosen configuration.<br>
-For a practical walk-through of how to create the setup, choose region and deploy the backend used by this app, click the guide link next to the “AWS Bedrock” fields on the front page.<br><br>
-<ul>
-  <li><strong>EU region:</strong> Yes</li>
-  <li><strong>Zero data retention:</strong> Yes</li>
-  <li><strong>Training:</strong> Not used for training</li>
-</ul><br><br>
+<hr><br>
 
-<strong>Mistral (Voxtral for speech-to-text, Mistral Large for text)</strong><br>
-EU-based. API data hosting in the EU by default unless explicitly using US endpoints.<br>
-Mistral offers Zero Data Retention (ZDR) on request, meaning data is not retained beyond what is necessary to deliver the response. This may simplify GDPR justification but must be documented in DPIA/TIA.<br>
-EU endpoint + ZDR (when granted and configured) makes Mistral one of the most GDPR-friendly options in this app.<br><br>
-<ul>
-  <li><strong>EU region:</strong> Yes</li>
-  <li><strong>Zero data retention:</strong> No – default retention is typically ~30 days, but you can request Zero Data Retention by contacting Mistral support (Mistral Help Center).</li>
-  <li><strong>Training:</strong> Opt-out available – by default data may be used for training, but you can disable this in your Mistral account privacy settings.</li>
-</ul><br><br>
+<strong>6. Provider-specific considerations</strong><br><br>
 
-<strong>Google Vertex AI (Gemini 2.5 Pro via EU backend)</strong><br>
-In this app, Google Vertex AI is used only through your own backend URL and secret, entered under “Google Vertex” on the front page.<br>
-When your Vertex project is configured to use an EU region (for example europe-west1) and zero data retention/no training reuse, prompts and notes are processed within the EU, and request data is not kept longer than necessary to deliver the response, according to Google’s documentation.<br>
-This setup can therefore be used as a fully EU-resident, zero-retention alternative for note generation, provided that you also have a valid DPA with Google and have completed DPIA/TIA that explicitly cover this use.<br>
-For a practical walk-through of how to create the project, set the region, and deploy the backend used by this app, you can click the guide button in the “Google Vertex” header on the front page; this opens a dedicated ChatGPT guide where you can ask follow-up questions.<br><br>
-<ul>
-  <li><strong>EU region:</strong> Yes</li>
-  <li><strong>Zero data retention:</strong> Yes</li>
-  <li><strong>Training:</strong> Not used for training</li>
-</ul><br><br>
+<strong>Soniox EU</strong><br>
+EU data residency requires a Soniox project created for the EU region, the API key belonging to that project and the matching EU API domain selected in the app. Soniox states that content data then remains in the EU region and is not used for model training. Verify retention/deletion behaviour and obtain the necessary agreement for your organisation.<br><br>
 
+<strong>Requesty</strong><br>
+The app uses Requesty's EU gateway and fixed, curated model routes rather than an unrestricted model picker. Requesty states that it does not train on prompts or responses. The EU gateway keeps Requesty's own processing and storage in the EU, while complete EU residency also depends on using an EU-hosted upstream deployment. The app is designed to select such deployments, but users must still verify current model details and disable prompt/output logging for their API key or obtain organisation-wide ZDR before using identifiable patient data.<br><br>
 
-<strong>Gemini 3 (Google AI Studio)</strong><br>
-Gemini 3 used via Google AI Studio / Gemini API with a plain API key is normally processed on Google’s global infrastructure, which may involve transfers outside the EEA.<br>
-Google may retain request data for a limited period for abuse detection, reliability and improvement, depending on your settings and agreement, and the endpoint is not by default explicitly EU-locked.<br>
-Use of Gemini 3 via Google AI Studio will therefore often be a legal “gray zone” for identifiable patient data unless you have explicit contractual guarantees for EU data residency and retention, documented in your DPIA/TIA.<br><br>
-<ul>
-  <li><strong>EU region:</strong> No – global processing</li>
-  <li><strong>Zero data retention:</strong> No – default is data retention (commonly cited around ~55 days) unless otherwise agreed/configured.</li>
-  <li><strong>Training:</strong> Varies – depends on settings/agreements (treat as non-GDPR for identifiable patient data without explicit guarantees).</li>
-</ul><br><br>
+<strong>AWS Bedrock</strong><br>
+Bedrock remains available for users who already have AWS access or prefer their own AWS infrastructure. It requires a separately deployed backend and careful regional configuration. It is more complicated and is no longer the recommended starting point for new users, but it may remain suitable for organisations with an established AWS environment and approved governance.<br><br>
+
+<strong>Mistral</strong><br>
+Mistral provides the Voxtral speech-to-text and Mistral Large note-generation options in this app. Verify the current hosting region, DPA, retention setting and training preference. If your use requires Zero Data Retention, obtain and document that configuration before sending patient information.<br><br>
 
 <strong>OpenAI</strong><br>
-OpenAI states that API data is not used for training by default, but may be stored temporarily (typically up to ~30 days) for abuse detection and debugging.<br>
-OpenAI has introduced data residency in Europe for certain API customers and products, but this requires specific agreements/configurations.<br>
-With typical usage in this app, OpenAI calls often go to global (US) endpoints, meaning transfers outside the EEA.<br><br>
-<ul>
-  <li><strong>EU region:</strong> No (by default)</li>
-  <li><strong>Zero data retention:</strong> No – default is temporary retention (typically up to ~30 days)</li>
-  <li><strong>Training:</strong> Not used (API default)</li>
-</ul><br><br>
-
-Using OpenAI with patient data is often a legal gray zone unless you have:<br>
-- a clear DPA,<br>
-- documented DPIA/TIA covering the transfer,<br>
-- any special arrangements for EU data residency/ZDR if available and activated.<br><br>
-
-<strong>Deepgram (Nova-3)</strong><br>
-Historically used global endpoints, but now offers dedicated and EU-specific endpoints.<br>
-Using only the default/global endpoint typically means audio is processed outside the EEA.<br>
-Deepgram also offers EU-hosted services and various compliance setups, but you must configure the correct endpoint (e.g., api.eu.deepgram.com) and have agreements covering data residency and retention.<br>
-As commonly used today, Deepgram—like OpenAI—may involve data transfers outside the EU unless explicitly configured otherwise.<br><br>
-<ul>
-  <li><strong>EU region:</strong> No – default usage can be global (EU endpoint requires explicit selection/configuration)</li>
-  <li><strong>Zero data retention:</strong> Depends – can be arranged by contacting Deepgram support</li>
-  <li><strong>Training:</strong> Not used (by default)</li>
-</ul><br><br>
-
-<strong>Lemonfox (speech-to-text and text generation)</strong><br>
-EU-based and markets itself as fully GDPR-compliant.<br>
-Speech-to-text (Whisper v3) and Llama 3-based text models are processed in the EU, and they state that audio/text is deleted shortly after processing (no training reuse).<br>
-This makes Lemonfox relatively GDPR-friendly for both speech-to-text and text generation, provided you still perform DPIA/TIA and have proper agreements.<br><br>
-
-<strong>Summary of model options in this app:</strong><br><br>
-
-Most GDPR-optimized path in this app (when correctly configured and with DPA + DPIA/TIA in place):<br>
-- Soniox with EU endpoint for speech-to-text.<br>
-- Google Vertex AI with Gemini 2.5 Pro in an EU region and zero data retention for note generation.<br><br>
-
-Other relatively GDPR-friendly options (again assuming EU endpoints and any ZDR options are actually enabled and documented):<br>
-- Lemonfox (EU STT + LLM, rapid deletion).<br>
-- Mistral (Voxtral + Mistral Large) with EU hosting and optional ZDR.<br><br>
-
-More demanding/“gray zones” for patient data (without special agreements/EU residency/ZDR):<br>
-- OpenAI via global endpoints.<br>
-- Deepgram via global endpoints.<br>
-- Gemini 3 via global Google AI Studio/Gemini API without explicit EU lock.<br><br>
-
-In all cases, you/your organization must document compliance with GDPR, the Health Personnel Act, and the Norwegian Information Security Norm.<br><br>
+OpenAI remains available for direct speech-to-text and note generation. Standard API data are not used for model training by default, but regional processing and retention depend on the product, account and contractual configuration. Do not assume that a standard direct API key provides EU-only processing or Zero Data Retention; verify the current terms and complete any required TIA.<br><br>
 
 <hr><br>
 
-<strong>7. Preconditions for possible clinical use</strong><br>
-Your assessment is decisive: The legality of using this tool with patient data depends entirely on your own thorough assessment of both the app and every provider you connect to (OpenAI, Gemini, Soniox, Lemonfox, Mistral, Deepgram, etc.).<br><br>
-
-Minimum requirements before using patient data:<br>
-- Valid DPAs with every provider you use.<br>
-- Organization-specific DPIA and TIA that are completed, approved, and conclude acceptable residual risk.<br>
-- Clear decision on which models/endpoints may be used for patient data (for example, limiting patient-related use to Soniox with EU endpoint and Google Vertex AI with Gemini 2.5 Pro in an EU region and zero data retention, and possibly Lemonfox/Mistral if your assessments deem them adequate).<br>
-- Responsibility for content: You are responsible for all data sent via your API keys/backends and for verifying the generated note before placing it in a patient record.<br><br>
-
-<hr><br>
-
-<strong>8. Overview of data storage</strong><br><br>
-
-(This describes how the web app handles data; provider-side storage must be verified with each provider.)<br><br>
-
-<strong>Your API keys (OpenAI, Soniox, Gemini, Lemonfox, Deepgram, Mistral, etc.) and Vertex backend credentials</strong><br>
-- Where stored? SessionStorage in your browser.<br>
-- For how long? Until you close the app or browser.<br>
-- Who has access? Only you and your browser.<br><br>
-
-<strong>Audio segments during recording</strong><br>
-- Where stored? Browser memory (RAM).<br>
-- For how long? Only during recording/processing. The app does not store audio permanently.<br>
-- Who has access? Only you and your browser before the audio is sent to the selected STT API.<br><br>
-
-<strong>Transcribed text/note drafts at providers</strong><br>
-- Where stored? At the selected provider (OpenAI, Google, Soniox, Lemonfox, Mistral, Deepgram, etc.) in their cloud infrastructure, or in your own Google Cloud project when using your Vertex backend.<br>
-- For how long? Varies—e.g., OpenAI states data may be stored up to ~30 days for abuse detection; some EU providers (Lemonfox/Mistral with ZDR, Soniox EU, Vertex with zero data retention) delete faster. You must verify each provider’s policy and your own Vertex configuration.<br>
-- Who has access? You through the API/backend response, and the provider (or your own Google Cloud project) during the technical retention period.<br><br>
-
-<strong>Instructions/Prompts inside the web app</strong><br>
-- Where stored? Locally in your browser (LocalStorage/SessionStorage). If you use the same browser, PC, and API keys/backend values, prompts remain available next time.<br>
-- For how long? Until you delete them or clear browser data.<br>
-- Who has access? You and your browser.<br><br>
+<strong>7. Minimum conditions before clinical use</strong><br><br>
+- Use only providers and endpoints approved by your organisation.<br>
+- Have valid DPAs and an up-to-date overview of subprocessors.<br>
+- Complete and approve the relevant DPIA/TIA.<br>
+- Configure EU routing and retention/ZDR correctly where required.<br>
+- Minimise the patient information sent and pseudonymise where practical.<br>
+- Protect API keys and exported backup files.<br>
+- Verify every transcript and generated note before adding information to the patient record.<br><br>
 
 <hr><br>
 
-<strong>9. Source code</strong><br>
-The source code is open and runs locally in your browser. There are no hidden backdoors transmitting data to the developer’s servers, other than basic usage statistics like click counts, but no sensitive user information or data you send/receive.<br>
+<strong>8. Overview of local and external storage</strong><br><br>
+
+<strong>API keys and backend credentials</strong><br>
+- Stored in: browser SessionStorage.<br>
+- Duration: until the tab/session is closed or the keys are cleared.<br>
+- Access: the user and that browser session.<br><br>
+
+<strong>Audio during recording</strong><br>
+- Stored in: browser memory while recording/processing.<br>
+- Duration: temporary; the app does not keep a permanent local audio archive.<br>
+- External processing: the selected STT provider receives the audio.<br><br>
+
+<strong>Transcripts, Supplementary Information and generated notes</strong><br>
+- Stored in: the active browser-tab session and its Workspace/history functions.<br>
+- Duration: normally until the tab/session is closed or the content/history is cleared.<br>
+- External processing: relevant text is sent to the selected note provider when generation is requested.<br><br>
+
+<strong>Prompts and Workspace Set settings</strong><br>
+- Prompts and selected settings can be stored locally in the browser.<br>
+- Workspace Set exports include configuration such as Workspace order, prompts, selected providers/models and relevant toggles, but not transcripts, Supplementary Information, generated notes, history, audio, API keys or passwords.<br>
+- Cloud exports are encrypted in the browser with the chosen password. Local JSON exports are readable and must be stored securely.<br><br>
+
+Provider-side processing and retention are separate from browser storage and must be verified for every provider used.<br><br>
+
+<hr><br>
+
+<strong>9. Source code and responsibility</strong><br><br>
+The web app's source code is openly available and the main application runs in the browser. The developer does not receive your clinical text through an application backend. Basic non-clinical usage statistics may still be collected as described by the site.<br><br>
+
+The generated output is a draft. The healthcare professional remains responsible for checking medical accuracy, correcting errors and deciding what is entered into the patient record.
 `,
 
 
@@ -410,115 +270,86 @@ Many existing providers offer similar services but charge significantly more —
 `,
 
   guideModalHeading: "API key - How to Get",
-guideModalText: `How to obtain API keys:<br><br>
-To use the speech-to-text and note-generation models in this app, you must obtain one or more API keys (OpenAI, Soniox, Google Gemini, Lemonfox, Deepgram, Mistral).<br><br>
+guideModalText: `
+<strong>API keys — getting started</strong><br><br>
 
-<strong>Speech-to-text models in the app:</strong><br>
-- OpenAI: gpt-4o-transcribe<br>
-- Soniox<br>
-- Soniox (speaker labels)<br>
-- Lemonfox Speech-to-Text (Whisper v3-based)<br>
-- Voxtral Mini<br>
-- Deepgram Nova-3<br><br>
+The simplest recommended setup for new users is:<br>
+1. <strong>Soniox with an EU-region API key</strong> for speech-to-text.<br>
+2. <strong>Requesty</strong> for note generation.<br><br>
 
-<strong>Text generation models in the app:</strong><br>
-- GPT-5.4<br>
-- GPT-5.2<br>
-- GPT-5.1<br>
-- Claude sonnet 4, 4.5 and Claude Haiku 4.5(via AWS Bedrock)<br>
-- Gemini 2.5 pro(via Google Vertex)<br>
-- Lemonfox text generation (Llama 3-based models)<br>
-- Mistral Large<br>
-- Gemini 3<br><br>
+This gives access to high-quality transcription and a curated selection of newer note models using only two provider accounts. Alternative providers can still be used if your organisation has assessed and approved them.<br><br>
 
-<strong>Recommended use in relation to GDPR:</strong><br>
-- Of the available models in this web app, Soniox for speech-to-text, as well as Google Vertex (Gemini 2.5 Pro) and AWS Bedrock (Claude) for text/note generation, are GDPR-compliant.<br>
-- The other models may involve data processing outside the EU’s borders and temporary data retention, which makes them less suitable for use in a clinical setting with regard to GDPR and the Norwegian Data Protection Authority’s guidance/standards.<br>
-- For use of this app in a clinical setting, it is therefore strongly recommended to use Soniox for speech-to-text, and Google Vertex and/or AWS Bedrock for note generation. Fortunately, these models are also very good and will provide high quality for both transcription and note generation.<br><br>
+<strong>Speech-to-text options in the app</strong><br>
+- Soniox batch transcription<br>
+- Soniox batch transcription with Speaker Labels<br>
+- Soniox real-time transcription<br>
+- OpenAI gpt-4o-transcribe<br>
+- Mistral Voxtral Mini Transcribe<br><br>
 
-<strong>Soniox(full GDPR compliance)</strong><br>
-– Create an account at Soniox:<br>
-https://soniox.com<br><br>
-– Generate a Soniox API key and purchase/upload credits (same principle as OpenAI)<br>
-– Store the key securely and paste it into “Soniox API key (EU or US)” on the front page<br>
-– You can now use Soniox speech-to-text (very high-quality and cost-effective, recommended)<br>
-– For EU endpoint (GDPR-compliant): email sales@soniox.com and request an EU API key for clinical doctor–patient use.<br><br>
-&nbsp;&nbsp;Example email:<br>
-&nbsp;&nbsp;"Greetings!<br><br>
-&nbsp;&nbsp;I work as a family doctor in Norway, and I wish to use the Soniox speech-to-text API to transcribe medical doctor-patient consultations in a clinical setting. In order for me to do this in a way that complies with my local GDPR regulations, I need to have access to a project/API-key with EU regional endpoint. I hope this is possible, as I am highly satisfied with the transcription quality of your speech-to-text model so far.<br><br>
-&nbsp;&nbsp;Regards<br>
-&nbsp;&nbsp;[Dr. "navn"]"<br><br>
-– Usual response time is 1-2 days. When approved, you can create a "new project" on your soniox.com user, in which you may chose EU endpoint. You can then generate a new API key which is linked to this new project.<br>
-– On the main page, you can choose between EU(GDPR compliant) and US endpoints in the dropdown when using Soniox. To use the the model with EU endpoint, simply paste your new EU API key in the Soniox API key infput field on the front page, before entering the main page.<br><br>
+<strong>Note-generation providers in the app</strong><br>
+- Requesty: Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.7 Flash and Kimi K3<br>
+- OpenAI: GPT-5.1, GPT-5.2, GPT-5.4 and GPT-5.5<br>
+- AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 and Claude Opus 4.5/4.6/4.7<br>
+- Mistral: Mistral Large<br><br>
 
+<hr><br>
 
-<strong id="requesty-guide-section">Requesty (GPT-5.5, Claude Opus 5 and Claude Sonnet 5 – full GDPR compliance)</strong><br>
-– For note generation.<br>
-– Requesty is an LLM gateway that gives you access to the top models from several providers through a single API key. In this app, Requesty is used via its <strong>EU endpoint</strong>, with EU-hosted model deployments, meaning <strong>zero data retention</strong>, <strong>no use of your data for model training</strong>, and <strong>all data processing within the EU</strong>.<br>
-– Through the Requesty provider you can use <strong>GPT-5.5</strong>, <strong>Claude Opus 5</strong> and <strong>Claude Sonnet 5</strong> for note generation in a GDPR-friendly way.<br>
-– How to get a Requesty API key:<br>
-&nbsp;&nbsp;1. Go to <a href="https://requesty.ai" target="_blank" rel="noopener">https://requesty.ai</a>, click <strong>"Get started"</strong> and create a user. New accounts receive <strong>$10 USD in free credits</strong>, so you can start using the models right away (later you can top up credits to continue using the provider).<br>
-&nbsp;&nbsp;2. In the left-hand menu, scroll down and click <strong>"API Keys"</strong>, then click <strong>"Create API Key"</strong>.<br>
-&nbsp;&nbsp;3. Choose <strong>"My API key for my account"</strong>, give your API key a name, and under access list select <strong>"Approved models"</strong>. Then click <strong>"Create API Key"</strong>.<br>
-&nbsp;&nbsp;4. <strong>Important:</strong> when the API key appears, copy it and store it securely immediately — it will not be shown again after you close the dialog.<br>
-&nbsp;&nbsp;5. Paste the key into the <strong>"Requesty API key"</strong> field on the front page. You can now select <strong>Requesty</strong> as note-generation provider on the main page and choose between the available models.<br><br>
+<strong>Soniox — recommended speech-to-text setup</strong><br>
+1. Create an account at <a href="https://soniox.com" target="_blank" rel="noopener noreferrer">soniox.com</a>.<br>
+2. Add billing/credits as required and create a project.<br>
+3. For EU data residency, request access to Soniox regional deployments. Soniox's documentation directs users to contact <a href="mailto:support@soniox.com">support@soniox.com</a>.<br>
+4. When regional access is enabled, create/select a project in the <strong>European Union</strong> region. The project receives region-specific API keys.<br>
+5. Copy the EU-project key and paste it into the <strong>Soniox API key</strong> field on the front page.<br>
+6. Select <strong>EU</strong> as the Soniox endpoint in the app. Both the EU project key and the EU endpoint are required for EU content residency.<br><br>
 
-<strong>AWS Bedrock (full GDPR compliance)</strong><br>
-– For note generation.<br>
-– This is a more advanced setup than most options in the app, but it can be configured in a way that supports full GDPR compliance, with EU endpoint.<br>
-– For step-by-step instructions, click the <a href="#" data-open-guide="bedrock"><strong>“Guide”</strong></a> link next to the <strong>AWS Bedrock</strong> header on the front page.<br>
-– When the setup is complete, you will receive a <strong>backend URL</strong> and a <strong>secret key</strong>. You must paste these into the <strong>AWS Bedrock</strong> fields on the front page of the web app.<br><br>
+Soniox can be used in batch or real-time mode. Speaker Labels are available for Soniox batch transcription and can help distinguish speakers in a consultation. Read the current <a href="https://soniox.com/docs/data-residency" target="_blank" rel="noopener noreferrer">Soniox data-residency documentation</a> before clinical use.<br><br>
 
-<strong>Google Vertex (Gemini 2.5 Pro – full GDPR compliance)</strong><br>
-– For note generation.<br>
-– This is a more advanced setup designed for users who want to run Gemini through Google Cloud / Vertex AI using a regional EU endpoint (such as europe-west1 or europe-west4).<br>
-– In short: you create your own Google Cloud project, activate Vertex AI, link it to a billing account, and deploy a small backend function (Cloud Run) which gives you a secure HTTPS URL (https://…run.app).<br>
-– In this web app, you paste that URL into the field “Vertex backend URL (https://…run.app)” and your secret BACKEND_SECRET into the “Vertex backend secret” field on the front page.<br>
-– All usage of Gemini 2.5 Pro then runs through *your* project; you control billing, quotas, and can select an EU region, which improves GDPR compliance.<br>
-– The setup is slightly technical, so if you prefer a full step-by-step guide, click the <a href="#" data-open-guide="vertex"><strong>“Guide”</strong></a> link next to the “Google Vertex” header above the input fields on the front page.<br><br>
+<hr><br>
+
+<strong id="requesty-guide-section">Requesty — recommended note-generation setup</strong><br>
+Requesty is an LLM gateway that provides access to models from several developers through one API key. This app sends Requesty calls through the EU gateway and exposes only a curated subset of named deployments intended for EU processing and appropriate privacy controls.<br><br>
+
+To create a key:<br>
+1. Go to <a href="https://requesty.ai" target="_blank" rel="noopener noreferrer">requesty.ai</a>, select <strong>Get started</strong> and create an account.<br>
+2. Add credits or configure billing in the Requesty dashboard. Any trial credits or promotions may change, so check the current terms in your account.<br>
+3. Open <strong>API Keys</strong> and choose <strong>Create API Key</strong>.<br>
+4. Give the key a clear name and restrict it to approved models or an appropriate access list when available.<br>
+5. Copy the key immediately and store it securely; it may not be displayed again.<br>
+6. Paste it into the <strong>Requesty API key</strong> field on the front page.<br><br>
+
+<strong>Important privacy configuration:</strong> Requesty states that it does not train on requests or responses. However, prompt/output logging on self-service plans is documented as enabled by default with 30-day retention. Disable logging for the API key or request organisation-wide Zero Data Retention, and verify the DPA and selected model routes, before using identifiable patient data. See <a href="https://www.requesty.ai/dpa" target="_blank" rel="noopener noreferrer">Requesty's DPA information</a> and <a href="https://docs.requesty.ai/features/eu-routing" target="_blank" rel="noopener noreferrer">EU-routing documentation</a>.<br><br>
+
+<hr><br>
 
 <strong>OpenAI</strong><br>
-– Create an account at OpenAI:<br>
-https://platform.openai.com<br><br>
-– Generate an API key and add credit to your account<br>
-– Store the key securely (locally on your PC, text file, password manager, Dropbox, etc.)<br>
-– Paste the key into the field “OpenAI API key” on the front page<br>
-– You can now use the OpenAI models in the app:<br>
-• Speech-to-text: gpt-4o-transcribe (select “OpenAI” in the Recording Module dropdown on the main page)<br>
-• Text generation: chatgpt-4-latest, GPT-5.1<br><br>
+1. Create an account at <a href="https://platform.openai.com" target="_blank" rel="noopener noreferrer">platform.openai.com</a>.<br>
+2. Configure billing and create an API key.<br>
+3. Store the key securely and paste it into the <strong>OpenAI API key</strong> field.<br>
+4. The key can be used for OpenAI speech-to-text and the available direct OpenAI note models.<br><br>
 
-<strong>Google Gemini</strong><br>
-– Create/log in to an account on Google AI Studio:<br>
-https://aistudio.google.com<br><br>
-– Generate a Gemini API key<br>
-– You normally receive some free credits upon account creation (check inside AI Studio)<br>
-– Store the key securely and paste it into “Google Gemini API key” on the front page<br>
-– Text model: Gemini 3 (currently one of the best text-generation models available)<br><br>
+Verify the current DPA, retention and regional-processing options before using patient information. A standard API key should not automatically be treated as EU-only or Zero Data Retention.<br><br>
 
-<strong>Lemonfox</strong><br>
-– Create an account on Lemonfox:<br>
-https://www.lemonfox.ai<br><br>
-– Generate an API key in the Lemonfox dashboard (for speech-to-text and/or text model depending on what you use)<br>
-– Lemonfox offers a very inexpensive speech-to-text API, often with free usage for the first month — see the pricing/product page for details. EU endpoint (GDPR-friendly)<br>
-– Store the key securely and paste it into “Lemonfox API key” on the front page<br>
-– You can now use:<br>
-• Speech-to-text: Lemonfox Speech-to-Text (Whisper v3-based, inexpensive and fast)<br>
-• Text generation: Lemonfox LLM (Llama 3-based models)<br><br>
-
-<strong>Deepgram</strong><br>
-– Create an account at Deepgram:<br>
-https://deepgram.com<br><br>
-– Go to the developer/API pages (“Developers” / “Docs”) and generate an API key in the Deepgram console<br>
-– Store the key securely and paste it into “Deepgram API key” on the front page<br>
-– You can now use the Deepgram Nova-3 speech-to-text model in the app<br><br>
+<hr><br>
 
 <strong>Mistral</strong><br>
-– Create an account at Mistral AI and log in to the console:<br>
-https://console.mistral.ai<br><br>
-– Set up billing if needed, then go to “API keys” in the console and generate a Mistral API key<br>
-– Store the key securely and paste it into “Mistral API key” on the front page<br>
-– Text model: Mistral Large<br>
-– EU endpoint / European data storage by default – well suited for GDPR-friendly use<br>
+1. Create an account at <a href="https://console.mistral.ai" target="_blank" rel="noopener noreferrer">console.mistral.ai</a>.<br>
+2. Configure billing and create a Mistral API key.<br>
+3. Paste the key into the <strong>Mistral API key</strong> field.<br>
+4. The key can be used with Voxtral Mini for speech-to-text and Mistral Large for note generation.<br><br>
+
+Verify the current EU-hosting, DPA, retention and model-training settings. Request and document Zero Data Retention if required by your organisation.<br><br>
+
+<hr><br>
+
+<strong>AWS Bedrock — optional setup for existing AWS users</strong><br>
+AWS Bedrock is retained for users who already have AWS access or specifically prefer their own AWS infrastructure. The setup requires an AWS account, regional model access and a separately deployed backend URL/secret for this app. It is more complicated and may not offer the newest models as quickly as Requesty, so it is <strong>not recommended as the normal starting point for new users</strong>.<br><br>
+
+If you choose Bedrock, use the <a href="#" data-open-guide="bedrock"><strong>Guide</strong></a> link beside the AWS Bedrock fields on the front page. Verify the selected AWS region, model access, IAM permissions, logging, retention and organisational agreements before clinical use.<br><br>
+
+<hr><br>
+
+<strong>Before entering patient information</strong><br>
+An API key alone does not make a service GDPR-compliant. Confirm the provider's DPA, subprocessors, endpoint, data residency, retention/ZDR and training settings; complete the necessary DPIA/TIA; protect the credentials; minimise submitted patient information; and verify every generated note.
 `,
 
   priceButton: "Price",
@@ -528,170 +359,115 @@ priceModalText: `
   <p><strong>Cost Information</strong></p>
 
   <p>
-    You only pay for what you actually use, directly to each provider (OpenAI, Soniox, Google Gemini,
-    Lemonfox, Deepgram, Mistral). There are no subscriptions or markups in this app. The prices below are
-    approximate USD figures with conversion to NOK (using roughly 1 USD ≈ 11 NOK).
+    This app has no subscription fee or markup. You pay the selected providers directly for actual API usage.
+    Prices can change, so the figures below are approximate examples. The provider's dashboard and invoice are authoritative.
   </p>
 
-  <p><strong>1. Speech-to-Text<br>(price per minute of audio)</strong></p>
-
-  <p><strong>OpenAI – gpt-4o-transcribe</strong><br>
-  Approx. 0.006 USD per minute (≈ 0.07 NOK/min).<br>
-  15-minute consultation: approx. 0.09 USD ≈ 1.00 NOK.</p>
-
-  <p><strong>Soniox (recommended – best quality and price)</strong><br>
-  Approx. 0.0017 USD per minute.<br>
-  15-minute consultation: approx. 0.025 USD ≈ 0.30 NOK.</p>
-
-  <p><strong>Lemonfox – Whisper v3</strong><br>
-  Approx. 0.50 USD for 3 hours of audio ≈ 0.17 USD per hour ≈ 0.0028 USD per minute.<br>
-  15-minute consultation: approx. 0.042 USD ≈ 0.45 NOK.</p>
-
-  <p><strong>Mistral</strong><br>
-  API pricing starts around 0.001 USD per minute.<br>
-  15-minute consultation: approx. 0.015 USD ≈ 0.17 NOK.</p>
-
-  <p><strong>Deepgram – Nova-3</strong><br>
-  Approx. 0.004 USD per minute.<br>
-  15-minute consultation = approx. 0.60 NOK.</p>
-
-  <p><strong>2. Text Generation – typical prices (per 1 million tokens)</strong></p>
-
-  <p><strong>OpenAI – GPT-5.1</strong><br>
-  Input: 1.25 USD (≈ 13.75 NOK)<br>
-  Output: 10 USD (≈ 110 NOK)</p>
-
-  <p><strong>OpenAI – chatgpt-4o-latest</strong><br>
-  Input: 5 USD (≈ 55 NOK)<br>
-  Output: 15 USD (≈ 165 NOK)</p>
-
-  <p><strong>Google Gemini 3</strong><br>
-  Input: approx. 2 USD (≈ 22 NOK)<br>
-  Output: approx. 12 USD (≈ 132 NOK)</p>
-
-  <p><strong>AWS Bedrock – Claude Sonnet 4</strong><br>
-  Input: 3 USD (≈ 33 NOK)<br>
-  Output: 15 USD (≈ 165 NOK)</p>
-
-  <p><strong>AWS Bedrock – Claude Sonnet 4.5</strong><br>
-  Input: 3 USD (≈ 33 NOK)<br>
-  Output: 15 USD (≈ 165 NOK)</p>
-
-  <p><strong>AWS Bedrock – Claude Haiku 4.5</strong><br>
-  Input: 1 USD (≈ 11 NOK)<br>
-  Output: 5 USD (≈ 55 NOK)</p>
-
-
-  <p><strong>Mistral – Mistral Large</strong><br>
-  Approx. 2 USD per 1M input tokens and 6 USD per 1M output tokens (≈ 22 and 66 NOK).</p>
-
-  <p><strong>Lemonfox – Llama 3-based models</strong><br>
-  Typically around 0.50 USD per 1M LLM input and output tokens (≈ 5.50 NOK).</p>
-
-  <p><strong>3. What are tokens – and how much does 1 consultation cost?</strong></p>
-
-  <p>Models count text in tokens, not plain words.</p>
-
+  <p><strong>Live price information in the app</strong></p>
   <ul>
-    <li>1 token ≈ 4 characters ≈ ¾ of a word</li>
-    <li>100 tokens ≈ 75 words</li>
-    <li>1,000 tokens ≈ 750 words</li>
+    <li>The approximate USD price per one million input and output tokens is shown beside the selected note model.</li>
+    <li>After note generation, the app shows token usage and an estimated price when the provider returns sufficient usage information.</li>
+    <li>Reasoning tokens, caching, discounts, gateway fees, exchange rates and provider-specific billing rules can affect the final amount.</li>
   </ul>
 
+  <hr><br>
+
+  <p><strong>1. Speech-to-text</strong><br>(approximate price per minute of audio)</p>
+
+  <p><strong>Soniox — recommended</strong><br>
+  Approximately 0.0017 USD per minute.<br>
+  A 15-minute consultation: approximately 0.026 USD.</p>
+
+  <p><strong>OpenAI — gpt-4o-transcribe</strong><br>
+  Approximately 0.006 USD per minute.<br>
+  A 15-minute consultation: approximately 0.09 USD.</p>
+
+  <p><strong>Mistral — Voxtral Mini Transcribe</strong><br>
+  Pricing may vary by the current API offering. Check Mistral's official pricing and the estimate shown by the provider.</p>
+
+  <hr><br>
+
+  <p><strong>2. Note generation</strong><br>(USD per one million input/output tokens)</p>
+
+  <p><strong>Requesty models currently configured in the app</strong></p>
+  <ul>
+    <li>Claude Opus 5: approximately 5.50 / 27.50 USD</li>
+    <li>Claude Sonnet 5: approximately 2.20 / 11.00 USD</li>
+    <li>GPT-5.6 Sol: approximately 5.50 / 33.00 USD</li>
+    <li>GPT-5.6 Terra: approximately 2.20 / 13.20 USD</li>
+    <li>GPT-5.6 Luna: approximately 0.22 / 1.32 USD</li>
+    <li>GPT-5.5: approximately 5.00 / 30.00 USD</li>
+    <li>GPT-5 Nano: approximately 0.05 / 0.40 USD</li>
+    <li>Gemini 3.7 Flash: approximately 0.66 / 3.30 USD</li>
+    <li>Kimi K3: approximately 3.00 / 15.00 USD</li>
+  </ul>
   <p>
-    A 15-minute consultation typically:<br>
-    2,200 input tokens per 15-minute consultation (the full transcription + structured text sent in),<br>
-    450 output tokens in the finished note,<br>
-    total approx. 2,650 tokens per consultation.<br><br>
-    This means 1 million tokens gives about 350–400 consultations in this usage
-    (depending on length and detail).
+    These values mirror the estimates configured in the app and can change when Requesty or the upstream deployment changes its pricing.
+    Check the price displayed beside the model and Requesty's actual usage report.
   </p>
 
-  <p><strong>4. Example: cost per 15-minute consultation</strong></p>
-
-  <p><em>Speech-to-text (approximate prices per 15 min):</em></p>
+  <p><strong>Other supported note providers</strong></p>
   <ul>
-    <li>OpenAI gpt-4o-transcribe: ≈ 1.00 NOK</li>
-    <li>Soniox: ≈ 0.30 NOK</li>
-    <li>Lemonfox (Whisper v3): ≈ 0.45 NOK</li>
-    <li>Voxtral (Mistral): ≈ 0.17 NOK</li>
-    <li>Deepgram Nova-3 (batch): ≈ 0.70 NOK</li>
+    <li><strong>OpenAI:</strong> direct GPT-5.1, GPT-5.2, GPT-5.4 and GPT-5.5 models.</li>
+    <li><strong>AWS Bedrock:</strong> Claude Haiku, Sonnet and Opus models. Retained mainly for existing AWS users.</li>
+    <li><strong>Mistral:</strong> Mistral Large.</li>
   </ul>
+  <p>Current per-model input/output prices are shown beside the selected model in the app.</p>
 
-  <p><em>Note generation (2,200 input + 450 output tokens):</em></p>
+  <hr><br>
+
+  <p><strong>3. What are tokens?</strong></p>
+  <p>Text models count tokens rather than words. As a rough English-language rule:</p>
   <ul>
-    <li>GPT-5.1: ≈ 0.08 NOK per note</li>
-    <li>chatgpt-4o-latest: ≈ 0.20 NOK per note</li>
-    <li>Gemini 3: ≈ 0.11 NOK per note</li>
-    <li>Mistral Large: ≈ 0.08 NOK per note</li>
-    <li>Lemonfox LLM: ≈ 0.02 NOK per note</li>
-    <li>AWS Bedrock – Claude Sonnet 4 / 4.5: ≈ 0.15 NOK per note</li>
-    <li>AWS Bedrock – Claude Haiku 4.5: ≈ 0.05 NOK per note</li>
+    <li>1 token is approximately 4 characters or three quarters of a word.</li>
+    <li>100 tokens are approximately 75 words.</li>
+    <li>1,000 tokens are approximately 750 words.</li>
   </ul>
-
-  <p><em>Some typical combinations for one 15-minute consultation:</em></p>
-
-  <ul>
-    <li>OpenAI (gpt-4o-transcribe) + GPT-5.1<br>
-      ≈ 1.00 NOK (STT) + 0.08 NOK (note) ≈ 1.10 NOK per consultation
-    </li>
-    <li>Soniox + GPT-5.1<br>
-      ≈ 0.30 NOK (STT) + 0.08 NOK (note) ≈ 0.40 NOK per consultation
-    </li>
-    <li>Voxtral + Mistral Large<br>
-      ≈ 0.17 NOK (STT) + 0.08 NOK (note) ≈ 0.25 NOK per consultation
-    </li>
-    <li>Soniox + Claude Sonnet 4 / 4.5<br>
-      ≈ 0.30 NOK (STT) + 0.15 NOK (note) ≈ 0.45 NOK per consultation
-    </li>
-    <li>Soniox + Claude Haiku 4.5<br>
-      ≈ 0.30 NOK (STT) + 0.05 NOK (note) ≈ 0.35 NOK per consultation
-    </li>
-  </ul>
-
   <p>
-    In other words: the text model is extremely cheap — the speech-to-text portion dominates the total cost.
+    Medical terminology, Norwegian text, formatting and long prompts can change this ratio. Input tokens include the prompt, transcript,
+    Supplementary Information and other context sent to the model. Output tokens are the generated note and any billable reasoning/output reported by the provider.
   </p>
 
-  <p><strong>5. Example: monthly cost with steady use</strong></p>
+  <hr><br>
 
+  <p><strong>4. Example consultation</strong></p>
   <p>
-    Assume:<br>
-    20 consultations per day<br>
-    4 days per week<br>
-    4 weeks per month<br>
-    ⇒ approx. 320 consultations per month (≈ 80 hours of audio).
+    A 15-minute consultation might use approximately 2,200 input tokens and 450 output tokens for the primary note.
+    The actual amount depends heavily on transcript length, prompt size, Supplementary Information and reasoning level.
+  </p>
+  <ul>
+    <li><strong>Soniox transcription:</strong> approximately 0.026 USD.</li>
+    <li><strong>GPT-5 Nano note:</strong> approximately 0.0003 USD at the example token count.</li>
+    <li><strong>Gemini 3.7 Flash note:</strong> approximately 0.003 USD.</li>
+    <li><strong>Claude Sonnet 5 note:</strong> approximately 0.010 USD.</li>
+    <li><strong>Claude Opus 5 note:</strong> approximately 0.025 USD.</li>
+    <li><strong>GPT-5.6 Sol note:</strong> approximately 0.027 USD.</li>
+  </ul>
+  <p>
+    In normal short consultations, speech-to-text may still represent a large share of the total cost. With very long Supplementary Information,
+    however, note-generation input cost can become more important.
   </p>
 
-  <p>This yields approximately:</p>
+  <hr><br>
 
-  <ul>
-    <li>OpenAI gpt-4o-transcribe + GPT-5.1<br>
-      ≈ 31 USD ≈ 340 NOK per month
-    </li>
-    <li>Soniox + GPT-5.1<br>
-      ≈ 10 USD ≈ 110 NOK per month
-    </li>
-    <li>Voxtral + Mistral Large<br>
-      ≈ 7 USD ≈ 80 NOK per month
-    </li>
-    <li>Lemonfox (Whisper v3 + Llama 3)<br>
-      ≈ 14 USD ≈ 150 NOK per month
-    </li>
-    <li>Deepgram Nova-3 + GPT-5.1<br>
-      ≈ 23 USD ≈ 250 NOK per month
-    </li>
-    <li>Soniox + Claude Sonnet 4 / 4.5<br>
-      ≈ 12 USD ≈ 130 NOK per month
-    </li>
-    <li>Soniox + Claude Haiku 4.5<br>
-      ≈ 9 USD ≈ 100 NOK per month
-    </li>
-  </ul>
-
+  <p><strong>5. Reducing the cost of long documents</strong></p>
   <p>
-    If you don’t use the service (vacation, sick leave, parental leave), no fixed costs accrue;
-    you only pay for actual usage with each provider.
+    If you have a long document, the Secondary Note Generation module can use a less expensive model—such as GPT-5 Nano—to create a shorter summary.
+    That summary can be inserted into Supplementary Information before the stronger primary model creates the final note. This can be much cheaper
+    than repeatedly sending, for example, 50 pages directly to a high-cost model.
+  </p>
+
+  <hr><br>
+
+  <p><strong>6. Example monthly use</strong></p>
+  <p>
+    At 20 consultations per day, 4 days per week and 4 weeks per month, the total is approximately 320 consultations.
+    With 15-minute consultations, that is about 80 hours of audio. At approximately 0.0017 USD per minute, Soniox transcription would be around
+    8.16 USD before any taxes or pricing changes. Note generation is added according to the selected model and the actual token usage.
+  </p>
+  <p>
+    There is no fixed app subscription. If you do not use the APIs, no usage cost is generated by this app. Provider account minimums, prepaid credits,
+    taxes or other provider-specific terms may still apply.
   </p>
 </div>
 `,
