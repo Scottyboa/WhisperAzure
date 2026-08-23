@@ -76,12 +76,15 @@ const ASYNC_MIN_CHUNK_DURATION_MS = 120000; // 120s; legacy guard for scheduleCh
 const ASYNC_VAD_THRESHOLD = 0.005;          // RMS gate (legacy, unused but kept)
 const ASYNC_SILENCE_DURATION_MS = 2000;     // ms of silence to close a chunk
 
-// ── Optional Soniox-side cleanup on every Start (async only) ────────────────
-// Deletes ALL transcriptions and files visible to the API key — not just
-// ones from this page. This is intentional: it keeps the user's Soniox
-// account from accumulating unused artifacts. Realtime sessions don't
-// create REST resources, so this never runs in realtime mode.
-const AUTO_CLEAN_ON_START = true;
+// ── Cross-workspace Soniox cleanup coordination (async only) ───────────────
+// Every Workspace runs in its own same-origin window/iframe, but all of them
+// share the Soniox API key. The coordinator is therefore stored on the top
+// window so a completed Workspace cannot delete a resource while another
+// Workspace is still uploading, polling or fetching a transcript.
+//
+// Only resource IDs created by this app are queued for deletion. Realtime
+// sessions never create REST file/transcription resources and do not use this.
+const SONIOX_CLEANUP_COORDINATOR_KEY = '__sonioxBatchCleanupCoordinatorV1';
 
 // ── Region-aware endpoint helpers ───────────────────────────────────────────
 function getAPIKey() {
@@ -324,62 +327,196 @@ function writeTranscriptionElement(text) {
 // ASYNC MODE — Soniox REST helpers
 // ════════════════════════════════════════════════════════════════════════════
 
-// Best-effort cleanup of *all* transcriptions and files visible to the
-// API key. Same behavior as the previous standalone modules.
-async function cleanupSonioxAll() {
-  if (!AUTO_CLEAN_ON_START) {
-    logDebug('[SonioxCleanup] Skipped: AUTO_CLEAN_ON_START=false');
-    return;
-  }
-  const apiKey = getAPIKey();
-  if (!apiKey) {
-    logDebug('[SonioxCleanup] Skipped: no API key present');
-    return;
-  }
-
-  const hdrs = { Authorization: `Bearer ${apiKey}` };
-  const base = getSonioxRestBase();
-
-  logInfo('[SonioxCleanup] Starting full cleanup…');
+function getSonioxCleanupHostWindow() {
   try {
-    const tResp = await fetchWithTimeout(`${base}/transcriptions`, { headers: hdrs }, 30000);
-    if (tResp.ok) {
-      const tJson = await tResp.json().catch(() => ({}));
-      const ts = Array.isArray(tJson?.transcriptions) ? tJson.transcriptions : [];
-      logInfo(`[SonioxCleanup] Found ${ts.length} transcriptions`);
-      for (const t of ts) {
-        try {
-          await fetchWithTimeout(`${base}/transcriptions/${t.id}`, { method: 'DELETE', headers: hdrs }, 30000);
-          logDebug('[SonioxCleanup] deleted transcription:', t.id);
-        } catch (e) {
-          logDebug('[SonioxCleanup] failed deleting transcription', t?.id, e);
-        }
-      }
-    } else {
-      logDebug('[SonioxCleanup] Failed to list transcriptions:', await tResp.text().catch(() => ''));
-    }
-
-    const fResp = await fetchWithTimeout(`${base}/files`, { headers: hdrs }, 30000);
-    if (fResp.ok) {
-      const fJson = await fResp.json().catch(() => ({}));
-      const fs = Array.isArray(fJson?.files) ? fJson.files : [];
-      logInfo(`[SonioxCleanup] Found ${fs.length} files`);
-      for (const f of fs) {
-        try {
-          await fetchWithTimeout(`${base}/files/${f.id}`, { method: 'DELETE', headers: hdrs }, 30000);
-          logDebug('[SonioxCleanup] deleted file:', f.id);
-        } catch (e) {
-          logDebug('[SonioxCleanup] failed deleting file', f?.id, e);
-        }
-      }
-    } else {
-      logDebug('[SonioxCleanup] Failed to list files:', await fResp.text().catch(() => ''));
-    }
-
-    logInfo('✅ [SonioxCleanup] Finished cleanup on start.');
-  } catch (e) {
-    logDebug('[SonioxCleanup] Error during cleanup:', e);
+    // Reading location verifies that the top window is same-origin.
+    void window.top.location.href;
+    return window.top;
+  } catch (_) {
+    return window;
   }
+}
+
+function getSonioxCleanupCoordinator() {
+  const host = getSonioxCleanupHostWindow();
+  const existing = host[SONIOX_CLEANUP_COORDINATOR_KEY];
+  if (existing?.version === 1) return existing;
+
+  const coordinator = {
+    version: 1,
+    sequence: 0,
+    activeJobs: new Set(),
+    pendingResources: new Map(),
+    cleanupRequested: false,
+    flushing: false,
+  };
+
+  try {
+    Object.defineProperty(host, SONIOX_CLEANUP_COORDINATOR_KEY, {
+      value: coordinator,
+      configurable: true,
+      writable: false,
+    });
+  } catch (_) {
+    host[SONIOX_CLEANUP_COORDINATOR_KEY] = coordinator;
+  }
+  return coordinator;
+}
+
+function beginSonioxBatchCleanupJob(chunkNum, sessionId) {
+  const coordinator = getSonioxCleanupCoordinator();
+  const runtimeId = String(window.__workspacePresetRuntimeId || 'primary');
+  const token = `${runtimeId}:${sessionId || 'session'}:${chunkNum}:${Date.now()}:${++coordinator.sequence}`;
+  coordinator.activeJobs.add(token);
+  logDebug(
+    `[SonioxCleanup] Registered active chunk ${token}; active=${coordinator.activeJobs.size}`
+  );
+  return token;
+}
+
+async function deleteSonioxResourcePath(resource, kind, id, retries = 2) {
+  if (!id) return true;
+  const path = kind === 'transcription' ? 'transcriptions' : 'files';
+  const label = `${kind} ${id}`;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      const response = await fetchWithTimeout(
+        `${resource.baseUrl}/${path}/${id}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${resource.apiKey}` },
+        },
+        30000
+      );
+      if (response.ok || response.status === 404 || response.status === 410) {
+        logInfo(`[SonioxCleanup] Deleted ${label}`);
+        return true;
+      }
+
+      const body = await response.text().catch(() => '');
+      logDebug(
+        `[SonioxCleanup] Delete ${label} returned HTTP ${response.status}`,
+        body
+      );
+    } catch (error) {
+      logDebug(`[SonioxCleanup] Delete ${label} failed`, error);
+    }
+
+    if (attempt < retries) {
+      await new Promise((resolve) => setTimeout(resolve, 750 * (attempt + 1)));
+    }
+  }
+  return false;
+}
+
+async function deleteCompletedSonioxResource(resource) {
+  let transcriptionId = resource.transcriptionId || null;
+  let fileId = resource.fileId || null;
+
+  // Delete the transcription first so Soniox no longer has a job referring
+  // to the uploaded file. If that fails, keep both IDs for a later retry.
+  if (transcriptionId) {
+    const transcriptionDeleted = await deleteSonioxResourcePath(
+      resource,
+      'transcription',
+      transcriptionId
+    );
+    if (!transcriptionDeleted) return { ...resource, transcriptionId, fileId };
+    transcriptionId = null;
+  }
+
+  if (fileId) {
+    const fileDeleted = await deleteSonioxResourcePath(resource, 'file', fileId);
+    if (!fileDeleted) return { ...resource, transcriptionId: null, fileId };
+    fileId = null;
+  }
+
+  return null;
+}
+
+async function flushCompletedSonioxResourcesIfIdle(reason = 'state-change') {
+  const coordinator = getSonioxCleanupCoordinator();
+  if (
+    coordinator.flushing ||
+    !coordinator.cleanupRequested ||
+    coordinator.activeJobs.size > 0
+  ) {
+    if (coordinator.cleanupRequested && coordinator.activeJobs.size > 0) {
+      logDebug(
+        `[SonioxCleanup] Deferred (${reason}); active=${coordinator.activeJobs.size}`
+      );
+    }
+    return;
+  }
+
+  if (coordinator.pendingResources.size === 0) {
+    coordinator.cleanupRequested = false;
+    return;
+  }
+
+  coordinator.flushing = true;
+  coordinator.cleanupRequested = false;
+  const batch = Array.from(coordinator.pendingResources.entries());
+  logInfo(
+    `[SonioxCleanup] No active Workspace chunks; deleting ${batch.length} completed resource set(s).`
+  );
+
+  try {
+    for (const [token, resource] of batch) {
+      // A resource may already have been removed from the shared map by a
+      // previous flush that overlapped this snapshot.
+      if (!coordinator.pendingResources.has(token)) continue;
+      const remaining = await deleteCompletedSonioxResource(resource);
+      if (remaining) coordinator.pendingResources.set(token, remaining);
+      else coordinator.pendingResources.delete(token);
+    }
+  } finally {
+    coordinator.flushing = false;
+  }
+
+  if (coordinator.pendingResources.size > 0) {
+    logDebug(
+      `[SonioxCleanup] ${coordinator.pendingResources.size} resource set(s) remain for a later retry.`
+    );
+  } else {
+    logInfo('[SonioxCleanup] Deferred cleanup finished.');
+  }
+
+  // A second Workspace may have completed and requested cleanup while this
+  // batch was being deleted. Re-check once without touching active jobs.
+  if (coordinator.cleanupRequested && coordinator.activeJobs.size === 0) {
+    void flushCompletedSonioxResourcesIfIdle('follow-up');
+  }
+}
+
+function completeSonioxBatchCleanupJob(token, resource) {
+  if (!token) return;
+  const coordinator = getSonioxCleanupCoordinator();
+  if (resource?.apiKey && resource?.baseUrl && (resource.transcriptionId || resource.fileId)) {
+    coordinator.pendingResources.set(token, {
+      apiKey: resource.apiKey,
+      baseUrl: resource.baseUrl,
+      transcriptionId: resource.transcriptionId || null,
+      fileId: resource.fileId || null,
+    });
+  }
+  coordinator.activeJobs.delete(token);
+  logDebug(
+    `[SonioxCleanup] Chunk output settled ${token}; active=${coordinator.activeJobs.size}, ` +
+    `ready=${coordinator.pendingResources.size}`
+  );
+  void flushCompletedSonioxResourcesIfIdle('chunk-settled');
+}
+
+function requestSonioxBatchCleanup(reason = 'transcription-complete') {
+  const coordinator = getSonioxCleanupCoordinator();
+  coordinator.cleanupRequested = true;
+  logDebug(
+    `[SonioxCleanup] Cleanup requested (${reason}); active=${coordinator.activeJobs.size}, ` +
+    `ready=${coordinator.pendingResources.size}`
+  );
+  void flushCompletedSonioxResourcesIfIdle(reason);
 }
 
 async function uploadToSonioxFile(wavBlob, filename, { signal } = {}, retries = 5, backoff = 2000) {
@@ -590,51 +727,6 @@ function renderDiarizedTranscript(tokens) {
   return lines.join('\n');
 }
 
-async function deleteSonioxTranscription(transcriptionId) {
-  if (!transcriptionId) return;
-  const apiKey = getAPIKey();
-  try {
-    const rsp = await fetch(`${getSonioxRestBase()}/transcriptions/${transcriptionId}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
-    if (!rsp.ok) {
-      const msg = await rsp.text();
-      logDebug(`Delete transcription ${transcriptionId} non-OK: ${msg}`);
-    } else {
-      logInfo(`Deleted transcription ${transcriptionId}`);
-    }
-  } catch (e) {
-    logDebug(`Delete transcription ${transcriptionId} failed:`, e);
-  }
-}
-
-async function deleteSonioxFile(fileId) {
-  if (!fileId) return;
-  const apiKey = getAPIKey();
-  try {
-    const rsp = await fetch(`${getSonioxRestBase()}/files/${fileId}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
-    if (!rsp.ok) {
-      const msg = await rsp.text();
-      logDebug(`Delete file ${fileId} non-OK: ${msg}`);
-    } else {
-      logInfo(`Deleted file ${fileId}`);
-    }
-  } catch (e) {
-    logDebug(`Delete file ${fileId} failed:`, e);
-  }
-}
-
-async function cleanupSonioxResources({ transcriptionId, fileId }) {
-  await Promise.allSettled([
-    deleteSonioxTranscription(transcriptionId),
-    deleteSonioxFile(fileId),
-  ]);
-}
-
 function estimateWavSeconds(wavBlob) {
   const BYTES_PER_SEC = 16000 * 2 * 1; // 16kHz, 16-bit, mono = 32000 B/s
   const payloadBytes = Math.max(0, wavBlob.size - 44);
@@ -783,31 +875,42 @@ function flushPendingVADOnce(reason, extraAudioFloat32 = null) {
 // ── Async transcription queue ───────────────────────────────────────────────
 async function transcribeChunkDirectly(wavBlob, chunkNum, { signal, sessionId } = {}) {
   const diarized = activeMode === 'async-diarized';
+  const apiKey = getAPIKey();
+  const cleanupJobToken = beginSonioxBatchCleanupJob(chunkNum, sessionId);
+  const cleanupResource = {
+    apiKey,
+    baseUrl: getSonioxRestBase(),
+    transcriptionId: null,
+    fileId: null,
+  };
   let fileId = null;
   let txId = null;
   try {
     const filename = `chunk_${chunkNum}.wav`;
     fileId = await uploadToSonioxFile(wavBlob, filename, { signal });
+    cleanupResource.fileId = fileId;
     txId = await createSonioxTranscription(fileId, SONIOX_CONTEXT_TEXT, { signal, diarized });
+    cleanupResource.transcriptionId = txId;
     const secs = estimateWavSeconds(wavBlob);
     const timeoutMs = Math.max(300000, Math.ceil(secs * 4000));
     await pollSonioxTranscription(txId, timeoutMs, 1500, { signal });
     const text = await fetchSonioxTranscriptText(txId, { signal, diarized });
-    await cleanupSonioxResources({ transcriptionId: txId, fileId });
-    return text || '';
+    return { text: text || '', cleanupJobToken, cleanupResource };
   } catch (error) {
     if (signal?.aborted || (sessionId && sessionId !== groupId)) {
-      await cleanupSonioxResources({ transcriptionId: txId, fileId });
-      return '';
+      return { text: '', cleanupJobToken, cleanupResource };
     }
     logError(`Error transcribing chunk ${chunkNum}:`, error);
-    await cleanupSonioxResources({ transcriptionId: txId, fileId });
     updateStatusMessage(
       'Transcription error with Soniox API. Check key/credits or try again.',
       'red'
     );
     transcriptionError = true;
-    return `[Error transcribing chunk ${chunkNum}]`;
+    return {
+      text: `[Error transcribing chunk ${chunkNum}]`,
+      cleanupJobToken,
+      cleanupResource,
+    };
   }
 }
 
@@ -844,17 +947,24 @@ async function processTranscriptionQueue() {
       let { chunkNum, wavBlob } = item;
       logInfo(`Transcribing chunk ${chunkNum}...`);
 
-      const transcript = await transcribeChunkDirectly(wavBlob, chunkNum, {
+      const chunkResult = await transcribeChunkDirectly(wavBlob, chunkNum, {
         signal: item.signal || mySignal,
         sessionId: mySessionId,
       });
+      try {
+        if (groupId !== mySessionId || mySignal.aborted) break;
 
-      if (groupId !== mySessionId || mySignal.aborted) break;
-
-      transcriptChunks[chunkNum] = transcript;
-      updateAsyncTranscriptionOutput();
-
-      wavBlob = null;
+        transcriptChunks[chunkNum] = chunkResult.text;
+        updateAsyncTranscriptionOutput();
+        wavBlob = null;
+      } finally {
+        // Mark the global chunk job settled only after its text has been
+        // applied to the Workspace output (or the session was aborted).
+        completeSonioxBatchCleanupJob(
+          chunkResult.cleanupJobToken,
+          chunkResult.cleanupResource
+        );
+      }
     }
   } finally {
     if (processingQueueSessionId === mySessionId) {
@@ -961,6 +1071,7 @@ function updateAsyncTranscriptionOutput() {
 
   if (manualStop && transcriptionQueue.length === 0 && !isProcessingQueue) {
     freezeCompletionTimer();
+    requestSonioxBatchCleanup('transcription-complete');
     if (!transcriptionError) {
       updateStatusMessage('Transcription finished!', 'green');
       window.__app?.emitTranscriptionFinished?.({ provider: 'soniox', reason: 'queueDrained' });
@@ -1476,6 +1587,13 @@ function teardownActivePipeline(reason = 'teardown') {
   try { rtTeardownAudioCapture(); } catch (_) {}
   pendingAudioQueue = [];
 
+  // The load-time safety hook calls this with "page-load" in every Workspace
+  // frame. That is not a completed/aborted transcription and must not trigger
+  // cleanup while another Workspace is working.
+  if (activeMode !== 'realtime' && reason !== 'page-load') {
+    requestSonioxBatchCleanup(reason);
+  }
+
   // Async / Silero VAD
   try {
     if (sileroVAD && typeof sileroVAD.pause === 'function') sileroVAD.pause().catch(() => {});
@@ -1860,9 +1978,6 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
     // Hard reset + abort any pending transcription work from a previous run.
     beginFreshSession();
 
-    // Fire-and-forget cleanup of any leftover Soniox-side artifacts.
-    cleanupSonioxAll().catch((err) => { logError('Soniox cleanup on start failed', err); });
-
     resetCompletionTimerDisplay();
     writeTranscriptionElement('');
 
@@ -1989,6 +2104,7 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
       setRecordingControlsIdle();
       updateStatusMessage('Recording aborted.', 'orange');
       logInfo('Recording aborted by user; discarded pending transcription work.');
+      requestSonioxBatchCleanup('recording-aborted');
     }, { signal: uiSignal });
   }
 
