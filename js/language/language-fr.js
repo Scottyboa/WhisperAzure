@@ -72,94 +72,97 @@ export const indexTranslations = {
   securityModalHeading: "Confidentialité",
   securityModalText: `
 <strong>Confidentialité et traitement des données</strong><br><br>
-Cette application web est un outil de reconnaissance vocale et de génération de notes. En tant que professionnel de santé et responsable du traitement, vous devez garantir que son utilisation respecte le droit applicable, notamment le RGPD et les exigences de sécurité de votre organisation.<br><br>
 
-Cela comprend notamment :<br>
-- les accords de traitement des données (DPA) nécessaires ;<br>
-- une DPIA/AIPD documentée et, le cas échéant, une TIA ;<br>
-- le choix des bons points de terminaison régionaux et réglages de conservation ;<br>
-- une base légale, des contrôles d’accès et l’information/le consentement requis du patient ;<br>
-- la vérification de chaque transcription et note avant usage clinique.<br><br>
-
-Le développeur ne peut pas déterminer la légalité de l’usage d’une organisation. Ceci ne constitue pas un avis juridique ; consultez votre DPO ou conseiller juridique si nécessaire.<br><br>
+Cette application web est un outil de reconnaissance vocale et de génération de notes. En tant que professionnel de santé et responsable du traitement, vous devez veiller à ce que son utilisation respecte la réglementation applicable, notamment le RGPD, la loi norvégienne sur le personnel de santé et la Norme norvégienne pour la sécurité de l’information dans le secteur de la santé et des soins.<br><br>
+Le développeur ne peut pas déterminer si l’utilisation par une organisation donnée est légale. Ceci ne constitue pas un avis juridique. Faites appel à votre délégué à la protection des données ou à un conseiller juridique si nécessaire.<br><br>
 
 <hr><br>
-<strong>1. Configuration recommandée aux nouveaux utilisateurs</strong><br><br>
-<strong>Reconnaissance vocale :</strong> <strong>Soniox avec projet UE, clé UE et point de terminaison UE</strong>. Soniox indique que le contenu audio et textuel reste dans la région choisie lorsque la clé régionale et le domaine API correspondant sont utilisés, et qu’il ne sert pas à entraîner les modèles. Les métadonnées de compte, facturation et utilisation peuvent toutefois être traitées hors région.<br><br>
 
-<strong>Génération de note :</strong> <strong>Requesty</strong>. L’application utilise la passerelle UE et une sélection organisée de déploiements nommés, prévus pour un traitement dans l’UE, sans réutilisation pour l’entraînement et avec des contrôles de conservation adaptés.<br><br>
+<strong>1. Configuration recommandée pour les nouveaux utilisateurs</strong><br><br>
 
-Le choix d’un modèle dans l’application n’active pas automatiquement Zero Data Retention sur votre compte Requesty. Requesty documente que, pour les offres en libre-service, la journalisation des prompts/réponses est activée par défaut pendant 30 jours. Elle peut être désactivée par clé et un ZDR au niveau de l’organisation peut être demandé. Avant toute donnée patient identifiable, vérifiez ce réglage, le déploiement, les sous-traitants et le DPA.<br><br>
+<strong>Reconnaissance vocale</strong><br>
+La solution recommandée est Soniox avec un projet UE, une clé API UE et un point de terminaison UE. Soniox indique que le contenu audio et les transcriptions restent dans la région choisie lorsque la clé régionale du projet et le domaine API approprié sont utilisés. Soniox indique également que le contenu transmis n’est pas utilisé pour l’entraînement des modèles. Les métadonnées de compte, de facturation et d’utilisation peuvent néanmoins être traitées en dehors de la région choisie. Lorsque Soniox est utilisé dans cette application, les enregistrements audio et les dictées produites sont toujours supprimés des serveurs de Soniox dès que la tâche de transcription est terminée.<br><br>
 
-Aucune configuration technique n’est automatiquement « conforme au RGPD ». Les contrats, réglages, finalités, évaluations des risques et procédures restent déterminants.<br><br>
+<strong>Génération de notes</strong><br>
+La solution recommandée pour les nouveaux utilisateurs est Requesty. L’application envoie les appels Requesty par l’intermédiaire de la passerelle UE de l’entreprise et présente une sélection délibérément organisée de déploiements de modèles nommés, destinés au traitement des données dans l’UE, sans réutilisation pour l’entraînement des modèles et avec des moyens de contrôle appropriés pour la conservation des données. Cela permet d’accéder à plusieurs modèles récents à l’aide d’une seule clé API Requesty.<br><br>
+
+Le choix du modèle dans l’application n’active pas à lui seul le Zero Data Retention sur le compte Requesty. Requesty indique dans sa documentation que la journalisation des prompts et des outputs est activée par défaut pendant 30 jours sur les abonnements en libre-service. La journalisation peut et doit être désactivée pour chaque clé API, et un Zero Data Retention à l’échelle de l’organisation peut être demandé à Requesty.<br><br>
 
 <hr><br>
-<strong>2. Flux de données de l’application</strong><br><br>
+
+<strong>2. Comment l’application web traite les données</strong><br><br>
+
 - L’audio est enregistré et traité temporairement dans la mémoire du navigateur.<br>
-- Il est envoyé par HTTPS chiffré au fournisseur STT choisi : Soniox, OpenAI ou Mistral/Voxtral.<br>
-- La transcription reste visible dans le Workspace sélectionné.<br>
-- Pour générer une note, transcription, prompt et Informations supplémentaires sont envoyés au fournisseur choisi.<br>
-- Les requêtes Requesty passent par sa passerelle UE puis par le déploiement précis sélectionné.<br>
-- Le brouillon revient au navigateur par connexion chiffrée.<br><br>
+- L’audio est transmis sous forme chiffrée via HTTPS au fournisseur de reconnaissance vocale sélectionné : Soniox, OpenAI ou Mistral/Voxtral.<br>
+- La transcription est affichée dans le Workspace sélectionné dans le navigateur.<br>
+- Lorsque vous générez une note, la transcription, le prompt sélectionné et les éventuelles Informations supplémentaires sont envoyés au fournisseur de notes sélectionné.<br>
+- Lors de l’utilisation de Requesty, la requête est envoyée du navigateur à la passerelle UE de Requesty, qui la transmet au déploiement de modèle spécifiquement sélectionné (ZDR, aucun entraînement de modèle, traitement des données exclusivement au sein de l’UE).<br>
+- Le brouillon de note est renvoyé au navigateur via une connexion chiffrée.<br><br>
 
-L’application ne possède pas de serveur applicatif stockant l’audio, les transcriptions ou les notes. AWS Bedrock est utilisé via le backend AWS configuré séparément par l’utilisateur.<br><br>
-
-<hr><br>
-<strong>3. Clés API et identifiants</strong><br><br>
-Vous utilisez vos propres clés ou, pour Bedrock, votre propre URL backend et secret. Le développeur ne reçoit ni ces identifiants ni le contenu clinique.<br><br>
-
-Les clés saisies sur la page d’accueil sont conservées temporairement dans SessionStorage et supprimées à la fermeture de l’onglet/session ou via Effacer les clés. Pour une sauvegarde chiffrée, le mot de passe chiffre localement le fichier dans le navigateur avant enregistrement ou téléversement.<br><br>
-
-Traitez clés, sauvegardes et mots de passe comme confidentiels. Utilisez des clés distinctes, limites de dépenses et restrictions d’accès, et révoquez immédiatement toute clé exposée.<br><br>
+L’application web elle-même ne possède aucun serveur applicatif qui stocke les fichiers audio, les transcriptions ou les notes. La communication s’effectue entre votre propre navigateur et les services que vous choisissez.<br><br>
 
 <hr><br>
-<strong>4. Accords de traitement des données</strong><br><br>
-Évaluez et signez les DPA adaptés avec les services réellement utilisés : Soniox, Requesty et ses sous-traitants/déploiements documentés, OpenAI, Mistral et éventuellement AWS. Vérifiez que les accords couvrent l’organisation, la santé, la sécurité, la conservation, la suppression, les sous-traitants et transferts internationaux. Réévaluez régulièrement les conditions et réglages.<br><br>
+
+<strong>3. Clés API et identifiants de connexion</strong><br><br>
+
+Vous utilisez vos propres clés de fournisseur ou, pour AWS Bedrock, votre propre URL de backend et votre propre secret. Le développeur de l’application web ne reçoit ni ces informations ni le contenu clinique qui est transmis par leur intermédiaire.<br><br>
+
+Les clés API saisies sur la page d’accueil sont stockées temporairement dans le SessionStorage du navigateur et supprimées lorsque l’onglet/la session est fermé ou lorsque vous sélectionnez Clear keys. Si vous exportez une sauvegarde chiffrée des clés, le mot de passe est utilisé localement dans le navigateur pour chiffrer le fichier avant qu’il ne soit enregistré ou téléversé.<br><br>
+
+Traitez les clés API, les sauvegardes et les mots de passe comme des informations confidentielles. Utilisez des clés individuelles, les limites de consommation du fournisseur et les restrictions d’accès lorsqu’elles sont disponibles, et révoquez immédiatement la clé si elle a pu être exposée.<br><br>
 
 <hr><br>
-<strong>5. DPIA et TIA</strong><br><br>
-<strong>DPIA/AIPD :</strong> généralement requise par l’article 35 du RGPD lorsque de nouvelles technologies traitent des données sensibles telles que la santé. Cartographiez audio, texte et métadonnées, documentez la finalité, les risques et les mesures techniques/organisationnelles.<br><br>
 
-<strong>TIA :</strong> peut être requise pour un transfert hors EEE. Évaluez destination, droit applicable, garanties contractuelles et mesures complémentaires : chiffrement, pseudonymisation, points de terminaison UE et conservation. Si tout le trajet documenté reste dans l’UE/EEE, documentez également cette conclusion.<br><br>
+<strong>4. Considérations propres aux fournisseurs</strong><br><br>
 
-Ces évaluations doivent être terminées et approuvées avant des données patient réelles.<br><br>
+<strong>Soniox UE</strong><br>
+La localisation des données dans l’UE exige un projet Soniox créé dans la région UE, la clé API associée à ce projet et la sélection du point de terminaison UE approprié dans l’application. Soniox indique que les données de contenu restent alors dans la région UE et ne sont pas utilisées pour l’entraînement des modèles. Vérifiez les pratiques de conservation/suppression et concluez l’accord nécessaire pour votre organisation.<br><br>
 
-<hr><br>
-<strong>6. Points propres aux fournisseurs</strong><br><br>
-<strong>Soniox UE :</strong> exige un projet de région UE, sa clé et le domaine API UE correspondant. Vérifiez la conservation/suppression et l’accord nécessaire.<br><br>
+<strong>Requesty</strong><br>
+L’application utilise la passerelle UE de Requesty et des routes de modèles fixes et organisées plutôt qu’un sélecteur de modèles illimité. Requesty indique que les prompts et les réponses ne sont pas utilisés pour l’entraînement des modèles. La passerelle UE maintient le traitement et le stockage propres à Requesty dans l’UE, tandis qu’une localisation complète des données dans l’UE exige également un déploiement de modèle hébergé dans l’UE. L’application est conçue pour sélectionner de tels déploiements, mais l’utilisateur doit toujours vérifier les informations actuelles du modèle et désactiver la journalisation des prompts/outputs pour la clé API ou obtenir un ZDR à l’échelle de l’organisation avant d’utiliser des informations permettant d’identifier les patients.<br><br>
 
-<strong>Requesty :</strong> l’application utilise la passerelle UE et des routes de modèles fixes et sélectionnées. Requesty indique ne pas entraîner ses modèles sur les prompts/réponses. La résidence UE complète dépend aussi d’un déploiement amont hébergé dans l’UE. Vérifiez les détails actuels et désactivez la journalisation par clé ou obtenez un ZDR organisationnel.<br><br>
+<strong>AWS Bedrock</strong><br>
+Bedrock est conservé pour les utilisateurs qui disposent déjà d’un accès AWS ou qui préfèrent leur propre infrastructure AWS. La solution nécessite un backend distinct et une configuration régionale rigoureuse. Elle est plus complexe et n’est plus recommandée comme point de départ pour les nouveaux utilisateurs, mais elle peut toujours convenir aux organisations disposant d’un environnement AWS établi et approuvé.<br><br>
 
-<strong>AWS Bedrock :</strong> conservé pour les utilisateurs AWS existants. Il nécessite un backend séparé et une configuration régionale rigoureuse. Plus complexe, il n’est plus le point de départ recommandé.<br><br>
+<strong>Mistral</strong><br>
+Mistral fournit Voxtral pour la reconnaissance vocale et Mistral Large pour la génération de notes dans l’application. Vérifiez la région d’exploitation actuelle, le DPA, le paramètre de conservation et la préférence d’entraînement. Si l’utilisation exige le Zero Data Retention, celui-ci doit être accordé, activé et documenté avant l’envoi d’informations relatives aux patients.<br><br>
 
-<strong>Mistral :</strong> fournit Voxtral pour le STT et Mistral Large pour les notes. Vérifiez région, DPA, conservation, entraînement et ZDR si nécessaire.<br><br>
-
-<strong>OpenAI :</strong> reste disponible en accès direct. Par défaut, les données API ne servent pas à entraîner les modèles, mais région et conservation dépendent du produit, du compte et du contrat. Une clé standard ne signifie pas automatiquement UE uniquement ou ZDR.<br><br>
-
-<hr><br>
-<strong>7. Conditions minimales avant usage clinique</strong><br><br>
-- Utiliser uniquement fournisseurs et points de terminaison approuvés.<br>
-- Disposer de DPA valides et d’une liste à jour des sous-traitants.<br>
-- Réaliser et approuver DPIA/TIA.<br>
-- Configurer correctement routage UE et conservation/ZDR.<br>
-- Minimiser et, si possible, pseudonymiser les données patient.<br>
-- Protéger clés API et fichiers exportés.<br>
-- Vérifier chaque transcription et note avant le dossier patient.<br><br>
+<strong>OpenAI</strong><br>
+OpenAI reste disponible pour la reconnaissance vocale directe et la génération de notes. Par défaut, les données API standard ne sont pas utilisées pour l’entraînement des modèles, mais le traitement régional et la conservation dépendent du produit, du compte et de la configuration contractuelle. Ne supposez pas qu’une clé API directe ordinaire assure automatiquement un traitement uniquement dans l’UE ou le Zero Data Retention. Vérifiez les conditions en vigueur et effectuez la TIA nécessaire.<br><br>
 
 <hr><br>
-<strong>8. Stockage local et externe</strong><br><br>
-<strong>Clés API/identifiants backend :</strong> SessionStorage jusqu’à fermeture ou effacement.<br><br>
-<strong>Audio :</strong> temporairement en mémoire puis envoyé au STT choisi ; aucune archive audio locale permanente.<br><br>
-<strong>Transcriptions, Informations supplémentaires et notes :</strong> dans la session d’onglet active et ses fonctions Workspace/historique, normalement jusqu’à fermeture ou effacement. Le texte pertinent est envoyé au fournisseur de notes lors d’une génération.<br><br>
-<strong>Prompts et paramètres de Workspace Set :</strong> peuvent être stockés localement. Un export contient ordre, prompts, fournisseurs/modèles et options, mais pas les transcriptions, Informations supplémentaires, notes, historique, audio, clés API ou mots de passe. Les exports cloud sont chiffrés dans le navigateur ; le JSON local est lisible et doit être protégé.<br><br>
 
-Le traitement et la conservation chez chaque fournisseur doivent être vérifiés séparément.<br><br>
+<strong>5. Vue d’ensemble du stockage local et externe</strong><br><br>
+
+<strong>Clés API et informations du backend</strong><br>
+- Stockées dans : le SessionStorage du navigateur.<br>
+- Durée : jusqu’à la fermeture de l’onglet/la session ou la suppression des clés.<br>
+- Accès : l’utilisateur et la session actuelle du navigateur.<br><br>
+
+<strong>Audio pendant l’enregistrement</strong><br>
+- Stocké dans : la mémoire du navigateur pendant l’enregistrement et le traitement.<br>
+- Durée : temporaire ; l’application ne conserve pas d’archive audio locale permanente.<br>
+- Traitement externe : le fournisseur STT sélectionné reçoit l’audio.<br><br>
+
+<strong>Transcriptions, Informations supplémentaires et notes générées</strong><br>
+- Stockées dans : la session de l’onglet actif du navigateur et les fonctions Workspace/historique associées.<br>
+- Durée : normalement jusqu’à la fermeture de l’onglet/la session ou la suppression du contenu/de l’historique.<br>
+- Traitement externe : le texte pertinent est envoyé au fournisseur de notes sélectionné lorsque la génération démarre.<br><br>
+
+<strong>Prompts et paramètres d’un Workspace Set</strong><br>
+- Les prompts et les paramètres sélectionnés peuvent être stockés localement dans le navigateur.<br>
+- L’exportation d’un Workspace Set comprend des éléments de configuration tels que l’ordre, les prompts, les fournisseurs/modèles sélectionnés et les toggles pertinents, mais pas les transcriptions, les Informations supplémentaires, les notes générées, l’historique, l’audio, les clés API ou les mots de passe.<br>
+- Les exportations dans le cloud sont chiffrées dans le navigateur avec le mot de passe sélectionné. Les exportations JSON locales sont lisibles et doivent être conservées en toute sécurité.<br><br>
+
+Le traitement et la conservation par les fournisseurs s’ajoutent au stockage dans le navigateur et doivent être vérifiés auprès de chaque service utilisé.<br><br>
 
 <hr><br>
-<strong>9. Code source et responsabilité</strong><br><br>
-Le code source est ouvert et l’application principale s’exécute dans le navigateur. Le développeur ne reçoit pas le texte clinique via un backend applicatif. Des statistiques d’usage élémentaires et non cliniques peuvent être collectées comme indiqué sur le site.<br><br>
 
-La sortie est un brouillon. Le professionnel de santé reste responsable de la vérification médicale, des corrections et de la décision de l’ajouter au dossier patient.
+<strong>6. Code source et responsabilité</strong><br><br>
+
+Le code source de l’application web est librement accessible et l’application principale s’exécute dans le navigateur. Le développeur ne reçoit aucun texte clinique par l’intermédiaire d’un backend applicatif. Des statistiques d’utilisation élémentaires et non cliniques peuvent néanmoins être collectées comme indiqué sur le site web.<br><br>
+
+Le contenu généré est un brouillon. Le professionnel de santé est responsable de la vérification de l’exactitude médicale, de la correction des erreurs et de la décision quant aux informations à inscrire dans le dossier du patient.
 `,
 
   aboutModalHeading: "À propos",

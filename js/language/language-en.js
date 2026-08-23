@@ -122,139 +122,98 @@ export const indexTranslations = {
 
   securityModalHeading: "Privacy",
 securityModalText: `
-<strong>Privacy and Data Processing</strong><br><br>
-This web app is a tool for speech-to-text and note generation. As a healthcare professional and data controller, you are responsible for ensuring that your use complies with applicable legislation, including GDPR, the Health Personnel Act and the Norwegian Information Security Norm (“Normen”).<br><br>
+<strong>Privacy and data processing</strong><br><br>
 
-This includes, among other things:<br>
-- Entering into the necessary Data Processing Agreements (DPAs).<br>
-- Completing and documenting appropriate DPIA and, when relevant, TIA assessments.<br>
-- Selecting the correct regional endpoints and retention settings.<br>
-- Ensuring a lawful basis, suitable access control and any required patient information or consent.<br>
-- Reviewing every transcript and generated note before clinical use.<br><br>
-
-The developer cannot determine whether a particular organisation's use is lawful. This information is not legal advice; involve your data protection officer or legal adviser when necessary.<br><br>
+This web app is a tool for speech-to-text and note generation. As a healthcare professional and data controller, you are responsible for ensuring that its use complies with applicable regulations, including the GDPR, the Norwegian Health Personnel Act and the Norwegian Code of Conduct for Information Security and Data Protection in the Health and Care Sector (“Normen”).<br><br>
+The developer cannot determine whether an individual organisation’s use is lawful. This is not legal advice. Involve your data protection officer or legal adviser when needed.<br><br>
 
 <hr><br>
 
 <strong>1. Recommended setup for new users</strong><br><br>
 
 <strong>Speech-to-text</strong><br>
-The recommended option is <strong>Soniox with an EU-region project, EU API key and EU endpoint</strong>. Soniox states that audio and transcript content remains in the selected region when the regional project key and matching API domain are used. Soniox also states that submitted content is not used to train its models. Account, billing and usage metadata may still be processed outside the selected region.<br><br>
+The recommended solution is Soniox with an EU project, EU API key and EU endpoint. Soniox states that audio and transcription content remains in the selected region when the project’s regional key and the correct API domain are used. Soniox also states that submitted content is not used for model training. Account, billing and usage metadata may nevertheless be processed outside the selected region. When Soniox is used in this app, audio recordings and produced dictations will always be deleted from Soniox’s servers as soon as the transcription job is complete.<br><br>
 
 <strong>Note generation</strong><br>
-The recommended option for new users is <strong>Requesty</strong>. The app sends Requesty requests through its EU gateway and exposes a deliberately curated selection of named model deployments intended for EU processing, no model-training reuse and suitable retention controls. This gives access to several newer models through one Requesty API key.<br><br>
+The recommended solution for new users is Requesty. The app sends Requesty calls through the company’s EU gateway and presents a deliberately curated selection of named model deployments intended for EU data processing, without reuse for model training and with suitable controls for data retention. This provides access to several newer models through a single Requesty API key.<br><br>
 
-The app's model selection does not by itself activate Zero Data Retention for your Requesty account. Requesty documents that prompt/output logging on self-service plans is enabled by default with a 30-day retention period. Logging can be disabled per API key, and organisation-wide Zero Data Retention can be requested from Requesty. Before using identifiable patient data, verify this setting, the selected model deployment, the current subprocessor information and your DPA.<br><br>
-
-No technical setup is automatically “GDPR compliant”. Your organisation's agreements, configuration, purpose, risk assessment and working procedures remain decisive.<br><br>
+The app’s model selection does not by itself activate Zero Data Retention on the Requesty account. Requesty documents that prompt and output logging on self-service plans is enabled by default with 30 days of retention. Logging can and should be disabled per API key, and organisation-wide Zero Data Retention can be requested from Requesty.<br><br>
 
 <hr><br>
 
 <strong>2. How the web app processes data</strong><br><br>
-- Audio is recorded and temporarily processed in the browser's memory.<br>
-- The audio is sent over encrypted HTTPS to the selected speech-to-text provider: Soniox, OpenAI or Mistral/Voxtral.<br>
-- The resulting transcript remains visible in the selected Workspace in the browser.<br>
+
+- Audio is recorded and processed temporarily in the browser’s memory.<br>
+- The audio is sent encrypted over HTTPS to the selected speech-to-text provider: Soniox, OpenAI or Mistral/Voxtral.<br>
+- The transcript is displayed in the selected Workspace in the browser.<br>
 - When you generate a note, the transcript, selected prompt and any Supplementary Information are sent to the selected note provider.<br>
-- For Requesty, the browser sends the request to Requesty's EU gateway, which forwards it to the specifically selected model deployment.<br>
+- When Requesty is used, the request is sent from the browser to Requesty’s EU gateway, which forwards it to the specifically selected model deployment (ZDR, no model training, with data processing exclusively within the EU).<br>
 - The draft note is returned to the browser over an encrypted connection.<br><br>
 
-The web app itself has no application server that stores your audio, transcript or note. Communication takes place between your browser and the services you choose. AWS Bedrock is an exception in the sense that it is accessed through the user's own separately configured AWS backend.<br><br>
+The web app itself has no application server that stores audio, transcripts or notes. Communication takes place between your own browser and the services you choose.<br><br>
 
 <hr><br>
 
-<strong>3. API keys and credentials</strong><br><br>
-You use your own provider keys or, for AWS Bedrock, your own backend URL and secret. The developer of this web app does not receive these credentials or the clinical content sent through them.<br><br>
+<strong>3. API keys and login credentials</strong><br><br>
 
-API keys entered on the front page are stored temporarily in the browser's SessionStorage and are removed when that browser tab/session is closed or when you use Clear keys. If you export an encrypted key backup, the password is used locally in the browser to encrypt the file before it is saved or uploaded.<br><br>
+You use your own provider keys or, for AWS Bedrock, your own backend URL and secret. The developer of the web app does not receive these details or the clinical content sent through them.<br><br>
 
-Treat API keys, backup files and passwords as confidential information. Use individual keys, provider-side spending limits and access restrictions where available, and revoke a key immediately if it may have been exposed.<br><br>
+API keys entered on the front page are stored temporarily in the browser’s SessionStorage and are removed when the tab/session is closed or when you select Clear keys. If you export an encrypted backup of the keys, the password is used locally in the browser to encrypt the file before it is saved or uploaded.<br><br>
 
-<hr><br>
-
-<strong>4. Data Processing Agreements</strong><br><br>
-Before processing personal or patient data, assess and enter into appropriate DPAs with the services you actually use. Depending on your configuration, this may include:<br>
-- Soniox for speech-to-text.<br>
-- Requesty for gateway processing and its documented subprocessors/model deployments.<br>
-- OpenAI for direct speech-to-text or note generation.<br>
-- Mistral for Voxtral or Mistral Large.<br>
-- AWS for a separately configured Bedrock setup.<br><br>
-
-Confirm that each agreement covers your organisation, healthcare use, security requirements, retention, deletion, subprocessors and any international transfers. Provider terms and technical settings can change, so they must be reviewed regularly.<br><br>
+Treat API keys, backups and passwords as confidential information. Use individual keys, provider spending limits and access restrictions where available, and revoke the key immediately if it may have been exposed.<br><br>
 
 <hr><br>
 
-<strong>5. DPIA and TIA</strong><br><br>
-
-<strong>DPIA — Data Protection Impact Assessment</strong><br>
-A DPIA is generally required under GDPR Article 35 when new technology is used to process special-category data such as health information. Map the audio, text and metadata being processed; document the purpose; assess risks to patients; and decide on technical and organisational safeguards such as data minimisation, access control, deletion and incident handling.<br><br>
-
-<strong>TIA — Transfer Impact Assessment</strong><br>
-A TIA may be required when personal data is transferred outside the EEA. Assess the destination, applicable law, contractual safeguards and supplementary measures, including encryption, pseudonymisation, EU endpoints and retention controls. If the entire documented processing path remains in the EU/EEA, explain and document that conclusion as part of the assessment.<br><br>
-
-Both assessments should be completed and approved before real patient data are used.<br><br>
-
-<hr><br>
-
-<strong>6. Provider-specific considerations</strong><br><br>
+<strong>4. Provider-specific considerations</strong><br><br>
 
 <strong>Soniox EU</strong><br>
-EU data residency requires a Soniox project created for the EU region, the API key belonging to that project and the matching EU API domain selected in the app. Soniox states that content data then remains in the EU region and is not used for model training. Verify retention/deletion behaviour and obtain the necessary agreement for your organisation.<br><br>
+EU data residency requires a Soniox project created in the EU region, the API key belonging to that project and the correct EU endpoint selected in the app. Soniox states that content data then remains in the EU region and is not used for model training. Check retention/deletion practices and enter into the necessary agreement for your organisation.<br><br>
 
 <strong>Requesty</strong><br>
-The app uses Requesty's EU gateway and fixed, curated model routes rather than an unrestricted model picker. Requesty states that it does not train on prompts or responses. The EU gateway keeps Requesty's own processing and storage in the EU, while complete EU residency also depends on using an EU-hosted upstream deployment. The app is designed to select such deployments, but users must still verify current model details and disable prompt/output logging for their API key or obtain organisation-wide ZDR before using identifiable patient data.<br><br>
+The app uses Requesty’s EU gateway and fixed, curated model routes rather than an unrestricted model picker. Requesty states that prompts and responses are not used for model training. The EU gateway keeps Requesty’s own processing and storage in the EU, while full EU data residency also requires an EU-hosted model deployment. The app is designed to select such deployments, but the user must still check current model details and disable prompt/output logging for the API key or obtain organisation-wide ZDR before identifiable patient information is used.<br><br>
 
 <strong>AWS Bedrock</strong><br>
-Bedrock remains available for users who already have AWS access or prefer their own AWS infrastructure. It requires a separately deployed backend and careful regional configuration. It is more complicated and is no longer the recommended starting point for new users, but it may remain suitable for organisations with an established AWS environment and approved governance.<br><br>
+Bedrock is retained for users who already have AWS access or who prefer their own AWS infrastructure. The solution requires a separate backend and careful regional configuration. It is more complicated and is no longer recommended as the starting point for new users, but it may still suit organisations with an established and approved AWS environment.<br><br>
 
 <strong>Mistral</strong><br>
-Mistral provides the Voxtral speech-to-text and Mistral Large note-generation options in this app. Verify the current hosting region, DPA, retention setting and training preference. If your use requires Zero Data Retention, obtain and document that configuration before sending patient information.<br><br>
+Mistral provides Voxtral for speech-to-text and Mistral Large for note generation in the app. Check the current operating region, DPA, retention setting and training preference. If the use requires Zero Data Retention, this must be granted, activated and documented before patient information is sent.<br><br>
 
 <strong>OpenAI</strong><br>
-OpenAI remains available for direct speech-to-text and note generation. Standard API data are not used for model training by default, but regional processing and retention depend on the product, account and contractual configuration. Do not assume that a standard direct API key provides EU-only processing or Zero Data Retention; verify the current terms and complete any required TIA.<br><br>
+OpenAI remains available for direct speech-to-text and note generation. Standard API data is not used for model training by default, but regional processing and retention depend on the product, account and contractual setup. Do not assume that a regular direct API key automatically provides EU-only processing or Zero Data Retention. Check the current terms and carry out the necessary TIA.<br><br>
 
 <hr><br>
 
-<strong>7. Minimum conditions before clinical use</strong><br><br>
-- Use only providers and endpoints approved by your organisation.<br>
-- Have valid DPAs and an up-to-date overview of subprocessors.<br>
-- Complete and approve the relevant DPIA/TIA.<br>
-- Configure EU routing and retention/ZDR correctly where required.<br>
-- Minimise the patient information sent and pseudonymise where practical.<br>
-- Protect API keys and exported backup files.<br>
-- Verify every transcript and generated note before adding information to the patient record.<br><br>
+<strong>5. Overview of local and external storage</strong><br><br>
 
-<hr><br>
-
-<strong>8. Overview of local and external storage</strong><br><br>
-
-<strong>API keys and backend credentials</strong><br>
-- Stored in: browser SessionStorage.<br>
-- Duration: until the tab/session is closed or the keys are cleared.<br>
-- Access: the user and that browser session.<br><br>
+<strong>API keys and backend details</strong><br>
+- Stored in: the browser’s SessionStorage.<br>
+- Duration: until the tab/session is closed or the keys are deleted.<br>
+- Access: the user and the current browser session.<br><br>
 
 <strong>Audio during recording</strong><br>
-- Stored in: browser memory while recording/processing.<br>
+- Stored in: the browser’s memory during recording and processing.<br>
 - Duration: temporary; the app does not keep a permanent local audio archive.<br>
 - External processing: the selected STT provider receives the audio.<br><br>
 
 <strong>Transcripts, Supplementary Information and generated notes</strong><br>
-- Stored in: the active browser-tab session and its Workspace/history functions.<br>
-- Duration: normally until the tab/session is closed or the content/history is cleared.<br>
-- External processing: relevant text is sent to the selected note provider when generation is requested.<br><br>
+- Stored in: the active browser tab’s session and its associated Workspace/history functions.<br>
+- Duration: normally until the tab/session is closed or the content/history is deleted.<br>
+- External processing: relevant text is sent to the selected note provider when generation is started.<br><br>
 
-<strong>Prompts and Workspace Set settings</strong><br>
+<strong>Prompts and settings in a Workspace Set</strong><br>
 - Prompts and selected settings can be stored locally in the browser.<br>
-- Workspace Set exports include configuration such as Workspace order, prompts, selected providers/models and relevant toggles, but not transcripts, Supplementary Information, generated notes, history, audio, API keys or passwords.<br>
-- Cloud exports are encrypted in the browser with the chosen password. Local JSON exports are readable and must be stored securely.<br><br>
+- Exporting a Workspace Set includes configuration such as order, prompts, selected providers/models and relevant toggles, but not transcripts, Supplementary Information, generated notes, history, audio, API keys or passwords.<br>
+- Cloud exports are encrypted in the browser with the selected password. Local JSON exports are readable and must be stored securely.<br><br>
 
-Provider-side processing and retention are separate from browser storage and must be verified for every provider used.<br><br>
+Provider processing and retention are additional to browser storage and must be checked with each service used.<br><br>
 
 <hr><br>
 
-<strong>9. Source code and responsibility</strong><br><br>
-The web app's source code is openly available and the main application runs in the browser. The developer does not receive your clinical text through an application backend. Basic non-clinical usage statistics may still be collected as described by the site.<br><br>
+<strong>6. Source code and responsibility</strong><br><br>
 
-The generated output is a draft. The healthcare professional remains responsible for checking medical accuracy, correcting errors and deciding what is entered into the patient record.
+The web app’s source code is openly available, and the main application runs in the browser. The developer does not receive clinical text through an application backend. Basic, non-clinical usage statistics may still be collected as described by the website.<br><br>
+
+The generated content is a draft. The healthcare professional is responsible for checking medical accuracy, correcting errors and deciding what is entered into the patient record.
 `,
 
 

@@ -72,94 +72,97 @@ export const indexTranslations = {
   securityModalHeading: "Datenschutz",
   securityModalText: `
 <strong>Datenschutz und Datenverarbeitung</strong><br><br>
-Diese Web-App ist ein Werkzeug für Spracherkennung und Notizerstellung. Als Gesundheitsfachkraft und Verantwortlicher sind Sie dafür zuständig, dass die Nutzung die geltenden Gesetze und Sicherheitsanforderungen erfüllt, insbesondere die DSGVO und die Vorgaben Ihrer Organisation.<br><br>
 
-Dazu gehören unter anderem:<br>
-- erforderliche Auftragsverarbeitungsverträge (DPA/AVV),<br>
-- dokumentierte DPIA/Datenschutz-Folgenabschätzung und gegebenenfalls TIA,<br>
-- korrekte regionale Endpunkte und Aufbewahrungseinstellungen,<br>
-- Rechtsgrundlage, Zugriffsschutz und erforderliche Patienteninformation/Einwilligung,<br>
-- Prüfung jedes Transkripts und jeder Notiz vor klinischer Nutzung.<br><br>
-
-Der Entwickler kann die Rechtmäßigkeit einer konkreten Nutzung nicht beurteilen. Dies ist keine Rechtsberatung; beziehen Sie bei Bedarf Datenschutzbeauftragte oder Rechtsberatung ein.<br><br>
+Diese Web-App ist ein Werkzeug für Sprache-zu-Text und die Erstellung von Notizen. Als Gesundheitsfachkraft und Verantwortlicher für die Datenverarbeitung sind Sie dafür verantwortlich, dass die Nutzung den geltenden Vorschriften entspricht, darunter der DSGVO, dem norwegischen Gesundheitspersonalgesetz und der Norm für Informationssicherheit im norwegischen Gesundheits- und Pflegesektor.<br><br>
+Der Entwickler kann nicht beurteilen, ob die Nutzung durch eine einzelne Organisation rechtmäßig ist. Dies ist keine Rechtsberatung. Ziehen Sie bei Bedarf den Datenschutzbeauftragten oder einen Rechtsberater hinzu.<br><br>
 
 <hr><br>
-<strong>1. Empfehlung für neue Nutzer</strong><br><br>
-<strong>Spracherkennung:</strong> <strong>Soniox mit EU-Projekt, EU-Schlüssel und EU-Endpunkt</strong>. Laut Soniox bleiben Audio- und Transkriptionsinhalte in der gewählten Region, wenn regionaler Projektschlüssel und passende API-Domain verwendet werden; die Inhalte werden nicht zum Modelltraining genutzt. Konto-, Abrechnungs- und Nutzungsmetadaten können dennoch außerhalb der Region verarbeitet werden.<br><br>
 
-<strong>Notizerstellung:</strong> <strong>Requesty</strong>. Die App nutzt das EU-Gateway und eine kuratierte Auswahl benannter Modellbereitstellungen, die für EU-Verarbeitung, keine Wiederverwendung zum Training und geeignete Aufbewahrungskontrollen vorgesehen sind.<br><br>
+<strong>1. Empfohlene Konfiguration für neue Nutzer</strong><br><br>
 
-Die Modellauswahl aktiviert nicht automatisch Zero Data Retention im Requesty-Konto. Requesty dokumentiert für Self-Service-Tarife standardmäßig eine 30-tägige Protokollierung von Prompts und Antworten. Sie kann je API-Schlüssel deaktiviert; organisationsweites ZDR kann angefragt werden. Prüfen Sie vor identifizierbaren Patientendaten diese Einstellung, Modellbereitstellung, Unterauftragsverarbeiter und DPA.<br><br>
+<strong>Sprache-zu-Text</strong><br>
+Die empfohlene Lösung ist Soniox mit EU-Projekt, EU-API-Schlüssel und EU-Endpunkt. Soniox gibt an, dass Audio- und Transkriptionsinhalte in der gewählten Region verbleiben, wenn der regionale Schlüssel des Projekts und die korrekte API-Domain verwendet werden. Soniox gibt außerdem an, dass übermittelte Inhalte nicht für das Modelltraining verwendet werden. Konto-, Abrechnungs- und Nutzungsmetadaten können dennoch außerhalb der gewählten Region verarbeitet werden. Bei der Nutzung von Soniox in dieser App werden Audioaufnahmen und erstellte Diktate stets von den Soniox-Servern gelöscht, sobald der Transkriptionsauftrag abgeschlossen ist.<br><br>
 
-Keine technische Konfiguration ist automatisch „DSGVO-konform“. Verträge, Konfiguration, Zweck, Risikobewertung und Arbeitsabläufe bleiben entscheidend.<br><br>
+<strong>Notizerstellung</strong><br>
+Die empfohlene Lösung für neue Nutzer ist Requesty. Die App sendet Requesty-Aufrufe über das EU-Gateway des Unternehmens und zeigt eine bewusst kuratierte Auswahl benannter Modellbereitstellungen, die für die Datenverarbeitung in der EU vorgesehen sind, ohne Wiederverwendung für das Modelltraining und mit geeigneten Kontrollmöglichkeiten für die Datenspeicherung. Dadurch erhalten Sie mit einem einzigen Requesty-API-Schlüssel Zugriff auf mehrere neuere Modelle.<br><br>
 
-<hr><br>
-<strong>2. Datenfluss der Web-App</strong><br><br>
-- Audio wird im Browserspeicher aufgenommen und vorübergehend verarbeitet.<br>
-- Es wird verschlüsselt an den gewählten STT-Anbieter Soniox, OpenAI oder Mistral/Voxtral gesendet.<br>
-- Das Transkript bleibt im gewählten Workspace im Browser sichtbar.<br>
-- Für die Notiz werden Transkript, Prompt und Zusatzinformationen an den gewählten Notizanbieter gesendet.<br>
-- Requesty-Anfragen gehen an das EU-Gateway und von dort zur fest gewählten Modellbereitstellung.<br>
-- Der Entwurf kehrt verschlüsselt zum Browser zurück.<br><br>
-
-Die App betreibt keinen eigenen Anwendungsserver zur Speicherung von Audio, Transkripten oder Notizen. AWS Bedrock wird über das separat konfigurierte AWS-Backend des Nutzers angesprochen.<br><br>
+Die Modellauswahl der App aktiviert nicht von sich aus Zero Data Retention im Requesty-Konto. Requesty dokumentiert, dass die Protokollierung von Prompts und Outputs bei Self-Service-Abonnements standardmäßig mit einer Aufbewahrungsdauer von 30 Tagen aktiviert ist. Die Protokollierung kann und sollte für jeden API-Schlüssel deaktiviert werden, und organisationsweites Zero Data Retention kann bei Requesty beantragt werden.<br><br>
 
 <hr><br>
-<strong>3. API-Schlüssel und Zugangsdaten</strong><br><br>
-Sie verwenden eigene Anbieter-Schlüssel beziehungsweise für Bedrock eine eigene Backend-URL und ein Secret. Der Entwickler erhält weder diese Zugangsdaten noch klinische Inhalte.<br><br>
 
-Auf der Startseite eingegebene Schlüssel liegen vorübergehend im SessionStorage und werden beim Schließen der Sitzung/des Tabs oder über „Schlüssel löschen“ entfernt. Bei einer verschlüsselten Schlüssel-Sicherung verschlüsselt das Passwort die Datei lokal im Browser, bevor sie gespeichert oder hochgeladen wird.<br><br>
+<strong>2. Wie die Web-App Daten verarbeitet</strong><br><br>
 
-Behandeln Sie Schlüssel, Sicherungsdateien und Passwörter vertraulich. Nutzen Sie getrennte Schlüssel, Ausgabenlimits und Zugriffsbeschränkungen und widerrufen Sie offengelegte Schlüssel sofort.<br><br>
+- Audio wird aufgenommen und vorübergehend im Speicher des Browsers verarbeitet.<br>
+- Das Audio wird verschlüsselt über HTTPS an den gewählten Sprache-zu-Text-Anbieter gesendet: Soniox, OpenAI oder Mistral/Voxtral.<br>
+- Das Transkript wird im ausgewählten Workspace im Browser angezeigt.<br>
+- Wenn Sie eine Notiz erstellen, werden das Transkript, der ausgewählte Prompt und etwaige Zusatzinformationen an den gewählten Notizanbieter gesendet.<br>
+- Bei der Nutzung von Requesty wird die Anfrage vom Browser an das EU-Gateway von Requesty gesendet, das sie an die speziell ausgewählte Modellbereitstellung weiterleitet (ZDR, kein Modelltraining, Datenverarbeitung ausschließlich innerhalb der EU).<br>
+- Der Notizentwurf wird über eine verschlüsselte Verbindung an den Browser zurückgegeben.<br><br>
 
-<hr><br>
-<strong>4. Auftragsverarbeitungsverträge</strong><br><br>
-Schließen Sie geeignete Vereinbarungen mit allen tatsächlich genutzten Diensten: Soniox, Requesty samt dokumentierter Unterauftragsverarbeiter/Modelldistributionen, OpenAI, Mistral und gegebenenfalls AWS. Prüfen Sie Organisation, Gesundheitsnutzung, Sicherheit, Aufbewahrung, Löschung, Unterauftragsverarbeiter und internationale Übermittlungen regelmäßig.<br><br>
-
-<hr><br>
-<strong>5. DPIA und TIA</strong><br><br>
-<strong>DPIA/Datenschutz-Folgenabschätzung:</strong> ist nach Art. 35 DSGVO in der Regel erforderlich, wenn neue Technik besondere Datenkategorien wie Gesundheitsdaten verarbeitet. Erfassen Sie Audio, Text und Metadaten, Zweck, Patientenrisiken sowie technische und organisatorische Schutzmaßnahmen.<br><br>
-
-<strong>TIA:</strong> kann bei Übermittlungen außerhalb des EWR erforderlich sein. Bewerten Sie Zielstaat, Recht, vertragliche Garantien und ergänzende Maßnahmen wie Verschlüsselung, Pseudonymisierung, EU-Endpunkte und Aufbewahrung. Bleibt der dokumentierte Verarbeitungsweg vollständig in EU/EWR, dokumentieren Sie auch diese Schlussfolgerung.<br><br>
-
-Beide Bewertungen sollten vor realen Patientendaten abgeschlossen und genehmigt sein.<br><br>
+Die Web-App selbst besitzt keinen Anwendungsserver, der Audio, Transkripte oder Notizen speichert. Die Kommunikation findet zwischen Ihrem eigenen Browser und den von Ihnen gewählten Diensten statt.<br><br>
 
 <hr><br>
-<strong>6. Hinweise zu den Anbietern</strong><br><br>
-<strong>Soniox EU:</strong> Erfordert EU-Projekt, dazugehörigen Schlüssel und passende EU-API-Domain. Prüfen Sie Aufbewahrung/Löschung und den Vertrag.<br><br>
 
-<strong>Requesty:</strong> Die App nutzt EU-Gateway und fest kuratierte Modellrouten. Requesty erklärt, Prompts und Antworten nicht zum Training zu verwenden. Vollständige EU-Residenz setzt zusätzlich eine EU-gehostete Upstream-Bereitstellung voraus. Prüfen Sie aktuelle Modelldetails und deaktivieren Sie die Protokollierung je Schlüssel oder vereinbaren Sie organisationsweites ZDR.<br><br>
+<strong>3. API-Schlüssel und Anmeldedaten</strong><br><br>
 
-<strong>AWS Bedrock:</strong> Für bestehende AWS-Nutzer verfügbar; benötigt eigenes Backend und sorgfältige Regionskonfiguration. Es ist komplizierter und nicht die Empfehlung für neue Nutzer.<br><br>
+Sie verwenden eigene Anbieterschlüssel oder, bei AWS Bedrock, eine eigene Backend-URL und ein eigenes Secret. Der Entwickler der Web-App erhält weder diese Angaben noch die klinischen Inhalte, die darüber gesendet werden.<br><br>
 
-<strong>Mistral:</strong> Stellt Voxtral für STT und Mistral Large für Notizen bereit. Prüfen Sie Region, DPA, Aufbewahrung, Trainingseinstellungen und gegebenenfalls ZDR.<br><br>
+API-Schlüssel, die auf der Startseite eingegeben werden, werden vorübergehend im SessionStorage des Browsers gespeichert und entfernt, wenn der Tab/die Sitzung geschlossen wird oder Sie Clear keys wählen. Wenn Sie eine verschlüsselte Sicherung der Schlüssel exportieren, wird das Passwort lokal im Browser verwendet, um die Datei zu verschlüsseln, bevor sie gespeichert oder hochgeladen wird.<br><br>
 
-<strong>OpenAI:</strong> Bleibt für direkte STT- und Notizaufrufe verfügbar. API-Daten werden standardmäßig nicht zum Training verwendet, doch Region und Aufbewahrung hängen von Produkt, Konto und Vertrag ab. Ein Standardschlüssel bedeutet nicht automatisch EU-only oder ZDR.<br><br>
+Behandeln Sie API-Schlüssel, Sicherungskopien und Passwörter als vertrauliche Informationen. Verwenden Sie individuelle Schlüssel sowie Ausgabenlimits und Zugriffsbeschränkungen des Anbieters, sofern verfügbar, und sperren Sie den Schlüssel sofort, wenn er offengelegt worden sein könnte.<br><br>
 
 <hr><br>
-<strong>7. Mindestbedingungen vor klinischer Nutzung</strong><br><br>
-- Nur genehmigte Anbieter und Endpunkte verwenden.<br>
-- Gültige DPA/AVV und aktuelle Unterauftragsverarbeiter prüfen.<br>
-- DPIA/TIA abschließen und genehmigen.<br>
-- EU-Routing und Aufbewahrung/ZDR korrekt konfigurieren.<br>
-- Patientendaten minimieren und möglichst pseudonymisieren.<br>
-- API-Schlüssel und Sicherungsdateien schützen.<br>
-- Jedes Transkript und jede Notiz vor Übernahme in die Akte prüfen.<br><br>
+
+<strong>4. Anbieterspezifische Hinweise</strong><br><br>
+
+<strong>Soniox EU</strong><br>
+Die EU-Datenlokalisierung erfordert ein in der EU-Region erstelltes Soniox-Projekt, den zu diesem Projekt gehörenden API-Schlüssel und die Auswahl des korrekten EU-Endpunkts in der App. Soniox gibt an, dass Inhaltsdaten dann in der EU-Region verbleiben und nicht für das Modelltraining verwendet werden. Prüfen Sie die Speicher-/Löschpraxis und schließen Sie die notwendige Vereinbarung für Ihre Organisation ab.<br><br>
+
+<strong>Requesty</strong><br>
+Die App verwendet das EU-Gateway von Requesty und feste, kuratierte Modellrouten anstelle einer uneingeschränkten Modellauswahl. Requesty gibt an, dass Prompts und Antworten nicht für das Modelltraining verwendet werden. Das EU-Gateway hält die eigene Verarbeitung und Speicherung von Requesty in der EU, während eine vollständige EU-Datenlokalisierung zusätzlich eine in der EU gehostete Modellbereitstellung erfordert. Die App ist darauf ausgelegt, solche Bereitstellungen auszuwählen; der Nutzer muss jedoch weiterhin die aktuellen Modelldetails prüfen und die Prompt-/Output-Protokollierung für den API-Schlüssel deaktivieren oder organisationsweites ZDR erhalten, bevor identifizierbare Patientendaten verwendet werden.<br><br>
+
+<strong>AWS Bedrock</strong><br>
+Bedrock bleibt für Nutzer erhalten, die bereits AWS-Zugriff haben oder ihre eigene AWS-Infrastruktur bevorzugen. Die Lösung erfordert ein separates Backend und eine sorgfältige regionale Konfiguration. Sie ist komplizierter und wird nicht mehr als Ausgangspunkt für neue Nutzer empfohlen, kann aber weiterhin für Organisationen mit einer etablierten und genehmigten AWS-Umgebung geeignet sein.<br><br>
+
+<strong>Mistral</strong><br>
+Mistral stellt in der App Voxtral für Sprache-zu-Text und Mistral Large für die Notizerstellung bereit. Prüfen Sie die aktuelle Betriebsregion, die DPA/AVV, die Speichereinstellung und die Trainingspräferenz. Wenn die Nutzung Zero Data Retention erfordert, muss dies bewilligt, aktiviert und dokumentiert sein, bevor Patientendaten gesendet werden.<br><br>
+
+<strong>OpenAI</strong><br>
+OpenAI bleibt für direkte Sprache-zu-Text-Verarbeitung und Notizerstellung verfügbar. Standard-API-Daten werden grundsätzlich nicht für das Modelltraining verwendet, aber regionale Verarbeitung und Speicherung hängen vom Produkt, Konto und Vertragssetup ab. Gehen Sie nicht davon aus, dass ein gewöhnlicher direkter API-Schlüssel automatisch eine ausschließliche EU-Verarbeitung oder Zero Data Retention bietet. Prüfen Sie die aktuellen Bedingungen und führen Sie die notwendige TIA durch.<br><br>
 
 <hr><br>
-<strong>8. Lokale und externe Speicherung</strong><br><br>
-<strong>API-Schlüssel/Backend-Zugangsdaten:</strong> SessionStorage bis zum Schließen/Löschen.<br><br>
-<strong>Audio:</strong> vorübergehend im Browserspeicher; es geht an den gewählten STT-Anbieter. Die App führt kein permanentes lokales Audioarchiv.<br><br>
-<strong>Transkripte, Zusatzinformationen und Notizen:</strong> in der aktiven Tab-Sitzung und deren Workspace-/Verlaufsfunktionen, normalerweise bis zum Schließen oder Löschen. Relevanter Text wird bei angeforderter Generierung an den Notizanbieter gesendet.<br><br>
-<strong>Prompts und Workspace-Set-Einstellungen:</strong> können lokal gespeichert werden. Exporte enthalten Konfiguration wie Reihenfolge, Prompts, Anbieter/Modelle und Schalter, aber keine Transkripte, Zusatzinformationen, Notizen, Historie, Audio, API-Schlüssel oder Passwörter. Cloud-Exporte werden im Browser verschlüsselt; lokale JSON-Dateien sind lesbar und sicher aufzubewahren.<br><br>
 
-Anbieterseitige Verarbeitung und Aufbewahrung sind getrennt zu prüfen.<br><br>
+<strong>5. Übersicht über lokale und externe Speicherung</strong><br><br>
+
+<strong>API-Schlüssel und Backend-Angaben</strong><br>
+- Gespeichert in: SessionStorage des Browsers.<br>
+- Dauer: bis der Tab/die Sitzung geschlossen oder die Schlüssel gelöscht werden.<br>
+- Zugriff: der Nutzer und die aktuelle Browsersitzung.<br><br>
+
+<strong>Audio während der Aufnahme</strong><br>
+- Gespeichert in: im Speicher des Browsers während Aufnahme und Verarbeitung.<br>
+- Dauer: vorübergehend; die App führt kein dauerhaftes lokales Audioarchiv.<br>
+- Externe Verarbeitung: Der ausgewählte STT-Anbieter erhält das Audio.<br><br>
+
+<strong>Transkripte, Zusatzinformationen und erstellte Notizen</strong><br>
+- Gespeichert in: der Sitzung des aktiven Browser-Tabs und den zugehörigen Workspace-/Verlaufsfunktionen.<br>
+- Dauer: normalerweise bis der Tab/die Sitzung geschlossen oder der Inhalt/Verlauf gelöscht wird.<br>
+- Externe Verarbeitung: Relevanter Text wird beim Start der Erstellung an den gewählten Notizanbieter gesendet.<br><br>
+
+<strong>Prompts und Einstellungen in einem Workspace Set</strong><br>
+- Prompts und ausgewählte Einstellungen können lokal im Browser gespeichert werden.<br>
+- Der Export eines Workspace Set umfasst Konfigurationen wie Reihenfolge, Prompts, ausgewählte Anbieter/Modelle und relevante Schalter, jedoch keine Transkripte, Zusatzinformationen, erstellten Notizen, Verläufe, Audiodaten, API-Schlüssel oder Passwörter.<br>
+- Cloud-Exporte werden im Browser mit dem gewählten Passwort verschlüsselt. Lokale JSON-Exporte sind lesbar und müssen sicher aufbewahrt werden.<br><br>
+
+Die Verarbeitung und Speicherung durch die Anbieter erfolgt zusätzlich zur Browserspeicherung und muss bei jedem verwendeten Dienst geprüft werden.<br><br>
 
 <hr><br>
-<strong>9. Quellcode und Verantwortung</strong><br><br>
-Der Quellcode ist offen, die Hauptanwendung läuft im Browser und der Entwickler erhält klinische Texte nicht über einen eigenen Backend-Server. Einfache nicht-klinische Nutzungsstatistiken können gemäß Website-Hinweisen erfasst werden.<br><br>
 
-Die Ausgabe ist ein Entwurf. Für medizinische Prüfung, Korrektur und Übernahme in die Patientenakte bleibt die Gesundheitsfachkraft verantwortlich.
+<strong>6. Quellcode und Verantwortung</strong><br><br>
+
+Der Quellcode der Web-App ist offen zugänglich, und die Hauptanwendung läuft im Browser. Der Entwickler erhält keine klinischen Texte über ein Anwendungsbackend. Grundlegende, nicht klinische Nutzungsstatistiken können dennoch wie auf der Website beschrieben erfasst werden.<br><br>
+
+Der generierte Inhalt ist ein Entwurf. Die Gesundheitsfachkraft ist dafür verantwortlich, die medizinische Richtigkeit zu prüfen, Fehler zu korrigieren und zu entscheiden, was in die Patientenakte aufgenommen wird.
 `,
 
   aboutModalHeading: "Über uns",

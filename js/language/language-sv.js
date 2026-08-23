@@ -71,94 +71,97 @@ export const indexTranslations = {
   securityModalHeading: "Integritet",
   securityModalText: `
 <strong>Integritet och databehandling</strong><br><br>
-Denna webbapp är ett verktyg för tal-till-text och anteckningsgenerering. Som vårdpersonal och personuppgiftsansvarig ansvarar du för att användningen följer tillämplig lagstiftning, inklusive GDPR, hälso- och sjukvårdsregler och organisationens krav på informationssäkerhet.<br><br>
 
-Detta omfattar bland annat att:<br>
-- ingå nödvändiga personuppgiftsbiträdesavtal (DPA),<br>
-- genomföra och dokumentera DPIA och, när det är relevant, TIA,<br>
-- välja rätt regionala slutpunkter och lagringsinställningar,<br>
-- säkerställa rättslig grund, åtkomstkontroll samt eventuell patientinformation eller samtycke,<br>
-- granska varje transkription och genererad anteckning före klinisk användning.<br><br>
-
-Utvecklaren kan inte avgöra om en organisations användning är laglig. Detta är inte juridisk rådgivning; involvera dataskyddsombud eller juridisk rådgivare vid behov.<br><br>
+Denna webbapp är ett verktyg för tal-till-text och anteckningsgenerering. Som hälso- och sjukvårdspersonal och personuppgiftsansvarig ansvarar du för att användningen följer gällande regelverk, bland annat GDPR, den norska hälso- och sjukvårdspersonallagen och Normen för informationssäkerhet i hälso- och omsorgssektorn.<br><br>
+Utvecklaren kan inte avgöra om den enskilda verksamhetens användning är laglig. Detta är inte juridisk rådgivning. Involvera dataskyddsombud eller juridisk rådgivare vid behov.<br><br>
 
 <hr><br>
+
 <strong>1. Rekommenderad konfiguration för nya användare</strong><br><br>
-<strong>Tal-till-text:</strong> <strong>Soniox med EU-projekt, EU-API-nyckel och EU-slutpunkt</strong>. Soniox uppger att ljud- och transkriptionsinnehåll stannar i vald region när regional projektnyckel och matchande API-domän används, och att innehållet inte används för modellträning. Konto-, fakturerings- och användningsmetadata kan ändå behandlas utanför regionen.<br><br>
 
-<strong>Anteckningsgenerering:</strong> <strong>Requesty</strong>. Appen använder Requestys EU-gateway och ett begränsat urval namngivna modelldistributioner avsedda för EU-behandling, utan återanvändning för modellträning och med lämpliga lagringskontroller.<br><br>
+<strong>Tal-till-text</strong><br>
+Den rekommenderade lösningen är Soniox med EU-projekt, EU-API-nyckel och EU-endpoint. Soniox uppger att ljud- och transkriptionsinnehåll förblir i den valda regionen när projektets regionala nyckel och rätt API-domän används. Soniox uppger också att inskickat innehåll inte används för modellträning. Konto-, fakturerings- och användningsmetadata kan ändå behandlas utanför den valda regionen. När Soniox används i denna app kommer ljudinspelningar och producerade diktat alltid att raderas från Soniox servrar så snart transkriptionsjobbet är slutfört.<br><br>
 
-Appens modellval aktiverar inte automatiskt Zero Data Retention för ditt Requesty-konto. Requesty dokumenterar att loggning av prompt och svar är aktiverad som standard för self-service-planer med 30 dagars lagring. Loggning kan stängas av per API-nyckel och organisationsomfattande ZDR kan begäras. Kontrollera detta, aktuell modelldistribution, underbiträden och DPA innan identifierbara patientuppgifter används.<br><br>
+<strong>Anteckningsgenerering</strong><br>
+Den rekommenderade lösningen för nya användare är Requesty. Appen skickar Requesty-anrop genom företagets EU-gateway och visar ett medvetet kurerat urval av namngivna modelldistributioner som är avsedda för databehandling inom EU, utan återanvändning för modellträning och med lämpliga kontrollmöjligheter för datalagring. Detta ger tillgång till flera nyare modeller genom en enda Requesty-API-nyckel.<br><br>
 
-Ingen teknisk konfiguration är automatiskt ”GDPR-kompatibel”. Avtal, konfiguration, ändamål, riskbedömning och arbetsrutiner är avgörande.<br><br>
+Appens modellval aktiverar inte i sig Zero Data Retention på Requesty-kontot. Requesty dokumenterar att loggning av prompts och outputs på självbetjäningsabonnemang är aktiverad som standard med 30 dagars lagring. Loggning kan och bör inaktiveras per API-nyckel, och organisationsomfattande Zero Data Retention kan begäras från Requesty.<br><br>
 
 <hr><br>
-<strong>2. Så behandlar webbappen data</strong><br><br>
+
+<strong>2. Hur webbappen behandlar data</strong><br><br>
+
 - Ljud spelas in och behandlas tillfälligt i webbläsarens minne.<br>
-- Ljudet skickas via krypterad HTTPS till vald STT-leverantör: Soniox, OpenAI eller Mistral/Voxtral.<br>
+- Ljudet skickas krypterat via HTTPS till den valda tal-till-text-leverantören: Soniox, OpenAI eller Mistral/Voxtral.<br>
 - Transkriptionen visas i valt Workspace i webbläsaren.<br>
-- Vid anteckningsgenerering skickas transkription, vald prompt och eventuell Kompletterande information till vald anteckningsleverantör.<br>
-- Requesty-anrop går till EU-gatewayen och vidare till den specifikt valda modelldistributionen.<br>
-- Utkastet returneras till webbläsaren via en krypterad anslutning.<br><br>
+- När du genererar en anteckning skickas transkriptionen, vald prompt och eventuell Kompletterande information till den valda anteckningsleverantören.<br>
+- När Requesty används skickas begäran från webbläsaren till Requestys EU-gateway, som vidarebefordrar den till den specifikt valda modelldistributionen (ZDR, ingen modellträning, med databehandling uteslutande inom EU).<br>
+- Anteckningsutkastet returneras till webbläsaren via en krypterad anslutning.<br><br>
 
-Webbappen har ingen egen applikationsserver som lagrar ljud, transkriptioner eller anteckningar. Kommunikationen sker mellan webbläsaren och valda tjänster. AWS Bedrock nås via användarens separat konfigurerade AWS-backend.<br><br>
-
-<hr><br>
-<strong>3. API-nycklar och autentiseringsuppgifter</strong><br><br>
-Du använder egna leverantörsnycklar eller, för AWS Bedrock, egen backend-URL och hemlighet. Utvecklaren får inte dessa uppgifter eller det kliniska innehållet.<br><br>
-
-Nycklar på startsidan lagras tillfälligt i webbläsarens SessionStorage och tas bort när fliken/sessionen stängs eller när du väljer Rensa nycklar. Vid export av en krypterad nyckelbackup används lösenordet lokalt i webbläsaren för att kryptera filen innan den sparas eller laddas upp.<br><br>
-
-Behandla nycklar, backupfiler och lösenord som konfidentiella. Använd separata nycklar, utgiftsgränser och åtkomstbegränsningar där det finns, och återkalla omedelbart en nyckel som kan ha exponerats.<br><br>
+Själva webbappen har ingen applikationsserver som lagrar ljud, transkriptioner eller anteckningar. Kommunikationen sker mellan din egen webbläsare och de tjänster du väljer.<br><br>
 
 <hr><br>
-<strong>4. Personuppgiftsbiträdesavtal</strong><br><br>
-Bedöm och teckna lämpliga DPA med de tjänster du faktiskt använder: Soniox, Requesty och dokumenterade underbiträden/modelldistributioner, OpenAI, Mistral och eventuellt AWS. Kontrollera att avtalen täcker organisationen, vårdanvändning, säkerhet, lagring, radering, underbiträden och internationella överföringar. Villkor och tekniska inställningar kan ändras och bör granskas regelbundet.<br><br>
+
+<strong>3. API-nycklar och inloggningsuppgifter</strong><br><br>
+
+Du använder egna leverantörsnycklar eller, för AWS Bedrock, en egen backend-URL och secret. Webbappens utvecklare tar inte emot dessa uppgifter eller det kliniska innehåll som skickas genom dem.<br><br>
+
+API-nycklar som skrivs in på startsidan lagras tillfälligt i webbläsarens SessionStorage och tas bort när fliken/sessionen stängs eller när du väljer Clear keys. Om du exporterar en krypterad säkerhetskopia av nycklarna används lösenordet lokalt i webbläsaren för att kryptera filen innan den sparas eller laddas upp.<br><br>
+
+Behandla API-nycklar, säkerhetskopior och lösenord som konfidentiell information. Använd individuella nycklar, leverantörens förbrukningsgränser och åtkomstbegränsningar där dessa finns, och spärra nyckeln omedelbart om den kan ha exponerats.<br><br>
 
 <hr><br>
-<strong>5. DPIA och TIA</strong><br><br>
-<strong>DPIA:</strong> krävs normalt enligt GDPR artikel 35 när ny teknik behandlar särskilda kategorier av uppgifter som hälsodata. Kartlägg ljud, text och metadata, dokumentera ändamålet, bedöm risker och bestäm tekniska och organisatoriska skyddsåtgärder.<br><br>
 
-<strong>TIA:</strong> kan krävas när personuppgifter överförs utanför EES. Bedöm destination, lagstiftning, avtalsmässiga skydd och kompletterande åtgärder som kryptering, pseudonymisering, EU-slutpunkter och lagringskontroller. Om hela den dokumenterade behandlingskedjan stannar i EU/EES ska även den slutsatsen dokumenteras.<br><br>
+<strong>4. Leverantörsspecifika hänsyn</strong><br><br>
 
-Båda bedömningarna bör vara genomförda och godkända innan verkliga patientuppgifter används.<br><br>
+<strong>Soniox EU</strong><br>
+EU-datalokalisering kräver ett Soniox-projekt som skapats i EU-regionen, API-nyckeln som tillhör detta projekt och att rätt EU-endpoint är vald i appen. Soniox uppger att innehållsdata då förblir i EU-regionen och inte används för modellträning. Kontrollera lagrings-/raderingsrutiner och ingå nödvändigt avtal för verksamheten.<br><br>
 
-<hr><br>
-<strong>6. Leverantörsspecifika överväganden</strong><br><br>
-<strong>Soniox EU:</strong> EU-dataresidens kräver ett EU-regionprojekt, dess API-nyckel och matchande EU-API-domän i appen. Kontrollera lagring/radering och nödvändigt avtal.<br><br>
+<strong>Requesty</strong><br>
+Appen använder Requestys EU-gateway och fasta, kurerade modellrutter i stället för en obegränsad modellväljare. Requesty uppger att prompts och svar inte används för modellträning. EU-gatewayen håller Requestys egen behandling och lagring inom EU, medan fullständig EU-datalokalisering också kräver en EU-värdbaserad modelldistribution. Appen är utformad för att välja sådana distributioner, men användaren måste fortfarande kontrollera aktuella modelldetaljer och inaktivera prompt-/output-loggning för API-nyckeln eller få organisationsomfattande ZDR innan identifierbara patientuppgifter används.<br><br>
 
-<strong>Requesty:</strong> Appen använder EU-gatewayen och fasta, utvalda modellrutter. Requesty uppger att promptar och svar inte används för träning. Fullständig EU-residens beror också på att en EU-hostad uppströmsdistribution används. Kontrollera aktuella modelldetaljer och stäng av prompt-/svarsloggning för nyckeln eller skaffa organisationsomfattande ZDR.<br><br>
+<strong>AWS Bedrock</strong><br>
+Bedrock finns kvar för användare som redan har AWS-åtkomst eller som föredrar egen AWS-infrastruktur. Lösningen kräver en separat backend och noggrann regional konfiguration. Den är mer komplicerad och rekommenderas inte längre som utgångspunkt för nya användare, men kan fortfarande passa verksamheter med en etablerad och godkänd AWS-miljö.<br><br>
 
-<strong>AWS Bedrock:</strong> Finns kvar för befintliga AWS-användare. Det kräver egen backend och noggrann regional konfiguration. Det är mer komplicerat och rekommenderas inte som startpunkt för nya användare.<br><br>
+<strong>Mistral</strong><br>
+Mistral tillhandahåller Voxtral för tal-till-text och Mistral Large för anteckningsgenerering i appen. Kontrollera aktuell driftregion, DPA, lagringsinställning och träningspreferens. Om användningen kräver Zero Data Retention måste detta vara beviljat, aktiverat och dokumenterat innan patientuppgifter skickas.<br><br>
 
-<strong>Mistral:</strong> Ger Voxtral för STT och Mistral Large för anteckningar. Kontrollera aktuell region, DPA, lagring och träningsinställningar. Dokumentera ZDR om organisationen kräver det.<br><br>
-
-<strong>OpenAI:</strong> Finns kvar för direkt STT och anteckningsgenerering. Standard-API-data används inte för träning som utgångspunkt, men regional behandling och lagring beror på produkt, konto och avtal. Anta inte att en vanlig API-nyckel automatiskt ger enbart EU-behandling eller ZDR.<br><br>
-
-<hr><br>
-<strong>7. Minimikrav före klinisk användning</strong><br><br>
-- Använd endast godkända leverantörer och slutpunkter.<br>
-- Ha giltiga DPA och aktuell översikt över underbiträden.<br>
-- Genomför och godkänn relevant DPIA/TIA.<br>
-- Konfigurera EU-routing och lagring/ZDR korrekt.<br>
-- Minimera patientinformationen och pseudonymisera där det är praktiskt.<br>
-- Skydda API-nycklar och exporterade backupfiler.<br>
-- Kontrollera varje transkription och anteckning före journalföring.<br><br>
+<strong>OpenAI</strong><br>
+OpenAI är fortfarande tillgängligt för direkt tal-till-text och anteckningsgenerering. Standard-API-data används som utgångspunkt inte för modellträning, men regional behandling och lagring beror på produkt, konto och avtalskonfiguration. Utgå inte från att en vanlig direkt API-nyckel automatiskt ger behandling endast inom EU eller Zero Data Retention. Kontrollera aktuella villkor och genomför nödvändig TIA.<br><br>
 
 <hr><br>
-<strong>8. Lokal och extern lagring</strong><br><br>
-<strong>API-nycklar/backenduppgifter:</strong> lagras i SessionStorage tills fliken/sessionen stängs eller nycklarna rensas.<br><br>
-<strong>Ljud:</strong> finns tillfälligt i webbläsarminnet under inspelning/behandling och skickas till vald STT-leverantör. Appen behåller inget permanent lokalt ljudarkiv.<br><br>
-<strong>Transkriptioner, Kompletterande information och anteckningar:</strong> finns i den aktiva fliksessionen och dess Workspace-/historikfunktioner, normalt tills sessionen stängs eller innehållet rensas. Relevant text skickas externt först när generering begärs.<br><br>
-<strong>Promptar och Workspace Set-inställningar:</strong> kan sparas lokalt. En Workspace Set-export innehåller konfiguration som ordning, promptar, leverantörer/modeller och relevanta reglage, men inte transkriptioner, Kompletterande information, anteckningar, historik, ljud, API-nycklar eller lösenord. Molnexport krypteras i webbläsaren; lokal JSON är läsbar och måste förvaras säkert.<br><br>
 
-Leverantörernas egen behandling och lagring är separat och måste kontrolleras för varje tjänst.<br><br>
+<strong>5. Översikt över lokal och extern lagring</strong><br><br>
+
+<strong>API-nycklar och backend-uppgifter</strong><br>
+- Lagras i: webbläsarens SessionStorage.<br>
+- Varaktighet: tills fliken/sessionen stängs eller nycklarna raderas.<br>
+- Åtkomst: användaren och den aktuella webbläsarsessionen.<br><br>
+
+<strong>Ljud under inspelning</strong><br>
+- Lagras i: webbläsarens minne under inspelning och behandling.<br>
+- Varaktighet: tillfälligt; appen behåller inget permanent lokalt ljudarkiv.<br>
+- Extern behandling: den valda STT-leverantören tar emot ljudet.<br><br>
+
+<strong>Transkriptioner, Kompletterande information och genererade anteckningar</strong><br>
+- Lagras i: den aktiva webbläsarflikens session och tillhörande Workspace-/historikfunktioner.<br>
+- Varaktighet: normalt tills fliken/sessionen stängs eller innehållet/historiken raderas.<br>
+- Extern behandling: relevant text skickas till den valda anteckningsleverantören när generering startas.<br><br>
+
+<strong>Prompts och inställningar i Workspace Set</strong><br>
+- Prompts och valda inställningar kan lagras lokalt i webbläsaren.<br>
+- Export av Workspace Set omfattar konfiguration som ordningsföljd, prompts, valda leverantörer/modeller och relevanta toggles, men inte transkriptioner, Kompletterande information, genererade anteckningar, historik, ljud, API-nycklar eller lösenord.<br>
+- Molnexport krypteras i webbläsaren med valt lösenord. Lokala JSON-exporter är läsbara och måste förvaras säkert.<br><br>
+
+Leverantörernas behandling och lagring tillkommer utöver webbläsarlagringen och måste kontrolleras hos varje tjänst som används.<br><br>
 
 <hr><br>
-<strong>9. Källkod och ansvar</strong><br><br>
-Källkoden är öppen och huvudappen körs i webbläsaren. Utvecklaren tar inte emot klinisk text via en egen applikationsbackend. Grundläggande icke-klinisk användningsstatistik kan samlas in enligt webbplatsens information.<br><br>
 
-Genererat innehåll är ett utkast. Vårdpersonalen ansvarar för medicinsk granskning, korrigering och beslut om vad som förs in i patientjournalen.
+<strong>6. Källkod och ansvar</strong><br><br>
+
+Webbappens källkod är öppet tillgänglig, och huvudapplikationen körs i webbläsaren. Utvecklaren tar inte emot klinisk text genom en applikationsbackend. Grundläggande, icke-klinisk användningsstatistik kan fortfarande samlas in enligt webbplatsens beskrivning.<br><br>
+
+Det genererade innehållet är ett utkast. Hälso- och sjukvårdspersonalen ansvarar för att kontrollera medicinsk korrekthet, rätta fel och avgöra vad som förs in i patientjournalen.
 `,
 
   aboutModalHeading: "Om",

@@ -2160,9 +2160,9 @@ function getMiniPresetCopy() {
 
 function getMiniPanelViewMode() {
   try {
-    return localStorage.getItem(MINI_WORKSPACE_PANEL_MODE_KEY) === 'presets' ? 'presets' : 'standard';
+    return localStorage.getItem(MINI_WORKSPACE_PANEL_MODE_KEY) === 'standard' ? 'standard' : 'presets';
   } catch (_) {
-    return 'standard';
+    return 'presets';
   }
 }
 

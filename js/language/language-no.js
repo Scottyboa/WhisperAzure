@@ -123,15 +123,8 @@ export const indexTranslations = {
   securityModalHeading: "Personvern",
 securityModalText: `
 <strong>Personvern og databehandling</strong><br><br>
+
 Denne webappen er et verktøy for tale-til-tekst og notatgenerering. Som helsepersonell og behandlingsansvarlig er du ansvarlig for at bruken er i samsvar med gjeldende regelverk, blant annet GDPR, helsepersonelloven og Normen for informasjonssikkerhet i helse- og omsorgssektoren.<br><br>
-
-Dette innebærer blant annet å:<br>
-- Inngå nødvendige databehandleravtaler (DPA).<br>
-- Gjennomføre og dokumentere relevant DPIA og, når nødvendig, TIA.<br>
-- Velge riktige regionale endepunkter og innstillinger for datalagring.<br>
-- Sikre behandlingsgrunnlag, egnet tilgangskontroll og nødvendig informasjon eller samtykke fra pasienten.<br>
-- Kontrollere hver transkripsjon og hvert genererte notat før klinisk bruk.<br><br>
-
 Utvikleren kan ikke avgjøre om den enkelte virksomhetens bruk er lovlig. Dette er ikke juridisk rådgivning. Involver personvernombud eller juridisk rådgiver ved behov.<br><br>
 
 <hr><br>
@@ -139,30 +132,30 @@ Utvikleren kan ikke avgjøre om den enkelte virksomhetens bruk er lovlig. Dette 
 <strong>1. Anbefalt oppsett for nye brukere</strong><br><br>
 
 <strong>Tale-til-tekst</strong><br>
-Anbefalt løsning er <strong>Soniox med EU-prosjekt, EU-API-nøkkel og EU-endepunkt</strong>. Soniox opplyser at lyd- og transkripsjonsinnhold forblir i valgt region når man bruker prosjektets regionale nøkkel og korrekt API-domene. Soniox opplyser også at innsendt innhold ikke brukes til modelltrening. Konto-, fakturerings- og bruksmetadata kan likevel behandles utenfor valgt region.<br><br>
+Anbefalt løsning er Soniox med EU-prosjekt, EU-API-nøkkel og EU-endepunkt. Soniox opplyser at lyd- og transkripsjonsinnhold forblir i valgt region når man bruker prosjektets regionale nøkkel og korrekt API-domene. Soniox opplyser også at innsendt innhold ikke brukes til modelltrening. Konto-, fakturerings- og bruksmetadata kan likevel behandles utenfor valgt region. Ved bruk av Soniox i denne app, så vil lydopptak og produserte diktater alltid slettes fra Soniox sine servere med en gang transkripsjonsjobben er fullført.<br><br>
 
 <strong>Notatgenerering</strong><br>
-Anbefalt løsning for nye brukere er <strong>Requesty</strong>. Appen sender Requesty-kall gjennom selskapets EU-gateway og viser et bevisst kuratert utvalg navngitte modellutrullinger som er ment for EU-databehandling, uten gjenbruk til modelltrening og med egnede kontrollmuligheter for datalagring. Dette gir tilgang til flere nyere modeller gjennom én Requesty-API-nøkkel.<br><br>
+Anbefalt løsning for nye brukere er Requesty. Appen sender Requesty-kall gjennom selskapets EU-gateway og viser et bevisst kuratert utvalg navngitte modellutrullinger som er ment for EU-databehandling, uten gjenbruk til modelltrening og med egnede kontrollmuligheter for datalagring. Dette gir tilgang til flere nyere modeller gjennom én Requesty-API-nøkkel.<br><br>
 
-Appens modellvalg aktiverer ikke i seg selv Zero Data Retention på Requesty-kontoen. Requesty dokumenterer at logging av prompts og outputs på selvbetjente abonnementer er aktivert som standard med 30 dagers lagring. Logging kan deaktiveres per API-nøkkel, og virksomhetsomfattende Zero Data Retention kan forespørres hos Requesty. Før identifiserbare pasientopplysninger brukes, må du kontrollere denne innstillingen, valgt modellutrulling, gjeldende underdatabehandlere og DPA.<br><br>
-
-Ingen teknisk løsning er automatisk «GDPR-kompatibel». Virksomhetens avtaler, konfigurasjon, formål, risikovurdering og arbeidsrutiner er fortsatt avgjørende.<br><br>
+Appens modellvalg aktiverer ikke i seg selv Zero Data Retention på Requesty-kontoen. Requesty dokumenterer at logging av prompts og outputs på selvbetjente abonnementer er aktivert som standard med 30 dagers lagring. Logging kan og bør deaktiveres per API-nøkkel, og virksomhetsomfattende Zero Data Retention kan forespørres hos Requesty.<br><br>
 
 <hr><br>
 
 <strong>2. Hvordan webappen behandler data</strong><br><br>
+
 - Lyd tas opp og behandles midlertidig i nettleserens minne.<br>
 - Lyden sendes kryptert over HTTPS til valgt tale-til-tekst-leverandør: Soniox, OpenAI eller Mistral/Voxtral.<br>
 - Transkripsjonen vises i valgt Workspace i nettleseren.<br>
 - Når du genererer et notat, sendes transkripsjonen, valgt prompt og eventuell Supplerende informasjon til valgt notatleverandør.<br>
-- Ved bruk av Requesty sendes forespørselen fra nettleseren til Requestys EU-gateway, som videresender den til den spesifikt valgte modellutrullingen.<br>
+- Ved bruk av Requesty sendes forespørselen fra nettleseren til Requestys EU-gateway, som videresender den til den spesifikt valgte modellutrullingen(ZDR, ingen modell trening, med data behandling utelukkende innenfor EU)<br>
 - Notatutkastet returneres til nettleseren over en kryptert forbindelse.<br><br>
 
-Selve webappen har ingen applikasjonsserver som lagrer lyd, transkripsjon eller notat. Kommunikasjonen skjer mellom nettleseren og tjenestene du velger. AWS Bedrock er et særtilfelle ved at tilgangen går gjennom brukerens egen, separat konfigurerte AWS-backend.<br><br>
+Selve webappen har ingen applikasjonsserver som lagrer lyd, transkripsjon eller notat. Kommunikasjonen skjer mellom din egen nettleseren og tjenestene du velger.<br><br>
 
 <hr><br>
 
 <strong>3. API-nøkler og påloggingsopplysninger</strong><br><br>
+
 Du bruker egne leverandørnøkler eller, for AWS Bedrock, egen backend-URL og secret. Utvikleren av webappen mottar ikke disse opplysningene eller det kliniske innholdet som sendes gjennom dem.<br><br>
 
 API-nøkler som skrives inn på forsiden, lagres midlertidig i nettleserens SessionStorage og fjernes når fanen/økten lukkes eller når du velger Clear keys. Dersom du eksporterer en kryptert sikkerhetskopi av nøklene, brukes passordet lokalt i nettleseren til å kryptere filen før den lagres eller lastes opp.<br><br>
@@ -171,31 +164,7 @@ Behandle API-nøkler, sikkerhetskopier og passord som konfidensiell informasjon.
 
 <hr><br>
 
-<strong>4. Databehandleravtaler</strong><br><br>
-Før person- eller pasientopplysninger behandles, må du vurdere og inngå passende DPA med tjenestene du faktisk bruker. Avhengig av oppsettet kan dette omfatte:<br>
-- Soniox for tale-til-tekst.<br>
-- Requesty for gateway-behandling og dokumenterte underdatabehandlere/modellutrullinger.<br>
-- OpenAI for direkte tale-til-tekst eller notatgenerering.<br>
-- Mistral for Voxtral eller Mistral Large.<br>
-- AWS ved et separat konfigurert Bedrock-oppsett.<br><br>
-
-Kontroller at hver avtale dekker virksomheten, helserelatert bruk, sikkerhetskrav, lagring, sletting, underdatabehandlere og eventuelle internasjonale overføringer. Leverandørvilkår og tekniske innstillinger kan endres og bør gjennomgås regelmessig.<br><br>
-
-<hr><br>
-
-<strong>5. DPIA og TIA</strong><br><br>
-
-<strong>DPIA — personvernkonsekvensvurdering</strong><br>
-En DPIA er normalt nødvendig etter GDPR artikkel 35 når ny teknologi brukes til å behandle særlige kategorier personopplysninger, som helseopplysninger. Kartlegg lyd, tekst og metadata; dokumenter formålet; vurder risikoen for pasientene; og bestem tekniske og organisatoriske tiltak som dataminimering, tilgangskontroll, sletting og hendelseshåndtering.<br><br>
-
-<strong>TIA — vurdering av tredjelandsoverføring</strong><br>
-En TIA kan være nødvendig når personopplysninger overføres utenfor EØS. Vurder destinasjonsland, relevant lovgivning, kontraktsmessige garantier og supplerende tiltak, blant annet kryptering, pseudonymisering, EU-endepunkter og lagringskontroll. Dersom hele den dokumenterte behandlingskjeden forblir i EU/EØS, bør også dette begrunnes og dokumenteres i vurderingen.<br><br>
-
-Begge vurderingene bør være ferdigstilt og godkjent før reelle pasientopplysninger brukes.<br><br>
-
-<hr><br>
-
-<strong>6. Leverandørspesifikke hensyn</strong><br><br>
+<strong>4. Leverandørspesifikke hensyn</strong><br><br>
 
 <strong>Soniox EU</strong><br>
 EU-datalokalisering krever et Soniox-prosjekt opprettet i EU-regionen, API-nøkkelen som tilhører dette prosjektet, og at korrekt EU-endepunkt er valgt i appen. Soniox opplyser at innholdsdata da forblir i EU-regionen og ikke brukes til modelltrening. Kontroller lagrings-/slettepraksis og inngå nødvendig avtale for virksomheten.<br><br>
@@ -214,18 +183,7 @@ OpenAI er fortsatt tilgjengelig for direkte tale-til-tekst og notatgenerering. S
 
 <hr><br>
 
-<strong>7. Minstekrav før klinisk bruk</strong><br><br>
-- Bruk bare leverandører og endepunkter som virksomheten har godkjent.<br>
-- Ha gyldige DPA-er og oppdatert oversikt over underdatabehandlere.<br>
-- Fullfør og godkjenn relevant DPIA/TIA.<br>
-- Konfigurer EU-ruting og lagring/ZDR korrekt når dette kreves.<br>
-- Begrens mengden pasientinformasjon og pseudonymiser når det er praktisk mulig.<br>
-- Beskytt API-nøkler og eksporterte sikkerhetskopier.<br>
-- Kontroller hver transkripsjon og hvert genererte notat før opplysninger legges i journalen.<br><br>
-
-<hr><br>
-
-<strong>8. Oversikt over lokal og ekstern lagring</strong><br><br>
+<strong>5. Oversikt over lokal og ekstern lagring</strong><br><br>
 
 <strong>API-nøkler og backend-opplysninger</strong><br>
 - Lagres i: nettleserens SessionStorage.<br>
@@ -251,7 +209,8 @@ Leverandørenes behandling og lagring kommer i tillegg til nettleserlagringen og
 
 <hr><br>
 
-<strong>9. Kildekode og ansvar</strong><br><br>
+<strong>6. Kildekode og ansvar</strong><br><br>
+
 Webappens kildekode er åpent tilgjengelig, og hovedapplikasjonen kjører i nettleseren. Utvikleren mottar ikke klinisk tekst gjennom en applikasjonsbackend. Grunnleggende, ikke-klinisk bruksstatistikk kan fortsatt samles inn slik nettstedet beskriver.<br><br>
 
 Det genererte innholdet er et utkast. Helsepersonellet er ansvarlig for å kontrollere medisinsk korrekthet, rette feil og avgjøre hva som legges inn i pasientjournalen.
