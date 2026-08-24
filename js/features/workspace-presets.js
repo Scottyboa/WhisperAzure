@@ -5,6 +5,7 @@ const PRESET_SCHEMA = "whisper.workspace-presets";
 const PRESET_VERSION = 1;
 const DEFINITIONS_KEY = "whisper_workspace_presets_v1";
 const ACTIVE_KEY = "whisper_workspace_active_preset_v1";
+const PRIMARY_RUNTIME_KEY = "whisper_workspace_primary_runtime_v1";
 const PANEL_MODE_KEY = "whisper_workspace_mini_panel_mode";
 const DRAFT_KEY = "whisper_workspace_draft_v1";
 const MAX_PRESETS = 12;
@@ -49,9 +50,8 @@ const DELEGATED_APP_ACTIONS = [
 const TEXT = {
   en: {
     presets: "Workspace set:", help: "Workspace set help", import: "Import", export: "Export",
-    add: "Add workspace", clone: "Clone workspace", close: "Close workspace", defaultName: "Workspace {n}",
+    add: "Add workspace", move: "Move workspace", clone: "Clone workspace", close: "Close workspace", defaultName: "Workspace {n}",
     cloneName: "{name} (copy)", cloneLoading: "Wait for this workspace to finish loading before cloning it.",
-    busyClone: "Stop or abort the active recording, transcription, or generation before cloning this workspace.",
     namePrompt: "Workspace name", max: "You can have up to 12 workspaces open.",
     atLeastOne: "At least one workspace must remain open.",
     busyClose: "Stop or abort the active recording, transcription, or generation before closing this workspace.",
@@ -80,9 +80,8 @@ const TEXT = {
   },
   no: {
     presets: "Workspace set:", help: "Hjelp om Workspace set", import: "Importer", export: "Eksporter",
-    add: "Legg til Workspace", clone: "Klon Workspace", close: "Lukk Workspace", defaultName: "Workspace {n}",
+    add: "Legg til Workspace", move: "Flytt Workspace", clone: "Klon Workspace", close: "Lukk Workspace", defaultName: "Workspace {n}",
     cloneName: "{name} (kopi)", cloneLoading: "Vent til dette Workspace-et er ferdig lastet før du kloner det.",
-    busyClone: "Stopp eller avbryt aktivt opptak, transkribering eller generering før dette Workspace-et klones.",
     namePrompt: "Navn på Workspace", max: "Du kan ha opptil 12 åpne Workspaces.",
     atLeastOne: "Minst ett Workspace må være åpent.",
     busyClose: "Stopp eller avbryt aktivt opptak, transkribering eller generering før Workspace-et lukkes.",
@@ -435,16 +434,17 @@ function injectManagerStyle() {
     .workspace-preset-help-content{display:none;position:absolute;z-index:9999;left:0;top:36px;width:min(400px,78vw);padding:10px 12px;border:1px solid #b8c6c0;border-radius:8px;background:#fff;box-shadow:0 7px 22px rgba(0,0,0,.16);color:#27332e;text-align:left;line-height:1.35;font-weight:400}
     .workspace-preset-help:hover .workspace-preset-help-content,.workspace-preset-help:focus .workspace-preset-help-content,.workspace-preset-help.is-open .workspace-preset-help-content{display:block}
     .workspace-preset-io{min-height:39px;padding:8px 16px;border:1px solid #cbd5d1;border-radius:8px;background:#fff;color:#3d5148;cursor:pointer}.workspace-preset-io:hover{background:#f1f7f4}
-    .workspace-preset-label{margin-left:17px;color:#68746f;font-weight:600;white-space:nowrap}.workspace-preset-list{display:flex;align-items:center;gap:10px;min-width:0;overflow-x:auto;padding:4px 0;scrollbar-width:thin}
-    .workspace-preset-chip{display:inline-flex;align-items:center;gap:2px;flex:0 0 auto;min-height:49px;padding:0 9px 0 0;border:1px solid #d2dad6;border-radius:999px;background:#fff;color:#34463e;max-width:310px;box-sizing:border-box}.workspace-preset-chip:hover{background:#f2f8f5;color:#34463e}
-    .workspace-preset-chip.is-active{border-color:#69a98d;background:#edf7f2;box-shadow:inset 0 -2px 0 #5a9}.workspace-preset-select{display:inline-flex;align-items:center;gap:10px;align-self:stretch;min-width:0;max-width:246px;padding:9px 7px 9px 17px;border:0;border-radius:999px 5px 5px 999px;background:transparent;color:inherit;cursor:pointer}.workspace-preset-select:hover,.workspace-preset-select:focus-visible{background:rgba(90,169,153,.09);outline:none}.workspace-preset-select[aria-pressed="true"]{font-weight:600}.workspace-preset-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .workspace-preset-label{margin-left:17px;color:#68746f;font-weight:600;white-space:nowrap}.workspace-preset-list{display:flex;align-items:center;gap:10px;min-width:0;overflow-x:auto;padding:4px 6px;scrollbar-width:thin}
+    .workspace-preset-chip{position:relative;display:inline-flex;align-items:center;gap:2px;flex:0 0 auto;min-height:49px;padding:0 9px 0 4px;border:1px solid #d2dad6;border-radius:999px;background:#fff;color:#34463e;max-width:310px;box-sizing:border-box}.workspace-preset-chip:hover{background:#f2f8f5;color:#34463e}
+    .workspace-preset-chip.is-active{border-color:#69a98d;background:#edf7f2;box-shadow:inset 0 -2px 0 #5a9}.workspace-preset-chip.is-workspace-dragging{opacity:.5}.workspace-preset-chip.is-workspace-drop-before::before,.workspace-preset-chip.is-workspace-drop-after::after{content:"";position:absolute;z-index:3;top:5px;bottom:5px;width:3px;border-radius:999px;background:#4f9d7b;box-shadow:0 0 0 2px rgba(79,157,123,.14)}.workspace-preset-chip.is-workspace-drop-before::before{left:-7px}.workspace-preset-chip.is-workspace-drop-after::after{right:-7px}
+    .workspace-preset-drag{align-self:stretch;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:25px;padding:0;border:0;border-radius:999px 5px 5px 999px;background:transparent;color:#8a9691;font-size:17px;line-height:1;cursor:grab}.workspace-preset-drag:hover,.workspace-preset-drag:focus-visible{background:rgba(90,169,153,.12);color:#46705f;outline:none}.workspace-preset-drag:active{cursor:grabbing}.workspace-preset-select{display:inline-flex;align-items:center;gap:10px;align-self:stretch;min-width:0;max-width:246px;padding:9px 7px;border:0;border-radius:5px;background:transparent;color:inherit;cursor:pointer}.workspace-preset-select:hover,.workspace-preset-select:focus-visible{background:rgba(90,169,153,.09);outline:none}.workspace-preset-select[aria-pressed="true"]{font-weight:600}.workspace-preset-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .workspace-preset-dot{width:10.5px;height:10.5px;border-radius:50%;background:#b8c0bd;flex:0 0 auto}.workspace-preset-dot.recording{background:#d7263d;box-shadow:0 0 0 0 rgba(215,38,61,.5);animation:workspacePulse 1.3s infinite}.workspace-preset-dot.generating{background:#7b61c9;animation:workspaceSpin 1.2s linear infinite}.workspace-preset-dot.transcribing{background:#2c7bd9}.workspace-preset-dot.complete{background:#2f9d61}
     .workspace-preset-clone,.workspace-preset-close{position:relative;flex:0 0 auto;border:0;background:transparent;color:#87918d;padding:0;cursor:pointer}.workspace-preset-clone{width:25px;height:29px;border-radius:5px}.workspace-preset-clone::before,.workspace-preset-clone::after{content:"";position:absolute;width:9px;height:9px;border:1.5px solid currentColor;border-radius:2px;box-sizing:border-box}.workspace-preset-clone::before{left:7px;top:7px}.workspace-preset-clone::after{left:10px;top:10px}.workspace-preset-clone:hover,.workspace-preset-clone:focus-visible{background:rgba(90,169,153,.12);color:#46705f;outline:none}.workspace-preset-close{width:24px;height:29px;border-radius:5px;line-height:1;font-size:19px}.workspace-preset-close:hover,.workspace-preset-close:focus-visible{background:rgba(164,0,30,.07);color:#a4001e;outline:none}.workspace-preset-add{width:47px;height:47px;padding:0;border:1px dashed #aebbb5;border-radius:50%;background:#fff;color:#426857;font-size:26px;line-height:1;cursor:pointer;flex:0 0 auto}
     .workspace-preset-frame-host{position:relative;width:100%}.workspace-preset-frame{border:0;background:#f8f8f8}.workspace-preset-frame.is-active{position:relative;display:block;width:100%;min-height:600px;opacity:1;pointer-events:auto}.workspace-preset-frame.is-parked{position:fixed;left:-10000px;top:0;width:2px!important;height:2px!important;opacity:0;pointer-events:none}
     .workspace-preset-toast{position:fixed;z-index:10020;left:50%;bottom:18px;transform:translateX(-50%);padding:8px 13px;border-radius:8px;background:#24352d;color:white;font-size:13px;box-shadow:0 5px 20px rgba(0,0,0,.2)}
     .workspace-backdrop{position:fixed;z-index:10010;inset:0;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.4)}.workspace-backdrop[hidden]{display:none}.workspace-modal{width:min(480px,94vw);max-height:88vh;overflow:auto;background:#fff;border-radius:12px;padding:16px;box-shadow:0 16px 48px rgba(0,0,0,.3)}.workspace-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.workspace-modal-head h2{font-size:18px;margin:0}.workspace-modal-close{border:0;background:transparent;color:#a4001e;padding:2px 6px;font-size:22px;cursor:pointer}.workspace-modal-notice{padding:9px;border:1px solid #b8d6ca;border-radius:8px;background:#f3faf7;font-size:12px;line-height:1.4}.workspace-modal-option{display:block;width:100%;margin-top:10px!important;padding:9px;border:1px solid #9bc4b2;border-radius:8px;background:#fff;color:#2e5544;text-align:left;cursor:pointer}.workspace-modal-option:hover{background:#f1f8f5;color:#2e5544}.workspace-modal-field{display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:8px;border:1px solid #cbd5d1;border-radius:7px}.workspace-modal-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.workspace-modal-actions button{padding:7px 11px;border-radius:7px;font-size:12px}.workspace-modal-status{min-height:18px;font-size:12px}.workspace-import-preview{margin-top:10px;padding:9px;border:1px solid #d8dfdc;border-radius:8px;background:#fafafa;font-size:12px}
     @keyframes workspacePulse{0%{box-shadow:0 0 0 0 rgba(215,38,61,.48)}70%{box-shadow:0 0 0 5px rgba(215,38,61,0)}100%{box-shadow:0 0 0 0 rgba(215,38,61,0)}}@keyframes workspaceSpin{50%{opacity:.35}}
-    @media(max-width:700px){.workspace-preset-label{margin-left:4px}.workspace-preset-io{min-height:35px;font-size:11px;padding:4px 6px}.workspace-preset-bar{min-height:69px;padding:10px 12px;gap:3.5px}.workspace-preset-help{width:34px;height:34px}.workspace-preset-chip{min-height:46px;padding-right:7px}.workspace-preset-select{padding:8px 5px 8px 14px;max-width:210px}.workspace-preset-clone,.workspace-preset-close{height:27px}.workspace-preset-add{width:44px;height:44px;font-size:24px}}
+    @media(max-width:700px){.workspace-preset-label{margin-left:4px}.workspace-preset-io{min-height:35px;font-size:11px;padding:4px 6px}.workspace-preset-bar{min-height:69px;padding:10px 12px;gap:3.5px}.workspace-preset-help{width:34px;height:34px}.workspace-preset-chip{min-height:46px;padding-right:7px}.workspace-preset-drag{width:23px;font-size:16px}.workspace-preset-select{padding:8px 5px;max-width:210px}.workspace-preset-clone,.workspace-preset-close{height:27px}.workspace-preset-add{width:44px;height:44px;font-size:24px}}
   `;
   document.head.appendChild(style);
 }
@@ -458,9 +458,13 @@ function initTopLevelManager() {
   const runtimes = new Map();
   const workspaceUi = new Map();
   let definitions = loadDefinitions();
-  let primaryPresetId = definitions[0].id;
+  let primaryPresetId = readSessionRaw(PRIMARY_RUNTIME_KEY);
+  if (!definitions.some((item) => item.id === primaryPresetId)) primaryPresetId = definitions[0].id;
+  writeSessionRaw(PRIMARY_RUNTIME_KEY, primaryPresetId);
   let activeId = readSessionRaw(ACTIVE_KEY) || primaryPresetId;
   if (!definitions.some((item) => item.id === activeId)) activeId = primaryPresetId;
+  let draggedWorkspaceId = "";
+  let dragDropTarget = null;
   let lastGeneralTerms = String(document.getElementById("redactorGeneralTerms")?.value || "");
   let configTimer = 0;
   let modalState = { mode: "", provider: "", bundle: null };
@@ -476,7 +480,7 @@ function initTopLevelManager() {
 
   runtimes.set(primaryPresetId, { id: primaryPresetId, kind: "native", win: window, doc: document, ready: true });
   window.addEventListener("message", handleFrameMessage);
-  definitions.slice(1).forEach(createFrameRuntime);
+  definitions.filter((item) => item.id !== primaryPresetId).forEach(createFrameRuntime);
   bindRuntimeDocument(runtimes.get(primaryPresetId));
   installAppDelegation();
   applyActiveWorkspace({ applySavedConfig: true });
@@ -605,6 +609,7 @@ function initTopLevelManager() {
       const runtime = runtimes.get(definition.id);
       if (runtime?.ready) definition.config = captureRuntimeConfig(runtime);
     });
+    writeSessionRaw(PRIMARY_RUNTIME_KEY, primaryPresetId);
     try { localStorage.setItem(DEFINITIONS_KEY, JSON.stringify(definitions)); } catch {}
   }
 
@@ -853,7 +858,91 @@ function initTopLevelManager() {
     importButton.addEventListener("click", () => openBackupModal("import"));
     exportButton.addEventListener("click", () => openBackupModal("export"));
     add.addEventListener("click", addPreset);
+    list.addEventListener("dragover", handleWorkspaceListDragOver);
+    list.addEventListener("drop", handleWorkspaceListDrop);
     return { bar, help, helpContent, importButton, exportButton, label, list, add };
+  }
+
+  function clearWorkspaceDropIndicators() {
+    workspaceUi.forEach((ui) => {
+      ui.chip.classList.remove("is-workspace-drop-before", "is-workspace-drop-after");
+    });
+    dragDropTarget = null;
+  }
+
+  function finishWorkspaceDrag() {
+    clearWorkspaceDropIndicators();
+    workspaceUi.forEach((ui) => ui.chip.classList.remove("is-workspace-dragging"));
+    draggedWorkspaceId = "";
+  }
+
+  function showWorkspaceDropTarget(id, placement) {
+    clearWorkspaceDropIndicators();
+    if (!id || id === draggedWorkspaceId) return;
+    const ui = workspaceUi.get(id);
+    if (!ui) return;
+    dragDropTarget = { id, placement: placement === "after" ? "after" : "before" };
+    ui.chip.classList.add(
+      dragDropTarget.placement === "after"
+        ? "is-workspace-drop-after"
+        : "is-workspace-drop-before"
+    );
+  }
+
+  function handleWorkspaceListDragOver(event) {
+    if (!draggedWorkspaceId) return;
+    const candidates = definitions
+      .filter((definition) => definition.id !== draggedWorkspaceId)
+      .map((definition) => ({ definition, chip: workspaceUi.get(definition.id)?.chip }))
+      .filter((item) => item.chip?.isConnected);
+    if (!candidates.length) return;
+
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+
+    const listRect = toolbar.list.getBoundingClientRect();
+    if (event.clientX < listRect.left + 28) toolbar.list.scrollLeft -= 14;
+    else if (event.clientX > listRect.right - 28) toolbar.list.scrollLeft += 14;
+
+    let target = candidates[candidates.length - 1];
+    let placement = "after";
+    for (const candidate of candidates) {
+      const rect = candidate.chip.getBoundingClientRect();
+      if (event.clientX < rect.left + (rect.width / 2)) {
+        target = candidate;
+        placement = "before";
+        break;
+      }
+    }
+    showWorkspaceDropTarget(target.definition.id, placement);
+  }
+
+  function handleWorkspaceListDrop(event) {
+    if (!draggedWorkspaceId || !dragDropTarget) return;
+    event.preventDefault();
+    const movedId = draggedWorkspaceId;
+    const target = { ...dragDropTarget };
+    finishWorkspaceDrag();
+    reorderWorkspace(movedId, target.id, target.placement);
+  }
+
+  function reorderWorkspace(movedId, targetId, placement) {
+    if (!movedId || !targetId || movedId === targetId) return false;
+    const sourceIndex = definitions.findIndex((item) => item.id === movedId);
+    if (sourceIndex < 0) return false;
+
+    const [moved] = definitions.splice(sourceIndex, 1);
+    const targetIndex = definitions.findIndex((item) => item.id === targetId);
+    if (targetIndex < 0) {
+      definitions.splice(sourceIndex, 0, moved);
+      return false;
+    }
+
+    definitions.splice(targetIndex + (placement === "after" ? 1 : 0), 0, moved);
+    persistDefinitions();
+    render();
+    notifyHub();
+    return true;
   }
 
   function render() {
@@ -888,6 +977,8 @@ function initTopLevelManager() {
       ui.select.title = statusTitle(snapshot, copy);
       ui.dot.className = `workspace-preset-dot ${statusClass(snapshot)}`;
       ui.name.textContent = definition.name;
+      ui.dragHandle.setAttribute("aria-label", copy.move);
+      ui.dragHandle.title = copy.move;
       ui.clone.setAttribute("aria-label", copy.clone);
       ui.clone.title = copy.clone;
       ui.close.setAttribute("aria-label", copy.close);
@@ -899,6 +990,31 @@ function initTopLevelManager() {
     const chip = document.createElement("div");
     chip.className = "workspace-preset-chip";
     chip.dataset.workspaceId = id;
+
+    const dragHandle = document.createElement("button");
+    dragHandle.type = "button";
+    dragHandle.className = "workspace-preset-drag";
+    dragHandle.textContent = "⠿";
+    dragHandle.draggable = true;
+    dragHandle.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    dragHandle.addEventListener("dragstart", (event) => {
+      if (!findDefinition(id)) {
+        event.preventDefault();
+        return;
+      }
+      finishWorkspaceDrag();
+      draggedWorkspaceId = id;
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", id);
+        try { event.dataTransfer.setDragImage(chip, 18, Math.max(10, chip.offsetHeight / 2)); } catch {}
+      }
+      chip.classList.add("is-workspace-dragging");
+    });
+    dragHandle.addEventListener("dragend", finishWorkspaceDrag);
 
     const select = document.createElement("button");
     select.type = "button";
@@ -922,8 +1038,8 @@ function initTopLevelManager() {
     close.textContent = "×";
     close.addEventListener("click", () => closePreset(id));
 
-    chip.append(select, clone, close);
-    return { chip, select, dot, name, clone, close };
+    chip.append(dragHandle, select, clone, close);
+    return { chip, dragHandle, select, dot, name, clone, close };
   }
 
   function syncDefinitionNames() {
@@ -982,7 +1098,6 @@ function initTopLevelManager() {
     const source = findDefinition(id);
     const sourceRuntime = runtimes.get(id);
     if (!source || !sourceRuntime?.ready) { toast(copy.cloneLoading, true); return; }
-    if (runtimeSnapshot(sourceRuntime).busy) { toast(copy.busyClone, true); return; }
     if (definitions.length >= MAX_PRESETS) { toast(copy.max, true); return; }
 
     source.config = captureRuntimeConfig(sourceRuntime);
@@ -1159,9 +1274,10 @@ function initTopLevelManager() {
       runtimes.clear(); clearRuntimeDraft({ id: primaryPresetId, kind: "native", win: window, doc: document });
       definitions = validated.presets;
       primaryPresetId = definitions[0].id; activeId = primaryPresetId;
+      writeSessionRaw(PRIMARY_RUNTIME_KEY, primaryPresetId);
       runtimes.set(primaryPresetId, { id: primaryPresetId, kind: "native", win: window, doc: document, ready: true, bound: true });
       await applyConfig(window, document, definitions[0].config);
-      definitions.slice(1).forEach(createFrameRuntime);
+      definitions.filter((item) => item.id !== primaryPresetId).forEach(createFrameRuntime);
     } else {
       const available = Math.max(0, MAX_PRESETS - definitions.length);
       validated.presets.slice(0, available).forEach((definition) => { definitions.push(definition); createFrameRuntime(definition); });
