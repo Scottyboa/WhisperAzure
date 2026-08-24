@@ -379,6 +379,10 @@ function initFrameRuntime() {
     getSnapshot: () => getRuntimeSnapshot(window, document),
     getHistorySnapshot: () => window.__noteHistory?.getSnapshot?.() || { entries: [], nextSequence: 1 },
     clearHistory: () => window.__noteHistory?.clearLocal?.() !== false,
+    replaceHistory(snapshot) {
+      const replace = window.__noteHistory?.replaceLocal;
+      return typeof replace === "function" ? replace(snapshot) !== false : false;
+    },
     getGeneralTerms: () => String(document.getElementById("redactorGeneralTerms")?.value || ""),
     setGeneralTerms(value) {
       const el = document.getElementById("redactorGeneralTerms");
@@ -520,6 +524,10 @@ function initTopLevelManager() {
         if (runtime.pendingDraft) {
           runtime.win.__workspacePresetBridge.applyDraft(runtime.pendingDraft);
           runtime.pendingDraft = null;
+        }
+        if (runtime.pendingHistory) {
+          runtime.win.__workspacePresetBridge.replaceHistory(runtime.pendingHistory);
+          runtime.pendingHistory = null;
         }
       }
       scheduleConfigSave(runtime.id);
@@ -1102,6 +1110,7 @@ function initTopLevelManager() {
 
     source.config = captureRuntimeConfig(sourceRuntime);
     const draft = captureRuntimeDraft(sourceRuntime);
+    const history = runtimeHistorySnapshot(sourceRuntime);
     const definition = {
       id: uid(),
       name: safeName(
@@ -1113,7 +1122,10 @@ function initTopLevelManager() {
     definitions.push(definition);
     createFrameRuntime(definition);
     const runtime = runtimes.get(definition.id);
-    if (runtime) runtime.pendingDraft = draft;
+    if (runtime) {
+      runtime.pendingDraft = draft;
+      runtime.pendingHistory = history;
+    }
     persistDefinitions();
     switchPreset(definition.id);
   }
