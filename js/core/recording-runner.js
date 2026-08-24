@@ -146,8 +146,20 @@ function flushPendingVadSegmentsGuarded({
   }
 }
 
-function installSafeRecordingLoadStop({ stopMicrophone, getSileroVAD } = {}) {
+function installSafeRecordingLoadStop({
+  stopMicrophone,
+  getSileroVAD,
+  shouldSkipLoadStop,
+} = {}) {
   window.addEventListener("load", () => {
+    try {
+      // A dynamically created Workspace becomes interactive at DOMContentLoaded,
+      // before every image/ad resource has necessarily finished loading. Never
+      // let this late safety callback tear down a session the user already
+      // started or intentionally left paused.
+      if (shouldSkipLoadStop?.()) return;
+    } catch (_) {}
+
     try {
       stopMicrophone?.();
     } catch (_) {}

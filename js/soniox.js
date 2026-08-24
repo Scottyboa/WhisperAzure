@@ -287,6 +287,25 @@ function canShowRecordingStatus() {
   return !manualStop && !transcriptFrozen && !recordingPaused;
 }
 
+// A dynamically created Workspace is already usable at DOMContentLoaded,
+// while the frame's later window.load event can still be waiting for images,
+// ads, or other resources. Protect any session that the user has started —
+// including a deliberately paused one — from that late load-time teardown.
+function hasLiveSonioxSession() {
+  return Boolean(
+    sileroVAD ||
+    ws ||
+    mediaStream ||
+    audioContext ||
+    recordingPaused ||
+    recordingActive ||
+    stopInProgress ||
+    transcriptionQueue.length > 0 ||
+    isProcessingQueue ||
+    pendingVADChunks.length > 0
+  );
+}
+
 // ── Completion timer ────────────────────────────────────────────────────────
 function startCompletionTimer() {
   if (completionTimerInterval) return;
@@ -927,6 +946,14 @@ function enqueueAsyncTranscription(wavBlob, chunkNum) {
   queueMicrotask(() => { processTranscriptionQueue(); });
 }
 
+function hasPendingAsyncWorkForCurrentSession() {
+  return Boolean(
+    pendingVADChunks.length > 0 ||
+    transcriptionQueue.some((item) => item?.sessionId === groupId) ||
+    (isProcessingQueue && processingQueueSessionId === groupId)
+  );
+}
+
 async function processTranscriptionQueue() {
   const mySessionId = groupId;
   const mySignal = sessionAbortController.signal;
@@ -971,7 +998,7 @@ async function processTranscriptionQueue() {
       isProcessingQueue = false;
       processingQueueSessionId = null;
     }
-    if (groupId === mySessionId && manualStop && transcriptionQueue.length === 0 && !transcriptFrozen) {
+    if (groupId === mySessionId && manualStop && !hasPendingAsyncWorkForCurrentSession() && !transcriptFrozen) {
       updateAsyncTranscriptionOutput();
     }
   }
@@ -1069,7 +1096,7 @@ function updateAsyncTranscriptionOutput() {
   logDebug('UI write: combined text length=', text.length);
   writeTranscriptionElement(text);
 
-  if (manualStop && transcriptionQueue.length === 0 && !isProcessingQueue) {
+  if (manualStop && !hasPendingAsyncWorkForCurrentSession()) {
     freezeCompletionTimer();
     requestSonioxBatchCleanup('transcription-complete');
     if (!transcriptionError) {
@@ -2007,23 +2034,54 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
     if (recordingPaused) {
       // RESUME: destroy old VAD and start a fresh one (re-prompts the mic).
       updateStatusMessage('Resuming recording…', 'orange');
+      let resumed = false;
+      let nextVAD = null;
       try {
-        if (sileroVAD && typeof sileroVAD.destroy === 'function') {
-          await sileroVAD.destroy();
+        const previousVAD = sileroVAD;
+        if (previousVAD && typeof previousVAD.destroy === 'function') {
+          try {
+            await previousVAD.destroy();
+          } finally {
+            if (sileroVAD === previousVAD) sileroVAD = null;
+          }
         }
-        sileroVAD = await vad.MicVAD.new(sileroVADOptions);
-        await sileroVAD.start();
+
+        if (sileroVAD === previousVAD) sileroVAD = null;
+        nextVAD = await vad.MicVAD.new(sileroVADOptions);
+        sileroVAD = nextVAD;
+
+        // A late page-load safety teardown in an older build could leave
+        // manualStop set even though the UI still showed a paused recording.
+        // Restore the non-terminal session state before starting the VAD so
+        // its first speech callbacks cannot be rejected as stale.
+        manualStop = false;
+        transcriptFrozen = false;
+        finalChunkProcessed = false;
+        pendingStop = false;
+        stopInProgress = false;
+        recordingActive = false;
         recordingPaused = false;
+        chunkStartTime = Date.now();
+        lastSpeechTime = Date.now();
+
+        await nextVAD.start();
+        resumed = true;
 
         pauseResumeButton.innerText = 'Pause Recording';
         updateStatusMessage('Listening for speech…', 'green');
         logInfo('Silero VAD resumed');
       } catch (err) {
+        recordingPaused = true;
+        recordingActive = false;
+        pauseResumeButton.innerText = 'Resume Recording';
+        try { await nextVAD?.pause?.(); } catch (_) {}
+        try { await nextVAD?.destroy?.(); } catch (_) {}
+        if (sileroVAD === nextVAD) sileroVAD = null;
         updateStatusMessage('Error resuming VAD: ' + err, 'red');
         logError('Error resuming Silero VAD:', err);
       } finally {
         setStopPauseDisabled(false);
-        setAbortButtonDisabled(false);
+        setAbortButtonDisabled(!resumed);
       }
     } else {
       // PAUSE: do NOT flip recordingPaused yet — submitUserSpeechOnPause
@@ -2035,9 +2093,14 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
       if (chunkTimeoutId) { clearTimeout(chunkTimeoutId); chunkTimeoutId = null; }
 
       updateStatusMessage('Pausing recording…', 'orange');
+      const vadToPause = sileroVAD;
       try {
-        await sileroVAD.pause();
-        logInfo('Silero VAD paused');
+        if (vadToPause && typeof vadToPause.pause === 'function') {
+          await vadToPause.pause();
+          logInfo('Silero VAD paused');
+        } else {
+          logInfo('Silero VAD was unavailable during pause; Resume can recreate it.');
+        }
       } catch (err) {
         logError('Error pausing Silero VAD:', err);
       }
@@ -2045,7 +2108,7 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
       await Promise.resolve();
       recordingPaused = true;
 
-      if (sileroVAD?.stream) sileroVAD.stream.getTracks().forEach(t => t.stop());
+      if (vadToPause?.stream) vadToPause.stream.getTracks().forEach(t => t.stop());
       stopMicrophone();
 
       // Flush the tail segment captured by the final onSpeechEnd.
@@ -2121,24 +2184,25 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
     updateStatusMessage('Finishing transcription...', 'blue');
 
     // FORCE-FLUSH the in-flight VAD segment via the public API, if any.
+    const vadToStop = sileroVAD;
     let forcedAudio = null;
-    if (sileroVAD && typeof sileroVAD.endSegment === 'function') {
-      const result = sileroVAD.endSegment();
+    if (vadToStop && typeof vadToStop.endSegment === 'function') {
+      const result = vadToStop.endSegment();
       forcedAudio = result?.audio || null;
     }
 
-    if (sileroVAD) {
-      try { await sileroVAD.pause(); logInfo('Silero VAD paused on stop'); }
+    if (vadToStop) {
+      try { await vadToStop.pause(); logInfo('Silero VAD paused on stop'); }
       catch (err) { logError('Error pausing Silero VAD on stop:', err); }
 
-      if (sileroVAD.stream) sileroVAD.stream.getTracks().forEach(t => t.stop());
+      if (vadToStop.stream) vadToStop.stream.getTracks().forEach(t => t.stop());
 
-      if (sileroVAD && !sileroVAD._destroyed) {
-        sileroVAD._destroyed = true;
-        try { await sileroVAD.destroy?.(); }
+      if (!vadToStop._destroyed) {
+        vadToStop._destroyed = true;
+        try { await vadToStop.destroy?.(); }
         catch (err) { logDebug('sileroVAD destroy error:', err); }
-        sileroVAD = null;
       }
+      if (sileroVAD === vadToStop) sileroVAD = null;
     }
     stopMicrophone();
 
@@ -2161,8 +2225,7 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
 
     if (audioFrames.length === 0 && !processedAnyAudioFrames) {
       // No speech was ever detected. Decide based on whether any work exists.
-      const hasWork =
-        transcriptionQueue.length > 0 || isProcessingQueue || pendingVADChunks.length > 0;
+      const hasWork = hasPendingAsyncWorkForCurrentSession();
       if (hasWork) {
         updateStatusMessage('Finishing transcription...', 'blue');
         if (!completionTimerRunning) startCompletionTimer();
@@ -2192,8 +2255,7 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
     }
 
     finalChunkProcessed = true;
-    const hasWork =
-      transcriptionQueue.length > 0 || isProcessingQueue || pendingVADChunks.length > 0;
+    const hasWork = hasPendingAsyncWorkForCurrentSession();
     if (hasWork) {
       updateStatusMessage('Finishing transcription...', 'blue');
       if (!completionTimerRunning) startCompletionTimer();
@@ -2214,6 +2276,13 @@ export { initRecording };
 // On page load, ensure we don't have a hanging mic / WS / VAD from a
 // previous tab state.
 installSafeRecordingLoadStop({
+  shouldSkipLoadStop: () => {
+    const shouldSkip = hasLiveSonioxSession();
+    if (shouldSkip) {
+      logDebug('Skipped late page-load teardown because this Workspace has an active Soniox session.');
+    }
+    return shouldSkip;
+  },
   stopMicrophone: () => {
     teardownActivePipeline('page-load');
   },
