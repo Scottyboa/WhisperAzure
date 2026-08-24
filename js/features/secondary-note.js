@@ -317,6 +317,9 @@ const state = {
   timerStartedAt: 0
 };
 
+let secondaryNoteModuleInitialized = false;
+let secondaryNoteModuleInitializing = false;
+
 // -----------------------------------------------------------------------------
 // Timer / status / usage helpers (secondary-only DOM targets)
 // -----------------------------------------------------------------------------
@@ -1139,109 +1142,130 @@ function bindPersistedSelect(id, storageKey, { normalize = (v) => v, onChange = 
 }
 
 function initSecondaryNoteModule() {
+  if (secondaryNoteModuleInitialized) return true;
+  if (secondaryNoteModuleInitializing) return false;
+
   const pane = el("secondaryNotePane");
   const toggleButton = el("toggleSecondaryNoteButton");
-  if (!pane || !toggleButton) return;
+  if (!pane || !toggleButton) return false;
 
-  hydrateSelectors();
-  initSecondarySourceDateToggle();
-  refreshToggleButtonLabel();
-  renderTimerText(0);
-  setBusy(false);
+  secondaryNoteModuleInitializing = true;
 
-  toggleButton.addEventListener("click", () => {
-    setSecondaryOpen(!isSecondaryOpen());
-  });
-
-  bindPersistedSelect("secondaryProvider", STORAGE_KEYS.provider, {
-    normalize: normalizeNoteUiProvider,
-    onChange: () => {
-      clearSecondaryUsageAndCost();
-      syncVisibility();
-    }
-  });
-  bindPersistedSelect("secondaryOpenaiModel", STORAGE_KEYS.openaiModel, {
-    normalize: (v) => (OPENAI_MODEL_IDS[v] ? v : DEFAULTS.openaiModel),
-    onChange: () => {
-      clearSecondaryUsageAndCost();
-      syncVisibility();
-    }
-  });
-  bindPersistedSelect("secondaryMode", STORAGE_KEYS.mode, {
-    normalize: normalizeNoteMode,
-    onChange: () => clearSecondaryUsageAndCost()
-  });
-  bindPersistedSelect("secondaryOpenaiReasoning", STORAGE_KEYS.openaiReasoning, {
-    normalize: normalizeOpenAiReasoning
-  });
-  bindPersistedSelect("secondaryNanoReasoning", STORAGE_KEYS.requestyNanoReasoning, {
-    normalize: (value) =>
-      normalizeRequestyNanoReasoning(value, getSelections().requestyModel)
-  });
-  bindPersistedSelect("secondaryBedrockModel", STORAGE_KEYS.bedrockModel, {
-    normalize: (v) => (ALLOWED_BEDROCK_MODEL_KEYS.has(v) ? v : DEFAULTS.bedrockModel),
-    onChange: () => clearSecondaryUsageAndCost()
-  });
-  bindPersistedSelect("secondaryRequestyModel", STORAGE_KEYS.requestyModel, {
-    normalize: normalizeRequestyModel,
-    onChange: (modelId) => {
-      clearSecondaryUsageAndCost();
-      const reasoningSelect = el("secondaryNanoReasoning");
-      const previous = modelId === "gemini-3.7-flash"
-        ? getDefaultRequestyReasoning(modelId)
-        : String(reasoningSelect?.value || "");
-      setSelectOptions(
-        reasoningSelect,
-        listRequestyNanoReasoningOptions(modelId)
-      );
-      const normalized = normalizeRequestyNanoReasoning(previous, modelId);
-      if (reasoningSelect) reasoningSelect.value = normalized;
-      writeSession(STORAGE_KEYS.requestyNanoReasoning, normalized);
-      syncVisibility();
-    }
-  });
-  bindPersistedSelect("secondaryPromptSelect", STORAGE_KEYS.promptSlot);
-
-  const autoTransfer = el("secondaryAutoTransferToggle");
-  if (autoTransfer) {
-    autoTransfer.addEventListener("change", () => {
-      writeSession(STORAGE_KEYS.autoTransfer, autoTransfer.checked ? "1" : "0");
-    });
-  }
-
-  const clearOnGenerateToggle = el("secondaryClearOnGenerateToggle");
-  if (clearOnGenerateToggle) {
-    clearOnGenerateToggle.addEventListener("change", () => {
-      writeSession(STORAGE_KEYS.clearOnGenerate, clearOnGenerateToggle.checked ? "1" : "0");
-    });
-  }
-
-  const generateButton = el("secondaryGenerateButton");
-  if (generateButton) generateButton.addEventListener("click", generateSecondaryNote);
-
-  const abortButton = el("secondaryAbortButton");
-  if (abortButton) abortButton.addEventListener("click", abortSecondaryNote);
-
-  const copyButton = el("secondaryCopyNoteButton");
-  if (copyButton) copyButton.addEventListener("click", copySecondaryNote);
-
-  const pushButton = el("secondaryPushToSupplementaryButton");
-  if (pushButton) pushButton.addEventListener("click", pushToSupplementary);
-
-  // Shared prompt storage: refresh slot labels when names change; the prompt
-  // TEXT is always read live at generation time, so value changes need no
-  // action here — but keeping labels current avoids stale dropdown names.
-  window.addEventListener("prompt-slot-names-changed", () => hydratePromptOptions());
-  window.addEventListener("prompt-slots-reordered", () => hydratePromptOptions());
-  window.addEventListener("prompt-slots-imported", () => hydratePromptOptions());
-  window.addEventListener("prompt-profile-changed", () => hydratePromptOptions());
-
-  // Language switches: refresh dynamic labels owned by this module.
-  window.addEventListener("secondary-note-i18n-changed", () => {
+  try {
+    hydrateSelectors();
+    initSecondarySourceDateToggle();
     refreshToggleButtonLabel();
-    if (!state.inFlight) renderTimerText(0);
-  });
+    renderTimerText(0);
+    setBusy(false);
+
+    toggleButton.addEventListener("click", () => {
+      setSecondaryOpen(!isSecondaryOpen());
+    });
+
+    bindPersistedSelect("secondaryProvider", STORAGE_KEYS.provider, {
+      normalize: normalizeNoteUiProvider,
+      onChange: () => {
+        clearSecondaryUsageAndCost();
+        syncVisibility();
+      }
+    });
+    bindPersistedSelect("secondaryOpenaiModel", STORAGE_KEYS.openaiModel, {
+      normalize: (v) => (OPENAI_MODEL_IDS[v] ? v : DEFAULTS.openaiModel),
+      onChange: () => {
+        clearSecondaryUsageAndCost();
+        syncVisibility();
+      }
+    });
+    bindPersistedSelect("secondaryMode", STORAGE_KEYS.mode, {
+      normalize: normalizeNoteMode,
+      onChange: () => clearSecondaryUsageAndCost()
+    });
+    bindPersistedSelect("secondaryOpenaiReasoning", STORAGE_KEYS.openaiReasoning, {
+      normalize: normalizeOpenAiReasoning
+    });
+    bindPersistedSelect("secondaryNanoReasoning", STORAGE_KEYS.requestyNanoReasoning, {
+      normalize: (value) =>
+        normalizeRequestyNanoReasoning(value, getSelections().requestyModel)
+    });
+    bindPersistedSelect("secondaryBedrockModel", STORAGE_KEYS.bedrockModel, {
+      normalize: (v) => (ALLOWED_BEDROCK_MODEL_KEYS.has(v) ? v : DEFAULTS.bedrockModel),
+      onChange: () => clearSecondaryUsageAndCost()
+    });
+    bindPersistedSelect("secondaryRequestyModel", STORAGE_KEYS.requestyModel, {
+      normalize: normalizeRequestyModel,
+      onChange: (modelId) => {
+        clearSecondaryUsageAndCost();
+        const reasoningSelect = el("secondaryNanoReasoning");
+        const previous = modelId === "gemini-3.7-flash"
+          ? getDefaultRequestyReasoning(modelId)
+          : String(reasoningSelect?.value || "");
+        setSelectOptions(
+          reasoningSelect,
+          listRequestyNanoReasoningOptions(modelId)
+        );
+        const normalized = normalizeRequestyNanoReasoning(previous, modelId);
+        if (reasoningSelect) reasoningSelect.value = normalized;
+        writeSession(STORAGE_KEYS.requestyNanoReasoning, normalized);
+        syncVisibility();
+      }
+    });
+    bindPersistedSelect("secondaryPromptSelect", STORAGE_KEYS.promptSlot);
+
+    const autoTransfer = el("secondaryAutoTransferToggle");
+    if (autoTransfer) {
+      autoTransfer.addEventListener("change", () => {
+        writeSession(STORAGE_KEYS.autoTransfer, autoTransfer.checked ? "1" : "0");
+      });
+    }
+
+    const clearOnGenerateToggle = el("secondaryClearOnGenerateToggle");
+    if (clearOnGenerateToggle) {
+      clearOnGenerateToggle.addEventListener("change", () => {
+        writeSession(STORAGE_KEYS.clearOnGenerate, clearOnGenerateToggle.checked ? "1" : "0");
+      });
+    }
+
+    const generateButton = el("secondaryGenerateButton");
+    if (generateButton) generateButton.addEventListener("click", generateSecondaryNote);
+
+    const abortButton = el("secondaryAbortButton");
+    if (abortButton) abortButton.addEventListener("click", abortSecondaryNote);
+
+    const copyButton = el("secondaryCopyNoteButton");
+    if (copyButton) copyButton.addEventListener("click", copySecondaryNote);
+
+    const pushButton = el("secondaryPushToSupplementaryButton");
+    if (pushButton) pushButton.addEventListener("click", pushToSupplementary);
+
+    // Shared prompt storage: refresh slot labels when names change; the prompt
+    // TEXT is always read live at generation time, so value changes need no
+    // action here — but keeping labels current avoids stale dropdown names.
+    window.addEventListener("prompt-slot-names-changed", () => hydratePromptOptions());
+    window.addEventListener("prompt-slots-reordered", () => hydratePromptOptions());
+    window.addEventListener("prompt-slots-imported", () => hydratePromptOptions());
+    window.addEventListener("prompt-profile-changed", () => hydratePromptOptions());
+
+    // Language switches: refresh dynamic labels owned by this module.
+    window.addEventListener("secondary-note-i18n-changed", () => {
+      refreshToggleButtonLabel();
+      if (!state.inFlight) renderTimerText(0);
+    });
+
+    secondaryNoteModuleInitialized = true;
+    window.__secondaryNoteModuleReady = true;
+    window.dispatchEvent(new window.Event("secondary-note-ready"));
+    return true;
+  } catch (error) {
+    window.__secondaryNoteModuleReady = false;
+    console.error("[secondary-note] Module initialization failed:", error);
+    return false;
+  } finally {
+    secondaryNoteModuleInitializing = false;
+  }
 }
+
+window.__secondaryNoteModuleReady = false;
+window.__initSecondaryNoteModule = initSecondaryNoteModule;
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initSecondaryNoteModule, { once: true });

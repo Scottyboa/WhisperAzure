@@ -143,6 +143,26 @@ function dispatchInput(win, element) {
   try { element.dispatchEvent(new win.Event("input", { bubbles: true })); } catch {}
 }
 
+function ensureSecondaryNoteModuleReady(win, doc) {
+  const pane = doc?.getElementById("secondaryNotePane");
+  const toggleButton = doc?.getElementById("toggleSecondaryNoteButton");
+  if (!pane || !toggleButton) return true;
+  if (win?.__secondaryNoteModuleReady === true) return true;
+
+  if (typeof win?.__initSecondaryNoteModule === "function") {
+    try {
+      return win.__initSecondaryNoteModule() === true || win.__secondaryNoteModuleReady === true;
+    } catch (error) {
+      console.warn("[workspace-presets] Secondary Note initialization failed.", error);
+      return false;
+    }
+  }
+
+  // Compatibility fallback if this file is briefly mixed with an older cached
+  // secondary-note.js that does not expose an explicit readiness handshake.
+  return doc?.readyState === "complete";
+}
+
 function captureConfig(doc) {
   const values = {};
   const checks = {};
@@ -387,7 +407,24 @@ function initFrameRuntime() {
   window.__openMiniPanel = () => window.parent.__openMiniPanel?.();
   window.addEventListener("mini-panel:open-requested", () => window.parent.__openMiniPanel?.());
   sendHeight();
-  notifyParent("ready");
+
+  let secondaryReadyAttempts = 0;
+  const notifyWhenRuntimeReady = () => {
+    if (ensureSecondaryNoteModuleReady(window, document)) {
+      notifyParent("ready");
+      return;
+    }
+
+    secondaryReadyAttempts += 1;
+    if (secondaryReadyAttempts < 200) {
+      window.setTimeout(notifyWhenRuntimeReady, 25);
+      return;
+    }
+
+    console.warn("[workspace-presets] Secondary Note readiness timed out; continuing with the frame runtime.");
+    notifyParent("ready-secondary-timeout");
+  };
+  notifyWhenRuntimeReady();
 }
 
 function injectManagerStyle() {
@@ -458,6 +495,16 @@ function initTopLevelManager() {
     if (data.type === "workspace-preset-frame-update") {
       let becameReady = false;
       if (!runtime.ready && runtime.frame.contentWindow?.__workspacePresetBridge) {
+        const secondaryReady = ensureSecondaryNoteModuleReady(
+          runtime.frame.contentWindow,
+          runtime.frame.contentDocument
+        );
+        const secondaryTimedOut = data.reason === "ready-secondary-timeout";
+        if (!secondaryReady && !secondaryTimedOut) return;
+        if (!secondaryReady) {
+          console.warn("[workspace-presets] Frame became ready without a confirmed Secondary Note module.");
+        }
+
         runtime.ready = true;
         becameReady = true;
         runtime.win = runtime.frame.contentWindow;
