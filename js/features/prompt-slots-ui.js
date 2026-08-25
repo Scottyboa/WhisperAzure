@@ -1,5 +1,6 @@
 import { PromptManager } from "../promptManager.js";
 import { PromptCloudBackup } from "./prompt-cloud-backup.js";
+import { CloudBackupSession } from "./cloud-backup-session.js";
 
 const promptSlotSelect = document.getElementById("promptSlot");
 const promptSlotPicker = document.getElementById("promptSlotPicker");
@@ -66,8 +67,11 @@ const PROMPT_BACKUP_TEXT = {
     importGoogleDrive: "Import from Google Drive",
     exportGoogleDriveHelp: "Encrypts the active profile in this browser and saves one prompt backup in your private Google Drive app storage. If General terms contains text, it is encrypted and saved as a separate backup. An empty General terms field never overwrites an earlier General terms backup.",
     importGoogleDriveHelp: "Sign in with the same Google account and enter the backup password. Prompts and any available General terms backup are downloaded from private Google Drive app storage.",
-    exportCloudNotice: "Create an encryption password. It is never uploaded or stored by this app. If you forget it, the backup cannot be restored. Prompt and General terms backups are separate from your API-key backup and other files.",
-    importCloudNotice: "Enter the password used when this prompt backup was exported. The password is used only in this browser and is never stored.",
+    exportCloudNotice: "Create a Cloud Backup Password for this provider. It is used for keys, prompt lists and Workspace Sets, kept only in this tab session and never uploaded. If you forget it, the backup cannot be restored.",
+    importCloudNotice: "Enter the Cloud Backup Password for this provider. It is kept only in this tab session and never uploaded.",
+    unlockedCloudNotice: "Your unlocked Cloud Backup Password for {provider} will be used.",
+    legacyPasswordNotice: "This older prompt backup uses a different password. Enter its previous password to import it. You can then update it to the unified Cloud Backup Password.",
+    migrateLegacy: "This prompt backup used an older password. Update it now to use your current Cloud Backup Password?",
     newPassword: "Encryption password (minimum 10 characters)",
     currentPassword: "Encryption password",
     repeatPassword: "Repeat password",
@@ -125,8 +129,11 @@ const PROMPT_BACKUP_TEXT = {
     importGoogleDrive: "Importer fra Google Drive",
     exportGoogleDriveHelp: "Krypterer den aktive profilen i nettleseren og lagrer én promptkopi i det private appområdet i Google Drive. Hvis Generelle begreper inneholder tekst, krypteres og lagres dette som en separat kopi. Et tomt felt overskriver aldri en eldre kopi av Generelle begreper.",
     importGoogleDriveHelp: "Logg inn med samme Google-konto og skriv inn passordet. Prompter og en eventuell kopi av Generelle begreper hentes fra det private appområdet i Google Drive.",
-    exportCloudNotice: "Lag et krypteringspassord. Det blir aldri lastet opp eller lagret av appen. Hvis du glemmer det, kan sikkerhetskopien ikke gjenopprettes. Kopiene av prompter og Generelle begreper er adskilt fra sikkerhetskopien av API-nøkler og andre filer.",
-    importCloudNotice: "Skriv inn passordet som ble brukt da promptkopien ble eksportert. Passordet brukes bare i nettleseren og lagres aldri.",
+    exportCloudNotice: "Opprett et Cloud Backup-passord for denne leverandøren. Det brukes for nøkler, promptlister og Workspace Sets, beholdes bare i denne faneøkten og lastes aldri opp. Hvis du glemmer det, kan sikkerhetskopien ikke gjenopprettes.",
+    importCloudNotice: "Skriv inn Cloud Backup-passordet for denne leverandøren. Det beholdes bare i denne faneøkten og lastes aldri opp.",
+    unlockedCloudNotice: "Det opplåste Cloud Backup-passordet for {provider} vil bli brukt.",
+    legacyPasswordNotice: "Denne eldre promptkopien bruker et annet passord. Skriv inn det tidligere passordet for å importere den. Deretter kan den oppdateres til det felles Cloud Backup-passordet.",
+    migrateLegacy: "Denne promptkopien brukte et eldre passord. Vil du oppdatere den nå til ditt nåværende Cloud Backup-passord?",
     newPassword: "Krypteringspassord (minst 10 tegn)",
     currentPassword: "Krypteringspassord",
     repeatPassword: "Gjenta passord",
@@ -592,6 +599,7 @@ const promptBackupModalState = {
   mode: "export",
   provider: "",
   busy: false,
+  legacyPasswordMode: false,
 };
 
 function setPromptBackupStatus(message, isError = false, { modalOnly = false } = {}) {
@@ -667,6 +675,7 @@ function updatePromptBackupChoiceText() {
 
 function showPromptBackupChoiceStep() {
   promptBackupModalState.provider = "";
+  promptBackupModalState.legacyPasswordMode = false;
   setPromptBackupBusy(false);
   clearPromptBackupPasswords();
   updatePromptBackupChoiceText();
@@ -689,13 +698,18 @@ async function showPromptBackupCloudStep(provider) {
   promptBackupModalState.provider = provider;
   const text = getPromptBackupText();
   const isExport = promptBackupModalState.mode === "export";
+  const unlockedPassword = CloudBackupSession.getPassword(provider);
+  const useUnlockedPassword = Boolean(unlockedPassword) && !promptBackupModalState.legacyPasswordMode;
+  const providerName = provider === "oneDrive" ? "Microsoft OneDrive" : "Google Drive";
 
   if (promptBackupModal.choiceStep) promptBackupModal.choiceStep.style.display = "none";
   if (promptBackupModal.cloudStep) promptBackupModal.cloudStep.style.display = "";
   if (promptBackupModal.cloudNotice) {
-    promptBackupModal.cloudNotice.textContent = isExport
-      ? text.exportCloudNotice
-      : text.importCloudNotice;
+    promptBackupModal.cloudNotice.textContent = promptBackupModalState.legacyPasswordMode
+      ? text.legacyPasswordNotice
+      : useUnlockedPassword
+        ? formatPromptBackupText(text.unlockedCloudNotice, { provider: providerName })
+        : isExport ? text.exportCloudNotice : text.importCloudNotice;
   }
   if (promptBackupModal.passwordLabel) {
     promptBackupModal.passwordLabel.textContent = isExport ? text.newPassword : text.currentPassword;
@@ -704,10 +718,14 @@ async function showPromptBackupCloudStep(provider) {
     promptBackupModal.passwordConfirmLabel.textContent = text.repeatPassword;
   }
   if (promptBackupModal.passwordConfirmWrap) {
-    promptBackupModal.passwordConfirmWrap.style.display = isExport ? "" : "none";
+    promptBackupModal.passwordConfirmWrap.style.display = isExport && !useUnlockedPassword ? "" : "none";
   }
   if (promptBackupModal.password) {
     promptBackupModal.password.setAttribute("autocomplete", isExport ? "new-password" : "current-password");
+    promptBackupModal.password.style.display = useUnlockedPassword ? "none" : "";
+  }
+  if (promptBackupModal.passwordLabel) {
+    promptBackupModal.passwordLabel.style.display = useUnlockedPassword ? "none" : "";
   }
   if (promptBackupModal.cloudAction) {
     promptBackupModal.cloudAction.textContent = getPromptBackupActionLabel();
@@ -720,7 +738,8 @@ async function showPromptBackupCloudStep(provider) {
     try {
       await PromptCloudBackup.prepareGoogleSignIn();
       setPromptBackupBusy(false, getPromptBackupActionLabel());
-      promptBackupModal.password?.focus();
+      if (useUnlockedPassword) promptBackupModal.cloudAction?.focus();
+      else promptBackupModal.password?.focus();
     } catch (error) {
       setPromptBackupBusy(false, getPromptBackupActionLabel());
       setPromptBackupStatus(error?.message || "Google sign-in could not be loaded.", true, {
@@ -730,13 +749,15 @@ async function showPromptBackupCloudStep(provider) {
     return;
   }
 
-  promptBackupModal.password?.focus();
+  if (useUnlockedPassword) promptBackupModal.cloudAction?.focus();
+  else promptBackupModal.password?.focus();
 }
 
 function openPromptBackupModal(mode) {
   if (!promptBackupModal.backdrop) return;
   promptBackupModalState.mode = mode === "import" ? "import" : "export";
   promptBackupModalState.busy = false;
+  promptBackupModalState.legacyPasswordMode = false;
   setPromptBackupStatus("");
   showPromptBackupChoiceStep();
   promptBackupModal.backdrop.classList.add("active");
@@ -829,15 +850,19 @@ async function runPromptCloudAction() {
   const text = getPromptBackupText();
   const isExport = promptBackupModalState.mode === "export";
   const provider = promptBackupModalState.provider;
-  const password = String(promptBackupModal.password?.value || "");
+  const unlockedPassword = CloudBackupSession.getPassword(provider);
+  const usingUnlockedPassword = Boolean(unlockedPassword) && !promptBackupModalState.legacyPasswordMode;
+  const password = usingUnlockedPassword
+    ? unlockedPassword
+    : String(promptBackupModal.password?.value || "");
   const confirmation = String(promptBackupModal.passwordConfirm?.value || "");
 
-  if (isExport && password.length < 10) {
+  if (isExport && !usingUnlockedPassword && password.length < 10) {
     setPromptBackupStatus(text.minimumPassword, true, { modalOnly: true });
     promptBackupModal.password?.focus();
     return;
   }
-  if (isExport && password !== confirmation) {
+  if (isExport && !usingUnlockedPassword && password !== confirmation) {
     setPromptBackupStatus(text.passwordsMismatch, true, { modalOnly: true });
     promptBackupModal.passwordConfirm?.focus();
     return;
@@ -859,6 +884,7 @@ async function runPromptCloudAction() {
   let generalTermsSaved = false;
   let generalTermsImported = false;
   let generalTermsImportError = null;
+  let migratedLegacyBackup = false;
   const busyLabel = isExport ? text.saving : text.importing;
   setPromptBackupBusy(true, busyLabel);
   setPromptBackupStatus("", false, { modalOnly: true });
@@ -868,29 +894,28 @@ async function runPromptCloudAction() {
       setPromptBackupStatus(text[statusKey] || statusKey, false, { modalOnly: true });
     };
 
+    const accessToken = await PromptCloudBackup.connect(provider, updateProgress);
+
     if (isExport) {
       const promptBundle = PromptManager.buildPromptExportBundle();
       const generalTermsBundle = buildGeneralTermsExportBundle();
-      let result;
-      if (provider === "oneDrive") {
-        result = await PromptCloudBackup.savePackageToOneDrive(
-          { promptBundle, generalTermsBundle },
-          password,
-          updateProgress
-        );
-      } else {
-        result = await PromptCloudBackup.savePackageToGoogleDrive(
-          { promptBundle, generalTermsBundle },
-          password,
-          updateProgress
-        );
-      }
+      updateProgress("encryptingAndSaving");
+      const result = await PromptCloudBackup.savePackageWithAccessToken(
+        provider,
+        accessToken,
+        { promptBundle, generalTermsBundle },
+        password
+      );
       generalTermsSaved = Boolean(result?.generalTermsSaved);
+      CloudBackupSession.unlock(provider, password);
       succeeded = true;
     } else {
-      const result = provider === "oneDrive"
-        ? await PromptCloudBackup.loadPackageFromOneDrive(password, updateProgress)
-        : await PromptCloudBackup.loadPackageFromGoogleDrive(password, updateProgress);
+      updateProgress("downloadingAndDecrypting");
+      const result = await PromptCloudBackup.loadPackageWithAccessToken(
+        provider,
+        accessToken,
+        password
+      );
       const imported = importPromptBundleWithConfirmation(result.promptBundle, {
         includesGeneralTerms: Boolean(result.generalTermsBundle),
       });
@@ -907,9 +932,39 @@ async function runPromptCloudAction() {
         generalTermsImportError = result.generalTermsError;
       }
       refreshPromptUiAfterImport();
+      if (!unlockedPassword) {
+        CloudBackupSession.unlock(provider, password);
+      } else if (promptBackupModalState.legacyPasswordMode &&
+                 window.confirm(text.migrateLegacy)) {
+        updateProgress("encryptingAndSaving");
+        await PromptCloudBackup.savePackageWithAccessToken(
+          provider,
+          accessToken,
+          {
+            promptBundle: result.promptBundle,
+            generalTermsBundle: result.generalTermsBundle,
+          },
+          unlockedPassword
+        );
+        migratedLegacyBackup = true;
+      }
       succeeded = true;
     }
   } catch (error) {
+    if (!isExport && usingUnlockedPassword &&
+        /incorrect password|damaged/i.test(String(error?.message || ""))) {
+      promptBackupModalState.legacyPasswordMode = true;
+      clearPromptBackupPasswords();
+      if (promptBackupModal.cloudNotice) {
+        promptBackupModal.cloudNotice.textContent = text.legacyPasswordNotice;
+      }
+      if (promptBackupModal.passwordLabel) promptBackupModal.passwordLabel.style.display = "";
+      if (promptBackupModal.password) promptBackupModal.password.style.display = "";
+      if (promptBackupModal.passwordConfirmWrap) promptBackupModal.passwordConfirmWrap.style.display = "none";
+      setPromptBackupStatus(text.legacyPasswordNotice, true, { modalOnly: true });
+      promptBackupModal.password?.focus();
+      return;
+    }
     const template = isExport ? text.exportFailed : text.importFailed;
     setPromptBackupStatus(formatPromptBackupText(template, {
       error: error?.message || "Unknown error",
@@ -931,6 +986,7 @@ async function runPromptCloudAction() {
       ? (generalTermsImported ? text.oneDriveImportedWithGeneral : text.oneDriveImported)
       : (generalTermsImported ? text.googleDriveImportedWithGeneral : text.googleDriveImported);
   }
+  if (migratedLegacyBackup) successMessage += " The cloud backup password was updated.";
   closePromptBackupModal({ force: true });
   if (generalTermsImportError) {
     setPromptBackupStatus(formatPromptBackupText(text.generalTermsImportWarning, {

@@ -306,7 +306,8 @@
 
     /* Compact Import/Export Keys modals */
     #importKeysModalBackdrop,
-    #exportKeysModalBackdrop {
+    #exportKeysModalBackdrop,
+    #cloudRestoreModalBackdrop {
       display: none;
       position: fixed;
       inset: 0;
@@ -317,11 +318,13 @@
       padding: 16px;
     }
     #importKeysModalBackdrop.active,
-    #exportKeysModalBackdrop.active {
+    #exportKeysModalBackdrop.active,
+    #cloudRestoreModalBackdrop.active {
       display: flex;
     }
     #importKeysModal,
-    #exportKeysModal {
+    #exportKeysModal,
+    #cloudRestoreModal {
       width: min(92vw, 460px);
       max-height: calc(100vh - 32px);
       overflow-y: auto;
@@ -333,7 +336,8 @@
       text-align: left;
     }
     #importKeysModal .mini-modal__header,
-    #exportKeysModal .mini-modal__header {
+    #exportKeysModal .mini-modal__header,
+    #cloudRestoreModal .mini-modal__header {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -341,14 +345,16 @@
       margin-bottom: 10px;
     }
     #importKeysModalTitle,
-    #exportKeysModalTitle {
+    #exportKeysModalTitle,
+    #cloudRestoreModalTitle {
       font-family: inherit;
       font-size: 16px;
       font-weight: 700;
       margin: 0;
     }
     #importKeysModalX,
-    #exportKeysModalX {
+    #exportKeysModalX,
+    #cloudRestoreModalX {
       border: none;
       background: transparent;
       cursor: pointer;
@@ -423,6 +429,27 @@
       margin: 10px 0 0;
       font-size: 12px;
       line-height: 1.35;
+    }
+    .cloud-restore-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      margin: 10px 0;
+      padding: 10px 11px;
+      border: 1px solid #d3dfda;
+      border-radius: 10px;
+      background: #fbfdfc;
+      color: #33443d;
+      font-size: 13px;
+      line-height: 1.35;
+      cursor: pointer;
+    }
+    .cloud-restore-option[hidden] {
+      display: none;
+    }
+    .cloud-restore-option input {
+      margin: 2px 0 0;
+      flex: 0 0 auto;
     }
     /* Discreet "ghost" button for Clear keys */
     .keys-io-btn--ghost-green {
@@ -947,6 +974,30 @@
         <p id="importKeysModalStatus" class="mini-modal__status" aria-live="polite"></p>
       </div>
     </div>
+
+    <!-- Optional cloud restore shown only after keys were imported from that provider. -->
+    <div id="cloudRestoreModalBackdrop" aria-hidden="true">
+      <div id="cloudRestoreModal" role="dialog" aria-modal="true" aria-labelledby="cloudRestoreModalTitle">
+        <div class="mini-modal__header">
+          <div id="cloudRestoreModalTitle">Load cloud backups?</div>
+          <button type="button" id="cloudRestoreModalX" aria-label="Continue with local data">×</button>
+        </div>
+        <div id="cloudRestoreModalNotice" class="mini-modal__notice"></div>
+        <label id="cloudRestorePromptsOption" class="cloud-restore-option" hidden>
+          <input id="cloudRestorePrompts" type="checkbox" checked>
+          <span id="cloudRestorePromptsLabel">Prompt list</span>
+        </label>
+        <label id="cloudRestoreWorkspaceOption" class="cloud-restore-option" hidden>
+          <input id="cloudRestoreWorkspace" type="checkbox" checked>
+          <span id="cloudRestoreWorkspaceLabel">Workspace Set</span>
+        </label>
+        <div class="mini-modal__actions">
+          <button type="button" id="cloudRestoreContinue" class="keys-io-btn">Load selected</button>
+          <button type="button" id="cloudRestoreSkip" class="keys-io-btn keys-io-btn--ghost-green">Use local data</button>
+        </div>
+        <p id="cloudRestoreModalStatus" class="mini-modal__status" aria-live="polite"></p>
+      </div>
+    </div>
     <p id="keysIoHint">
       Back up keys as a JSON file, to Microsoft OneDrive, or to Google Drive. Import the backup later to refill the fields and avoid retyping.
     </p>
@@ -1078,6 +1129,8 @@
   <!-- Inline Script for API Key Handling and Consent -->
   <script type="module">
     import { PromptManager } from "./js/promptManager.js";
+    import { PromptCloudBackup } from "./js/features/prompt-cloud-backup.js";
+    import { CloudBackupSession } from "./js/features/cloud-backup-session.js";
 
     // Helper function to set a cookie
     function setCookie(name, value, days) {
@@ -1089,58 +1142,6 @@
       }
       document.cookie = name + "=" + (value || "")  + expires + "; path=/";
     }
-
-    // Phase 1: Store all keys on click; keep OpenAI as default user_api_key (no validation).
-    (function wireEnterButtonOnce() {
-      var btn = document.getElementById("enterTranscriptionBtn");
-      if (!btn) return;
-      if (btn._multiKeyWired) return;  // guard against double-binding
-      btn._multiKeyWired = true;
-
-      btn.addEventListener("click", function () {
-        var promptProfileId      = ((document.getElementById("promptProfileInput")      || {}).value || "").trim();
-        var openaiKey            = ((document.getElementById("apiKeyInput")             || {}).value || "").trim();
-        var sonioxKey            = ((document.getElementById("sonioxKeyInput")          || {}).value || "").trim();
-        var mistralKey           = ((document.getElementById("mistralKeyInput")         || {}).value || "").trim();
-        var requestyKey          = ((document.getElementById("requestyKeyInput")         || {}).value || "").trim();
-        var bedrockBackendUrl   = ((document.getElementById("bedrockBackendUrlInput")   || {}).value || "").trim();
-        var bedrockBackendSecret= ((document.getElementById("bedrockBackendSecretInput")|| {}).value || "").trim();
-
-
-        // Store all keys (even if empty) for later provider selection
-        sessionStorage.setItem("openai_api_key", openaiKey);
-        sessionStorage.setItem("soniox_api_key", sonioxKey);
-        sessionStorage.setItem("mistral_api_key", mistralKey);
-        sessionStorage.setItem("requesty_api_key", requestyKey);
-        sessionStorage.setItem("bedrock_backend_url", bedrockBackendUrl);
-        sessionStorage.setItem("bedrock_backend_secret", bedrockBackendSecret);
-        
-        // Back-compat: default active key remains OpenAI for now
-        sessionStorage.setItem("user_api_key", openaiKey);
-
-        // Consent cookie (kept as before, but now only set once here)
-        setCookie("user_consent", "accepted", 365);
-
-
-        // Prompt profile persistence + legacy prompt migration are centralized in PromptManager.
-        // Important: do this AFTER storing sessionStorage.openai_api_key so legacy migration
-        // can read the correct legacy namespace if the user is moving from key-scoped prompts.
-        try {
-          if (typeof PromptManager?.commitPromptProfileInput === "function") {
-            PromptManager.commitPromptProfileInput(promptProfileId);
-          } else if (typeof PromptManager?.setPromptProfileId === "function") {
-            PromptManager.setPromptProfileId(promptProfileId);
-          } else if (promptProfileId) {
-            localStorage.setItem("prompt_profile_id", promptProfileId);
-          } else {
-            localStorage.removeItem("prompt_profile_id");
-          }
-        } catch {}
-        
-        // Proceed to the transcription tool regardless of empties
-        window.location.href = "transcribe.html";
-      });
-    })();
 
   document.addEventListener("DOMContentLoaded", function() {
     [
@@ -1225,6 +1226,78 @@
     const GOOGLE_DRIVE_BACKUP_VERSION = 1;
     const GOOGLE_DRIVE_KDF_ITERATIONS = 250000;
     const GOOGLE_IDENTITY_SCRIPT_URL = "https://accounts.google.com/gsi/client";
+    const activeCloudAccessTokens = new Map();
+
+    const CLOUD_RESTORE_TEXT = {
+      en: {
+        title: "Load cloud backups?",
+        both: "You previously saved a prompt list and a Workspace Set to {provider}. Select what you want to load for this session. Items you do not select will continue using the data already saved in this browser.",
+        prompts: "You previously saved a prompt list to {provider}. Would you like to load it for this session? If not, the prompts already saved in this browser will be used.",
+        workspace: "You previously saved a Workspace Set to {provider}. Would you like to load it for this session? If not, the Workspace Set already saved in this browser will be used.",
+        promptLabel: "Prompt list", workspaceLabel: "Workspace Set",
+        load: "Load selected", local: "Use local data",
+        checking: "Checking cloud backups…", loading: "Downloading and decrypting selected backups…",
+        legacyPrompt: "The {item} uses an older password. Enter its previous password to import it.",
+        migrate: "Update this older {item} backup to use your current Cloud Backup Password?",
+        failed: "Cloud restore failed: {error}\n\nThe data already stored in this browser has not been changed.",
+      },
+      no: {
+        title: "Laste inn skysikkerhetskopier?",
+        both: "Du har tidligere lagret en promptliste og et Workspace Set i {provider}. Velg hva du vil laste inn for denne økten. Elementer du ikke velger, fortsetter å bruke dataene som allerede er lagret i nettleseren.",
+        prompts: "Du har tidligere lagret en promptliste i {provider}. Vil du laste den inn for denne økten? Hvis ikke brukes promptene som allerede er lagret i nettleseren.",
+        workspace: "Du har tidligere lagret et Workspace Set i {provider}. Vil du laste det inn for denne økten? Hvis ikke brukes Workspace Set-et som allerede er lagret i nettleseren.",
+        promptLabel: "Promptliste", workspaceLabel: "Workspace Set",
+        load: "Last inn valgte", local: "Bruk lokale data",
+        checking: "Sjekker skysikkerhetskopier…", loading: "Laster ned og dekrypterer valgte sikkerhetskopier…",
+        legacyPrompt: "{item} bruker et eldre passord. Skriv inn det tidligere passordet for å importere den.",
+        migrate: "Oppdatere denne eldre sikkerhetskopien av {item} til ditt nåværende Cloud Backup-passord?",
+        failed: "Gjenoppretting fra skyen mislyktes: {error}\n\nDataene som allerede er lagret i nettleseren, er ikke endret.",
+      },
+      sv: {
+        title: "Läsa in molnsäkerhetskopior?",
+        both: "Du har tidigare sparat en promptlista och ett Workspace Set i {provider}. Välj vad du vill läsa in för den här sessionen. Objekt som inte väljs fortsätter använda data som redan finns i webbläsaren.",
+        prompts: "Du har tidigare sparat en promptlista i {provider}. Vill du läsa in den för den här sessionen? Annars används promptarna som redan finns i webbläsaren.",
+        workspace: "Du har tidigare sparat ett Workspace Set i {provider}. Vill du läsa in det för den här sessionen? Annars används det Workspace Set som redan finns i webbläsaren.",
+        promptLabel: "Promptlista", workspaceLabel: "Workspace Set", load: "Läs in valda", local: "Använd lokala data",
+        checking: "Kontrollerar molnsäkerhetskopior…", loading: "Laddar ner och dekrypterar valda säkerhetskopior…",
+        legacyPrompt: "{item} använder ett äldre lösenord. Ange det tidigare lösenordet för att importera den.",
+        migrate: "Uppdatera denna äldre säkerhetskopia av {item} till ditt nuvarande Cloud Backup-lösenord?",
+        failed: "Molnåterställningen misslyckades: {error}\n\nData som redan finns i webbläsaren har inte ändrats.",
+      },
+      de: {
+        title: "Cloud-Sicherungen laden?",
+        both: "Sie haben zuvor eine Prompt-Liste und ein Workspace Set in {provider} gespeichert. Wählen Sie aus, was für diese Sitzung geladen werden soll. Nicht ausgewählte Elemente verwenden weiterhin die bereits im Browser gespeicherten Daten.",
+        prompts: "Sie haben zuvor eine Prompt-Liste in {provider} gespeichert. Möchten Sie sie für diese Sitzung laden? Andernfalls werden die bereits im Browser gespeicherten Prompts verwendet.",
+        workspace: "Sie haben zuvor ein Workspace Set in {provider} gespeichert. Möchten Sie es für diese Sitzung laden? Andernfalls wird das bereits im Browser gespeicherte Workspace Set verwendet.",
+        promptLabel: "Prompt-Liste", workspaceLabel: "Workspace Set", load: "Auswahl laden", local: "Lokale Daten verwenden",
+        checking: "Cloud-Sicherungen werden geprüft…", loading: "Ausgewählte Sicherungen werden heruntergeladen und entschlüsselt…",
+        legacyPrompt: "{item} verwendet ein älteres Passwort. Geben Sie zum Importieren das frühere Passwort ein.",
+        migrate: "Diese ältere Sicherung von {item} auf Ihr aktuelles Cloud-Backup-Passwort aktualisieren?",
+        failed: "Cloud-Wiederherstellung fehlgeschlagen: {error}\n\nDie bereits im Browser gespeicherten Daten wurden nicht verändert.",
+      },
+      fr: {
+        title: "Charger les sauvegardes cloud ?",
+        both: "Vous avez déjà enregistré une liste de prompts et un Workspace Set dans {provider}. Sélectionnez les éléments à charger pour cette session. Les éléments non sélectionnés continueront d’utiliser les données déjà enregistrées dans le navigateur.",
+        prompts: "Vous avez déjà enregistré une liste de prompts dans {provider}. Voulez-vous la charger pour cette session ? Sinon, les prompts déjà enregistrés dans le navigateur seront utilisés.",
+        workspace: "Vous avez déjà enregistré un Workspace Set dans {provider}. Voulez-vous le charger pour cette session ? Sinon, le Workspace Set déjà enregistré dans le navigateur sera utilisé.",
+        promptLabel: "Liste de prompts", workspaceLabel: "Workspace Set", load: "Charger la sélection", local: "Utiliser les données locales",
+        checking: "Vérification des sauvegardes cloud…", loading: "Téléchargement et déchiffrement des sauvegardes sélectionnées…",
+        legacyPrompt: "{item} utilise un ancien mot de passe. Saisissez l’ancien mot de passe pour l’importer.",
+        migrate: "Mettre à jour cette ancienne sauvegarde de {item} avec votre mot de passe Cloud Backup actuel ?",
+        failed: "Échec de la restauration cloud : {error}\n\nLes données déjà enregistrées dans le navigateur n’ont pas été modifiées.",
+      },
+      it: {
+        title: "Caricare i backup cloud?",
+        both: "Hai già salvato un elenco di prompt e un Workspace Set in {provider}. Seleziona cosa caricare per questa sessione. Gli elementi non selezionati continueranno a usare i dati già salvati nel browser.",
+        prompts: "Hai già salvato un elenco di prompt in {provider}. Vuoi caricarlo per questa sessione? In caso contrario verranno usati i prompt già salvati nel browser.",
+        workspace: "Hai già salvato un Workspace Set in {provider}. Vuoi caricarlo per questa sessione? In caso contrario verrà usato il Workspace Set già salvato nel browser.",
+        promptLabel: "Elenco di prompt", workspaceLabel: "Workspace Set", load: "Carica selezionati", local: "Usa dati locali",
+        checking: "Controllo dei backup cloud…", loading: "Download e decrittazione dei backup selezionati…",
+        legacyPrompt: "{item} usa una password precedente. Inserisci la vecchia password per importarlo.",
+        migrate: "Aggiornare questo vecchio backup di {item} con l’attuale password Cloud Backup?",
+        failed: "Ripristino cloud non riuscito: {error}\n\nI dati già salvati nel browser non sono stati modificati.",
+      },
+    };
 
     const KEY_FIELDS = [
       { id: "apiKeyInput",               storageKey: "openai_api_key" },
@@ -1306,6 +1379,8 @@
         try { sessionStorage.removeItem(storageKey); } catch {}
       });
       try { sessionStorage.removeItem("user_api_key"); } catch {}
+      activeCloudAccessTokens.clear();
+      CloudBackupSession.lockAll();
       setKeysIoStatus("Cleared keys from fields and session.", false);
     }
 
@@ -1943,6 +2018,212 @@
       googleDriveBack: document.getElementById("importGoogleDriveBackBtn")
     };
 
+    const cloudRestoreModal = {
+      backdrop: document.getElementById("cloudRestoreModalBackdrop"),
+      card: document.getElementById("cloudRestoreModal"),
+      title: document.getElementById("cloudRestoreModalTitle"),
+      close: document.getElementById("cloudRestoreModalX"),
+      notice: document.getElementById("cloudRestoreModalNotice"),
+      promptsOption: document.getElementById("cloudRestorePromptsOption"),
+      prompts: document.getElementById("cloudRestorePrompts"),
+      promptsLabel: document.getElementById("cloudRestorePromptsLabel"),
+      workspaceOption: document.getElementById("cloudRestoreWorkspaceOption"),
+      workspace: document.getElementById("cloudRestoreWorkspace"),
+      workspaceLabel: document.getElementById("cloudRestoreWorkspaceLabel"),
+      continue: document.getElementById("cloudRestoreContinue"),
+      skip: document.getElementById("cloudRestoreSkip"),
+      status: document.getElementById("cloudRestoreModalStatus"),
+    };
+
+    function getCloudRestoreText() {
+      let language = "en";
+      try { language = localStorage.getItem("siteLanguage") || "en"; } catch {}
+      return CLOUD_RESTORE_TEXT[language] || CLOUD_RESTORE_TEXT.en;
+    }
+
+    function formatCloudText(template, values = {}) {
+      return String(template || "").replace(/\{(\w+)\}/g, (_, key) => String(values[key] ?? ""));
+    }
+
+    function cloudProviderName(provider) {
+      return provider === "oneDrive" ? "Microsoft OneDrive" : "Google Drive";
+    }
+
+    function setCloudRestoreStatus(message, isError = false) {
+      if (!cloudRestoreModal.status) return;
+      cloudRestoreModal.status.textContent = String(message || "");
+      cloudRestoreModal.status.style.color = isError ? "#b00020" : "#2e7d32";
+    }
+
+    function closeCloudRestoreModal() {
+      cloudRestoreModal.backdrop?.classList.remove("active");
+      cloudRestoreModal.backdrop?.setAttribute("aria-hidden", "true");
+      setCloudRestoreStatus("");
+    }
+
+    function chooseCloudRestoreItems(availability, provider) {
+      const text = getCloudRestoreText();
+      const providerName = cloudProviderName(provider);
+      if (cloudRestoreModal.title) cloudRestoreModal.title.textContent = text.title;
+      if (cloudRestoreModal.promptsLabel) cloudRestoreModal.promptsLabel.textContent = text.promptLabel;
+      if (cloudRestoreModal.workspaceLabel) cloudRestoreModal.workspaceLabel.textContent = text.workspaceLabel;
+      if (cloudRestoreModal.continue) cloudRestoreModal.continue.textContent = text.load;
+      if (cloudRestoreModal.skip) cloudRestoreModal.skip.textContent = text.local;
+      if (cloudRestoreModal.promptsOption) cloudRestoreModal.promptsOption.hidden = !availability.prompts;
+      if (cloudRestoreModal.workspaceOption) cloudRestoreModal.workspaceOption.hidden = !availability.workspaceSet;
+      if (cloudRestoreModal.prompts) cloudRestoreModal.prompts.checked = Boolean(availability.prompts);
+      if (cloudRestoreModal.workspace) cloudRestoreModal.workspace.checked = Boolean(availability.workspaceSet);
+      if (cloudRestoreModal.notice) {
+        const template = availability.prompts && availability.workspaceSet
+          ? text.both
+          : availability.prompts ? text.prompts : text.workspace;
+        cloudRestoreModal.notice.textContent = formatCloudText(template, { provider: providerName });
+      }
+      setCloudRestoreStatus("");
+      cloudRestoreModal.backdrop?.classList.add("active");
+      cloudRestoreModal.backdrop?.setAttribute("aria-hidden", "false");
+
+      return new Promise((resolve) => {
+        let settled = false;
+        const finish = (selection) => {
+          if (settled) return;
+          settled = true;
+          resolve(selection);
+        };
+        cloudRestoreModal.continue.onclick = () => finish({
+          prompts: Boolean(availability.prompts && cloudRestoreModal.prompts?.checked),
+          workspaceSet: Boolean(availability.workspaceSet && cloudRestoreModal.workspace?.checked),
+        });
+        const useLocal = () => {
+          closeCloudRestoreModal();
+          finish({ prompts: false, workspaceSet: false });
+        };
+        cloudRestoreModal.skip.onclick = useLocal;
+        cloudRestoreModal.close.onclick = useLocal;
+      });
+    }
+
+    async function loadCloudBackupWithLegacyFallback(kind, provider, accessToken, masterPassword) {
+      const text = getCloudRestoreText();
+      const item = kind === "prompts" ? text.promptLabel : text.workspaceLabel;
+      const load = (password) => kind === "prompts"
+        ? PromptCloudBackup.loadPackageWithAccessToken(provider, accessToken, password)
+        : PromptCloudBackup.loadWorkspaceSetWithAccessToken(provider, accessToken, password);
+      const save = (bundle) => kind === "prompts"
+        ? PromptCloudBackup.savePackageWithAccessToken(provider, accessToken, bundle, masterPassword)
+        : PromptCloudBackup.saveWorkspaceSetWithAccessToken(provider, accessToken, bundle, masterPassword);
+
+      try {
+        return await load(masterPassword);
+      } catch (error) {
+        if (!/incorrect password|damaged/i.test(String(error?.message || ""))) throw error;
+        const legacyPassword = window.prompt(formatCloudText(text.legacyPrompt, { item }));
+        if (legacyPassword == null) throw new Error(`${item} restore was cancelled.`);
+        const bundle = await load(String(legacyPassword));
+        if (window.confirm(formatCloudText(text.migrate, { item }))) {
+          await save(bundle);
+        }
+        return bundle;
+      }
+    }
+
+    function commitEnterState() {
+      const promptProfileId = String(promptProfileInput?.value || "").trim();
+      const values = {
+        openai_api_key: String(apiKeyInput?.value || "").trim(),
+        soniox_api_key: String(sonioxKeyInput?.value || "").trim(),
+        mistral_api_key: String(mistralKeyInput?.value || "").trim(),
+        requesty_api_key: String(requestyKeyInput?.value || "").trim(),
+        bedrock_backend_url: String(bedrockBackendUrlInput?.value || "").trim(),
+        bedrock_backend_secret: String(bedrockBackendSecretInput?.value || "").trim(),
+      };
+      Object.entries(values).forEach(([key, value]) => sessionStorage.setItem(key, value));
+      sessionStorage.setItem("user_api_key", values.openai_api_key);
+      setCookie("user_consent", "accepted", 365);
+      try {
+        if (typeof PromptManager?.commitPromptProfileInput === "function") {
+          PromptManager.commitPromptProfileInput(promptProfileId);
+        } else if (typeof PromptManager?.setPromptProfileId === "function") {
+          PromptManager.setPromptProfileId(promptProfileId);
+        } else if (promptProfileId) {
+          localStorage.setItem("prompt_profile_id", promptProfileId);
+        } else {
+          localStorage.removeItem("prompt_profile_id");
+        }
+      } catch {}
+    }
+
+    function enterTranscriptionTool() {
+      window.location.href = "transcribe.html";
+    }
+
+    async function handleEnterTranscription() {
+      if (enterTranscriptionBtn?.disabled) return;
+      commitEnterState();
+      CloudBackupSession.clearPendingRestore();
+
+      const provider = CloudBackupSession.getKeysImportedProvider();
+      const password = CloudBackupSession.getPassword(provider);
+      if (!provider || !password) {
+        enterTranscriptionTool();
+        return;
+      }
+
+      const originalLabel = enterTranscriptionBtn.textContent;
+      enterTranscriptionBtn.disabled = true;
+      enterTranscriptionBtn.textContent = getCloudRestoreText().checking;
+      try {
+        const accessToken = activeCloudAccessTokens.get(provider) ||
+          await PromptCloudBackup.connect(provider, (statusKey) => {
+            const text = getCloudRestoreText();
+            setKeysIoStatus(text[statusKey] || text.checking, false);
+          });
+        activeCloudAccessTokens.set(provider, accessToken);
+        const availability = await PromptCloudBackup.inspectAvailableBackups(provider, accessToken);
+        if (!availability.prompts && !availability.workspaceSet) {
+          enterTranscriptionTool();
+          return;
+        }
+
+        const selection = await chooseCloudRestoreItems(availability, provider);
+        if (!selection.prompts && !selection.workspaceSet) {
+          enterTranscriptionTool();
+          return;
+        }
+
+        setCloudRestoreStatus(getCloudRestoreText().loading, false);
+        cloudRestoreModal.continue.disabled = true;
+        cloudRestoreModal.skip.disabled = true;
+        const promptPackage = selection.prompts
+          ? await loadCloudBackupWithLegacyFallback("prompts", provider, accessToken, password)
+          : null;
+        const workspaceSet = selection.workspaceSet
+          ? await loadCloudBackupWithLegacyFallback("workspaceSet", provider, accessToken, password)
+          : null;
+        CloudBackupSession.stageRestore({ promptPackage, workspaceSet });
+        closeCloudRestoreModal();
+        enterTranscriptionTool();
+      } catch (error) {
+        CloudBackupSession.clearPendingRestore();
+        const message = formatCloudText(getCloudRestoreText().failed, {
+          error: error?.message || "Unknown error",
+        });
+        closeCloudRestoreModal();
+        window.alert(message);
+        enterTranscriptionTool();
+      } finally {
+        if (cloudRestoreModal.continue) cloudRestoreModal.continue.disabled = false;
+        if (cloudRestoreModal.skip) cloudRestoreModal.skip.disabled = false;
+        enterTranscriptionBtn.disabled = false;
+        enterTranscriptionBtn.textContent = originalLabel;
+      }
+    }
+
+    if (enterTranscriptionBtn && !enterTranscriptionBtn._multiKeyWired) {
+      enterTranscriptionBtn._multiKeyWired = true;
+      enterTranscriptionBtn.addEventListener("click", handleEnterTranscription);
+    }
+
     function showExportChoice() {
       if (exportModal.choice) exportModal.choice.style.display = "";
       if (exportModal.oneDrive) exportModal.oneDrive.style.display = "none";
@@ -1973,15 +2254,17 @@
       if (exportModal.choice) exportModal.choice.style.display = "none";
       if (exportModal.oneDrive) exportModal.oneDrive.style.display = "";
       if (exportModal.googleDrive) exportModal.googleDrive.style.display = "none";
-      exportModal.oneDrivePassword?.focus();
+      configureKeyCloudPasswordStep("oneDrive", "export");
     }
 
     function showExportGoogleDrive() {
       if (exportModal.choice) exportModal.choice.style.display = "none";
       if (exportModal.oneDrive) exportModal.oneDrive.style.display = "none";
       if (exportModal.googleDrive) exportModal.googleDrive.style.display = "";
+      configureKeyCloudPasswordStep("googleDrive", "export");
       prepareGoogleDriveButton(exportModal.googleDriveSave).then(() => {
-        exportModal.googleDrivePassword?.focus();
+        if (CloudBackupSession.getPassword("googleDrive")) exportModal.googleDriveSave?.focus();
+        else exportModal.googleDrivePassword?.focus();
       });
     }
 
@@ -2028,16 +2311,58 @@
       if (importModal.choice) importModal.choice.style.display = "none";
       if (importModal.oneDrive) importModal.oneDrive.style.display = "";
       if (importModal.googleDrive) importModal.googleDrive.style.display = "none";
-      importModal.oneDrivePassword?.focus();
+      if (importModal.oneDrive) importModal.oneDrive.dataset.legacyPasswordMode = "false";
+      configureKeyCloudPasswordStep("oneDrive", "import");
     }
 
     function showImportGoogleDrive() {
       if (importModal.choice) importModal.choice.style.display = "none";
       if (importModal.oneDrive) importModal.oneDrive.style.display = "none";
       if (importModal.googleDrive) importModal.googleDrive.style.display = "";
+      if (importModal.googleDrive) importModal.googleDrive.dataset.legacyPasswordMode = "false";
+      configureKeyCloudPasswordStep("googleDrive", "import");
       prepareGoogleDriveButton(importModal.googleDriveFetch).then(() => {
-        importModal.googleDrivePassword?.focus();
+        if (CloudBackupSession.getPassword("googleDrive")) importModal.googleDriveFetch?.focus();
+        else importModal.googleDrivePassword?.focus();
       });
+    }
+
+    function configureKeyCloudPasswordStep(provider, mode) {
+      const isOneDrive = provider === "oneDrive";
+      const pane = mode === "export"
+        ? (isOneDrive ? exportModal.oneDrive : exportModal.googleDrive)
+        : (isOneDrive ? importModal.oneDrive : importModal.googleDrive);
+      const password = mode === "export"
+        ? (isOneDrive ? exportModal.oneDrivePassword : exportModal.googleDrivePassword)
+        : (isOneDrive ? importModal.oneDrivePassword : importModal.googleDrivePassword);
+      const confirmation = mode === "export"
+        ? (isOneDrive ? exportModal.oneDrivePasswordConfirm : exportModal.googleDrivePasswordConfirm)
+        : null;
+      const unlocked = CloudBackupSession.getPassword(provider);
+      const legacyMode = pane?.dataset.legacyPasswordMode === "true";
+      const useUnlocked = Boolean(unlocked) && !legacyMode;
+      const labels = pane ? Array.from(pane.querySelectorAll(".mini-modal__field-label")) : [];
+      labels.forEach((label) => { label.style.display = useUnlocked ? "none" : ""; });
+      if (password) password.style.display = useUnlocked ? "none" : "";
+      if (confirmation) confirmation.style.display = useUnlocked ? "none" : "";
+      const notice = pane?.querySelector(".mini-modal__notice");
+      if (notice) {
+        notice.textContent = legacyMode
+          ? "This older key backup uses a different password. Enter its previous password to import it."
+          : useUnlocked
+            ? `Your unlocked Cloud Backup Password for ${cloudProviderName(provider)} will be used.`
+            : mode === "export"
+              ? "Create a Cloud Backup Password for this provider. It will also be used for prompt lists and Workspace Sets, kept only in this tab session and never uploaded."
+              : "Enter the Cloud Backup Password for this provider. It is kept only in this tab session and never uploaded.";
+      }
+      if (useUnlocked) {
+        const action = mode === "export"
+          ? (isOneDrive ? exportModal.oneDriveSave : exportModal.googleDriveSave)
+          : (isOneDrive ? importModal.oneDriveFetch : importModal.googleDriveFetch);
+        action?.focus();
+      } else {
+        password?.focus();
+      }
     }
 
     exportKeysBtn?.addEventListener("click", openExportModal);
@@ -2064,14 +2389,15 @@
     });
 
     exportModal.oneDriveSave?.addEventListener("click", async () => {
-      const password = exportModal.oneDrivePassword?.value || "";
-      const confirmation = exportModal.oneDrivePasswordConfirm?.value || "";
-      if (password.length < 10) {
+      const unlockedPassword = CloudBackupSession.getPassword("oneDrive");
+      const password = unlockedPassword || exportModal.oneDrivePassword?.value || "";
+      const confirmation = unlockedPassword || exportModal.oneDrivePasswordConfirm?.value || "";
+      if (!unlockedPassword && password.length < 10) {
         setKeysIoStatus("Use an encryption password with at least 10 characters.", true);
         exportModal.oneDrivePassword?.focus();
         return;
       }
-      if (password !== confirmation) {
+      if (!unlockedPassword && password !== confirmation) {
         setKeysIoStatus("The two encryption passwords do not match.", true);
         exportModal.oneDrivePasswordConfirm?.focus();
         return;
@@ -2087,6 +2413,8 @@
         setKeysIoStatus("Encrypting and saving the backup…", false);
         const encrypted = await encryptKeyBundleForOneDrive(buildKeyBundle(), password);
         await uploadEncryptedBackupToOneDrive(accessToken, encrypted);
+        CloudBackupSession.unlock("oneDrive", password);
+        activeCloudAccessTokens.set("oneDrive", accessToken);
         closeExportModal();
         setKeysIoStatus("Encrypted OneDrive backup saved. Any previous backup was replaced.", false);
       } catch (error) {
@@ -2100,14 +2428,15 @@
     });
 
     exportModal.googleDriveSave?.addEventListener("click", async () => {
-      const password = exportModal.googleDrivePassword?.value || "";
-      const confirmation = exportModal.googleDrivePasswordConfirm?.value || "";
-      if (password.length < 10) {
+      const unlockedPassword = CloudBackupSession.getPassword("googleDrive");
+      const password = unlockedPassword || exportModal.googleDrivePassword?.value || "";
+      const confirmation = unlockedPassword || exportModal.googleDrivePasswordConfirm?.value || "";
+      if (!unlockedPassword && password.length < 10) {
         setKeysIoStatus("Use an encryption password with at least 10 characters.", true);
         exportModal.googleDrivePassword?.focus();
         return;
       }
-      if (password !== confirmation) {
+      if (!unlockedPassword && password !== confirmation) {
         setKeysIoStatus("The two encryption passwords do not match.", true);
         exportModal.googleDrivePasswordConfirm?.focus();
         return;
@@ -2123,6 +2452,8 @@
         setKeysIoStatus("Encrypting and saving the backup…", false);
         const encrypted = await encryptKeyBundleForGoogleDrive(buildKeyBundle(), password);
         await uploadEncryptedBackupToGoogleDrive(accessToken, encrypted);
+        CloudBackupSession.unlock("googleDrive", password);
+        activeCloudAccessTokens.set("googleDrive", accessToken);
         closeExportModal();
         setKeysIoStatus("Encrypted Google Drive backup saved. Any previous backup was replaced.", false);
       } catch (error) {
@@ -2162,6 +2493,7 @@
           return;
         }
         applyKeyBundle(JSON.parse(raw));
+        CloudBackupSession.clearKeysImportedProvider();
         closeImportModal();
         setKeysIoStatus("Imported keys. Review the fields, then click Enter.", false);
       } catch {
@@ -2170,7 +2502,10 @@
     });
 
     importModal.oneDriveFetch?.addEventListener("click", async () => {
-      const password = importModal.oneDrivePassword?.value || "";
+      const unlockedPassword = CloudBackupSession.getPassword("oneDrive");
+      const legacyMode = importModal.oneDrive?.dataset.legacyPasswordMode === "true";
+      const usingUnlockedPassword = Boolean(unlockedPassword) && !legacyMode;
+      const password = usingUnlockedPassword ? unlockedPassword : importModal.oneDrivePassword?.value || "";
       if (!password) {
         setKeysIoStatus("Enter the encryption password for your OneDrive backup.", true);
         importModal.oneDrivePassword?.focus();
@@ -2187,9 +2522,23 @@
         const encrypted = await downloadEncryptedBackupFromOneDrive(accessToken);
         const bundle = await decryptKeyBundleFromOneDrive(encrypted, password);
         applyKeyBundle(bundle);
+        if (!unlockedPassword) {
+          CloudBackupSession.unlock("oneDrive", password);
+        } else if (legacyMode && window.confirm("Update this older key backup to use your current Cloud Backup Password?")) {
+          const migrated = await encryptKeyBundleForOneDrive(bundle, unlockedPassword);
+          await uploadEncryptedBackupToOneDrive(accessToken, migrated);
+        }
+        CloudBackupSession.markKeysImportedFrom("oneDrive");
+        activeCloudAccessTokens.set("oneDrive", accessToken);
         closeImportModal();
         setKeysIoStatus("Imported keys from your OneDrive. Review the fields, then click Enter.", false);
       } catch (error) {
+        if (usingUnlockedPassword && /incorrect password|damaged/i.test(String(error?.message || ""))) {
+          if (importModal.oneDrive) importModal.oneDrive.dataset.legacyPasswordMode = "true";
+          configureKeyCloudPasswordStep("oneDrive", "import");
+          setKeysIoStatus("This older key backup uses a different password. Enter its previous password.", true);
+          return;
+        }
         setKeysIoStatus("OneDrive import failed: " + (error?.message || "Unknown error"), true);
       } finally {
         if (importModal.oneDrivePassword) importModal.oneDrivePassword.value = "";
@@ -2199,7 +2548,10 @@
     });
 
     importModal.googleDriveFetch?.addEventListener("click", async () => {
-      const password = importModal.googleDrivePassword?.value || "";
+      const unlockedPassword = CloudBackupSession.getPassword("googleDrive");
+      const legacyMode = importModal.googleDrive?.dataset.legacyPasswordMode === "true";
+      const usingUnlockedPassword = Boolean(unlockedPassword) && !legacyMode;
+      const password = usingUnlockedPassword ? unlockedPassword : importModal.googleDrivePassword?.value || "";
       if (!password) {
         setKeysIoStatus("Enter the encryption password for your Google Drive backup.", true);
         importModal.googleDrivePassword?.focus();
@@ -2216,9 +2568,23 @@
         const encrypted = await downloadEncryptedBackupFromGoogleDrive(accessToken);
         const bundle = await decryptKeyBundleFromGoogleDrive(encrypted, password);
         applyKeyBundle(bundle);
+        if (!unlockedPassword) {
+          CloudBackupSession.unlock("googleDrive", password);
+        } else if (legacyMode && window.confirm("Update this older key backup to use your current Cloud Backup Password?")) {
+          const migrated = await encryptKeyBundleForGoogleDrive(bundle, unlockedPassword);
+          await uploadEncryptedBackupToGoogleDrive(accessToken, migrated);
+        }
+        CloudBackupSession.markKeysImportedFrom("googleDrive");
+        activeCloudAccessTokens.set("googleDrive", accessToken);
         closeImportModal();
         setKeysIoStatus("Imported keys from Google Drive. Review the fields, then click Enter.", false);
       } catch (error) {
+        if (usingUnlockedPassword && /incorrect password|damaged/i.test(String(error?.message || ""))) {
+          if (importModal.googleDrive) importModal.googleDrive.dataset.legacyPasswordMode = "true";
+          configureKeyCloudPasswordStep("googleDrive", "import");
+          setKeysIoStatus("This older key backup uses a different password. Enter its previous password.", true);
+          return;
+        }
         setKeysIoStatus("Google Drive import failed: " + (error?.message || "Unknown error"), true);
       } finally {
         if (importModal.googleDrivePassword) importModal.googleDrivePassword.value = "";
@@ -2236,6 +2602,7 @@
       reader.onload = () => {
         try {
           applyKeyBundle(JSON.parse(String(reader.result || "")));
+          CloudBackupSession.clearKeysImportedProvider();
           setKeysIoStatus("Imported keys. Review the fields, then click Enter.", false);
         } catch {
           setKeysIoStatus("Import failed: invalid JSON file.", true);

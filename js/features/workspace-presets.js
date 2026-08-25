@@ -1,5 +1,6 @@
 import { PromptManager } from "../promptManager.js";
 import { PromptCloudBackup } from "./prompt-cloud-backup.js";
+import { CloudBackupSession } from "./cloud-backup-session.js";
 
 const PRESET_SCHEMA = "whisper.workspace-presets";
 const PRESET_VERSION = 1;
@@ -67,6 +68,10 @@ const TEXT = {
     password: "Encryption password", repeat: "Repeat password",
     passwordMin: "Use a password with at least 10 characters.", mismatch: "The passwords do not match.",
     passwordRequired: "Enter the backup password.", save: "Save", back: "Back", cancel: "Cancel",
+    unlockedPassword: "Your unlocked Cloud Backup Password for {provider} will be used.",
+    legacyPassword: "This older Workspace Set uses a different password. Enter its previous password to import it.",
+    migrateLegacy: "This Workspace Set used an older password. Update it now to use your current Cloud Backup Password?",
+    cloudRestored: "Selected cloud backups were loaded.",
     addMode: "Add workspaces", replaceMode: "Replace workspace set",
     preview: "{n} workspaces found: {names}",
     replaceWarning: "Replace the current workspace set? Existing workspace text and history will be discarded. Active jobs must already be stopped.",
@@ -97,6 +102,10 @@ const TEXT = {
     password: "Krypteringspassord", repeat: "Gjenta passord",
     passwordMin: "Bruk et passord med minst 10 tegn.", mismatch: "Passordene er ikke like.",
     passwordRequired: "Skriv inn passordet til backupen.", save: "Lagre", back: "Tilbake", cancel: "Avbryt",
+    unlockedPassword: "Det opplåste Cloud Backup-passordet for {provider} vil bli brukt.",
+    legacyPassword: "Dette eldre Workspace set-et bruker et annet passord. Skriv inn det tidligere passordet for å importere det.",
+    migrateLegacy: "Dette Workspace set-et brukte et eldre passord. Vil du oppdatere det nå til ditt nåværende Cloud Backup-passord?",
+    cloudRestored: "Valgte skysikkerhetskopier ble lastet inn.",
     addMode: "Legg til Workspaces", replaceMode: "Erstatt Workspace set",
     preview: "{n} Workspaces funnet: {names}",
     replaceWarning: "Erstatt nåværende Workspace set? Eksisterende Workspace-tekst og historikk forkastes. Aktive jobber må allerede være stoppet.",
@@ -471,7 +480,7 @@ function initTopLevelManager() {
   let dragDropTarget = null;
   let lastGeneralTerms = String(document.getElementById("redactorGeneralTerms")?.value || "");
   let configTimer = 0;
-  let modalState = { mode: "", provider: "", bundle: null };
+  let modalState = { mode: "", provider: "", bundle: null, legacyPasswordMode: false };
   const originalActions = {};
 
   const toolbar = buildToolbar();
@@ -596,6 +605,7 @@ function initTopLevelManager() {
     },
     panelModeKey: PANEL_MODE_KEY,
   });
+  void applyPendingCloudRestore();
   window.setTimeout(() => notifyHistoryViewChanged("manager-ready"), 0);
 
   function loadDefinitions() {
@@ -1272,12 +1282,16 @@ function initTopLevelManager() {
     window.dispatchEvent(new CustomEvent("prompt-slots-imported", { detail: { source: "workspace-presets" } }));
   }
 
-  async function importBundle(bundle, mode) {
+  async function importBundle(
+    bundle,
+    mode,
+    { confirmReplace = true, importPrompts = true } = {}
+  ) {
     const validated = validateBundle(bundle);
     if (allBusy()) throw new Error(t().importBusy);
-    importPromptDependencies(validated.prompts);
+    if (importPrompts) importPromptDependencies(validated.prompts);
     if (mode === "replace") {
-      if (!window.confirm(t().replaceWarning)) return false;
+      if (confirmReplace && !window.confirm(t().replaceWarning)) return false;
       [...runtimes.values()].filter((runtime) => runtime.kind === "frame").forEach((runtime) => {
         clearRuntimeHistory(runtime);
         runtime.frame.remove();
@@ -1298,6 +1312,49 @@ function initTopLevelManager() {
     return true;
   }
 
+  function applyPendingGeneralTerms(bundle) {
+    if (!bundle || bundle.schema !== "whisper.redactor-general-terms" ||
+        Number(bundle.version) !== 1 || typeof bundle.generalTerms !== "string") return false;
+    const value = String(bundle.generalTerms || "").replace(/\r\n?/g, "\n").trim();
+    if (!value) return false;
+    lastGeneralTerms = value;
+    try { sessionStorage.setItem("redactor_general_terms_session", value); } catch {}
+    const field = document.getElementById("redactorGeneralTerms");
+    if (field) { field.value = value; dispatchInput(window, field); }
+    runtimes.forEach((runtime) => syncGeneralTermsTo(runtime));
+    return true;
+  }
+
+  async function applyPendingCloudRestore() {
+    const pending = CloudBackupSession.consumePendingRestore();
+    if (!pending.promptPackage && !pending.workspaceSet) return;
+    try {
+      if (pending.promptPackage?.promptBundle) {
+        PromptManager.importPromptsFromBundle(pending.promptPackage.promptBundle, { confirm: false });
+      }
+      if (pending.workspaceSet) {
+        await importBundle(pending.workspaceSet, "replace", {
+          confirmReplace: false,
+          // When both are selected, the complete prompt-list backup is the
+          // source of truth and must not be overwritten by the Workspace Set's
+          // smaller collection of prompt dependencies.
+          importPrompts: !pending.promptPackage?.promptBundle,
+        });
+      }
+      if (pending.promptPackage?.generalTermsBundle) {
+        applyPendingGeneralTerms(pending.promptPackage.generalTermsBundle);
+      }
+      window.dispatchEvent(new CustomEvent("prompt-slots-imported", {
+        detail: { source: "cloud-entry-restore" },
+      }));
+      render();
+      notifyHub();
+      toast(t().cloudRestored);
+    } catch (error) {
+      toast(fmt(t().failed, { error: error?.message || "Unknown error" }), true);
+    }
+  }
+
   function allBusy() { return [...runtimes.values()].some((runtime) => runtimeSnapshot(runtime).busy); }
 
   function buildModal() {
@@ -1313,10 +1370,10 @@ function initTopLevelManager() {
 
   function openBackupModal(mode) {
     if (mode === "import" && allBusy()) { toast(t().importBusy, true); return; }
-    modalState = { mode, provider: "", bundle: null };
+    modalState = { mode, provider: "", bundle: null, legacyPasswordMode: false };
     renderChoiceModal(); modal.backdrop.hidden = false;
   }
-  function closeModal() { modal.backdrop.hidden = true; modal.body.replaceChildren(); modal.status.textContent = ""; modalState = { mode: "", provider: "", bundle: null }; }
+  function closeModal() { modal.backdrop.hidden = true; modal.body.replaceChildren(); modal.status.textContent = ""; modalState = { mode: "", provider: "", bundle: null, legacyPasswordMode: false }; }
   function setModalStatus(message, error = false) { modal.status.textContent = String(message || ""); modal.status.style.color = error ? "#b00020" : "#2e7d32"; }
 
   function renderChoiceModal() {
@@ -1349,39 +1406,72 @@ function initTopLevelManager() {
 
   function renderPasswordStep() {
     const copy = t(); const exporting = modalState.mode === "export"; modal.body.replaceChildren(); setModalStatus("");
-    const notice = document.createElement("div"); notice.className = "workspace-modal-notice"; notice.textContent = exporting ? copy.exportNotice : copy.importNotice;
+    const unlockedPassword = CloudBackupSession.getPassword(modalState.provider);
+    const useUnlockedPassword = Boolean(unlockedPassword) && !modalState.legacyPasswordMode;
+    const providerName = modalState.provider === "oneDrive" ? "Microsoft OneDrive" : "Google Drive";
+    const notice = document.createElement("div"); notice.className = "workspace-modal-notice";
+    notice.textContent = modalState.legacyPasswordMode
+      ? copy.legacyPassword
+      : useUnlockedPassword
+        ? fmt(copy.unlockedPassword, { provider: providerName })
+        : exporting ? copy.exportNotice : copy.importNotice;
     const password = document.createElement("input"); password.type = "password"; password.className = "workspace-modal-field"; password.placeholder = copy.password; password.autocomplete = exporting ? "new-password" : "current-password";
     let repeat = null;
-    if (exporting) {
+    if (exporting && !useUnlockedPassword) {
       repeat = document.createElement("input"); repeat.type = "password"; repeat.className = "workspace-modal-field"; repeat.placeholder = copy.repeat; repeat.autocomplete = "new-password";
     }
     const actions = document.createElement("div"); actions.className = "workspace-modal-actions";
     const run = document.createElement("button"); run.type = "button"; run.textContent = exporting ? copy.save : copy.import;
     const back = document.createElement("button"); back.type = "button"; back.textContent = copy.back; actions.append(run, back);
-    modal.body.append(notice, password);
+    modal.body.append(notice);
+    if (!useUnlockedPassword) modal.body.append(password);
     if (repeat) modal.body.append(repeat);
     modal.body.append(actions); back.addEventListener("click", renderChoiceModal);
     run.addEventListener("click", async () => {
-      const value = password.value; if (exporting && value.length < 10) { setModalStatus(copy.passwordMin, true); return; }
-      if (exporting && value !== repeat.value) { setModalStatus(copy.mismatch, true); return; }
+      const value = useUnlockedPassword ? unlockedPassword : password.value;
+      if (exporting && !useUnlockedPassword && value.length < 10) { setModalStatus(copy.passwordMin, true); return; }
+      if (exporting && !useUnlockedPassword && value !== repeat.value) { setModalStatus(copy.mismatch, true); return; }
       if (!exporting && !value) { setModalStatus(copy.passwordRequired, true); return; }
       run.disabled = true;
       try {
         const progress = (key) => setModalStatus(copy[key] || key);
+        const accessToken = await PromptCloudBackup.connect(modalState.provider, progress);
         if (exporting) {
           const bundle = buildExportBundle();
-          if (modalState.provider === "oneDrive") await PromptCloudBackup.saveWorkspacePresetsToOneDrive(bundle, value, progress);
-          else await PromptCloudBackup.saveWorkspacePresetsToGoogleDrive(bundle, value, progress);
+          progress("encryptingAndSaving");
+          await PromptCloudBackup.saveWorkspaceSetWithAccessToken(
+            modalState.provider, accessToken, bundle, value
+          );
+          CloudBackupSession.unlock(modalState.provider, value);
           const message = modalState.provider === "oneDrive" ? copy.savedOneDrive : copy.savedGoogle; closeModal(); toast(message);
         } else {
-          const bundle = modalState.provider === "oneDrive"
-            ? await PromptCloudBackup.loadWorkspacePresetsFromOneDrive(value, progress)
-            : await PromptCloudBackup.loadWorkspacePresetsFromGoogleDrive(value, progress);
+          progress("downloadingAndDecrypting");
+          const bundle = await PromptCloudBackup.loadWorkspaceSetWithAccessToken(
+            modalState.provider, accessToken, value
+          );
+          if (!unlockedPassword) {
+            CloudBackupSession.unlock(modalState.provider, value);
+          } else if (modalState.legacyPasswordMode && window.confirm(copy.migrateLegacy)) {
+            progress("encryptingAndSaving");
+            await PromptCloudBackup.saveWorkspaceSetWithAccessToken(
+              modalState.provider, accessToken, bundle, unlockedPassword
+            );
+          }
           showImportPreview(bundle);
         }
-      } catch (error) { setModalStatus(fmt(copy.failed, { error: error?.message || "Unknown error" }), true); }
+      } catch (error) {
+        if (!exporting && useUnlockedPassword &&
+            /incorrect password|damaged/i.test(String(error?.message || ""))) {
+          modalState.legacyPasswordMode = true;
+          renderPasswordStep();
+          setModalStatus(copy.legacyPassword, true);
+          return;
+        }
+        setModalStatus(fmt(copy.failed, { error: error?.message || "Unknown error" }), true);
+      }
       finally { password.value = ""; if (repeat) repeat.value = ""; run.disabled = false; }
     });
+    if (useUnlockedPassword) run.focus(); else password.focus();
   }
 
   async function exportJson() {

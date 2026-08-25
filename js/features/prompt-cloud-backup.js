@@ -601,144 +601,188 @@ async function downloadFromGoogleDrive(
   }
 }
 
-async function savePackageToOneDrive(
-  { promptBundle, generalTermsBundle = null },
-  password,
-  onStatus = () => {}
+function normalizeProvider(provider) {
+  const value = String(provider || "");
+  if (value !== "oneDrive" && value !== "googleDrive") {
+    throw new Error("Unsupported cloud backup provider.");
+  }
+  return value;
+}
+
+async function connect(provider, onStatus = () => {}) {
+  const normalized = normalizeProvider(provider);
+  if (normalized === "oneDrive") {
+    onStatus("microsoftSignIn");
+    return requestMicrosoftAccessToken();
+  }
+  onStatus("googleSignIn");
+  await loadGoogleIdentityServices();
+  return requestGoogleAccessToken();
+}
+
+async function downloadProviderFile(
+  provider,
+  accessToken,
+  filename,
+  backupLabel,
+  options = {}
 ) {
-  onStatus("microsoftSignIn");
-  const accessToken = await requestMicrosoftAccessToken();
-  onStatus("encryptingAndSaving");
+  return provider === "oneDrive"
+    ? downloadFromOneDrive(accessToken, filename, backupLabel, options)
+    : downloadFromGoogleDrive(accessToken, filename, backupLabel, options);
+}
+
+async function uploadProviderFile(provider, accessToken, filename, encryptedBackup) {
+  if (provider === "oneDrive") {
+    return uploadToOneDrive(accessToken, filename, encryptedBackup);
+  }
+  return uploadToGoogleDrive(accessToken, filename, encryptedBackup);
+}
+
+async function inspectAvailableBackups(provider, accessToken) {
+  const normalized = normalizeProvider(provider);
+  const [prompts, workspaceSet] = await Promise.all([
+    downloadProviderFile(
+      normalized,
+      accessToken,
+      PROMPT_BACKUP_FILENAME,
+      "prompt backup",
+      { required: false }
+    ),
+    downloadProviderFile(
+      normalized,
+      accessToken,
+      WORKSPACE_PRESETS_BACKUP_FILENAME,
+      "workspace preset backup",
+      { required: false }
+    ),
+  ]);
+  return { prompts: Boolean(prompts), workspaceSet: Boolean(workspaceSet) };
+}
+
+async function savePackageWithAccessToken(
+  provider,
+  accessToken,
+  { promptBundle, generalTermsBundle = null },
+  password
+) {
+  const normalized = normalizeProvider(provider);
   const encryptedPrompts = await encryptBackupBundle(
     promptBundle,
     password,
-    PROMPT_PROVIDERS.oneDrive
+    PROMPT_PROVIDERS[normalized]
   );
-  await uploadToOneDrive(accessToken, PROMPT_BACKUP_FILENAME, encryptedPrompts);
+  await uploadProviderFile(normalized, accessToken, PROMPT_BACKUP_FILENAME, encryptedPrompts);
 
   if (generalTermsBundle) {
     const encryptedGeneralTerms = await encryptBackupBundle(
       generalTermsBundle,
       password,
-      GENERAL_TERMS_PROVIDERS.oneDrive
+      GENERAL_TERMS_PROVIDERS[normalized]
     );
-    await uploadToOneDrive(
+    await uploadProviderFile(
+      normalized,
       accessToken,
       GENERAL_TERMS_BACKUP_FILENAME,
       encryptedGeneralTerms
     );
   }
-
   return { generalTermsSaved: Boolean(generalTermsBundle) };
+}
+
+async function loadPackageWithAccessToken(provider, accessToken, password) {
+  const normalized = normalizeProvider(provider);
+  const encryptedPrompts = await downloadProviderFile(
+    normalized,
+    accessToken,
+    PROMPT_BACKUP_FILENAME,
+    "prompt backup"
+  );
+  const promptBundle = await decryptBackupBundle(
+    encryptedPrompts,
+    password,
+    PROMPT_PROVIDERS[normalized]
+  );
+
+  let generalTermsBundle = null;
+  let generalTermsError = null;
+  try {
+    const encryptedGeneralTerms = await downloadProviderFile(
+      normalized,
+      accessToken,
+      GENERAL_TERMS_BACKUP_FILENAME,
+      "General terms backup",
+      { required: false }
+    );
+    if (encryptedGeneralTerms) {
+      generalTermsBundle = await decryptBackupBundle(
+        encryptedGeneralTerms,
+        password,
+        GENERAL_TERMS_PROVIDERS[normalized]
+      );
+    }
+  } catch (error) {
+    generalTermsError = error;
+  }
+  return { promptBundle, generalTermsBundle, generalTermsError };
+}
+
+async function saveWorkspaceSetWithAccessToken(provider, accessToken, bundle, password) {
+  const normalized = normalizeProvider(provider);
+  const encrypted = await encryptBackupBundle(
+    bundle,
+    password,
+    WORKSPACE_PRESET_PROVIDERS[normalized]
+  );
+  await uploadProviderFile(
+    normalized,
+    accessToken,
+    WORKSPACE_PRESETS_BACKUP_FILENAME,
+    encrypted
+  );
+}
+
+async function loadWorkspaceSetWithAccessToken(provider, accessToken, password) {
+  const normalized = normalizeProvider(provider);
+  const encrypted = await downloadProviderFile(
+    normalized,
+    accessToken,
+    WORKSPACE_PRESETS_BACKUP_FILENAME,
+    "workspace preset backup"
+  );
+  return decryptBackupBundle(
+    encrypted,
+    password,
+    WORKSPACE_PRESET_PROVIDERS[normalized]
+  );
+}
+
+async function savePackageToProvider(provider, data, password, onStatus = () => {}) {
+  const accessToken = await connect(provider, onStatus);
+  onStatus("encryptingAndSaving");
+  return savePackageWithAccessToken(provider, accessToken, data, password);
+}
+
+async function loadPackageFromProvider(provider, password, onStatus = () => {}) {
+  const accessToken = await connect(provider, onStatus);
+  onStatus("downloadingAndDecrypting");
+  return loadPackageWithAccessToken(provider, accessToken, password);
+}
+
+async function savePackageToOneDrive(data, password, onStatus = () => {}) {
+  return savePackageToProvider("oneDrive", data, password, onStatus);
 }
 
 async function loadPackageFromOneDrive(password, onStatus = () => {}) {
-  onStatus("microsoftSignIn");
-  const accessToken = await requestMicrosoftAccessToken();
-  onStatus("downloadingAndDecrypting");
-  const encryptedPrompts = await downloadFromOneDrive(
-    accessToken,
-    PROMPT_BACKUP_FILENAME,
-    "prompt backup"
-  );
-  const promptBundle = await decryptBackupBundle(
-    encryptedPrompts,
-    password,
-    PROMPT_PROVIDERS.oneDrive
-  );
-
-  let generalTermsBundle = null;
-  let generalTermsError = null;
-  try {
-    const encryptedGeneralTerms = await downloadFromOneDrive(
-      accessToken,
-      GENERAL_TERMS_BACKUP_FILENAME,
-      "General terms backup",
-      { required: false }
-    );
-    if (encryptedGeneralTerms) {
-      generalTermsBundle = await decryptBackupBundle(
-        encryptedGeneralTerms,
-        password,
-        GENERAL_TERMS_PROVIDERS.oneDrive
-      );
-    }
-  } catch (error) {
-    generalTermsError = error;
-  }
-
-  return { promptBundle, generalTermsBundle, generalTermsError };
+  return loadPackageFromProvider("oneDrive", password, onStatus);
 }
 
-async function savePackageToGoogleDrive(
-  { promptBundle, generalTermsBundle = null },
-  password,
-  onStatus = () => {}
-) {
-  onStatus("googleSignIn");
-  await loadGoogleIdentityServices();
-  const accessToken = await requestGoogleAccessToken();
-  onStatus("encryptingAndSaving");
-  const encryptedPrompts = await encryptBackupBundle(
-    promptBundle,
-    password,
-    PROMPT_PROVIDERS.googleDrive
-  );
-  await uploadToGoogleDrive(accessToken, PROMPT_BACKUP_FILENAME, encryptedPrompts);
-
-  if (generalTermsBundle) {
-    const encryptedGeneralTerms = await encryptBackupBundle(
-      generalTermsBundle,
-      password,
-      GENERAL_TERMS_PROVIDERS.googleDrive
-    );
-    await uploadToGoogleDrive(
-      accessToken,
-      GENERAL_TERMS_BACKUP_FILENAME,
-      encryptedGeneralTerms
-    );
-  }
-
-  return { generalTermsSaved: Boolean(generalTermsBundle) };
+async function savePackageToGoogleDrive(data, password, onStatus = () => {}) {
+  return savePackageToProvider("googleDrive", data, password, onStatus);
 }
 
 async function loadPackageFromGoogleDrive(password, onStatus = () => {}) {
-  onStatus("googleSignIn");
-  await loadGoogleIdentityServices();
-  const accessToken = await requestGoogleAccessToken();
-  onStatus("downloadingAndDecrypting");
-  const encryptedPrompts = await downloadFromGoogleDrive(
-    accessToken,
-    PROMPT_BACKUP_FILENAME,
-    "prompt backup"
-  );
-  const promptBundle = await decryptBackupBundle(
-    encryptedPrompts,
-    password,
-    PROMPT_PROVIDERS.googleDrive
-  );
-
-  let generalTermsBundle = null;
-  let generalTermsError = null;
-  try {
-    const encryptedGeneralTerms = await downloadFromGoogleDrive(
-      accessToken,
-      GENERAL_TERMS_BACKUP_FILENAME,
-      "General terms backup",
-      { required: false }
-    );
-    if (encryptedGeneralTerms) {
-      generalTermsBundle = await decryptBackupBundle(
-        encryptedGeneralTerms,
-        password,
-        GENERAL_TERMS_PROVIDERS.googleDrive
-      );
-    }
-  } catch (error) {
-    generalTermsError = error;
-  }
-
-  return { promptBundle, generalTermsBundle, generalTermsError };
+  return loadPackageFromProvider("googleDrive", password, onStatus);
 }
 
 async function saveToOneDrive(bundle, password, onStatus = () => {}) {
@@ -760,61 +804,27 @@ async function loadFromGoogleDrive(password, onStatus = () => {}) {
 }
 
 async function saveWorkspacePresetsToOneDrive(bundle, password, onStatus = () => {}) {
-  onStatus("microsoftSignIn");
-  const accessToken = await requestMicrosoftAccessToken();
+  const accessToken = await connect("oneDrive", onStatus);
   onStatus("encryptingAndSaving");
-  const encrypted = await encryptBackupBundle(
-    bundle,
-    password,
-    WORKSPACE_PRESET_PROVIDERS.oneDrive
-  );
-  await uploadToOneDrive(accessToken, WORKSPACE_PRESETS_BACKUP_FILENAME, encrypted);
+  return saveWorkspaceSetWithAccessToken("oneDrive", accessToken, bundle, password);
 }
 
 async function loadWorkspacePresetsFromOneDrive(password, onStatus = () => {}) {
-  onStatus("microsoftSignIn");
-  const accessToken = await requestMicrosoftAccessToken();
+  const accessToken = await connect("oneDrive", onStatus);
   onStatus("downloadingAndDecrypting");
-  const encrypted = await downloadFromOneDrive(
-    accessToken,
-    WORKSPACE_PRESETS_BACKUP_FILENAME,
-    "workspace preset backup"
-  );
-  return decryptBackupBundle(
-    encrypted,
-    password,
-    WORKSPACE_PRESET_PROVIDERS.oneDrive
-  );
+  return loadWorkspaceSetWithAccessToken("oneDrive", accessToken, password);
 }
 
 async function saveWorkspacePresetsToGoogleDrive(bundle, password, onStatus = () => {}) {
-  onStatus("googleSignIn");
-  await loadGoogleIdentityServices();
-  const accessToken = await requestGoogleAccessToken();
+  const accessToken = await connect("googleDrive", onStatus);
   onStatus("encryptingAndSaving");
-  const encrypted = await encryptBackupBundle(
-    bundle,
-    password,
-    WORKSPACE_PRESET_PROVIDERS.googleDrive
-  );
-  await uploadToGoogleDrive(accessToken, WORKSPACE_PRESETS_BACKUP_FILENAME, encrypted);
+  return saveWorkspaceSetWithAccessToken("googleDrive", accessToken, bundle, password);
 }
 
 async function loadWorkspacePresetsFromGoogleDrive(password, onStatus = () => {}) {
-  onStatus("googleSignIn");
-  await loadGoogleIdentityServices();
-  const accessToken = await requestGoogleAccessToken();
+  const accessToken = await connect("googleDrive", onStatus);
   onStatus("downloadingAndDecrypting");
-  const encrypted = await downloadFromGoogleDrive(
-    accessToken,
-    WORKSPACE_PRESETS_BACKUP_FILENAME,
-    "workspace preset backup"
-  );
-  return decryptBackupBundle(
-    encrypted,
-    password,
-    WORKSPACE_PRESET_PROVIDERS.googleDrive
-  );
+  return loadWorkspaceSetWithAccessToken("googleDrive", accessToken, password);
 }
 
 export const PromptCloudBackup = Object.freeze({
@@ -822,6 +832,12 @@ export const PromptCloudBackup = Object.freeze({
   generalTermsFilename: GENERAL_TERMS_BACKUP_FILENAME,
   workspacePresetsFilename: WORKSPACE_PRESETS_BACKUP_FILENAME,
   prepareGoogleSignIn: loadGoogleIdentityServices,
+  connect,
+  inspectAvailableBackups,
+  savePackageWithAccessToken,
+  loadPackageWithAccessToken,
+  saveWorkspaceSetWithAccessToken,
+  loadWorkspaceSetWithAccessToken,
   saveToOneDrive,
   loadFromOneDrive,
   saveToGoogleDrive,

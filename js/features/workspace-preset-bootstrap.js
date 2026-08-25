@@ -27,6 +27,10 @@
     "bedrock_backend_url",
     "bedrock_backend_secret",
     "redactor_general_terms_session",
+    "whisper_cloud_backup_active_provider_v1",
+    "whisper_cloud_backup_keys_provider_v1",
+    "whisper_cloud_backup_password_v1::oneDrive",
+    "whisper_cloud_backup_password_v1::googleDrive",
   ]);
   const workspaceLocalExactKeys = new Set([
     "redactor_visible",
