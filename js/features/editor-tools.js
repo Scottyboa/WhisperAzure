@@ -61,9 +61,9 @@
         return !!toggle.checked;
       }
       try {
-        return sessionStorage.getItem(SUPPLEMENTARY_DATE_TOGGLE_KEY) !== '0';
+        return sessionStorage.getItem(SUPPLEMENTARY_DATE_TOGGLE_KEY) === '1';
       } catch (_) {
-        return true;
+        return false;
       }
     };
 
@@ -2150,7 +2150,7 @@
     if (supplementaryDateToggle && supplementaryDateToggle.type === 'checkbox') {
       try {
         if (sessionStorage.getItem(SUPPLEMENTARY_DATE_TOGGLE_KEY) == null) {
-          sessionStorage.setItem(SUPPLEMENTARY_DATE_TOGGLE_KEY, '1');
+          sessionStorage.setItem(SUPPLEMENTARY_DATE_TOGGLE_KEY, '0');
         }
       } catch (_) {}
 

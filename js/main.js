@@ -768,7 +768,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getSupplementaryDateEnabled() {
-    return readSession(SUPPLEMENTARY_DATE_TOGGLE_KEY, '1') === '1';
+    return readSession(SUPPLEMENTARY_DATE_TOGGLE_KEY, '0') === '1';
   }
 
   function setSupplementaryDateEnabled(enabled, options = {}) {
@@ -799,7 +799,7 @@ document.addEventListener('DOMContentLoaded', () => {
     el.dataset.bound = '1';
 
     if (readSession(SUPPLEMENTARY_DATE_TOGGLE_KEY, null) == null) {
-      writeSession(SUPPLEMENTARY_DATE_TOGGLE_KEY, '1');
+      writeSession(SUPPLEMENTARY_DATE_TOGGLE_KEY, '0');
     }
 
     el.checked = getSupplementaryDateEnabled();
@@ -3064,4 +3064,3 @@ document.addEventListener('DOMContentLoaded', () => {
   void initNoteProvider(getSelectedEffectiveNoteProvider());
   void initMiniControllerFeature();
 });
-
