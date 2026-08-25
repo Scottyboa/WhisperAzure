@@ -2417,8 +2417,8 @@
 
         // Norwegian only when lang === "no". All other languages default to English.
         const candidates = (lang === "no")
-          ? ["./bedrock-guide.no.txt", "./bedrock-guide.txt"]
-          : ["./bedrock-guide.txt"];
+          ? ["./provider-guides/bedrock-guide.no.txt", "./provider-guides/bedrock-guide.txt"]
+          : ["./provider-guides/bedrock-guide.txt"];
 
         try {
           let loaded = false;
@@ -2436,7 +2436,7 @@
           console.error("Failed to load bedrock guide text:", err);
           bedrockGuideTextEl.textContent =
             "Could not load the guide text.\n\n" +
-            "If you are the site owner: make sure bedrock-guide.txt exists next to index.html (and optionally bedrock-guide.no.txt).";
+            "If you are the site owner: make sure bedrock-guide.txt exists inside the provider-guides folder (and optionally bedrock-guide.no.txt).";
           bedrockGuideLoadedLang = null;
         }
       }
@@ -2579,12 +2579,12 @@
         headingId: "sonioxGuideHeading",
         textId: "sonioxGuideText",
         filesByLanguage: {
-          en: "./soniox-guide.txt",
-          no: "./soniox-guide.no.txt",
-          sv: "./soniox-guide.sv.txt",
-          de: "./soniox-guide.de.txt",
-          fr: "./soniox-guide.fr.txt",
-          it: "./soniox-guide.it.txt"
+          en: "./provider-guides/soniox-guide.txt",
+          no: "./provider-guides/soniox-guide.no.txt",
+          sv: "./provider-guides/soniox-guide.sv.txt",
+          de: "./provider-guides/soniox-guide.de.txt",
+          fr: "./provider-guides/soniox-guide.fr.txt",
+          it: "./provider-guides/soniox-guide.it.txt"
         },
         headingsByLanguage: {
           en: "Soniox setup guide",
@@ -2599,12 +2599,12 @@
           de: "Wird geladen…", fr: "Chargement…", it: "Caricamento…"
         },
         errorByLanguage: {
-          en: "Could not load the guide text. Make sure the guide file exists next to index.html.",
-          no: "Kunne ikke laste guideteksten. Kontroller at guidefilen finnes ved siden av index.html.",
-          sv: "Det gick inte att läsa in guiden. Kontrollera att guidefilen finns bredvid index.html.",
-          de: "Der Leitfaden konnte nicht geladen werden. Prüfen Sie, ob die Datei neben index.html vorhanden ist.",
-          fr: "Impossible de charger le guide. Vérifiez que le fichier se trouve à côté de index.html.",
-          it: "Impossibile caricare la guida. Verificare che il file sia presente accanto a index.html."
+          en: "Could not load the guide text. Make sure the guide file exists inside the provider-guides folder.",
+          no: "Kunne ikke laste guideteksten. Kontroller at guidefilen finnes i mappen provider-guides.",
+          sv: "Det gick inte att läsa in guiden. Kontrollera att guidefilen finns i mappen provider-guides.",
+          de: "Der Leitfaden konnte nicht geladen werden. Prüfen Sie, ob die Datei im Ordner provider-guides vorhanden ist.",
+          fr: "Impossible de charger le guide. Vérifiez que le fichier se trouve dans le dossier provider-guides.",
+          it: "Impossibile caricare la guida. Verificare che il file sia presente nella cartella provider-guides."
         },
         analyticsAction: "Soniox guide"
       });
@@ -2616,12 +2616,12 @@
         headingId: "requestyGuideHeading",
         textId: "requestyGuideText",
         filesByLanguage: {
-          en: "./requesty-guide.txt",
-          no: "./requesty-guide.no.txt",
-          sv: "./requesty-guide.sv.txt",
-          de: "./requesty-guide.de.txt",
-          fr: "./requesty-guide.fr.txt",
-          it: "./requesty-guide.it.txt"
+          en: "./provider-guides/requesty-guide.txt",
+          no: "./provider-guides/requesty-guide.no.txt",
+          sv: "./provider-guides/requesty-guide.sv.txt",
+          de: "./provider-guides/requesty-guide.de.txt",
+          fr: "./provider-guides/requesty-guide.fr.txt",
+          it: "./provider-guides/requesty-guide.it.txt"
         },
         headingsByLanguage: {
           en: "Requesty setup guide",
@@ -2636,12 +2636,12 @@
           de: "Wird geladen…", fr: "Chargement…", it: "Caricamento…"
         },
         errorByLanguage: {
-          en: "Could not load the guide text. Make sure the guide file exists next to index.html.",
-          no: "Kunne ikke laste guideteksten. Kontroller at guidefilen finnes ved siden av index.html.",
-          sv: "Det gick inte att läsa in guiden. Kontrollera att guidefilen finns bredvid index.html.",
-          de: "Der Leitfaden konnte nicht geladen werden. Prüfen Sie, ob die Datei neben index.html vorhanden ist.",
-          fr: "Impossible de charger le guide. Vérifiez que le fichier se trouve à côté de index.html.",
-          it: "Impossibile caricare la guida. Verificare che il file sia presente accanto a index.html."
+          en: "Could not load the guide text. Make sure the guide file exists inside the provider-guides folder.",
+          no: "Kunne ikke laste guideteksten. Kontroller at guidefilen finnes i mappen provider-guides.",
+          sv: "Det gick inte att läsa in guiden. Kontrollera att guidefilen finns i mappen provider-guides.",
+          de: "Der Leitfaden konnte nicht geladen werden. Prüfen Sie, ob die Datei im Ordner provider-guides vorhanden ist.",
+          fr: "Impossible de charger le guide. Vérifiez que le fichier se trouve dans le dossier provider-guides.",
+          it: "Impossibile caricare la guida. Verificare che il file sia presente nella cartella provider-guides."
         },
         analyticsAction: "Requesty guide"
       });
