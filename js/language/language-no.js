@@ -6,7 +6,6 @@ export const indexTranslations = {
   headerSubtitle: "Avansert AI-drevet tale-til-tekst og notatgenerering for helsekonsultasjoner",
   startText: "Du kan nå også velge mellom ulike modeller fra forskjellige leverandører. For instruksjoner om hvordan å bruke denne webappen, les info-modulene nederst på forsiden.",
   apiPlaceholder: "Skriv inn OpenAI API-nøkkel her",
-  promptProfileHint: "Brukes til å lagre dine egendefinerte prompts på denne enheten uavhengig av API-nøkkelen din.",
   keysIoHint: "Eksporter nøklene til en fil og oppbevar den sikkert. Neste gang kan du importere filen for å fylle inn feltene på nytt, noe som sparer tid og gjør at du slipper å skrive dem inn. Nøklene slettes automatisk når du lukker webappen/nettleser-fanen, eller manuelt med Clear keys.",
   gdprColumnTitle: "GDPR-kompatibel:",
   gdprColumnFootnote: "(EU data-residens/databehandling + ingen datalagring + data brukes ikke for modelltrening – forutsatt korrekt oppsett)",
@@ -528,7 +527,7 @@ guideText: `Velkommen til <strong>Transcribe Notes</strong>. Appen kan ta opp og
 <details>
   <summary><strong>Promptplasser, historikk, Redactor og OCR</strong></summary>
   <ul>
-    <li>Du har 20 promptplasser. Prompt profile ID skiller promptsett på samme enhet. Promptsett kan importeres eller eksporteres som JSON eller kryptert via OneDrive og Google Drive.</li>
+    <li>Du har 20 promptplasser. De huskes i denne nettleseren og kan importeres eller eksporteres som JSON eller som krypterte kopier via OneDrive og Google Drive.</li>
     <li>Historikkolonnen viser de 30 siste fullførte primære notatgenereringene i det aktive Workspace-et. Klikk på et element for å se transkripsjon, supplerende informasjon og generert notat. Klonede Workspaces deler historikk med klonefamilien, mens andre Workspaces har separat historikk.</li>
     <li><strong>Redactor</strong> kan fjerne valgte generelle og spesifikke begreper fra transkripsjonen og supplerende informasjon. Kontroller alltid resultatet før teksten sendes videre.</li>
     <li><strong>OCR</strong> kan hente tekst fra et innlimt skjermbilde eller en bildefil og sende teksten til listen over spesifikke begreper eller til råtekstfeltet.</li>

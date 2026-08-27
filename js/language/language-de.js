@@ -361,7 +361,7 @@ guideText: `Willkommen bei <strong>Transcribe Notes</strong>. Die App kann Gespr
 <details>
   <summary><strong>Prompt-Slots, Verlauf, Redactor und OCR</strong></summary>
   <ul>
-    <li>Es gibt 20 Prompt-Slots. Die Prompt profile ID trennt Prompt-Sätze auf demselben Gerät. Import und Export sind als JSON oder verschlüsselt über OneDrive und Google Drive möglich.</li>
+    <li>Es gibt 20 Prompt-Slots. Sie werden in diesem Browser gespeichert und können als JSON oder als verschlüsselte Sicherung über OneDrive und Google Drive importiert und exportiert werden.</li>
     <li>Die Verlaufsspalte zeigt die 30 letzten abgeschlossenen primären Notizgenerierungen des aktiven Workspace. Ein Eintrag zeigt Transkript, ergänzende Informationen und generierte Notiz. Geklonte Workspaces teilen den Verlauf mit ihrer Klonfamilie; andere Workspaces haben einen separaten Verlauf.</li>
     <li><strong>Redactor</strong> kann ausgewählte allgemeine und spezifische Begriffe aus Transkript und ergänzenden Informationen entfernen. Ergebnis vor dem Senden immer prüfen.</li>
     <li><strong>OCR</strong> kann Text aus einem eingefügten Screenshot oder einer Bilddatei extrahieren und an die Liste spezifischer Begriffe oder das Rohtextfeld übergeben.</li>

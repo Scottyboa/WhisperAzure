@@ -4,7 +4,6 @@ export const indexTranslations = {
   headerSubtitle: "Advanced AI-Powered Speech-to-Text and Clinical Note Generation for Healthcare Consultations",
   startText: "You can now also choose between different models from various providers. Read the info modules at the bottom of the frontpage, for instructions on how to use the app.",
   apiPlaceholder: "Enter OpenAI API Key here",
-  promptProfileHint: "Used to save your custom prompts on this device independent of your API key.",
   keysIoHint: "Export keys to a file and store it securely. Next time, import the file to refill the fields, which saves time and avoids typing. The keys are deleted automatically when you close the webapp/tab, or manually by clicking Clear keys.",
   gdprColumnTitle: "GDPR compliant:",
   gdprColumnFootnote: "(EU data residency/processing + zero data retention + data not used for model traning - assuming correct configuration)",
@@ -529,7 +528,7 @@ guideText: `Welcome to <strong>Transcribe Notes</strong>. The app can record and
 <details>
   <summary><strong>Prompt slots, history, Redactor and OCR</strong></summary>
   <ul>
-    <li>There are 20 prompt slots. Prompt profile ID separates prompt sets on the same device. Prompt sets can be imported or exported as JSON or as encrypted backups through OneDrive and Google Drive.</li>
+    <li>There are 20 prompt slots. They are remembered in this browser and can be imported or exported as JSON or as encrypted backups through OneDrive and Google Drive.</li>
     <li>The history column shows the 30 most recent completed primary note generations in the active Workspace. Select an item to view the transcript, supplementary information and generated note. Cloned Workspaces share history with their clone family; other Workspaces have separate history.</li>
     <li><strong>Redactor</strong> can remove selected General and Specific terms from the transcript and supplementary information. Always inspect the result before sending the text.</li>
     <li><strong>OCR</strong> can extract text from a pasted screenshot or image file and send it to the Specific terms list or the raw-text field.</li>

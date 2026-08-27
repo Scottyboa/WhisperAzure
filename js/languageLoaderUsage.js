@@ -61,10 +61,6 @@ function updateIndexUI(trans) {
   if (nonGdprFootEl) nonGdprFootEl.textContent = trans.nonGdprColumnFootnote ?? nonGdprFootEl.textContent;
 
   // Optional helper text blocks (may be absent or untranslated in some language packs)
-  const promptProfileHintEl = document.getElementById("prompt-profile-hint");
-  if (promptProfileHintEl && trans.promptProfileHint) {
-    promptProfileHintEl.textContent = trans.promptProfileHint;
-  }
   const keysIoHintEl = document.getElementById("keysIoHint");
   if (keysIoHintEl && trans.keysIoHint) {
     keysIoHintEl.textContent = trans.keysIoHint;

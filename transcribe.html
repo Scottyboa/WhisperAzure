@@ -1513,25 +1513,21 @@
       margin-left: 4px;
     }
 
-    /* Prompt profile row (Custom Prompt column) */
-    .prompt-profile-row {
+    /* Prompt backup actions (Custom Prompt column) */
+    .prompt-backup-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-end;
       gap: 10px;
       flex-wrap: wrap;
       margin-top: 0;
     }
-    .prompt-profile-left {
-      font-size: 14px;
-      color: #555;
-    }
-    .prompt-profile-actions {
+    .prompt-backup-actions {
       display: flex;
       gap: 8px;
       align-items: center;
     }
-    .prompt-profile-actions button {
+    .prompt-backup-actions button {
       font-size: 14px;
       padding: 6px 10px;
     }
@@ -1590,11 +1586,6 @@
       font-size: 26px;
       line-height: 1;
       cursor: pointer;
-    }
-    .prompt-backup-modal__profile {
-      margin: 0 0 10px;
-      font-size: 12px;
-      color: #555;
     }
     .prompt-backup-modal__notice {
       margin: 0 0 12px;
@@ -2980,13 +2971,8 @@
             </label>
           </div>
 
-          <!-- New: Prompt profile status + Import/Export -->
-          <div class="prompt-profile-row">
-            <div class="prompt-profile-left">
-              <span id="promptProfileLabel">Prompt profile:</span>
-              <span id="promptProfileValue">(not set)</span>
-            </div>
-            <div class="prompt-profile-actions">
+          <div class="prompt-backup-row">
+            <div class="prompt-backup-actions">
               <button id="promptExportBtn" type="button">Export</button>
               <button id="promptImportBtn" type="button">Import</button>
               <input id="promptImportFile" type="file" accept="application/json" style="display:none;">
@@ -3005,8 +2991,6 @@
                 <h2 id="promptBackupModalTitle">Export prompts</h2>
                 <button id="promptBackupModalClose" type="button" aria-label="Close">×</button>
               </div>
-              <p id="promptBackupModalProfile" class="prompt-backup-modal__profile"></p>
-
               <div id="promptBackupChoiceStep">
                 <div id="promptBackupChoiceNotice" class="prompt-backup-modal__notice"></div>
 

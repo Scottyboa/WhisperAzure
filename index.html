@@ -789,18 +789,6 @@
     <!-- This text is replaced by the language file (e.g. "Dont have an API-key yet? ...") -->
     <p id="start-text">To get started, please enter your OpenAI API key:</p>
 
-    <!-- New: Prompt Profile ID (optional) -->
-    <p id="prompt-profile-label">Prompt profile ID (optional):</p>
-    <input
-      type="text"
-      id="promptProfileInput"
-      placeholder='e.g. "David1"'
-      autocomplete="off"
-    >
-    <p id="prompt-profile-hint" style="font-size: 14px; color: #666; margin-top: -10px;">
-      Used to save your custom prompts on this device, independent of your API key.
-    </p>
-
     <div class="keys-io-row">
       <button type="button" id="importKeysBtn" class="keys-io-btn">Import keys</button>
       <button type="button" id="exportKeysBtn" class="keys-io-btn">Export keys</button>
@@ -808,7 +796,7 @@
         type="button"
         id="clearKeysBtn"
         class="keys-io-btn keys-io-btn--ghost-green"
-        title="Clears key/secret/url fields (does not affect Prompt profile)"
+        title="Clears key, secret and URL fields only"
       >
         <span>Clear keys</span>
       </button>
@@ -1153,28 +1141,12 @@
     });
 
     const enterTranscriptionBtn    = document.getElementById("enterTranscriptionBtn");
-    const promptProfileInput       = document.getElementById("promptProfileInput");
     const apiKeyInput              = document.getElementById("apiKeyInput");
     const sonioxKeyInput           = document.getElementById("sonioxKeyInput");
     const mistralKeyInput          = document.getElementById("mistralKeyInput");
     const requestyKeyInput         = document.getElementById("requestyKeyInput");
     const bedrockBackendUrlInput    = document.getElementById("bedrockBackendUrlInput");
     const bedrockBackendSecretInput = document.getElementById("bedrockBackendSecretInput");
-
-    // 0) Hydrate prompt profile input from centralized PromptManager storage (device persistent)
-    if (promptProfileInput) {
-      try {
-        if (typeof PromptManager?.hydratePromptProfileInput === "function") {
-          PromptManager.hydratePromptProfileInput(promptProfileInput);
-        } else {
-          const storedProfile = (typeof PromptManager?.getPromptProfileId === "function")
-            ? (PromptManager.getPromptProfileId() || "").trim()
-            : ((localStorage.getItem("prompt_profile_id") || "").trim());
-          if (storedProfile && !promptProfileInput.value) promptProfileInput.value = storedProfile;
-        }
-      } catch {}
-    }
-
 
     // 1) Prefill all fields from sessionStorage (keys only live for this tab)
     if (apiKeyInput) {
@@ -2126,7 +2098,6 @@
     }
 
     function commitEnterState() {
-      const promptProfileId = String(promptProfileInput?.value || "").trim();
       const values = {
         openai_api_key: String(apiKeyInput?.value || "").trim(),
         soniox_api_key: String(sonioxKeyInput?.value || "").trim(),
@@ -2139,14 +2110,13 @@
       sessionStorage.setItem("user_api_key", values.openai_api_key);
       setCookie("user_consent", "accepted", 365);
       try {
-        if (typeof PromptManager?.commitPromptProfileInput === "function") {
-          PromptManager.commitPromptProfileInput(promptProfileId);
-        } else if (typeof PromptManager?.setPromptProfileId === "function") {
-          PromptManager.setPromptProfileId(promptProfileId);
-        } else if (promptProfileId) {
-          localStorage.setItem("prompt_profile_id", promptProfileId);
-        } else {
-          localStorage.removeItem("prompt_profile_id");
+        // Preserve an existing legacy namespace. New browsers use one hidden
+        // default namespace, initialized only after the entered key is stored
+        // so older API-key-based prompts can be migrated safely.
+        if (typeof PromptManager?.ensurePromptProfileId === "function") {
+          PromptManager.ensurePromptProfileId();
+        } else if (!String(localStorage.getItem("prompt_profile_id") || "").trim()) {
+          localStorage.setItem("prompt_profile_id", "default");
         }
       } catch {}
     }

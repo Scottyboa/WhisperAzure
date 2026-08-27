@@ -373,7 +373,7 @@ guideText: `Välkommen till <strong>Transcribe Notes</strong>. Appen kan spela i
 <details>
   <summary><strong>Promptplatser, historik, Redactor och OCR</strong></summary>
   <ul>
-    <li>Det finns 20 promptplatser. Prompt profile ID separerar promptuppsättningar på samma enhet. Uppsättningar kan importeras eller exporteras som JSON eller krypterat via OneDrive och Google Drive.</li>
+    <li>Det finns 20 promptplatser. De sparas i den här webbläsaren och kan importeras eller exporteras som JSON eller som krypterade säkerhetskopior via OneDrive och Google Drive.</li>
     <li>Historikkolumnen visar de 30 senaste slutförda primära anteckningsgenereringarna i aktivt Workspace. Klicka på ett objekt för att se transkription, kompletterande information och genererad anteckning. Klonade Workspaces delar historik med sin klonfamilj, medan andra Workspaces har separat historik.</li>
     <li><strong>Redactor</strong> kan ta bort valda allmänna och specifika termer från transkriptionen och kompletterande information. Kontrollera alltid resultatet innan texten skickas vidare.</li>
     <li><strong>OCR</strong> kan hämta text från en inklistrad skärmbild eller bildfil och skicka texten till listan med specifika termer eller råtextfältet.</li>

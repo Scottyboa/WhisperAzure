@@ -361,7 +361,7 @@ guideText: `Bienvenue dans <strong>Transcribe Notes</strong>. L'application peut
 <details>
   <summary><strong>Emplacements de prompts, historique, Redactor et OCR</strong></summary>
   <ul>
-    <li>Vingt emplacements de prompts sont disponibles. Prompt profile ID sépare les jeux de prompts sur un même appareil. Ils peuvent être importés ou exportés en JSON ou sous forme chiffrée via OneDrive et Google Drive.</li>
+    <li>Vingt emplacements de prompts sont disponibles. Ils sont mémorisés dans ce navigateur et peuvent être importés ou exportés au format JSON ou sous forme de sauvegarde chiffrée via OneDrive et Google Drive.</li>
     <li>La colonne d'historique affiche les 30 dernières générations principales terminées du Workspace actif. Sélectionnez un élément pour voir la transcription, les informations complémentaires et la note générée. Les Workspaces clonés partagent l'historique de leur famille de clones ; les autres ont un historique distinct.</li>
     <li><strong>Redactor</strong> peut supprimer les termes généraux et spécifiques choisis de la transcription et des informations complémentaires. Vérifiez toujours le résultat avant envoi.</li>
     <li><strong>OCR</strong> peut extraire le texte d'une capture d'écran collée ou d'un fichier image et l'envoyer vers la liste des termes spécifiques ou le champ de texte brut.</li>

@@ -1438,11 +1438,11 @@ function initTopLevelManager() {
     return { presets, prompts, promptProfileId: String(bundle.promptProfileId || "") };
   }
 
-  function importPromptDependencies(prompts, preferredProfileId = "") {
+  function importPromptDependencies(prompts) {
     if (typeof PromptManager.ensurePromptProfileId === "function") {
-      PromptManager.ensurePromptProfileId(preferredProfileId);
+      PromptManager.ensurePromptProfileId();
     } else if (!PromptManager.getPromptProfileId?.()) {
-      PromptManager.setPromptProfileId?.(String(preferredProfileId || "default").trim() || "default");
+      PromptManager.setPromptProfileId?.("default");
     }
     Object.entries(prompts || {}).forEach(([slot, item]) => {
       PromptManager.savePrompt(slot, item.text);
@@ -1458,7 +1458,7 @@ function initTopLevelManager() {
   ) {
     const validated = validateBundle(bundle);
     if (allBusy()) throw new Error(t().importBusy);
-    if (importPrompts) importPromptDependencies(validated.prompts, validated.promptProfileId);
+    if (importPrompts) importPromptDependencies(validated.prompts);
     if (mode === "replace") {
       if (confirmReplace && !window.confirm(t().replaceWarning)) return false;
       [...runtimes.values()].filter((runtime) => runtime.kind === "frame").forEach((runtime) => {

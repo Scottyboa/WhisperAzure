@@ -14,7 +14,6 @@ const clearPromptButton = document.getElementById("clearPromptButton");
 const copyPromptButton = document.getElementById("copyPromptButton");
 const promptSlotNameInput = document.getElementById("promptSlotName");
 
-const promptProfileValue = document.getElementById("promptProfileValue");
 const promptExportBtn = document.getElementById("promptExportBtn");
 const promptImportBtn = document.getElementById("promptImportBtn");
 const promptImportFile = document.getElementById("promptImportFile");
@@ -25,7 +24,6 @@ const promptBackupModal = {
   card: document.getElementById("promptBackupModal"),
   title: document.getElementById("promptBackupModalTitle"),
   close: document.getElementById("promptBackupModalClose"),
-  profile: document.getElementById("promptBackupModalProfile"),
   choiceStep: document.getElementById("promptBackupChoiceStep"),
   choiceNotice: document.getElementById("promptBackupChoiceNotice"),
   jsonChoice: document.getElementById("promptBackupJsonChoice"),
@@ -52,20 +50,19 @@ const PROMPT_BACKUP_TEXT = {
     close: "Close",
     exportTitle: "Export prompts",
     importTitle: "Import prompts",
-    activeProfile: "Active prompt profile: {profile}",
-    exportNotice: "Before exporting, make sure every prompt you want to back up is filled in. All 20 prompt slots and their labels in the active profile are included; empty slots are saved as empty. Cloud export also saves General terms as a separate encrypted backup when that field contains text. Specific terms are never included.",
-    importNotice: "Import replaces all 20 prompt slots and their labels in the active profile. A JSON or cloud backup must already have been created. Cloud import also restores an available General terms backup for this tab; Specific terms are never imported.",
+    exportNotice: "Before exporting, make sure every prompt you want to back up is filled in. All 20 saved prompt slots and their labels are included; empty slots are saved as empty. Cloud export also saves General terms as a separate encrypted backup when that field contains text. Specific terms are never included.",
+    importNotice: "Import replaces all 20 prompt slots and their labels saved in this browser. A JSON or cloud backup must already have been created. Cloud import also restores an available General terms backup for this tab; Specific terms are never imported.",
     exportJson: "Export as JSON file",
     importJson: "Import from JSON file",
     exportJsonHelp: "Uses the existing method and saves a readable JSON file on this device. Store the file securely.",
     importJsonHelp: "Uses the existing method: choose a previously exported prompt JSON file from this device.",
     exportOneDrive: "Export to Microsoft OneDrive",
     importOneDrive: "Import from Microsoft OneDrive",
-    exportOneDriveHelp: "Encrypts the active profile in this browser and saves one prompt backup in your private Microsoft OneDrive app folder. If General terms contains text, it is encrypted and saved as a separate backup. An empty General terms field never overwrites an earlier General terms backup.",
+    exportOneDriveHelp: "Encrypts the saved prompt list in this browser and stores one prompt backup in your private Microsoft OneDrive app folder. If General terms contains text, it is encrypted and saved as a separate backup. An empty General terms field never overwrites an earlier General terms backup.",
     importOneDriveHelp: "Sign in with the same personal Microsoft account and enter the backup password. Prompts and any available General terms backup are downloaded from your private OneDrive app folder.",
     exportGoogleDrive: "Export to Google Drive",
     importGoogleDrive: "Import from Google Drive",
-    exportGoogleDriveHelp: "Encrypts the active profile in this browser and saves one prompt backup in your private Google Drive app storage. If General terms contains text, it is encrypted and saved as a separate backup. An empty General terms field never overwrites an earlier General terms backup.",
+    exportGoogleDriveHelp: "Encrypts the saved prompt list in this browser and stores one prompt backup in your private Google Drive app storage. If General terms contains text, it is encrypted and saved as a separate backup. An empty General terms field never overwrites an earlier General terms backup.",
     importGoogleDriveHelp: "Sign in with the same Google account and enter the backup password. Prompts and any available General terms backup are downloaded from private Google Drive app storage.",
     exportCloudNotice: "Create a Cloud Backup Password for this provider. It is used for keys, prompt lists and Workspace Sets, kept only in this tab session and never uploaded. If you forget it, the backup cannot be restored.",
     importCloudNotice: "Enter the Cloud Backup Password for this provider. It is kept only in this tab session and never uploaded.",
@@ -96,38 +93,36 @@ const PROMPT_BACKUP_TEXT = {
     googleDriveSaved: "Encrypted prompt backup saved to Google Drive. Any previous Google Drive prompt backup was replaced.",
     oneDriveSavedWithGeneral: "Encrypted prompt and General terms backups saved to Microsoft OneDrive. Previous backups of those files were replaced.",
     googleDriveSavedWithGeneral: "Encrypted prompt and General terms backups saved to Google Drive. Previous backups of those files were replaced.",
-    oneDriveImported: "Prompts imported from Microsoft OneDrive into the active profile.",
-    googleDriveImported: "Prompts imported from Google Drive into the active profile.",
+    oneDriveImported: "Prompts imported from Microsoft OneDrive and saved in this browser.",
+    googleDriveImported: "Prompts imported from Google Drive and saved in this browser.",
     oneDriveImportedWithGeneral: "Prompts and General terms imported from Microsoft OneDrive. General terms is available for this tab only.",
     googleDriveImportedWithGeneral: "Prompts and General terms imported from Google Drive. General terms is available for this tab only.",
     generalTermsImportWarning: "Prompts were imported, but the separate General terms backup could not be restored: {error}",
     jsonExported: "Prompt JSON export completed.",
-    jsonImported: "Prompts imported from the JSON file into the active profile.",
+    jsonImported: "Prompts imported from the JSON file and saved in this browser.",
     exportFailed: "Prompt export failed: {error}",
     importFailed: "Prompt import failed: {error}",
     invalidJson: "Prompt import failed: the file is not valid JSON.",
-    replaceActive: "Replace all 20 prompts and labels in the active profile \"{active}\"?",
-    profileMismatch: "This backup was exported from profile \"{source}\", but the active profile is \"{active}\".\n\nImporting will replace the active profile; it will not switch profiles. Continue?",
+    replaceSaved: "Replace all 20 prompts and labels currently saved in this browser?",
     replaceGeneralTerms: "The available General terms backup will also replace General terms for this tab. Specific terms will not be changed.",
   },
   no: {
     close: "Lukk",
     exportTitle: "Eksporter prompter",
     importTitle: "Importer prompter",
-    activeProfile: "Aktiv promptprofil: {profile}",
-    exportNotice: "Før eksport må alle promptene du ønsker å sikkerhetskopiere være ferdig utfylt. Alle 20 promptplassene og navnene deres i den aktive profilen tas med; tomme plasser lagres som tomme. Ved skyeksport lagres også Generelle begreper som en separat kryptert kopi når feltet inneholder tekst. Spesifikke begreper tas aldri med.",
-    importNotice: "Import erstatter alle 20 promptplassene og navnene deres i den aktive profilen. En JSON- eller skysikkerhetskopi må være opprettet på forhånd. Skyimport gjenoppretter også en tilgjengelig kopi av Generelle begreper for denne fanen; Spesifikke begreper importeres aldri.",
+    exportNotice: "Før eksport må alle promptene du ønsker å sikkerhetskopiere være ferdig utfylt. Alle de 20 lagrede promptplassene og navnene deres tas med; tomme plasser lagres som tomme. Ved skyeksport lagres også Generelle begreper som en separat kryptert kopi når feltet inneholder tekst. Spesifikke begreper tas aldri med.",
+    importNotice: "Import erstatter alle 20 promptplassene og navnene som er lagret i denne nettleseren. En JSON- eller skysikkerhetskopi må være opprettet på forhånd. Skyimport gjenoppretter også en tilgjengelig kopi av Generelle begreper for denne fanen; Spesifikke begreper importeres aldri.",
     exportJson: "Eksporter som JSON-fil",
     importJson: "Importer fra JSON-fil",
     exportJsonHelp: "Bruker den eksisterende metoden og lagrer en lesbar JSON-fil på denne enheten. Oppbevar filen sikkert.",
     importJsonHelp: "Bruker den eksisterende metoden: velg en tidligere eksportert prompt-JSON-fil fra denne enheten.",
     exportOneDrive: "Eksporter til Microsoft OneDrive",
     importOneDrive: "Importer fra Microsoft OneDrive",
-    exportOneDriveHelp: "Krypterer den aktive profilen i nettleseren og lagrer én promptkopi i den private appmappen i Microsoft OneDrive. Hvis Generelle begreper inneholder tekst, krypteres og lagres dette som en separat kopi. Et tomt felt overskriver aldri en eldre kopi av Generelle begreper.",
+    exportOneDriveHelp: "Krypterer promptlisten som er lagret i nettleseren og lagrer én promptkopi i den private appmappen i Microsoft OneDrive. Hvis Generelle begreper inneholder tekst, krypteres og lagres dette som en separat kopi. Et tomt felt overskriver aldri en eldre kopi av Generelle begreper.",
     importOneDriveHelp: "Logg inn med samme private Microsoft-konto og skriv inn passordet. Prompter og en eventuell kopi av Generelle begreper hentes fra den private appmappen i OneDrive.",
     exportGoogleDrive: "Eksporter til Google Drive",
     importGoogleDrive: "Importer fra Google Drive",
-    exportGoogleDriveHelp: "Krypterer den aktive profilen i nettleseren og lagrer én promptkopi i det private appområdet i Google Drive. Hvis Generelle begreper inneholder tekst, krypteres og lagres dette som en separat kopi. Et tomt felt overskriver aldri en eldre kopi av Generelle begreper.",
+    exportGoogleDriveHelp: "Krypterer promptlisten som er lagret i nettleseren og lagrer én promptkopi i det private appområdet i Google Drive. Hvis Generelle begreper inneholder tekst, krypteres og lagres dette som en separat kopi. Et tomt felt overskriver aldri en eldre kopi av Generelle begreper.",
     importGoogleDriveHelp: "Logg inn med samme Google-konto og skriv inn passordet. Prompter og en eventuell kopi av Generelle begreper hentes fra det private appområdet i Google Drive.",
     exportCloudNotice: "Opprett et Cloud Backup-passord for denne leverandøren. Det brukes for nøkler, promptlister og Workspace Sets, beholdes bare i denne faneøkten og lastes aldri opp. Hvis du glemmer det, kan sikkerhetskopien ikke gjenopprettes.",
     importCloudNotice: "Skriv inn Cloud Backup-passordet for denne leverandøren. Det beholdes bare i denne faneøkten og lastes aldri opp.",
@@ -158,18 +153,17 @@ const PROMPT_BACKUP_TEXT = {
     googleDriveSaved: "Kryptert promptkopi lagret i Google Drive. En eventuell tidligere Google Drive-kopi ble erstattet.",
     oneDriveSavedWithGeneral: "Krypterte kopier av prompter og Generelle begreper ble lagret i Microsoft OneDrive. Tidligere kopier av disse filene ble erstattet.",
     googleDriveSavedWithGeneral: "Krypterte kopier av prompter og Generelle begreper ble lagret i Google Drive. Tidligere kopier av disse filene ble erstattet.",
-    oneDriveImported: "Promptene ble importert fra Microsoft OneDrive til den aktive profilen.",
-    googleDriveImported: "Promptene ble importert fra Google Drive til den aktive profilen.",
+    oneDriveImported: "Promptene ble importert fra Microsoft OneDrive og lagret i denne nettleseren.",
+    googleDriveImported: "Promptene ble importert fra Google Drive og lagret i denne nettleseren.",
     oneDriveImportedWithGeneral: "Prompter og Generelle begreper ble importert fra Microsoft OneDrive. Generelle begreper er bare tilgjengelig i denne fanen.",
     googleDriveImportedWithGeneral: "Prompter og Generelle begreper ble importert fra Google Drive. Generelle begreper er bare tilgjengelig i denne fanen.",
     generalTermsImportWarning: "Promptene ble importert, men den separate kopien av Generelle begreper kunne ikke gjenopprettes: {error}",
     jsonExported: "Eksport av prompt-JSON er fullført.",
-    jsonImported: "Promptene ble importert fra JSON-filen til den aktive profilen.",
+    jsonImported: "Promptene ble importert fra JSON-filen og lagret i denne nettleseren.",
     exportFailed: "Eksport av prompter mislyktes: {error}",
     importFailed: "Import av prompter mislyktes: {error}",
     invalidJson: "Import av prompter mislyktes: filen inneholder ikke gyldig JSON.",
-    replaceActive: "Erstatt alle 20 promptene og navnene i den aktive profilen \"{active}\"?",
-    profileMismatch: "Denne sikkerhetskopien ble eksportert fra profilen \"{source}\", men den aktive profilen er \"{active}\".\n\nImporten erstatter den aktive profilen; den bytter ikke profil. Vil du fortsette?",
+    replaceSaved: "Erstatt alle 20 promptene og navnene som er lagret i denne nettleseren?",
     replaceGeneralTerms: "Den tilgjengelige kopien av Generelle begreper vil også erstatte innholdet i feltet for denne fanen. Spesifikke begreper endres ikke.",
   },
 };
@@ -546,55 +540,6 @@ function syncNameInputForCurrentSlot() {
   promptSlotNameInput.value = getSlotDisplayName(slot);
 }
 
-function renderPromptProfileLabel() {
-  if (!promptProfileValue) return;
-  const pid = getCurrentProfileId();
-  promptProfileValue.textContent = pid ? pid : "(not set)";
-}
-
-function ensurePromptProfileId({ allowChange = false } = {}) {
-  const existing = getCurrentProfileId();
-  if (existing && !allowChange) return existing;
-
-  const currentHint = existing ? `Current: ${existing}\n\n` : "";
-  const entered = window.prompt(
-    `${currentHint}Enter a prompt profile ID.\n\n` +
-    `This lets you keep a separate set of custom prompts on this device.\n` +
-    `Example: David1`,
-    existing || ""
-  );
-
-  if (entered == null) return existing;
-
-  const next = String(entered || "").trim();
-  if (!next) {
-    window.alert("Profile ID cannot be blank.");
-    return existing;
-  }
-
-  const active = (typeof PromptManager.setPromptProfileId === "function")
-    ? PromptManager.setPromptProfileId(next)
-    : next;
-
-  if (promptSlotSelect) {
-    const restored = (typeof PromptManager.getSelectedPromptSlot === "function")
-      ? String(PromptManager.getSelectedPromptSlot(active) || "").trim()
-      : "";
-    const allowed = new Set(getAvailableSlots());
-    promptSlotSelect.value = (restored && allowed.has(restored)) ? restored : (getAvailableSlots()[0] || "1");
-  }
-
-  reloadCurrentPromptSlot();
-  persistCurrentSelectedSlot();
-  renderPromptProfileLabel();
-  renderPromptSlotTrigger();
-  renderPromptSlotPopover();
-  syncNameInputForCurrentSlot();
-  syncMiniPanelPromptApi();
-
-  return active;
-}
-
 const promptBackupModalState = {
   mode: "export",
   provider: "",
@@ -632,17 +577,10 @@ function clearPromptBackupPasswords() {
 function updatePromptBackupChoiceText() {
   const text = getPromptBackupText();
   const isExport = promptBackupModalState.mode === "export";
-  const profileId = getCurrentProfileId();
-
   if (promptBackupModal.title) {
     promptBackupModal.title.textContent = isExport ? text.exportTitle : text.importTitle;
   }
   if (promptBackupModal.close) promptBackupModal.close.setAttribute("aria-label", text.close);
-  if (promptBackupModal.profile) {
-    promptBackupModal.profile.textContent = formatPromptBackupText(text.activeProfile, {
-      profile: profileId,
-    });
-  }
   if (promptBackupModal.choiceNotice) {
     promptBackupModal.choiceNotice.textContent = isExport ? text.exportNotice : text.importNotice;
   }
@@ -813,17 +751,8 @@ function applyGeneralTermsImportBundle(bundle) {
 
 function buildPromptImportConfirmation(bundle, { includesGeneralTerms = false } = {}) {
   const text = getPromptBackupText();
-  const validated = PromptManager.validatePromptImportBundle(bundle);
-  const active = getCurrentProfileId();
-  let message = "";
-  if (validated.profileId && validated.profileId !== active) {
-    message = formatPromptBackupText(text.profileMismatch, {
-      source: validated.profileId,
-      active,
-    });
-  } else {
-    message = formatPromptBackupText(text.replaceActive, { active });
-  }
+  PromptManager.validatePromptImportBundle(bundle);
+  let message = text.replaceSaved;
 
   if (includesGeneralTerms) {
     message += `\n\n${text.replaceGeneralTerms}`;
@@ -998,7 +927,6 @@ async function runPromptCloudAction() {
 }
 
 restorePersistedSelectedSlot();
-renderPromptProfileLabel();
 renderPromptSlotTrigger();
 renderPromptSlotPopover();
 syncNameInputForCurrentSlot();
@@ -1121,26 +1049,14 @@ if (copyPromptButton && customPromptTextarea) {
   });
 }
 
-if (promptProfileValue) {
-  promptProfileValue.style.cursor = "pointer";
-  promptProfileValue.title = "Click to set/change prompt profile";
-  promptProfileValue.addEventListener("click", () => {
-    ensurePromptProfileId({ allowChange: true });
-  });
-}
-
 if (promptExportBtn) {
   promptExportBtn.addEventListener("click", () => {
-    const pid = ensurePromptProfileId();
-    if (!pid) return;
     openPromptBackupModal("export");
   });
 }
 
 if (promptImportBtn && promptImportFile) {
   promptImportBtn.addEventListener("click", () => {
-    const pid = ensurePromptProfileId();
-    if (!pid) return;
     openPromptBackupModal("import");
   });
 
@@ -1232,7 +1148,6 @@ window.addEventListener("prompt-profile-changed", (event) => {
   if (nextProfileId && nextProfileId !== currentProfileId) return;
 
   restorePersistedSelectedSlot();
-  renderPromptProfileLabel();
   reloadCurrentPromptSlot();
   syncNameInputForCurrentSlot();
   renderPromptSlotTrigger();
