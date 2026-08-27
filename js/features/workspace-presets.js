@@ -10,6 +10,7 @@ const PRIMARY_RUNTIME_KEY = "whisper_workspace_primary_runtime_v1";
 const PANEL_MODE_KEY = "whisper_workspace_mini_panel_mode";
 const DRAFT_KEY = "whisper_workspace_draft_v1";
 const MAX_PRESETS = 12;
+const MAX_HISTORY_ENTRIES = 30;
 
 const VALUE_IDS = [
   "transcribeProvider", "sonioxSpeakerLabels", "sonioxRegion",
@@ -58,7 +59,7 @@ const TEXT = {
     busyClose: "Stop or abort the active recording, transcription, or generation before closing this workspace.",
     closeConfirm: "Close \"{name}\"? Its transcript, notes and other workspace text will be removed from this tab session.",
     importBusy: "Stop or abort all active recordings and generations before importing a workspace set.",
-    helpHtml: `<strong>Workspaces are separate work areas in this browser tab.</strong><br/>Each workspace keeps its own text, prompts, models, settings, history and active processes. Its name automatically follows the selected prompt slot name. Switching workspaces does not stop recording or generation.<br/><br/>Use + to add a workspace and × to close one.<br/><br/><strong>Import/export:</strong> A workspace set backup saves the workspace setup, selected prompts, models and relevant settings. Transcripts, supplementary information, notes, history, audio, API keys and other patient information are never exported. Cloud backups are encrypted. A downloaded JSON file is readable and should be stored securely.`,
+    helpHtml: `<strong>Workspaces are separate work areas in this browser tab.</strong><br/>Each workspace keeps its own text, prompts, models, settings and active processes. Cloned workspaces share history with their clone family; workspaces added with + keep separate history. Its name automatically follows the selected prompt slot name. Switching workspaces does not stop recording or generation.<br/><br/>Use + to add a workspace and × to close one.<br/><br/><strong>Import/export:</strong> A workspace set backup saves the workspace setup, selected prompts, models and relevant settings. Transcripts, supplementary information, notes, history, audio, API keys and other patient information are never exported. Cloud backups are encrypted. A downloaded JSON file is readable and should be stored securely.`,
     exportTitle: "Export workspace set", importTitle: "Import workspace set",
     jsonExport: "Export as JSON file", jsonImport: "Import from JSON file",
     oneDriveExport: "Export to Microsoft OneDrive", oneDriveImport: "Import from Microsoft OneDrive",
@@ -92,7 +93,7 @@ const TEXT = {
     busyClose: "Stopp eller avbryt aktivt opptak, transkribering eller generering før Workspace-et lukkes.",
     closeConfirm: "Lukk \"{name}\"? Transkripsjon, notater, historikk og annen Workspace-tekst fjernes fra denne faneøkten.",
     importBusy: "Stopp eller avbryt alle aktive opptak og genereringer før du importerer et Workspace set.",
-    helpHtml: `<strong>Workspaces er separate arbeidsområder i denne nettleserfanen.</strong><br/>Hvert Workspace beholder egne tekster, prompts, modeller, innstillinger, historikk og aktive prosesser. Navnet følger automatisk navnet på valgt prompt-slot. Bytte mellom Workspaces stopper ikke opptak eller generering.<br/><br/>Bruk + for å legge til et Workspace og × for å lukke det.<br/><br/><strong>Import/eksport:</strong> En Workspace set-backup lagrer Workspace-oppsettet, valgte prompts, modeller og relevante innstillinger. Transkripsjoner, supplerende informasjon, notater, historikk, lyd, API-nøkler og andre pasientopplysninger eksporteres aldri. Skybackup krypteres. En nedlastet JSON-fil er lesbar og bør oppbevares sikkert.`,
+    helpHtml: `<strong>Workspaces er separate arbeidsområder i denne nettleserfanen.</strong><br/>Hvert Workspace beholder egne tekster, prompts, modeller, innstillinger og aktive prosesser. Klonede Workspaces deler historikk med resten av klonefamilien, mens Workspaces som legges til med + har separat historikk. Navnet følger automatisk navnet på valgt prompt-slot. Bytte mellom Workspaces stopper ikke opptak eller generering.<br/><br/>Bruk + for å legge til et Workspace og × for å lukke det.<br/><br/><strong>Import/eksport:</strong> En Workspace set-backup lagrer Workspace-oppsettet, valgte prompts, modeller og relevante innstillinger. Transkripsjoner, supplerende informasjon, notater, historikk, lyd, API-nøkler og andre pasientopplysninger eksporteres aldri. Skybackup krypteres. En nedlastet JSON-fil er lesbar og bør oppbevares sikkert.`,
     exportTitle: "Eksporter Workspace set", importTitle: "Importer Workspace set",
     jsonExport: "Eksporter som JSON-fil", jsonImport: "Importer fra JSON-fil",
     oneDriveExport: "Eksporter til Microsoft OneDrive", oneDriveImport: "Importer fra Microsoft OneDrive",
@@ -363,16 +364,21 @@ function initFrameRuntime() {
     document.getElementById(fieldId)?.addEventListener("input", saveDraft);
   });
 
-  const notifyParent = (reason = "state") => {
+  const notifyParent = (reason = "state", detail = {}) => {
     saveDraft();
     try {
-      window.parent.postMessage({ type: "workspace-preset-frame-update", id, reason }, window.location.origin);
+      window.parent.postMessage(
+        { type: "workspace-preset-frame-update", id, reason, ...detail },
+        window.location.origin
+      );
     } catch {}
   };
   document.addEventListener("change", () => notifyParent("config"), true);
   document.addEventListener("click", () => window.setTimeout(() => notifyParent("click"), 0), true);
   window.addEventListener("app:state-changed", () => notifyParent("app-state"));
-  window.addEventListener("note-history-updated", () => notifyParent("history"));
+  window.addEventListener("note-history-updated", (event) => {
+    notifyParent("history", { historyReason: String(event?.detail?.reason || "updated") });
+  });
   window.addEventListener("mini-hub:prompt-ui-refresh", () => notifyParent("prompt-title"));
 
   window.__workspacePresetBridge = Object.freeze({
@@ -387,10 +393,10 @@ function initFrameRuntime() {
     },
     getSnapshot: () => getRuntimeSnapshot(window, document),
     getHistorySnapshot: () => window.__noteHistory?.getSnapshot?.() || { entries: [], nextSequence: 1 },
-    clearHistory: () => window.__noteHistory?.clearLocal?.() !== false,
-    replaceHistory(snapshot) {
+    clearHistory: (options = {}) => window.__noteHistory?.clearLocal?.(options) !== false,
+    replaceHistory(snapshot, options = {}) {
       const replace = window.__noteHistory?.replaceLocal;
-      return typeof replace === "function" ? replace(snapshot) !== false : false;
+      return typeof replace === "function" ? replace(snapshot, options) !== false : false;
     },
     getGeneralTerms: () => String(document.getElementById("redactorGeneralTerms")?.value || ""),
     setGeneralTerms(value) {
@@ -493,6 +499,7 @@ function initTopLevelManager() {
 
   runtimes.set(primaryPresetId, { id: primaryPresetId, kind: "native", win: window, doc: document, ready: true });
   window.addEventListener("message", handleFrameMessage);
+  window.addEventListener("note-history-updated", handleNativeHistoryUpdate);
   definitions.filter((item) => item.id !== primaryPresetId).forEach(createFrameRuntime);
   bindRuntimeDocument(runtimes.get(primaryPresetId));
   installAppDelegation();
@@ -535,17 +542,25 @@ function initTopLevelManager() {
           runtime.pendingDraft = null;
         }
         if (runtime.pendingHistory) {
-          runtime.win.__workspacePresetBridge.replaceHistory(runtime.pendingHistory);
+          runtime.win.__workspacePresetBridge.replaceHistory(runtime.pendingHistory, { notify: false });
           runtime.pendingHistory = null;
         }
       }
       scheduleConfigSave(runtime.id);
       render();
       notifyHub();
-      if ((data.reason === "history" || becameReady) && runtime.id === activeId) {
-        notifyHistoryUpdated(becameReady ? "runtime-ready" : "background-generation", runtime.id);
+      if (data.reason === "history") {
+        synchronizeHistoryGroup(runtime.id, String(data.historyReason || "updated"));
+      } else if (becameReady) {
+        synchronizeHistoryGroup(runtime.id, "runtime-ready");
       }
     }
+  }
+
+  function handleNativeHistoryUpdate(event) {
+    const runtime = runtimes.get(primaryPresetId);
+    if (!runtime || runtime.kind !== "native") return;
+    synchronizeHistoryGroup(primaryPresetId, String(event?.detail?.reason || "updated"));
   }
 
   const poll = window.setInterval(() => {
@@ -568,14 +583,13 @@ function initTopLevelManager() {
     getSnapshot: buildWorkspaceSnapshot,
     getHistorySnapshot(presetId = activeId) {
       const requestedId = String(presetId || activeId);
-      return runtimeHistorySnapshot(runtimes.get(requestedId) || runtimes.get(activeId));
+      return mergedHistoryForGroup(requestedId);
     },
     clearHistory(presetId = activeId) {
       const requestedId = String(presetId || activeId);
-      const runtime = runtimes.get(requestedId) || runtimes.get(activeId);
-      const cleared = clearRuntimeHistory(runtime);
-      if (cleared && runtime?.id === activeId) notifyHistoryUpdated("cleared", runtime.id);
-      return cleared;
+      if (!findDefinition(requestedId)) return false;
+      applyHistoryToGroup(requestedId, { entries: [], nextSequence: 1 }, "cleared");
+      return true;
     },
     restoreHistoryEntry(entry, target = "current") {
       return restoreHistoryEntry(entry, target);
@@ -612,14 +626,19 @@ function initTopLevelManager() {
     try {
       const parsed = JSON.parse(localStorage.getItem(DEFINITIONS_KEY) || "[]");
       if (Array.isArray(parsed) && parsed.length) {
-        return parsed.slice(0, MAX_PRESETS).map((item, index) => ({
-          id: String(item?.id || uid()),
-          name: normalizeWorkspaceName(item?.name, index),
-          config: sanitizeConfig(item?.config),
-        }));
+        return parsed.slice(0, MAX_PRESETS).map((item, index) => {
+          const id = String(item?.id || uid());
+          return {
+            id,
+            historyGroupId: String(item?.historyGroupId || id),
+            name: normalizeWorkspaceName(item?.name, index),
+            config: sanitizeConfig(item?.config),
+          };
+        });
       }
     } catch {}
-    return [{ id: uid(), name: "Workspace 1", config: captureConfig(document) }];
+    const id = uid();
+    return [{ id, historyGroupId: id, name: "Workspace 1", config: captureConfig(document) }];
   }
 
   function persistDefinitions() {
@@ -638,6 +657,16 @@ function initTopLevelManager() {
     try { sessionStorage.setItem(key, String(value || "")); } catch {}
   }
   function findDefinition(id) { return definitions.find((item) => item.id === id); }
+
+  function historyGroupIdFor(workspaceId) {
+    const definition = findDefinition(String(workspaceId || ""));
+    return String(definition?.historyGroupId || definition?.id || workspaceId || "");
+  }
+
+  function historyGroupDefinitions(workspaceId) {
+    const groupId = historyGroupIdFor(workspaceId);
+    return definitions.filter((definition) => historyGroupIdFor(definition.id) === groupId);
+  }
 
   function createFrameRuntime(definition) {
     const frame = document.createElement("iframe");
@@ -737,15 +766,20 @@ function initTopLevelManager() {
     const draft = historyEntryDraft(entry);
     if (target === "new") {
       if (definitions.length >= MAX_PRESETS) return { ok: false, reason: "max" };
+      const id = uid();
       const definition = {
-        id: uid(),
+        id,
+        historyGroupId: id,
         name: fmt(t().defaultName, { n: definitions.length + 1 }),
         config: {},
       };
       definitions.push(definition);
       createFrameRuntime(definition);
       const runtime = runtimes.get(definition.id);
-      if (runtime) runtime.pendingDraft = draft;
+      if (runtime) {
+        runtime.pendingDraft = draft;
+        runtime.pendingHistory = { entries: [], nextSequence: 1 };
+      }
       persistDefinitions();
       switchPreset(definition.id);
       return { ok: true, workspaceId: definition.id };
@@ -760,7 +794,9 @@ function initTopLevelManager() {
   }
 
   function runtimeHistorySnapshot(runtime) {
-    if (!runtime?.ready) return { entries: [], nextSequence: 1 };
+    if (!runtime?.ready) {
+      return cloneHistorySnapshot(runtime?.pendingHistory || { entries: [], nextSequence: 1 });
+    }
     if (runtime.kind === "frame") {
       return runtime.win?.__workspacePresetBridge?.getHistorySnapshot?.() || {
         entries: [],
@@ -770,16 +806,120 @@ function initTopLevelManager() {
     return window.__noteHistory?.getSnapshot?.() || { entries: [], nextSequence: 1 };
   }
 
-  function clearRuntimeHistory(runtime) {
-    if (!runtime?.ready) return false;
-    if (runtime.kind === "frame") {
-      return runtime.win?.__workspacePresetBridge?.clearHistory?.() !== false;
-    }
-    return window.__noteHistory?.clearLocal?.() !== false;
+  function cloneHistorySnapshot(snapshot) {
+    const entries = Array.isArray(snapshot?.entries)
+      ? snapshot.entries
+        .filter((entry) => entry && typeof entry === "object")
+        .map((entry) => ({ ...entry }))
+        .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
+        .slice(0, MAX_HISTORY_ENTRIES)
+      : [];
+    const highestSequence = entries.reduce(
+      (highest, entry) => Math.max(highest, Number(entry.sequence) || 0),
+      0
+    );
+    const requestedNext = Number(snapshot?.nextSequence);
+    return {
+      entries,
+      nextSequence: Number.isInteger(requestedNext) && requestedNext > highestSequence
+        ? requestedNext
+        : highestSequence + 1,
+    };
   }
 
-  function replaceNativeHistory(snapshot) {
-    return window.__noteHistory?.replaceLocal?.(snapshot) !== false;
+  function mergeHistorySnapshots(snapshots) {
+    const entriesById = new Map();
+    let nextSequence = 1;
+    snapshots.forEach((snapshot) => {
+      const normalized = cloneHistorySnapshot(snapshot);
+      nextSequence = Math.max(nextSequence, normalized.nextSequence);
+      normalized.entries.forEach((entry) => {
+        const key = String(entry.id || `${entry.sequence}-${entry.createdAt}`);
+        if (!entriesById.has(key)) entriesById.set(key, entry);
+      });
+    });
+    const chronological = [...entriesById.values()]
+      .sort((a, b) => (
+        Number(a.createdAt || 0) - Number(b.createdAt || 0) ||
+        String(a.id || "").localeCompare(String(b.id || ""))
+      ));
+    const usedSequences = new Set();
+    let highestAssignedSequence = 0;
+    chronological.forEach((entry) => {
+      let sequence = Number(entry.sequence);
+      if (!Number.isInteger(sequence) || sequence < 1 || usedSequences.has(sequence)) {
+        sequence = highestAssignedSequence + 1;
+        while (usedSequences.has(sequence)) sequence += 1;
+        entry.sequence = sequence;
+      }
+      usedSequences.add(sequence);
+      highestAssignedSequence = Math.max(highestAssignedSequence, sequence);
+    });
+    const entries = chronological
+      .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
+      .slice(0, MAX_HISTORY_ENTRIES);
+    const highestSequence = entries.reduce(
+      (highest, entry) => Math.max(highest, Number(entry.sequence) || 0),
+      0
+    );
+    return { entries, nextSequence: Math.max(nextSequence, highestSequence + 1) };
+  }
+
+  function mergedHistoryForGroup(workspaceId) {
+    const snapshots = historyGroupDefinitions(workspaceId).map((definition) => (
+      runtimeHistorySnapshot(runtimes.get(definition.id))
+    ));
+    return mergeHistorySnapshots(
+      snapshots.length ? snapshots : [{ entries: [], nextSequence: 1 }]
+    );
+  }
+
+  function replaceRuntimeHistory(runtime, snapshot, { notify = false } = {}) {
+    if (!runtime) return false;
+    const normalized = cloneHistorySnapshot(snapshot);
+    if (!runtime.ready) {
+      runtime.pendingHistory = normalized;
+      return true;
+    }
+    if (runtime.kind === "frame") {
+      return runtime.win?.__workspacePresetBridge?.replaceHistory?.(normalized, {
+        notify,
+        preservePendingRun: true,
+        preserveView: true,
+      }) !== false;
+    }
+    return window.__noteHistory?.replaceLocal?.(normalized, {
+      notify,
+      preservePendingRun: true,
+      preserveView: true,
+    }) !== false;
+  }
+
+  function replaceNativeHistory(snapshot, { notify = false } = {}) {
+    return window.__noteHistory?.replaceLocal?.(snapshot, { notify }) !== false;
+  }
+
+  function applyHistoryToGroup(workspaceId, snapshot, reason = "updated") {
+    const groupId = historyGroupIdFor(workspaceId);
+    const normalized = cloneHistorySnapshot(snapshot);
+    historyGroupDefinitions(workspaceId).forEach((definition) => {
+      replaceRuntimeHistory(runtimes.get(definition.id), normalized, { notify: false });
+    });
+    if (historyGroupIdFor(activeId) === groupId) {
+      notifyHistoryUpdated(reason, workspaceId);
+    }
+    return normalized;
+  }
+
+  function synchronizeHistoryGroup(workspaceId, reason = "updated") {
+    const sourceRuntime = runtimes.get(String(workspaceId || ""));
+    if (!sourceRuntime) return { entries: [], nextSequence: 1 };
+    const sourceSnapshot = runtimeHistorySnapshot(sourceRuntime);
+    const replaceReasons = new Set(["cleared", "replaced", "deleted", "entry-deleted"]);
+    const snapshot = replaceReasons.has(reason)
+      ? sourceSnapshot
+      : mergedHistoryForGroup(workspaceId);
+    return applyHistoryToGroup(workspaceId, snapshot, reason);
   }
 
   function notifyHistoryViewChanged(reason = "workspace-switched") {
@@ -1104,9 +1244,12 @@ function initTopLevelManager() {
     const copy = t();
     if (definitions.length >= MAX_PRESETS) { toast(copy.max, true); return; }
     const suggested = fmt(copy.defaultName, { n: definitions.length + 1 });
-    const definition = { id: uid(), name: suggested, config: {} };
+    const id = uid();
+    const definition = { id, historyGroupId: id, name: suggested, config: {} };
     definitions.push(definition);
     createFrameRuntime(definition);
+    const runtime = runtimes.get(definition.id);
+    if (runtime) runtime.pendingHistory = { entries: [], nextSequence: 1 };
     persistDefinitions();
     switchPreset(definition.id);
   }
@@ -1120,9 +1263,10 @@ function initTopLevelManager() {
 
     source.config = captureRuntimeConfig(sourceRuntime);
     const draft = captureRuntimeDraft(sourceRuntime);
-    const history = runtimeHistorySnapshot(sourceRuntime);
+    const history = mergedHistoryForGroup(source.id);
     const definition = {
       id: uid(),
+      historyGroupId: historyGroupIdFor(source.id),
       name: safeName(
         fmt(copy.cloneName, { name: source.name }),
         fmt(copy.defaultName, { n: definitions.length + 1 })
@@ -1157,9 +1301,8 @@ function initTopLevelManager() {
       }
       const replacementRuntime = runtimes.get(replacement.id);
       const replacementDraft = captureRuntimeDraft(replacementRuntime);
-      const replacementHistory = runtimeHistorySnapshot(replacementRuntime);
+      const replacementHistory = mergedHistoryForGroup(replacement.id);
       replacement.config = captureRuntimeConfig(replacementRuntime);
-      clearRuntimeHistory(replacementRuntime);
       replacementRuntime.frame?.remove();
       runtimes.delete(replacement.id);
       clearRuntimeDraft(runtime);
@@ -1170,9 +1313,8 @@ function initTopLevelManager() {
       primaryPresetId = replacement.id;
       definitions = definitions.filter((item) => item.id !== id);
       activeId = replacement.id;
-      replaceNativeHistory(replacementHistory);
+      replaceNativeHistory(replacementHistory, { notify: false });
     } else {
-      clearRuntimeHistory(runtime);
       runtime.frame.remove(); runtimes.delete(id);
       definitions = definitions.filter((item) => item.id !== id);
       if (activeId === id) activeId = primaryPresetId;
@@ -1240,9 +1382,22 @@ function initTopLevelManager() {
         label: String(PromptManager.getSlotDisplayName(slot, promptProfileId) || ""),
       };
     });
+    const historyGroupAliases = new Map();
+    definitions.forEach((definition) => {
+      const groupId = historyGroupIdFor(definition.id);
+      if (!historyGroupAliases.has(groupId)) {
+        historyGroupAliases.set(groupId, `history-group-${historyGroupAliases.size + 1}`);
+      }
+    });
     return {
       schema: PRESET_SCHEMA, version: PRESET_VERSION, exportedAt: new Date().toISOString(),
-      promptProfileId, presets: definitions.map((item) => ({ name: item.name, config: sanitizeConfig(item.config) })), prompts,
+      promptProfileId,
+      presets: definitions.map((item) => ({
+        name: item.name,
+        historyGroup: historyGroupAliases.get(historyGroupIdFor(item.id)),
+        config: sanitizeConfig(item.config),
+      })),
+      prompts,
     };
   }
 
@@ -1262,9 +1417,18 @@ function initTopLevelManager() {
 
   function validateBundle(bundle) {
     if (!bundle || bundle.schema !== PRESET_SCHEMA || Number(bundle.version) !== PRESET_VERSION || !Array.isArray(bundle.presets)) throw new Error(t().invalid);
-    const presets = bundle.presets.slice(0, MAX_PRESETS).map((item, index) => ({
-      id: uid(), name: normalizeWorkspaceName(item?.name, index), config: sanitizeConfig(item?.config),
-    }));
+    const importedHistoryGroups = new Map();
+    const presets = bundle.presets.slice(0, MAX_PRESETS).map((item, index) => {
+      const id = uid();
+      const exportedGroup = String(item?.historyGroup || `independent-${index}`);
+      if (!importedHistoryGroups.has(exportedGroup)) importedHistoryGroups.set(exportedGroup, uid());
+      return {
+        id,
+        historyGroupId: importedHistoryGroups.get(exportedGroup),
+        name: normalizeWorkspaceName(item?.name, index),
+        config: sanitizeConfig(item?.config),
+      };
+    });
     if (!presets.length) throw new Error(t().invalid);
     const prompts = {};
     Object.entries(bundle.prompts || {}).forEach(([slot, item]) => {
@@ -1274,7 +1438,12 @@ function initTopLevelManager() {
     return { presets, prompts, promptProfileId: String(bundle.promptProfileId || "") };
   }
 
-  function importPromptDependencies(prompts) {
+  function importPromptDependencies(prompts, preferredProfileId = "") {
+    if (typeof PromptManager.ensurePromptProfileId === "function") {
+      PromptManager.ensurePromptProfileId(preferredProfileId);
+    } else if (!PromptManager.getPromptProfileId?.()) {
+      PromptManager.setPromptProfileId?.(String(preferredProfileId || "default").trim() || "default");
+    }
     Object.entries(prompts || {}).forEach(([slot, item]) => {
       PromptManager.savePrompt(slot, item.text);
       PromptManager.setSlotDisplayName(slot, item.label, PromptManager.getPromptProfileId());
@@ -1289,24 +1458,32 @@ function initTopLevelManager() {
   ) {
     const validated = validateBundle(bundle);
     if (allBusy()) throw new Error(t().importBusy);
-    if (importPrompts) importPromptDependencies(validated.prompts);
+    if (importPrompts) importPromptDependencies(validated.prompts, validated.promptProfileId);
     if (mode === "replace") {
       if (confirmReplace && !window.confirm(t().replaceWarning)) return false;
       [...runtimes.values()].filter((runtime) => runtime.kind === "frame").forEach((runtime) => {
-        clearRuntimeHistory(runtime);
         runtime.frame.remove();
       });
-      replaceNativeHistory({ entries: [], nextSequence: 1 });
+      replaceNativeHistory({ entries: [], nextSequence: 1 }, { notify: false });
       runtimes.clear(); clearRuntimeDraft({ id: primaryPresetId, kind: "native", win: window, doc: document });
       definitions = validated.presets;
       primaryPresetId = definitions[0].id; activeId = primaryPresetId;
       writeSessionRaw(PRIMARY_RUNTIME_KEY, primaryPresetId);
       runtimes.set(primaryPresetId, { id: primaryPresetId, kind: "native", win: window, doc: document, ready: true, bound: true });
       await applyConfig(window, document, definitions[0].config);
-      definitions.filter((item) => item.id !== primaryPresetId).forEach(createFrameRuntime);
+      definitions.filter((item) => item.id !== primaryPresetId).forEach((definition) => {
+        createFrameRuntime(definition);
+        const runtime = runtimes.get(definition.id);
+        if (runtime) runtime.pendingHistory = { entries: [], nextSequence: 1 };
+      });
     } else {
       const available = Math.max(0, MAX_PRESETS - definitions.length);
-      validated.presets.slice(0, available).forEach((definition) => { definitions.push(definition); createFrameRuntime(definition); });
+      validated.presets.slice(0, available).forEach((definition) => {
+        definitions.push(definition);
+        createFrameRuntime(definition);
+        const runtime = runtimes.get(definition.id);
+        if (runtime) runtime.pendingHistory = { entries: [], nextSequence: 1 };
+      });
     }
     writeSessionRaw(ACTIVE_KEY, activeId); persistDefinitions(); applyActiveWorkspace(); render(); notifyHub();
     return true;

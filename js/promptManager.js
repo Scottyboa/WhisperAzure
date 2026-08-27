@@ -192,6 +192,12 @@ export const PromptManager = (() => {
     return active;
   }
 
+  function ensurePromptProfileId(preferredProfileId = "") {
+    const existing = getPromptProfileId();
+    if (existing) return existing;
+    return setPromptProfileId(normalizeProfileId(preferredProfileId) || DEFAULT_PROFILE_ID);
+  }
+
   function resolveInputElement(inputOrSelector) {
     if (!inputOrSelector) return null;
     if (typeof inputOrSelector === "string") {
@@ -403,12 +409,8 @@ export const PromptManager = (() => {
   }
 
   function importPromptsFromBundle(parsed, options = {}) {
-    const profileId = getPromptProfileId();
-    if (!profileId) {
-      throw new Error("Prompt profile ID is not set.");
-    }
-
     const bundle = validatePromptImportBundle(parsed);
+    const profileId = ensurePromptProfileId(bundle.profileId);
     const sourceProfileId = bundle.profileId;
 
     if (options.confirm !== false) {
@@ -444,12 +446,6 @@ export const PromptManager = (() => {
   }
 
   async function importPromptsFromFile(file, options = {}) {
-    const profileId = getPromptProfileId();
-    if (!profileId) {
-      console.warn("Cannot import prompts: prompt profile id not set.");
-      return false;
-    }
-
     if (!file) return false;
 
     let text = "";
@@ -580,6 +576,7 @@ export const PromptManager = (() => {
     savePrompt,
     getPromptProfileId,
     setPromptProfileId,
+    ensurePromptProfileId,
     hydratePromptProfileInput,
     commitPromptProfileInput,
     getPromptNamespaceHash,

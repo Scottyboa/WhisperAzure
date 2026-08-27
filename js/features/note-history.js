@@ -8,7 +8,7 @@ const STRINGS = {
     clear: "Clear",
     helpLabel: "Note history help",
     tooltip:
-      "Shows the 30 most recent generated notes in the active workspace. Select an item to view its transcript, supplementary information and note. Each workspace has its own history. History remains after refresh and is removed when the tab session ends.",
+      "Shows the 30 most recent generated notes in the active workspace. Select an item to view its transcript, supplementary information and note. Cloned workspaces share history with their clone family; other workspaces have separate history. History remains after refresh and is removed when the tab session ends.",
     empty: "No generated notes yet.",
     note: "Note",
     transcript: "Transcript",
@@ -34,7 +34,7 @@ const STRINGS = {
     clear: "Clear",
     helpLabel: "Hjelp for notathistorikk",
     tooltip:
-      "Viser de 30 siste genererte notatene i aktivt Workspace. Klikk på et element for å vise transkripsjonen, supplerende informasjon og notatet. Hvert Workspace har sin egen historikk. Historikken beholdes ved oppdatering av siden og slettes når faneøkten avsluttes.",
+      "Viser de 30 siste genererte notatene i aktivt Workspace. Klikk på et element for å vise transkripsjonen, supplerende informasjon og notatet. Klonede Workspaces deler historikk med klonefamilien; andre Workspaces har separat historikk. Historikken beholdes ved oppdatering av siden og slettes når faneøkten avsluttes.",
     empty: "Ingen genererte notater ennå.",
     note: "Notat",
     transcript: "Transkripsjon",
@@ -60,7 +60,7 @@ const STRINGS = {
     clear: "Rensa",
     helpLabel: "Hjälp för anteckningshistorik",
     tooltip:
-      "Visar de 30 senast genererade anteckningarna i den aktiva arbetsytan. Välj ett objekt för att visa transkriptionen, kompletterande information och anteckningen. Varje arbetsyta har sin egen historik. Historiken finns kvar efter uppdatering och tas bort när fliksessionen avslutas.",
+      "Visar de 30 senast genererade anteckningarna i den aktiva arbetsytan. Välj ett objekt för att visa transkriptionen, kompletterande information och anteckningen. Klonade arbetsytor delar historik med sin klonfamilj; andra arbetsytor har separat historik. Historiken finns kvar efter uppdatering och tas bort när fliksessionen avslutas.",
     empty: "Inga genererade anteckningar ännu.",
     note: "Anteckning",
     transcript: "Transkription",
@@ -86,7 +86,7 @@ const STRINGS = {
     clear: "Leeren",
     helpLabel: "Hilfe zum Notizverlauf",
     tooltip:
-      "Zeigt die 30 zuletzt erstellten Notizen im aktiven Arbeitsbereich. Wählen Sie einen Eintrag, um Transkript, ergänzende Informationen und Notiz anzuzeigen. Jeder Arbeitsbereich hat einen eigenen Verlauf. Der Verlauf bleibt nach dem Aktualisieren erhalten und wird am Ende der Tabsitzung entfernt.",
+      "Zeigt die 30 zuletzt erstellten Notizen im aktiven Arbeitsbereich. Wählen Sie einen Eintrag, um Transkript, ergänzende Informationen und Notiz anzuzeigen. Geklonte Arbeitsbereiche teilen den Verlauf mit ihrer Klonfamilie; andere Arbeitsbereiche haben einen separaten Verlauf. Der Verlauf bleibt nach dem Aktualisieren erhalten und wird am Ende der Tabsitzung entfernt.",
     empty: "Noch keine Notizen erstellt.",
     note: "Notiz",
     transcript: "Transkript",
@@ -112,7 +112,7 @@ const STRINGS = {
     clear: "Effacer",
     helpLabel: "Aide sur l’historique des notes",
     tooltip:
-      "Affiche les 30 dernières notes générées dans l’espace de travail actif. Sélectionnez un élément pour afficher la transcription, les informations complémentaires et la note. Chaque espace de travail possède son propre historique. L’historique persiste après actualisation et disparaît à la fin de la session de l’onglet.",
+      "Affiche les 30 dernières notes générées dans l’espace de travail actif. Sélectionnez un élément pour afficher la transcription, les informations complémentaires et la note. Les espaces de travail clonés partagent l’historique de leur famille de clones ; les autres ont un historique distinct. L’historique persiste après actualisation et disparaît à la fin de la session de l’onglet.",
     empty: "Aucune note générée.",
     note: "Note",
     transcript: "Transcription",
@@ -138,7 +138,7 @@ const STRINGS = {
     clear: "Cancella",
     helpLabel: "Guida alla cronologia delle note",
     tooltip:
-      "Mostra le 30 note generate più di recente nell’area di lavoro attiva. Seleziona un elemento per visualizzare trascrizione, informazioni supplementari e nota. Ogni area di lavoro ha una cronologia separata. La cronologia rimane dopo l’aggiornamento e viene rimossa al termine della sessione della scheda.",
+      "Mostra le 30 note generate più di recente nell’area di lavoro attiva. Seleziona un elemento per visualizzare trascrizione, informazioni supplementari e nota. Le aree di lavoro clonate condividono la cronologia della loro famiglia di cloni; le altre hanno una cronologia separata. La cronologia rimane dopo l’aggiornamento e viene rimossa al termine della sessione della scheda.",
     empty: "Nessuna nota generata.",
     note: "Nota",
     transcript: "Trascrizione",
@@ -341,11 +341,14 @@ function notifyLocalHistoryUpdated(reason = "updated") {
   } catch (_) {}
 }
 
-function replaceLocalHistorySnapshot(snapshot, { notify = true } = {}) {
+function replaceLocalHistorySnapshot(
+  snapshot,
+  { notify = true, preservePendingRun = false, preserveView = false } = {}
+) {
   const normalized = normalizeHistorySnapshot(snapshot);
   state.entries = normalized.entries;
   state.nextSequence = normalized.nextSequence;
-  state.pendingRun = null;
+  if (!preservePendingRun) state.pendingRun = null;
 
   try {
     if (state.entries.length) {
@@ -355,8 +358,9 @@ function replaceLocalHistorySnapshot(snapshot, { notify = true } = {}) {
     }
   } catch (_) {}
 
-  closeModal();
   renderHistory();
+  if (preserveView) syncModalContent();
+  else closeModal();
   if (notify) notifyLocalHistoryUpdated("replaced");
   return true;
 }

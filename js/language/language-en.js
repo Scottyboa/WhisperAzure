@@ -483,7 +483,7 @@ guideText: `Welcome to <strong>Transcribe Notes</strong>. The app can record and
 <details>
   <summary><strong>Workspaces and Workspace Sets</strong></summary>
   <ul>
-    <li>A <strong>Workspace</strong> is a separate work area within the browser tab. Each Workspace has its own text, selected prompts, providers, models, settings, history and active processes. Switching Workspaces does not stop recording or generation.</li>
+    <li>A <strong>Workspace</strong> is a separate work area within the browser tab. Each Workspace has its own text, selected prompts, providers, models, settings and active processes. Cloned Workspaces share history with their clone family; Workspaces added with + have separate history. Switching Workspaces does not stop recording or generation.</li>
     <li>The name normally follows the selected prompt-slot label. Use <strong>+</strong> to add and <strong>×</strong> to close a Workspace. Up to 12 Workspaces can be open.</li>
     <li>All open Workspaces form a <strong>Workspace Set</strong>. Import and export are available through a local JSON file, Microsoft OneDrive or Google Drive.</li>
     <li>A Workspace Set stores the number and order of Workspaces, names, selected prompt slots with prompt text and labels, providers, models, reasoning selections, relevant checkboxes and open modules. It does not include transcripts, supplementary information, notes, history, audio, API keys, passwords or other patient information.</li>
@@ -530,7 +530,7 @@ guideText: `Welcome to <strong>Transcribe Notes</strong>. The app can record and
   <summary><strong>Prompt slots, history, Redactor and OCR</strong></summary>
   <ul>
     <li>There are 20 prompt slots. Prompt profile ID separates prompt sets on the same device. Prompt sets can be imported or exported as JSON or as encrypted backups through OneDrive and Google Drive.</li>
-    <li>The history column shows the 30 most recent completed primary note generations in the active Workspace. Select an item to view the transcript, supplementary information and generated note. Each Workspace has its own history.</li>
+    <li>The history column shows the 30 most recent completed primary note generations in the active Workspace. Select an item to view the transcript, supplementary information and generated note. Cloned Workspaces share history with their clone family; other Workspaces have separate history.</li>
     <li><strong>Redactor</strong> can remove selected General and Specific terms from the transcript and supplementary information. Always inspect the result before sending the text.</li>
     <li><strong>OCR</strong> can extract text from a pasted screenshot or image file and send it to the Specific terms list or the raw-text field.</li>
   </ul>

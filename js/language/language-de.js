@@ -315,7 +315,7 @@ guideText: `Willkommen bei <strong>Transcribe Notes</strong>. Die App kann Gespr
 <details>
   <summary><strong>Workspaces und Workspace Sets</strong></summary>
   <ul>
-    <li>Ein <strong>Workspace</strong> ist ein eigener Arbeitsbereich im Browser-Tab. Jeder Workspace hat eigene Texte, ausgewählte Prompts, Anbieter, Modelle, Einstellungen, einen eigenen Verlauf und aktive Prozesse. Ein Wechsel stoppt weder Aufnahme noch Generierung.</li>
+    <li>Ein <strong>Workspace</strong> ist ein eigener Arbeitsbereich im Browser-Tab. Jeder Workspace hat eigene Texte, ausgewählte Prompts, Anbieter, Modelle, Einstellungen und aktive Prozesse. Geklonte Workspaces teilen den Verlauf mit ihrer Klonfamilie; mit + hinzugefügte Workspaces haben einen separaten Verlauf. Ein Wechsel stoppt weder Aufnahme noch Generierung.</li>
     <li>Der Name folgt normalerweise der Bezeichnung des ausgewählten Prompt-Slots. Mit <strong>+</strong> wird ein Workspace hinzugefügt, mit <strong>×</strong> geschlossen. Bis zu 12 Workspaces können geöffnet sein.</li>
     <li>Alle geöffneten Workspaces bilden ein <strong>Workspace Set</strong>. Import und Export sind über eine lokale JSON-Datei, Microsoft OneDrive oder Google Drive möglich.</li>
     <li>Ein Workspace Set speichert Anzahl und Reihenfolge, Namen, ausgewählte Prompt-Slots samt Prompttext und Bezeichnungen, Anbieter, Modelle, Reasoning-Auswahl, relevante Kontrollkästchen und geöffnete Module. Transkripte, ergänzende Informationen, Notizen, Verlauf, Audio, API-Schlüssel, Passwörter und andere Patientendaten sind nicht enthalten.</li>
@@ -362,7 +362,7 @@ guideText: `Willkommen bei <strong>Transcribe Notes</strong>. Die App kann Gespr
   <summary><strong>Prompt-Slots, Verlauf, Redactor und OCR</strong></summary>
   <ul>
     <li>Es gibt 20 Prompt-Slots. Die Prompt profile ID trennt Prompt-Sätze auf demselben Gerät. Import und Export sind als JSON oder verschlüsselt über OneDrive und Google Drive möglich.</li>
-    <li>Die Verlaufsspalte zeigt die 30 letzten abgeschlossenen primären Notizgenerierungen des aktiven Workspace. Ein Eintrag zeigt Transkript, ergänzende Informationen und generierte Notiz. Jeder Workspace hat einen eigenen Verlauf.</li>
+    <li>Die Verlaufsspalte zeigt die 30 letzten abgeschlossenen primären Notizgenerierungen des aktiven Workspace. Ein Eintrag zeigt Transkript, ergänzende Informationen und generierte Notiz. Geklonte Workspaces teilen den Verlauf mit ihrer Klonfamilie; andere Workspaces haben einen separaten Verlauf.</li>
     <li><strong>Redactor</strong> kann ausgewählte allgemeine und spezifische Begriffe aus Transkript und ergänzenden Informationen entfernen. Ergebnis vor dem Senden immer prüfen.</li>
     <li><strong>OCR</strong> kann Text aus einem eingefügten Screenshot oder einer Bilddatei extrahieren und an die Liste spezifischer Begriffe oder das Rohtextfeld übergeben.</li>
   </ul>

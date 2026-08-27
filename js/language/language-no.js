@@ -482,7 +482,7 @@ guideText: `Velkommen til <strong>Transcribe Notes</strong>. Appen kan ta opp og
 <details>
   <summary><strong>Workspaces og Workspace Sets</strong></summary>
   <ul>
-    <li>Et <strong>Workspace</strong> er et eget arbeidsområde i nettleserfanen. Hvert Workspace har egne tekster, valgte prompts, tilbydere, modeller, innstillinger, historikk og aktive prosesser. Bytte mellom Workspaces stopper ikke opptak eller generering.</li>
+    <li>Et <strong>Workspace</strong> er et eget arbeidsområde i nettleserfanen. Hvert Workspace har egne tekster, valgte prompts, tilbydere, modeller, innstillinger og aktive prosesser. Klonede Workspaces deler historikk med klonefamilien, mens Workspaces som legges til med + har separat historikk. Bytte mellom Workspaces stopper ikke opptak eller generering.</li>
     <li>Navnet følger normalt navnet på den valgte promptplassen. Bruk <strong>+</strong> for å legge til og <strong>×</strong> for å lukke et Workspace. Du kan ha opptil 12 åpne Workspaces.</li>
     <li>Alle åpne Workspaces utgjør et <strong>Workspace Set</strong>. Import og eksport kan gjøres med lokal JSON-fil, Microsoft OneDrive eller Google Drive.</li>
     <li>Et Workspace Set lagrer antall og rekkefølge, navn, valgte promptplasser med prompttekst og navn, tilbydere, modeller, reasoning-valg, relevante avkrysningsbokser og åpne moduler. Det tar ikke med transkripsjoner, supplerende informasjon, notater, historikk, lyd, API-nøkler, passord eller andre pasientopplysninger.</li>
@@ -529,7 +529,7 @@ guideText: `Velkommen til <strong>Transcribe Notes</strong>. Appen kan ta opp og
   <summary><strong>Promptplasser, historikk, Redactor og OCR</strong></summary>
   <ul>
     <li>Du har 20 promptplasser. Prompt profile ID skiller promptsett på samme enhet. Promptsett kan importeres eller eksporteres som JSON eller kryptert via OneDrive og Google Drive.</li>
-    <li>Historikkolonnen viser de 30 siste fullførte primære notatgenereringene i det aktive Workspace-et. Klikk på et element for å se transkripsjon, supplerende informasjon og generert notat. Hvert Workspace har sin egen historikk.</li>
+    <li>Historikkolonnen viser de 30 siste fullførte primære notatgenereringene i det aktive Workspace-et. Klikk på et element for å se transkripsjon, supplerende informasjon og generert notat. Klonede Workspaces deler historikk med klonefamilien, mens andre Workspaces har separat historikk.</li>
     <li><strong>Redactor</strong> kan fjerne valgte generelle og spesifikke begreper fra transkripsjonen og supplerende informasjon. Kontroller alltid resultatet før teksten sendes videre.</li>
     <li><strong>OCR</strong> kan hente tekst fra et innlimt skjermbilde eller en bildefil og sende teksten til listen over spesifikke begreper eller til råtekstfeltet.</li>
   </ul>

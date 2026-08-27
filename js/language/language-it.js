@@ -315,7 +315,7 @@ guideText: `Benvenuto in <strong>Transcribe Notes</strong>. L'app può registrar
 <details>
   <summary><strong>Workspaces e Workspace Sets</strong></summary>
   <ul>
-    <li>Un <strong>Workspace</strong> è un'area di lavoro separata nella scheda del browser. Ogni Workspace ha testi, prompt selezionati, fornitori, modelli, impostazioni, cronologia e processi attivi propri. Cambiare Workspace non interrompe registrazioni o generazioni.</li>
+    <li>Un <strong>Workspace</strong> è un'area di lavoro separata nella scheda del browser. Ogni Workspace ha testi, prompt selezionati, fornitori, modelli, impostazioni e processi attivi propri. I Workspace clonati condividono la cronologia della loro famiglia di cloni; quelli aggiunti con + hanno una cronologia separata. Cambiare Workspace non interrompe registrazioni o generazioni.</li>
     <li>Il nome segue normalmente l'etichetta dello slot prompt selezionato. Usa <strong>+</strong> per aggiungere e <strong>×</strong> per chiudere un Workspace. Possono essere aperti fino a 12 Workspaces.</li>
     <li>Tutti i Workspaces aperti formano un <strong>Workspace Set</strong>. Importazione ed esportazione sono disponibili tramite file JSON locale, Microsoft OneDrive o Google Drive.</li>
     <li>Un Workspace Set salva numero e ordine, nomi, slot prompt selezionati con testo ed etichette, fornitori, modelli, scelte di reasoning, caselle pertinenti e moduli aperti. Non include trascrizioni, informazioni supplementari, note, cronologia, audio, chiavi API, password o altre informazioni sui pazienti.</li>
@@ -362,7 +362,7 @@ guideText: `Benvenuto in <strong>Transcribe Notes</strong>. L'app può registrar
   <summary><strong>Slot prompt, cronologia, Redactor e OCR</strong></summary>
   <ul>
     <li>Sono disponibili 20 slot prompt. Prompt profile ID separa i set di prompt sullo stesso dispositivo. I set possono essere importati o esportati in JSON o crittografati tramite OneDrive e Google Drive.</li>
-    <li>La colonna della cronologia mostra le 30 generazioni primarie completate più recenti del Workspace attivo. Seleziona un elemento per vedere trascrizione, informazioni supplementari e nota generata. Ogni Workspace ha la propria cronologia.</li>
+    <li>La colonna della cronologia mostra le 30 generazioni primarie completate più recenti del Workspace attivo. Seleziona un elemento per vedere trascrizione, informazioni supplementari e nota generata. I Workspace clonati condividono la cronologia della loro famiglia di cloni; gli altri hanno una cronologia separata.</li>
     <li><strong>Redactor</strong> può rimuovere termini generali e specifici selezionati dalla trascrizione e dalle informazioni supplementari. Controlla sempre il risultato prima dell'invio.</li>
     <li><strong>OCR</strong> può estrarre testo da uno screenshot incollato o da un file immagine e inviarlo all'elenco dei termini specifici o al campo di testo grezzo.</li>
   </ul>
