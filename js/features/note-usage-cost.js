@@ -7,6 +7,8 @@ import {
   isOpenAiEffectiveNoteProvider,
   isRequestyEffectiveNoteProvider,
   normalizeNoteEffectiveProvider,
+  normalizeOpenAiModel,
+  resolveEffectiveNoteProvider,
   resolveRequestyEffectiveProvider,
 } from '../core/provider-registry.js';
 
@@ -63,24 +65,19 @@ import {
       return getEffectiveProviderKey();
     }
 
-    // Some OpenAI note modules report the UI provider ("openai") instead of an
-    // effective provider key ("gpt5", "gpt52", "gpt54", "gpt55"). Normalize those here
-    // so pricing and logging do not fall back to DEFAULTS.noteProvider.
+    // Direct OpenAI reports the UI provider plus the actual API model.
+    // Resolve that pair to the registry's effective provider key.
     if (rawProvider === "openai") {
       const rawModel = String(modelId || "").trim().toLowerCase();
-      if (rawModel === "gpt-5.5") return "gpt55";
-      if (rawModel === "gpt-5.4") return "gpt54";
-      if (rawModel === "gpt-5.2") return "gpt52";
-      if (rawModel === "gpt-5.1") return "gpt5";
-
       const snapshot = getControllerNoteSnapshot();
-      const openAiModel = String(
-        snapshot.openaiModel || readSession("openai_model", "") || DEFAULTS.openaiModel
-      ).trim().toLowerCase();
-      if (openAiModel === "gpt55") return "gpt55";
-      if (openAiModel === "gpt54") return "gpt54";
-      if (openAiModel === "gpt52") return "gpt52";
-      return "gpt5";
+      const openAiModel = normalizeOpenAiModel(
+        rawModel || snapshot.openaiModel ||
+        readSession("openai_model", "") || DEFAULTS.openaiModel
+      );
+      return resolveEffectiveNoteProvider({
+        provider: "openai",
+        openaiModel: openAiModel,
+      });
     }
 
     // The Requesty note module reports the UI provider ("requesty");
@@ -126,15 +123,10 @@ import {
 
   // Prices are USD per 1M tokens (Standard pricing; cached-input discounts not applied here).
   const OPENAI_USD_PER_MTOK = {
-    "gpt-5.1": { input: 1.25, output: 10.0 },
-    "gpt-5.2": { input: 1.75, output: 14.0 },
-    "gpt-5.4": { input: 2.5, output: 15.0 },
-    "gpt-5.5": { input: 5.0, output: 30.0 },
-    "chatgpt-4o-latest": { input: 5.0, output: 15.0 },
-    "GPT-5.1": { input: 1.25, output: 10.0 },
-    "GPT-5.2": { input: 1.75, output: 14.0 },
-    "GPT-5.4": { input: 2.5, output: 15.0 },
-    "GPT-5.5": { input: 5.0, output: 30.0 },
+    "gpt-5.6-sol": { input: 4.0, output: 20.0 },
+    "gpt-5.6-terra": { input: 2.0, output: 12.0 },
+    "gpt-5.6-luna": { input: 0.2, output: 1.2 },
+    "gpt-5-nano": { input: 0.05, output: 0.4 },
   };
 
   // AWS Bedrock (Claude) — USD per 1M tokens
@@ -178,13 +170,6 @@ import {
   // Completed Requesty calls prefer usage.cost, so the displayed final cost
   // reflects the actual charge, caching, and any current account markup.
 
-  const OPENAI_UI_MODEL_IDS = {
-    gpt5: "gpt-5.1",
-    gpt52: "gpt-5.2",
-    gpt54: "gpt-5.4",
-    gpt55: "gpt-5.5",
-  };
-
   function getModelPricing({
     provider,
     openaiModel,
@@ -194,8 +179,7 @@ import {
     const providerKey = String(provider || "").trim().toLowerCase();
 
     if (providerKey === "openai") {
-      const rawModel = String(openaiModel || DEFAULTS.openaiModel).trim().toLowerCase();
-      const modelId = OPENAI_UI_MODEL_IDS[rawModel] || rawModel;
+      const modelId = normalizeOpenAiModel(openaiModel);
       const rates = OPENAI_USD_PER_MTOK[modelId];
       return rates ? { rates } : null;
     }

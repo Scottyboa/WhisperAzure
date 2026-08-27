@@ -2801,10 +2801,10 @@
                  style="display:none; align-items:center; gap:6px; margin-left:8px;">
               <label for="openaiModel" id="openaiModelLabel">Model:</label>
               <select id="openaiModel">
-                <option value="gpt5" selected>GPT-5.1</option>
-                <option value="gpt52">GPT-5.2</option>
-                <option value="gpt54">GPT-5.4</option>
-                <option value="gpt55">GPT-5.5</option>
+                <option value="gpt-5.6-sol" selected>GPT-5.6 Sol</option>
+                <option value="gpt-5.6-terra">GPT-5.6 Terra</option>
+                <option value="gpt-5.6-luna">GPT-5.6 Luna</option>
+                <option value="gpt-5-nano">GPT-5 Nano</option>
               </select>
               <span id="openaiModelPrice" class="model-price-label"></span>
             </div>
@@ -2868,9 +2868,11 @@
             <label for="gpt5Reasoning" id="gpt5ReasoningLabel">Reasoning effort:</label>
             <select id="gpt5Reasoning">
               <option value="none">None</option>
-              <option value="low" selected>Low</option>
-              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
               <option value="high">High</option>
+              <option value="xhigh">X-high</option>
+              <option value="max">Max</option>
             </select>
           </div>
 

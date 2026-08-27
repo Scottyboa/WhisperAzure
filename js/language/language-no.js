@@ -70,7 +70,7 @@ export const indexTranslations = {
 
   <p><strong>Andre støttede leverandører</strong></p>
   <ul>
-    <li><strong>OpenAI</strong> – GPT-5.1, GPT-5.2, GPT-5.4 og GPT-5.5</li>
+    <li><strong>OpenAI</strong> – GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna og GPT-5 Nano</li>
     <li><strong>AWS Bedrock</strong> – Claude Haiku 4.5, Claude Sonnet 4.5/4.6 og Claude Opus 4.5/4.6/4.7</li>
     <li><strong>Mistral</strong> – Mistral Large</li>
   </ul>
@@ -246,7 +246,7 @@ Dette gir tilgang til transkripsjon av høy kvalitet og et kuratert utvalg nyere
 
 <strong>Leverandører for notatgenerering i appen</strong><br>
 - Requesty: Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.7 Flash og Kimi K3<br>
-- OpenAI: GPT-5.1, GPT-5.2, GPT-5.4 og GPT-5.5<br>
+- OpenAI: GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna og GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 og Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
 
@@ -366,7 +366,7 @@ En API-nøkkel alene gjør ikke en tjeneste GDPR-kompatibel. Kontroller leverand
 
   <p><strong>Andre støttede notatleverandører</strong></p>
   <ul>
-    <li><strong>OpenAI:</strong> direkte GPT-5.1-, GPT-5.2-, GPT-5.4- og GPT-5.5-modeller.</li>
+    <li><strong>OpenAI:</strong> direkte GPT-5.6 Sol-, GPT-5.6 Terra-, GPT-5.6 Luna- og GPT-5 Nano-modeller.</li>
     <li><strong>AWS Bedrock:</strong> Claude Haiku-, Sonnet- og Opus-modeller. Beholdes hovedsakelig for eksisterende AWS-brukere.</li>
     <li><strong>Mistral:</strong> Mistral Large.</li>
   </ul>

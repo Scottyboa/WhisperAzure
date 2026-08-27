@@ -70,7 +70,7 @@ export const indexTranslations = {
 
   <p><strong>Other supported providers</strong></p>
   <ul>
-    <li><strong>OpenAI</strong> – GPT-5.1, GPT-5.2, GPT-5.4 and GPT-5.5</li>
+    <li><strong>OpenAI</strong> – GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna and GPT-5 Nano</li>
     <li><strong>AWS Bedrock</strong> – Claude Haiku 4.5, Claude Sonnet 4.5/4.6 and Claude Opus 4.5/4.6/4.7</li>
     <li><strong>Mistral</strong> – Mistral Large</li>
   </ul>
@@ -247,7 +247,7 @@ This gives access to high-quality transcription and a curated selection of newer
 
 <strong>Note-generation providers in the app</strong><br>
 - Requesty: Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.7 Flash and Kimi K3<br>
-- OpenAI: GPT-5.1, GPT-5.2, GPT-5.4 and GPT-5.5<br>
+- OpenAI: GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna and GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 and Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
 
@@ -367,7 +367,7 @@ priceModalText: `
 
   <p><strong>Other supported note providers</strong></p>
   <ul>
-    <li><strong>OpenAI:</strong> direct GPT-5.1, GPT-5.2, GPT-5.4 and GPT-5.5 models.</li>
+    <li><strong>OpenAI:</strong> direct GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna and GPT-5 Nano models.</li>
     <li><strong>AWS Bedrock:</strong> Claude Haiku, Sonnet and Opus models. Retained mainly for existing AWS users.</li>
     <li><strong>Mistral:</strong> Mistral Large.</li>
   </ul>

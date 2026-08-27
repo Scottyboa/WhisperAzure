@@ -13,8 +13,9 @@ export const DEFAULTS = {
   sonioxRegion: 'eu',
   sonioxSpeakerLabels: 'off',
   noteProvider: 'aws-bedrock',
-  openaiModel: 'gpt5',
-  openaiReasoning: 'low',
+  openaiModel: 'gpt-5.6-sol',
+  openaiEffectiveProvider: 'openai-gpt56-sol',
+  openaiReasoning: 'medium',
   noteMode: 'streaming',
   bedrockModel: 'opus-4-5',
   requestyModel: 'claude-opus-5',
@@ -61,68 +62,41 @@ const TRANSCRIBE_PROVIDER_REGISTRY = {
 };
 
 const NOTE_PROVIDER_REGISTRY = {
-  gpt5: {
-    id: 'gpt5',
-    label: 'GPT-5.1',
+  'openai-gpt56-sol': {
+    id: 'openai-gpt56-sol',
+    label: 'GPT-5.6 Sol',
     uiProvider: 'openai',
-    openaiModel: 'gpt5',
-    mode: 'streaming',
-    modulePath: './noteGeneration_openai.js',
-    initExportName: 'initGpt5Streaming',
-  },
-  'gpt5-ns': {
-    id: 'gpt5-ns',
-    label: 'GPT-5.1 (non-streaming)',
-    uiProvider: 'openai',
-    openaiModel: 'gpt5',
-    mode: 'non-streaming',
-    modulePath: './noteGeneration_openai.js',
-    initExportName: 'initGpt5NonStreaming',
-  },
-  gpt52: {
-    id: 'gpt52',
-    label: 'GPT-5.2',
-    uiProvider: 'openai',
-    openaiModel: 'gpt52',
-    mode: 'streaming',
-    modulePath: './noteGeneration_openai.js',
-    initExportName: 'initGpt52Streaming',
-  },
-  'gpt52-ns': {
-    id: 'gpt52-ns',
-    label: 'GPT-5.2 (non-streaming)',
-    uiProvider: 'openai',
-    openaiModel: 'gpt52',
-    mode: 'non-streaming',
-    modulePath: './noteGeneration_openai.js',
-    initExportName: 'initGpt52NonStreaming',
-  },
-  gpt54: {
-    id: 'gpt54',
-    label: 'GPT-5.4',
-    uiProvider: 'openai',
-    openaiModel: 'gpt54',
+    openaiModel: 'gpt-5.6-sol',
     mode: DEFAULTS.noteMode,
     modulePath: './noteGeneration_openai.js',
-    initExportName: 'initGpt54',
+    initExportName: 'initOpenAiNoteGeneration',
   },
-  gpt55: {
-    id: 'gpt55',
-    label: 'GPT-5.5',
+  'openai-gpt56-terra': {
+    id: 'openai-gpt56-terra',
+    label: 'GPT-5.6 Terra',
     uiProvider: 'openai',
-    openaiModel: 'gpt55',
-    mode: 'streaming',
+    openaiModel: 'gpt-5.6-terra',
+    mode: DEFAULTS.noteMode,
     modulePath: './noteGeneration_openai.js',
-    initExportName: 'initGpt55Streaming',
+    initExportName: 'initOpenAiNoteGeneration',
   },
-  'gpt55-ns': {
-    id: 'gpt55-ns',
-    label: 'GPT-5.5 (non-streaming)',
+  'openai-gpt56-luna': {
+    id: 'openai-gpt56-luna',
+    label: 'GPT-5.6 Luna',
     uiProvider: 'openai',
-    openaiModel: 'gpt55',
-    mode: 'non-streaming',
+    openaiModel: 'gpt-5.6-luna',
+    mode: DEFAULTS.noteMode,
     modulePath: './noteGeneration_openai.js',
-    initExportName: 'initGpt55NonStreaming',
+    initExportName: 'initOpenAiNoteGeneration',
+  },
+  'openai-gpt5-nano': {
+    id: 'openai-gpt5-nano',
+    label: 'GPT-5 Nano',
+    uiProvider: 'openai',
+    openaiModel: 'gpt-5-nano',
+    mode: DEFAULTS.noteMode,
+    modulePath: './noteGeneration_openai.js',
+    initExportName: 'initOpenAiNoteGeneration',
   },
   mistral: {
     id: 'mistral',
@@ -137,7 +111,7 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './AWSBedrock.js',
   },
   // Requesty (GDPR-compliant router; EU endpoint + EU-region models).
-  // Like gpt54, Requesty variants are mode-driven: the module reads
+  // Requesty variants are mode-driven: the module reads
   // #noteProviderMode at run time, so one effective provider per model.
   'requesty-claude': {
     id: 'requesty-claude',
@@ -283,10 +257,10 @@ const REQUESTY_GPT56_MODELS = new Set([
 ]);
 
 const OPENAI_NOTE_MODEL_OPTIONS = [
-  { value: 'gpt5', label: 'GPT-5.1' },
-  { value: 'gpt52', label: 'GPT-5.2' },
-  { value: 'gpt54', label: 'GPT-5.4' },
-  { value: 'gpt55', label: 'GPT-5.5' },
+  { value: 'gpt-5.6-sol', label: 'GPT-5.6 Sol' },
+  { value: 'gpt-5.6-terra', label: 'GPT-5.6 Terra' },
+  { value: 'gpt-5.6-luna', label: 'GPT-5.6 Luna' },
+  { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
 ];
 
 const NOTE_MODE_OPTIONS = [
@@ -294,12 +268,34 @@ const NOTE_MODE_OPTIONS = [
   { value: 'non-streaming', label: 'non-streaming' },
 ];
 
-const OPENAI_REASONING_OPTIONS = [
+const OPENAI_GPT56_REASONING_OPTIONS = [
+  { value: 'none', label: 'None' },
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+  { value: 'xhigh', label: 'X-high' },
+  { value: 'max', label: 'Max' },
+];
+
+const OPENAI_GPT5_NANO_REASONING_OPTIONS = [
+  { value: 'minimal', label: 'Minimal' },
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+];
+
+const SHARED_REQUESTY_REASONING_OPTIONS = [
   { value: 'none', label: 'None' },
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
   { value: 'high', label: 'High' },
 ];
+
+const OPENAI_GPT56_MODELS = new Set([
+  'gpt-5.6-sol',
+  'gpt-5.6-terra',
+  'gpt-5.6-luna',
+]);
 
 const BEDROCK_MODEL_OPTIONS = [
   { value: 'haiku-4-5', label: 'Claude Haiku 4.5' },
@@ -343,12 +339,47 @@ export function listOpenAiModelOptions() {
   return OPENAI_NOTE_MODEL_OPTIONS.map((item) => ({ ...item }));
 }
 
+export function normalizeOpenAiModel(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  if (OPENAI_NOTE_MODEL_OPTIONS.some((item) => item.value === raw)) return raw;
+
+  // Backward compatibility: retired direct OpenAI selections migrate to Sol.
+  if (
+    raw === 'gpt4' || raw === 'gpt5' || raw === 'gpt52' ||
+    raw === 'gpt54' || raw === 'gpt55' || raw === 'gpt-5.1' ||
+    raw === 'gpt-5.2' || raw === 'gpt-5.4' || raw === 'gpt-5.5'
+  ) {
+    return DEFAULTS.openaiModel;
+  }
+
+  return DEFAULTS.openaiModel;
+}
+
 export function listNoteModeOptions() {
   return NOTE_MODE_OPTIONS.map((item) => ({ ...item }));
 }
 
-export function listOpenAiReasoningOptions() {
-  return OPENAI_REASONING_OPTIONS.map((item) => ({ ...item }));
+export function listOpenAiReasoningOptions(modelId = DEFAULTS.openaiModel) {
+  const model = normalizeOpenAiModel(modelId);
+  const options = OPENAI_GPT56_MODELS.has(model)
+    ? OPENAI_GPT56_REASONING_OPTIONS
+    : OPENAI_GPT5_NANO_REASONING_OPTIONS;
+  return options.map((item) => ({ ...item }));
+}
+
+export function getDefaultOpenAiReasoning() {
+  return DEFAULTS.openaiReasoning;
+}
+
+export function listSharedRequestyReasoningOptions() {
+  return SHARED_REQUESTY_REASONING_OPTIONS.map((item) => ({ ...item }));
+}
+
+export function normalizeSharedRequestyReasoning(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  return SHARED_REQUESTY_REASONING_OPTIONS.some((item) => item.value === raw)
+    ? raw
+    : 'low';
 }
 
 export function listBedrockModelOptions() {
@@ -465,9 +496,22 @@ export function getTranscribeProviderShortLabel(provider) {
 
 export function normalizeNoteEffectiveProvider(value) {
   const raw = String(value || '').trim().toLowerCase();
-  // Legacy migration: old saved GPT-4 sessions should land on the current
-  // default OpenAI model, not silently fall back to AWS Bedrock.
-  if (raw === 'gpt4') return DEFAULTS.openaiModel;
+  // Retired direct OpenAI providers remain OpenAI and migrate to GPT-5.6 Sol.
+  if (
+    raw === 'openai' || raw === 'gpt4' || raw === 'gpt5' ||
+    raw === 'gpt5-ns' || raw === 'gpt52' || raw === 'gpt52-ns' ||
+    raw === 'gpt54' || raw === 'gpt55' || raw === 'gpt55-ns'
+  ) {
+    return DEFAULTS.openaiEffectiveProvider;
+  }
+
+  const directModel = OPENAI_NOTE_MODEL_OPTIONS.find((item) => item.value === raw);
+  if (directModel) {
+    const match = Object.values(NOTE_PROVIDER_REGISTRY).find(
+      (config) => config.uiProvider === 'openai' && config.openaiModel === directModel.value
+    );
+    if (match) return match.id;
+  }
   return NOTE_PROVIDER_REGISTRY[raw] ? raw : DEFAULTS.noteProvider;
 }
 
@@ -489,16 +533,11 @@ export function resolveEffectiveNoteProvider({ provider, openaiModel, noteMode, 
     return normalizeNoteEffectiveProvider(uiProvider);
   }
 
-  const model = String(openaiModel || DEFAULTS.openaiModel).trim().toLowerCase();
-  const mode = String(noteMode || DEFAULTS.noteMode).trim().toLowerCase();
-
-  if (model === 'gpt5' || model === 'gpt52' || model === 'gpt55') {
-    return mode === 'non-streaming' ? `${model}-ns` : model;
-  }
-
-  if (model === 'gpt54') return 'gpt54';
-
-  return DEFAULTS.openaiModel;
+  const model = normalizeOpenAiModel(openaiModel);
+  const match = Object.values(NOTE_PROVIDER_REGISTRY).find(
+    (config) => config.uiProvider === 'openai' && config.openaiModel === model
+  );
+  return match ? match.id : DEFAULTS.openaiEffectiveProvider;
 }
 
 export function deriveNoteUiStateFromEffectiveProvider(effectiveProvider, storedMode = DEFAULTS.noteMode) {
@@ -506,7 +545,7 @@ export function deriveNoteUiStateFromEffectiveProvider(effectiveProvider, stored
   const config = NOTE_PROVIDER_REGISTRY[normalized] || NOTE_PROVIDER_REGISTRY[DEFAULTS.noteProvider];
 
   if (config.uiProvider === 'requesty') {
-    // Requesty variants are mode-driven (gpt54 style): respect the stored
+    // Requesty variants are mode-driven: respect the stored
     // note mode instead of forcing the default.
     return {
       provider: 'requesty',
@@ -527,16 +566,11 @@ export function deriveNoteUiStateFromEffectiveProvider(effectiveProvider, stored
     };
   }
 
-  const resolvedMode =
-    normalized === 'gpt54'
-      ? normalizeNoteMode(storedMode)
-      : (config.mode || DEFAULTS.noteMode);
-
   return {
     provider: 'openai',
     openaiModel: config.openaiModel || DEFAULTS.openaiModel,
     requestyModel: DEFAULTS.requestyModel,
-    mode: resolvedMode,
+    mode: normalizeNoteMode(storedMode),
     effectiveProvider: normalized,
   };
 }
@@ -551,11 +585,11 @@ export function normalizeNoteMode(mode) {
     : DEFAULTS.noteMode;
 }
 
-export function normalizeOpenAiReasoning(value) {
+export function normalizeOpenAiReasoning(value, modelId = DEFAULTS.openaiModel) {
   const raw = String(value || '').trim().toLowerCase();
-  return OPENAI_REASONING_OPTIONS.some((item) => item.value === raw)
+  return listOpenAiReasoningOptions(modelId).some((item) => item.value === raw)
     ? raw
-    : DEFAULTS.openaiReasoning;
+    : getDefaultOpenAiReasoning();
 }
 
 export function getNoteProviderConfig(effectiveProvider) {
@@ -571,7 +605,7 @@ export function resolveNoteModulePath(effectiveProvider) {
 }
 
 // Returns the name of the named export to call on the loaded module
-// (e.g. 'initGpt5Streaming'). Falls back to 'initNoteGeneration' for
+// (e.g. 'initOpenAiNoteGeneration'). Falls back to 'initNoteGeneration' for
 // providers that don't specify an explicit export, so non-OpenAI
 // modules (Mistral and AWS Bedrock) keep their existing
 // loader behaviour.
@@ -636,30 +670,19 @@ export function getDefaultModelIdForEffectiveNoteProvider({
     return 'mistral-large-latest';
   }
 
-  switch (normalized) {
-    case 'gpt5':
-    case 'gpt5-ns':
-      return 'gpt-5.1';
-    case 'gpt52':
-    case 'gpt52-ns':
-      return 'gpt-5.2';
-    case 'gpt54':
-      return 'gpt-5.4';
-    case 'gpt55':
-    case 'gpt55-ns':
-      return 'gpt-5.5';
-    default:
-      return String(openaiModel || '').trim() || null;
+  if (isOpenAiEffectiveNoteProvider(normalized)) {
+    const config = getNoteProviderConfig(normalized);
+    return String(config.openaiModel || normalizeOpenAiModel(openaiModel)).trim() || null;
   }
+
+  return String(openaiModel || '').trim() || null;
 }
 
 export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {}) {
   const uiProvider = String(provider || DEFAULTS.noteProvider).trim().toLowerCase();
-  const model = String(openaiModel || DEFAULTS.openaiModel).trim().toLowerCase();
   const reqModel = normalizeRequestyModel(requestyModel);
 
   const isOpenAi = uiProvider === 'openai';
-  const isGpt5x = isOpenAi && (model === 'gpt5' || model === 'gpt52' || model === 'gpt54' || model === 'gpt55');
   const isRequesty = uiProvider === 'requesty';
   const usesDedicatedRequestyReasoning =
     isRequesty &&
@@ -678,8 +701,8 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
 
   return {
     showOpenAi: isOpenAi,
-    showOpenAiMode: isGpt5x || isRequesty,
-    showOpenAiReasoning: isGpt5x || (isRequesty && !usesDedicatedRequestyReasoning),
+    showOpenAiMode: isOpenAi || isRequesty,
+    showOpenAiReasoning: isOpenAi || (isRequesty && !usesDedicatedRequestyReasoning),
     showRequestyNanoReasoning: usesDedicatedRequestyReasoning,
     showBedrock: uiProvider === 'aws-bedrock',
     showRequesty: isRequesty,

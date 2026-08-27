@@ -12,6 +12,7 @@ import {
   listNoteModeOptions,
   listNoteUiProviderOptions,
   listOpenAiModelOptions,
+  normalizeOpenAiModel,
   listSonioxRegionOptions,
   listSonioxSpeakerLabelOptions,
   listTranscribeProviderOptions,
@@ -1496,12 +1497,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getSelectedOpenAiModel() {
     const domValue = String(document.getElementById('openaiModel')?.value || '').toLowerCase();
-    if (domValue) return domValue;
+    if (domValue) return normalizeOpenAiModel(domValue);
 
     const stored = String(readSession('openai_model', '')).toLowerCase();
-    if (stored) return stored;
+    if (stored) return normalizeOpenAiModel(stored);
 
-    return getDerivedNoteUiState().openaiModel;
+    return normalizeOpenAiModel(getDerivedNoteUiState().openaiModel);
   }
 
   function getSelectedBedrockModel() {
@@ -1793,12 +1794,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const path = resolveNoteModulePath(effectiveChoice);
     const initExportName = resolveNoteInitExportName(effectiveChoice);
 
-    const fallbackProvider = DEFAULTS.openaiModel;
+    const fallbackProvider = DEFAULTS.openaiEffectiveProvider;
     const fallbackPath = resolveNoteModulePath(fallbackProvider);
     const fallbackInitExportName = resolveNoteInitExportName(fallbackProvider);
 
-    // Prefer the registry-specified named export (e.g. 'initGpt5Streaming'
-    // on the consolidated noteGeneration_openai.js). Fall back to the
+    // Prefer the registry-specified named export. Fall back to the
     // legacy 'initNoteGeneration' export for modules that don't declare
     // initExportName (Mistral, AWS Bedrock).
     const callInit = (mod, name) => {
@@ -1820,7 +1820,7 @@ document.addEventListener('DOMContentLoaded', () => {
           provider: effectiveChoice,
         });
       } else {
-        console.warn(`Module ${path} missing ${initExportName}() / initNoteGeneration(); falling back to GPT-5.1`);
+        console.warn(`Module ${path} missing ${initExportName}() / initNoteGeneration(); falling back to GPT-5.6 Sol`);
         const fallback = await loadCachedModule(fallbackPath);
         callInit(fallback, fallbackInitExportName);
         emitAppStateChanged('note-provider-fallback-initialized', {
@@ -1828,7 +1828,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     } catch (e) {
-      console.warn(`Failed to load ${path}; falling back to GPT-5.1`, e);
+      console.warn(`Failed to load ${path}; falling back to GPT-5.6 Sol`, e);
       const fallback = await loadCachedModule(fallbackPath);
       callInit(fallback, fallbackInitExportName);
       emitAppStateChanged('note-provider-fallback-initialized', {
@@ -2686,8 +2686,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!normalizedNext) return false;
 
     // Callers may pass either a UI provider ('openai', 'mistral',
-    // 'aws-bedrock', ...) or an EFFECTIVE provider ('gpt5', 'gpt52-ns',
-    // ...). A raw UI value like 'openai' must stay 'openai' here; if we
+    // 'aws-bedrock', ...) or an EFFECTIVE provider ('openai-gpt56-sol',
+    // 'requesty-claude', ...). A raw UI value like 'openai' must stay
+    // 'openai' here; if we
     // feed it through inferNoteProviderUi() it gets treated like an
     // unknown effective provider and can fall back to the default UI.
     const normalizedUiProvider = normalizeNoteUiProvider(normalizedNext);
@@ -2775,8 +2776,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   app.setOpenAiModel = function setOpenAiModel(next) {
-    const normalizedNext = String(next || '').trim().toLowerCase();
-    if (!normalizedNext) return false;
+    const rawNext = String(next || '').trim().toLowerCase();
+    if (!rawNext) return false;
+    const normalizedNext = normalizeOpenAiModel(rawNext);
 
     const el = document.getElementById('openaiModel');
     if (el && el.value !== normalizedNext) {
@@ -2991,7 +2993,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // NOTE: the #noteProvider change handler lives in
   // provider-persistence.js, which is the authoritative owner of
   // note-provider selection and persistence. It already resolves the
-  // UI value ('openai') to an effective provider ('gpt5', 'gpt52-ns',
+  // UI value ('openai') to an effective provider ('openai-gpt56-sol',
   // etc.) via resolveEffectiveNoteProvider and writes the correct
   // value to sessionStorage. main.js used to ALSO bind a listener
   // here that wrote the raw UI value — which overwrote the correct

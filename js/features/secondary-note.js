@@ -28,6 +28,7 @@ import {
 } from "../core/note-runner.js";
 import {
   DEFAULTS,
+  getDefaultOpenAiReasoning,
   getDefaultRequestyReasoning,
   getNoteUiVisibility,
   listBedrockModelOptions,
@@ -37,11 +38,14 @@ import {
   listOpenAiReasoningOptions,
   listRequestyModelOptions,
   listRequestyNanoReasoningOptions,
+  listSharedRequestyReasoningOptions,
   normalizeNoteMode,
   normalizeNoteUiProvider,
+  normalizeOpenAiModel,
   normalizeOpenAiReasoning,
   normalizeRequestyModel,
-  normalizeRequestyNanoReasoning
+  normalizeRequestyNanoReasoning,
+  normalizeSharedRequestyReasoning
 } from "../core/provider-registry.js";
 import { PromptManager } from "../promptManager.js";
 
@@ -73,14 +77,6 @@ const ALLOWED_BEDROCK_MODEL_KEYS = new Set([
   "opus-4-6",
   "opus-4-7"
 ]);
-
-// Mirrors noteGeneration_openai.js model ids.
-const OPENAI_MODEL_IDS = {
-  gpt5: "gpt-5.1",
-  gpt52: "gpt-5.2",
-  gpt54: "gpt-5.4",
-  gpt55: "gpt-5.5"
-};
 
 // Mirrors requesty.js VARIANTS (EU endpoint + EU-region models).
 const REQUESTY_EU_CHAT_COMPLETIONS_URL =
@@ -383,10 +379,9 @@ function pushSecondaryUsage({ providerKey, modelId, usage, meta = null }) {
 
 function getSelections() {
   const provider = normalizeNoteUiProvider(readSession(STORAGE_KEYS.provider, DEFAULTS.noteProvider));
-  const openaiModel = (() => {
-    const raw = String(readSession(STORAGE_KEYS.openaiModel, DEFAULTS.openaiModel)).trim().toLowerCase();
-    return OPENAI_MODEL_IDS[raw] ? raw : DEFAULTS.openaiModel;
-  })();
+  const openaiModel = normalizeOpenAiModel(
+    readSession(STORAGE_KEYS.openaiModel, DEFAULTS.openaiModel)
+  );
   const bedrockModel = (() => {
     const raw = String(readSession(STORAGE_KEYS.bedrockModel, DEFAULTS.bedrockModel)).trim();
     return ALLOWED_BEDROCK_MODEL_KEYS.has(raw) ? raw : DEFAULTS.bedrockModel;
@@ -400,9 +395,15 @@ function getSelections() {
     provider,
     mode: normalizeNoteMode(readSession(STORAGE_KEYS.mode, DEFAULTS.noteMode)),
     openaiModel,
-    openaiReasoning: normalizeOpenAiReasoning(
-      readSession(STORAGE_KEYS.openaiReasoning, DEFAULTS.openaiReasoning)
-    ),
+    openaiReasoning:
+      provider === "openai"
+        ? normalizeOpenAiReasoning(
+            readSession(STORAGE_KEYS.openaiReasoning, getDefaultOpenAiReasoning()),
+            openaiModel
+          )
+        : normalizeSharedRequestyReasoning(
+            readSession(STORAGE_KEYS.openaiReasoning, "low")
+          ),
     bedrockModel,
     requestyModel,
     requestyNanoReasoning: normalizeRequestyNanoReasoning(
@@ -443,11 +444,18 @@ function hydrateSelectors() {
   // Existing sessions may still contain a provider that is no longer
   // available. Persist the normalized fallback during hydration.
   writeSession(STORAGE_KEYS.provider, selections.provider);
+  writeSession(STORAGE_KEYS.openaiModel, selections.openaiModel);
+  writeSession(STORAGE_KEYS.openaiReasoning, selections.openaiReasoning);
 
   setSelectOptions(el("secondaryProvider"), listNoteUiProviderOptions());
   setSelectOptions(el("secondaryOpenaiModel"), listOpenAiModelOptions());
   setSelectOptions(el("secondaryMode"), listNoteModeOptions());
-  setSelectOptions(el("secondaryOpenaiReasoning"), listOpenAiReasoningOptions());
+  setSelectOptions(
+    el("secondaryOpenaiReasoning"),
+    selections.provider === "openai"
+      ? listOpenAiReasoningOptions(selections.openaiModel)
+      : listSharedRequestyReasoningOptions()
+  );
   setSelectOptions(
     el("secondaryNanoReasoning"),
     listRequestyNanoReasoningOptions(selections.requestyModel)
@@ -671,7 +679,7 @@ async function generateOpenAi({ selections, sourceText, promptText, outputField,
   );
   if (!apiKey) return { ok: false, silent: true };
 
-  const modelId = OPENAI_MODEL_IDS[selections.openaiModel] || OPENAI_MODEL_IDS.gpt5;
+  const modelId = normalizeOpenAiModel(selections.openaiModel);
   const streaming = selections.mode !== "non-streaming";
   const reasoningLevel = selections.openaiReasoning;
 
@@ -690,7 +698,8 @@ async function generateOpenAi({ selections, sourceText, promptText, outputField,
     text: { verbosity: "medium" }
   };
   if (streaming) requestBody.stream = true;
-  if (reasoningLevel && reasoningLevel !== "none") {
+  // Send `none` explicitly because GPT-5.6 otherwise defaults to Medium.
+  if (reasoningLevel) {
     requestBody.reasoning = { effort: reasoningLevel };
   }
 
@@ -1164,15 +1173,45 @@ function initSecondaryNoteModule() {
 
     bindPersistedSelect("secondaryProvider", STORAGE_KEYS.provider, {
       normalize: normalizeNoteUiProvider,
-      onChange: () => {
+      onChange: (provider) => {
         clearSecondaryUsageAndCost();
+        const selections = getSelections();
+        const reasoningSelect = el("secondaryOpenaiReasoning");
+        const previousReasoning = String(reasoningSelect?.value || "");
+        setSelectOptions(
+          reasoningSelect,
+          provider === "openai"
+            ? listOpenAiReasoningOptions(selections.openaiModel)
+            : listSharedRequestyReasoningOptions()
+        );
+        const normalizedReasoning =
+          provider === "openai"
+            ? normalizeOpenAiReasoning(previousReasoning, selections.openaiModel)
+            : normalizeSharedRequestyReasoning(previousReasoning);
+        if (reasoningSelect) reasoningSelect.value = normalizedReasoning;
+        writeSession(STORAGE_KEYS.openaiReasoning, normalizedReasoning);
         syncVisibility();
       }
     });
     bindPersistedSelect("secondaryOpenaiModel", STORAGE_KEYS.openaiModel, {
-      normalize: (v) => (OPENAI_MODEL_IDS[v] ? v : DEFAULTS.openaiModel),
-      onChange: () => {
+      normalize: normalizeOpenAiModel,
+      onChange: (modelId) => {
         clearSecondaryUsageAndCost();
+        const provider = getSelections().provider;
+        const reasoningSelect = el("secondaryOpenaiReasoning");
+        const previousReasoning = String(reasoningSelect?.value || "");
+        setSelectOptions(
+          reasoningSelect,
+          provider === "openai"
+            ? listOpenAiReasoningOptions(modelId)
+            : listSharedRequestyReasoningOptions()
+        );
+        const normalizedReasoning =
+          provider === "openai"
+            ? normalizeOpenAiReasoning(previousReasoning, modelId)
+            : normalizeSharedRequestyReasoning(previousReasoning);
+        if (reasoningSelect) reasoningSelect.value = normalizedReasoning;
+        writeSession(STORAGE_KEYS.openaiReasoning, normalizedReasoning);
         syncVisibility();
       }
     });
@@ -1181,7 +1220,10 @@ function initSecondaryNoteModule() {
       onChange: () => clearSecondaryUsageAndCost()
     });
     bindPersistedSelect("secondaryOpenaiReasoning", STORAGE_KEYS.openaiReasoning, {
-      normalize: normalizeOpenAiReasoning
+      normalize: (value) =>
+        getSelections().provider === "openai"
+          ? normalizeOpenAiReasoning(value, getSelections().openaiModel)
+          : normalizeSharedRequestyReasoning(value)
     });
     bindPersistedSelect("secondaryNanoReasoning", STORAGE_KEYS.requestyNanoReasoning, {
       normalize: (value) =>

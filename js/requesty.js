@@ -46,8 +46,8 @@ import {
 } from "./core/note-runner.js";
 import {
   getDefaultRequestyReasoning,
-  normalizeOpenAiReasoning,
-  normalizeRequestyNanoReasoning
+  normalizeRequestyNanoReasoning,
+  normalizeSharedRequestyReasoning
 } from "./core/provider-registry.js";
 
 // EU router: Requesty processing/storage stays in Frankfurt. Combined with
@@ -159,7 +159,9 @@ function resolveReasoningLevel(variantKey, variantConfig) {
   // endpoint and maps it to a thinking budget; "none" is handled in
   // buildRequestBody by omitting the parameter (the model then uses its own
   // adaptive default). For GPT-5.5 it is the native OpenAI effort string.
-  return normalizeOpenAiReasoning(getSelectValue("gpt5Reasoning", "none"));
+  return normalizeSharedRequestyReasoning(
+    getSelectValue("gpt5Reasoning", "low")
+  );
 }
 
 function buildRequestBody({

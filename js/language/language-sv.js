@@ -41,7 +41,7 @@ export const indexTranslations = {
   </ul>
   <p><strong>Andra leverantörer som stöds</strong></p>
   <ul>
-    <li><strong>OpenAI</strong> – GPT-5.1, GPT-5.2, GPT-5.4 och GPT-5.5</li>
+    <li><strong>OpenAI</strong> – GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna och GPT-5 Nano</li>
     <li><strong>AWS Bedrock</strong> – Claude Haiku 4.5, Claude Sonnet 4.5/4.6 och Claude Opus 4.5/4.6/4.7</li>
     <li><strong>Mistral</strong> – Mistral Large</li>
   </ul>
@@ -182,7 +182,7 @@ Den enklaste rekommenderade konfigurationen för nya användare är:<br>
 2. <strong>Requesty</strong> för anteckningsgenerering.<br><br>
 
 <strong>STT-alternativ:</strong> Soniox batch, Soniox batch med talaretiketter, Soniox realtid, OpenAI gpt-4o-transcribe och Mistral Voxtral Mini Transcribe.<br><br>
-<strong>Anteckningsleverantörer:</strong> Requesty (Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.7 Flash och Kimi K3), OpenAI (GPT-5.1/5.2/5.4/5.5), AWS Bedrock (Claude Haiku/Sonnet/Opus) och Mistral Large.<br><br>
+<strong>Anteckningsleverantörer:</strong> Requesty (Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.7 Flash och Kimi K3), OpenAI (GPT-5.6 Sol/Terra/Luna och GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) och Mistral Large.<br><br>
 
 <hr><br>
 <strong>Soniox — rekommenderad STT-konfiguration</strong><br>
@@ -249,7 +249,7 @@ En API-nyckel gör inte en tjänst automatiskt GDPR-kompatibel. Kontrollera DPA,
     <li>Kimi K3: cirka 3,00 / 15,00 USD</li>
   </ul>
   <p>Beloppen motsvarar appens nuvarande uppskattningar och kan ändras när Requesty eller uppströmsleverantören ändrar pris. Kontrollera priset bredvid modellen och Requestys användningsrapport.</p>
-  <p>Andra leverantörer som stöds är direkt OpenAI (GPT-5.1/5.2/5.4/5.5), AWS Bedrock (Claude Haiku/Sonnet/Opus, främst för befintliga AWS-användare) och Mistral Large. Aktuella modellpriser visas i appen.</p>
+  <p>Andra leverantörer som stöds är direkt OpenAI (GPT-5.6 Sol/Terra/Luna och GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus, främst för befintliga AWS-användare) och Mistral Large. Aktuella modellpriser visas i appen.</p>
 
   <hr><br>
   <p><strong>3. Vad är token?</strong></p>

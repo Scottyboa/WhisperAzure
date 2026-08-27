@@ -42,7 +42,7 @@ export const indexTranslations = {
   </ul>
   <p><strong>Autres fournisseurs pris en charge</strong></p>
   <ul>
-    <li><strong>OpenAI</strong> – GPT-5.1, GPT-5.2, GPT-5.4 et GPT-5.5</li>
+    <li><strong>OpenAI</strong> – GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna et GPT-5 Nano</li>
     <li><strong>AWS Bedrock</strong> – Claude Haiku 4.5, Claude Sonnet 4.5/4.6 et Claude Opus 4.5/4.6/4.7</li>
     <li><strong>Mistral</strong> – Mistral Large</li>
   </ul>
@@ -182,7 +182,7 @@ Configuration recommandée la plus simple :<br>
 2. <strong>Requesty</strong> pour les notes.<br><br>
 
 <strong>Options STT :</strong> Soniox par lots, par lots avec identification des locuteurs, temps réel, OpenAI gpt-4o-transcribe et Mistral Voxtral Mini.<br><br>
-<strong>Fournisseurs de notes :</strong> Requesty (Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.7 Flash, Kimi K3), OpenAI (GPT-5.1/5.2/5.4/5.5), AWS Bedrock (Claude Haiku/Sonnet/Opus) et Mistral Large.<br><br>
+<strong>Fournisseurs de notes :</strong> Requesty (Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.7 Flash, Kimi K3), OpenAI (GPT-5.6 Sol/Terra/Luna et GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) et Mistral Large.<br><br>
 
 <hr><br>
 <strong>Soniox — configuration STT recommandée</strong><br>
@@ -240,7 +240,7 @@ Une clé API ne rend pas un service automatiquement conforme au RGPD. Vérifiez 
     <li>GPT-5 Nano : env. 0,05 / 0,40 USD</li><li>Gemini 3.7 Flash : env. 0,66 / 3,30 USD</li><li>Kimi K3 : env. 3,00 / 15,00 USD</li>
   </ul>
   <p>Ces valeurs reflètent les estimations de l’application et peuvent changer avec Requesty ou le déploiement amont. Consultez le prix près du modèle et le rapport d’utilisation Requesty.</p>
-  <p>Autres fournisseurs : OpenAI direct (GPT-5.1/5.2/5.4/5.5), AWS Bedrock (Claude Haiku/Sonnet/Opus, surtout pour utilisateurs AWS existants) et Mistral Large. Les prix actuels apparaissent dans l’application.</p>
+  <p>Autres fournisseurs : OpenAI direct (GPT-5.6 Sol/Terra/Luna et GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus, surtout pour utilisateurs AWS existants) et Mistral Large. Les prix actuels apparaissent dans l’application.</p>
 
   <hr><br>
   <p><strong>3. Que sont les tokens ?</strong></p>
