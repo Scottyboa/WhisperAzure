@@ -52,7 +52,10 @@
         return body;
       }
 
-      return body ? `${dateLine}\n${body}` : `${dateLine}\n`;
+      // Keep one intentionally blank line between the sticky date and the
+      // supplementary text. Preserve the same spacing even while the body is
+      // empty so later typing or pasting starts below that blank line.
+      return body ? `${dateLine}\n\n${body}` : `${dateLine}\n\n`;
     };
 
     const getSupplementaryDateToggleState = () => {

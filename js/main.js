@@ -739,7 +739,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const todayLine = getTodaySupplementaryDateLine();
     const body = nonDateLines.join('\n').replace(/^\n+/, '');
-    return body ? `${todayLine}\n${body}` : todayLine;
+    // Keep one intentionally blank line between the sticky date and the
+    // supplementary text. Preserve the same spacing even while the body is
+    // empty so later typing or pasting starts below that blank line.
+    return body ? `${todayLine}\n\n${body}` : `${todayLine}\n\n`;
   }
 
   function syncSupplementaryDateField({ enabled, focus = false, emitReason = '' } = {}) {
