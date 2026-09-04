@@ -115,9 +115,9 @@ const REQUESTY_VARIANTS = {
     pricingModelId: "gpt-5.6-sol",
     reasoningSelector: "dedicated"
   },
-  "gemini-3.7-flash": {
-    requestyModelId: "vertex/gemini-3.7-flash@eu",
-    pricingModelId: "gemini-3.7-flash",
+  "gemini-3.8-flash": {
+    requestyModelId: "vertex/gemini-3.8-flash@eu",
+    pricingModelId: "gemini-3.8-flash",
     reasoningSelector: "dedicated"
   },
   "kimi-k3": {
@@ -1238,7 +1238,7 @@ function initSecondaryNoteModule() {
       onChange: (modelId) => {
         clearSecondaryUsageAndCost();
         const reasoningSelect = el("secondaryNanoReasoning");
-        const previous = modelId === "gemini-3.7-flash"
+        const previous = modelId === "gemini-3.8-flash"
           ? getDefaultRequestyReasoning(modelId)
           : String(reasoningSelect?.value || "");
         setSelectOptions(

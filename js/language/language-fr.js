@@ -38,7 +38,7 @@ export const indexTranslations = {
   <p><strong>Requesty — recommandé aux nouveaux utilisateurs</strong></p>
   <p>Requesty donne accès aux modèles de plusieurs développeurs avec une seule clé API. L’application limite volontairement les choix à des déploiements prévus pour un traitement dans l’UE, sans réutilisation pour l’entraînement et avec des contrôles de conservation adaptés.</p>
   <ul>
-    <li>Claude Opus 5</li><li>Claude Sonnet 5</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 3.7 Flash</li><li>Kimi K3</li>
+    <li>Claude Opus 5</li><li>Claude Sonnet 5</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 3.8 Flash</li><li>Kimi K3</li>
   </ul>
   <p><strong>Autres fournisseurs pris en charge</strong></p>
   <ul>
@@ -52,7 +52,7 @@ export const indexTranslations = {
   <ul>
     <li><strong>Qualité maximale :</strong> Claude Opus 5 et GPT-5.6 Sol</li>
     <li><strong>Excellents choix polyvalents :</strong> Claude Sonnet 5, GPT-5.6 Terra et GPT-5.5</li>
-    <li><strong>Rapidité et rapport qualité-prix :</strong> GPT-5.6 Luna et Gemini 3.7 Flash</li>
+    <li><strong>Rapidité et rapport qualité-prix :</strong> GPT-5.6 Luna et Gemini 3.8 Flash</li>
     <li><strong>Résumé/prétraitement au coût minimal :</strong> GPT-5 Nano</li>
     <li><strong>Autre possibilité :</strong> Kimi K3</li>
   </ul>
@@ -182,7 +182,7 @@ Configuration recommandée la plus simple :<br>
 2. <strong>Requesty</strong> pour les notes.<br><br>
 
 <strong>Options STT :</strong> Soniox par lots, par lots avec identification des locuteurs, temps réel, OpenAI gpt-4o-transcribe et Mistral Voxtral Mini.<br><br>
-<strong>Fournisseurs de notes :</strong> Requesty (Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.7 Flash, Kimi K3), OpenAI (GPT-5.6 Sol/Terra/Luna et GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) et Mistral Large.<br><br>
+<strong>Fournisseurs de notes :</strong> Requesty (Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, Kimi K3), OpenAI (GPT-5.6 Sol/Terra/Luna et GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) et Mistral Large.<br><br>
 
 <hr><br>
 <strong>Soniox — configuration STT recommandée</strong><br>
@@ -237,7 +237,7 @@ Une clé API ne rend pas un service automatiquement conforme au RGPD. Vérifiez 
     <li>Claude Opus 5 : env. 5,50 / 27,50 USD</li><li>Claude Sonnet 5 : env. 2,20 / 11,00 USD</li>
     <li>GPT-5.6 Sol : env. 5,50 / 33,00 USD</li><li>GPT-5.6 Terra : env. 2,20 / 13,20 USD</li>
     <li>GPT-5.6 Luna : env. 0,22 / 1,32 USD</li><li>GPT-5.5 : env. 5,00 / 30,00 USD</li>
-    <li>GPT-5 Nano : env. 0,05 / 0,40 USD</li><li>Gemini 3.7 Flash : env. 0,66 / 3,30 USD</li><li>Kimi K3 : env. 3,00 / 15,00 USD</li>
+    <li>GPT-5 Nano : env. 0,05 / 0,40 USD</li><li>Gemini 3.8 Flash : env. 0,825 / 4,125 USD (remise actuelle de 50 % sur ce point de terminaison)</li><li>Kimi K3 : env. 3,00 / 15,00 USD</li>
   </ul>
   <p>Ces valeurs reflètent les estimations de l’application et peuvent changer avec Requesty ou le déploiement amont. Consultez le prix près du modèle et le rapport d’utilisation Requesty.</p>
   <p>Autres fournisseurs : OpenAI direct (GPT-5.6 Sol/Terra/Luna et GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus, surtout pour utilisateurs AWS existants) et Mistral Large. Les prix actuels apparaissent dans l’application.</p>
@@ -251,7 +251,7 @@ Une clé API ne rend pas un service automatiquement conforme au RGPD. Vérifiez 
   <p>Pour environ 2 200 tokens d’entrée et 450 de sortie :</p>
   <ul>
     <li>Transcription Soniox : env. 0,026 USD</li><li>GPT-5 Nano : env. 0,0003 USD</li>
-    <li>Gemini 3.7 Flash : env. 0,003 USD</li><li>Claude Sonnet 5 : env. 0,010 USD</li>
+    <li>Gemini 3.8 Flash : env. 0,004 USD</li><li>Claude Sonnet 5 : env. 0,010 USD</li>
     <li>Claude Opus 5 : env. 0,025 USD</li><li>GPT-5.6 Sol : env. 0,027 USD</li>
   </ul>
   <p>Le coût réel dépend de la longueur, du prompt, des Informations supplémentaires et du niveau de raisonnement.</p>

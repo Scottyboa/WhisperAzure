@@ -63,7 +63,7 @@ export const indexTranslations = {
     <li>GPT-5.6 Luna</li>
     <li>GPT-5.5</li>
     <li>GPT-5 Nano</li>
-    <li>Gemini 3.7 Flash</li>
+    <li>Gemini 3.8 Flash</li>
     <li>Kimi K3</li>
   </ul>
 
@@ -86,7 +86,7 @@ export const indexTranslations = {
   <ul>
     <li><strong>Maksimal kvalitet:</strong> Claude Opus 5 og GPT-5.6 Sol</li>
     <li><strong>Sterke allroundvalg:</strong> Claude Sonnet 5, GPT-5.6 Terra og GPT-5.5</li>
-    <li><strong>Raskere og rimeligere valg:</strong> GPT-5.6 Luna og Gemini 3.7 Flash</li>
+    <li><strong>Raskere og rimeligere valg:</strong> GPT-5.6 Luna og Gemini 3.8 Flash</li>
     <li><strong>Billigst til sammendrag og forbehandling:</strong> GPT-5 Nano</li>
     <li><strong>Ytterligere alternativ:</strong> Kimi K3</li>
   </ul>
@@ -244,7 +244,7 @@ Dette gir tilgang til transkripsjon av høy kvalitet og et kuratert utvalg nyere
 - Mistral Voxtral Mini Transcribe<br><br>
 
 <strong>Leverandører for notatgenerering i appen</strong><br>
-- Requesty: Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.7 Flash og Kimi K3<br>
+- Requesty: Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash og Kimi K3<br>
 - OpenAI: GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna og GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 og Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
@@ -355,7 +355,7 @@ En API-nøkkel alene gjør ikke en tjeneste GDPR-kompatibel. Kontroller leverand
     <li>GPT-5.6 Luna: omtrent 0,22 / 1,32 USD</li>
     <li>GPT-5.5: omtrent 5,00 / 30,00 USD</li>
     <li>GPT-5 Nano: omtrent 0,05 / 0,40 USD</li>
-    <li>Gemini 3.7 Flash: omtrent 0,66 / 3,30 USD</li>
+    <li>Gemini 3.8 Flash: omtrent 0,825 / 4,125 USD (nåværende endepunktsrabatt på 50 %)</li>
     <li>Kimi K3: omtrent 3,00 / 15,00 USD</li>
   </ul>
   <p>
@@ -395,7 +395,7 @@ En API-nøkkel alene gjør ikke en tjeneste GDPR-kompatibel. Kontroller leverand
   <ul>
     <li><strong>Soniox-transkripsjon:</strong> omtrent 0,026 USD.</li>
     <li><strong>GPT-5 Nano-notat:</strong> omtrent 0,0003 USD med eksempelets tokenmengde.</li>
-    <li><strong>Gemini 3.7 Flash-notat:</strong> omtrent 0,003 USD.</li>
+    <li><strong>Gemini 3.8 Flash-notat:</strong> omtrent 0,004 USD.</li>
     <li><strong>Claude Sonnet 5-notat:</strong> omtrent 0,010 USD.</li>
     <li><strong>Claude Opus 5-notat:</strong> omtrent 0,025 USD.</li>
     <li><strong>GPT-5.6 Sol-notat:</strong> omtrent 0,027 USD.</li>

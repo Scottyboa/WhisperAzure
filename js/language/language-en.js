@@ -63,7 +63,7 @@ export const indexTranslations = {
     <li>GPT-5.6 Luna</li>
     <li>GPT-5.5</li>
     <li>GPT-5 Nano</li>
-    <li>Gemini 3.7 Flash</li>
+    <li>Gemini 3.8 Flash</li>
     <li>Kimi K3</li>
   </ul>
 
@@ -86,7 +86,7 @@ export const indexTranslations = {
   <ul>
     <li><strong>Maximum quality:</strong> Claude Opus 5 and GPT-5.6 Sol</li>
     <li><strong>Strong general-purpose choices:</strong> Claude Sonnet 5, GPT-5.6 Terra and GPT-5.5</li>
-    <li><strong>Faster/value-oriented choices:</strong> GPT-5.6 Luna and Gemini 3.7 Flash</li>
+    <li><strong>Faster/value-oriented choices:</strong> GPT-5.6 Luna and Gemini 3.8 Flash</li>
     <li><strong>Lowest-cost summarisation and preprocessing:</strong> GPT-5 Nano</li>
     <li><strong>Additional alternative:</strong> Kimi K3</li>
   </ul>
@@ -245,7 +245,7 @@ This gives access to high-quality transcription and a curated selection of newer
 - Mistral Voxtral Mini Transcribe<br><br>
 
 <strong>Note-generation providers in the app</strong><br>
-- Requesty: Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.7 Flash and Kimi K3<br>
+- Requesty: Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash and Kimi K3<br>
 - OpenAI: GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna and GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 and Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
@@ -356,7 +356,7 @@ priceModalText: `
     <li>GPT-5.6 Luna: approximately 0.22 / 1.32 USD</li>
     <li>GPT-5.5: approximately 5.00 / 30.00 USD</li>
     <li>GPT-5 Nano: approximately 0.05 / 0.40 USD</li>
-    <li>Gemini 3.7 Flash: approximately 0.66 / 3.30 USD</li>
+    <li>Gemini 3.8 Flash: approximately 0.825 / 4.125 USD (current 50% endpoint discount)</li>
     <li>Kimi K3: approximately 3.00 / 15.00 USD</li>
   </ul>
   <p>
@@ -396,7 +396,7 @@ priceModalText: `
   <ul>
     <li><strong>Soniox transcription:</strong> approximately 0.026 USD.</li>
     <li><strong>GPT-5 Nano note:</strong> approximately 0.0003 USD at the example token count.</li>
-    <li><strong>Gemini 3.7 Flash note:</strong> approximately 0.003 USD.</li>
+    <li><strong>Gemini 3.8 Flash note:</strong> approximately 0.004 USD.</li>
     <li><strong>Claude Sonnet 5 note:</strong> approximately 0.010 USD.</li>
     <li><strong>Claude Opus 5 note:</strong> approximately 0.025 USD.</li>
     <li><strong>GPT-5.6 Sol note:</strong> approximately 0.027 USD.</li>

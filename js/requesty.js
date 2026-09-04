@@ -11,7 +11,7 @@
 //   - GPT-5.6 Luna     -> azure/gpt-5.6-luna@swedencentral   (Azure, Sweden Central)
 //   - GPT-5.6 Terra    -> azure/gpt-5.6-terra@swedencentral  (Azure, Sweden Central)
 //   - GPT-5.6 Sol      -> azure/gpt-5.6-sol@swedencentral    (Azure, Sweden Central)
-//   - Gemini 3.7 Flash -> vertex/gemini-3.7-flash@eu          (Google Vertex AI, EU)
+//   - Gemini 3.8 Flash -> vertex/gemini-3.8-flash@eu          (Google Vertex AI, EU)
 //   - Kimi K3          -> nebius/kimi-k3                      (Nebius, EU)
 //
 // sessionStorage keys used:
@@ -46,6 +46,7 @@ import {
 } from "./core/note-runner.js";
 import {
   getDefaultRequestyReasoning,
+  normalizeRequestyModel,
   normalizeRequestyNanoReasoning,
   normalizeSharedRequestyReasoning
 } from "./core/provider-registry.js";
@@ -105,11 +106,11 @@ const VARIANTS = Object.freeze({
     pricingModelId: "gpt-5.6-sol",
     reasoningSelector: "dedicated"
   },
-  "gemini-3.7-flash": {
+  "gemini-3.8-flash": {
     // Google Vertex AI EU deployment. The supported reasoning levels are
     // low | medium | high. The app intentionally defaults to low.
-    requestyModelId: "vertex/gemini-3.7-flash@eu",
-    pricingModelId: "gemini-3.7-flash",
+    requestyModelId: "vertex/gemini-3.8-flash@eu",
+    pricingModelId: "gemini-3.8-flash",
     reasoningSelector: "dedicated"
   },
   "kimi-k3": {
@@ -134,7 +135,8 @@ function getSelectedVariantKey() {
       DEFAULT_VARIANT_KEY
   ).trim().toLowerCase();
 
-  return VARIANTS[raw] ? raw : DEFAULT_VARIANT_KEY;
+  const normalized = normalizeRequestyModel(raw);
+  return VARIANTS[normalized] ? normalized : DEFAULT_VARIANT_KEY;
 }
 
 function resolveEffectiveMode() {
@@ -144,7 +146,7 @@ function resolveEffectiveMode() {
 }
 
 function resolveReasoningLevel(variantKey, variantConfig) {
-  // GPT-5 Nano, GPT-5.6, Gemini 3.7 Flash, and Kimi K3 use the dedicated
+  // GPT-5 Nano, GPT-5.6, Gemini 3.8 Flash, and Kimi K3 use the dedicated
   // Requesty selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
@@ -336,7 +338,7 @@ async function generateNote() {
 //
 // All effective providers (requesty-claude / requesty-sonnet /
 // requesty-gpt55 / requesty-nano / requesty-gpt56-* /
-// requesty-gemini37-flash / requesty-kimi-k3)
+// requesty-gemini38-flash / requesty-kimi-k3)
 // bind the same generate function; the active model is read from the
 // #requestyModel select / requesty_model session key at click time. Separate
 // exports are kept so the provider-registry entries stay explicit and
@@ -370,7 +372,7 @@ function initRequestyGpt56Sol() {
   bindGenerateNoteButton(generateNote);
 }
 
-function initRequestyGemini37Flash() {
+function initRequestyGemini38Flash() {
   bindGenerateNoteButton(generateNote);
 }
 
@@ -386,6 +388,6 @@ export {
   initRequestyGpt56Luna,
   initRequestyGpt56Terra,
   initRequestyGpt56Sol,
-  initRequestyGemini37Flash,
+  initRequestyGemini38Flash,
   initRequestyKimiK3
 };

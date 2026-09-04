@@ -38,7 +38,7 @@ export const indexTranslations = {
   <p><strong>Requesty — consigliato ai nuovi utenti</strong></p>
   <p>Requesty offre, con una sola chiave API, modelli di più sviluppatori. L’app limita intenzionalmente la scelta a deployment selezionati, destinati all’elaborazione nell’UE, senza riutilizzo per l’addestramento e con controlli di conservazione appropriati.</p>
   <ul>
-    <li>Claude Opus 5</li><li>Claude Sonnet 5</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 3.7 Flash</li><li>Kimi K3</li>
+    <li>Claude Opus 5</li><li>Claude Sonnet 5</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 3.8 Flash</li><li>Kimi K3</li>
   </ul>
   <p><strong>Altri provider supportati</strong></p>
   <ul>
@@ -52,7 +52,7 @@ export const indexTranslations = {
   <ul>
     <li><strong>Qualità massima:</strong> Claude Opus 5 e GPT-5.6 Sol</li>
     <li><strong>Ottime scelte generali:</strong> Claude Sonnet 5, GPT-5.6 Terra e GPT-5.5</li>
-    <li><strong>Velocità e convenienza:</strong> GPT-5.6 Luna e Gemini 3.7 Flash</li>
+    <li><strong>Velocità e convenienza:</strong> GPT-5.6 Luna e Gemini 3.8 Flash</li>
     <li><strong>Riepilogo/pre-elaborazione al minor costo:</strong> GPT-5 Nano</li>
     <li><strong>Altra alternativa:</strong> Kimi K3</li>
   </ul>
@@ -182,7 +182,7 @@ La configurazione più semplice consigliata ai nuovi utenti è:<br>
 2. <strong>Requesty</strong> per la generazione delle note.<br><br>
 
 <strong>Opzioni STT:</strong> Soniox batch, batch con etichette dei parlanti, tempo reale, OpenAI gpt-4o-transcribe e Mistral Voxtral Mini.<br><br>
-<strong>Provider di note:</strong> Requesty (Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.7 Flash, Kimi K3), OpenAI (GPT-5.6 Sol/Terra/Luna e GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) e Mistral Large.<br><br>
+<strong>Provider di note:</strong> Requesty (Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, Kimi K3), OpenAI (GPT-5.6 Sol/Terra/Luna e GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) e Mistral Large.<br><br>
 
 <hr><br>
 <strong>Soniox — configurazione STT consigliata</strong><br>
@@ -237,7 +237,7 @@ Una chiave API non rende automaticamente un servizio conforme al GDPR. Verifica 
     <li>Claude Opus 5: circa 5,50 / 27,50 USD</li><li>Claude Sonnet 5: circa 2,20 / 11,00 USD</li>
     <li>GPT-5.6 Sol: circa 5,50 / 33,00 USD</li><li>GPT-5.6 Terra: circa 2,20 / 13,20 USD</li>
     <li>GPT-5.6 Luna: circa 0,22 / 1,32 USD</li><li>GPT-5.5: circa 5,00 / 30,00 USD</li>
-    <li>GPT-5 Nano: circa 0,05 / 0,40 USD</li><li>Gemini 3.7 Flash: circa 0,66 / 3,30 USD</li><li>Kimi K3: circa 3,00 / 15,00 USD</li>
+    <li>GPT-5 Nano: circa 0,05 / 0,40 USD</li><li>Gemini 3.8 Flash: circa 0,825 / 4,125 USD (sconto attuale del 50% sull'endpoint)</li><li>Kimi K3: circa 3,00 / 15,00 USD</li>
   </ul>
   <p>I valori rispecchiano le stime attuali dell’app e possono cambiare con Requesty o il deployment upstream. Controlla il prezzo vicino al modello e il rapporto d’uso Requesty.</p>
   <p>Altri provider: OpenAI diretto (GPT-5.6 Sol/Terra/Luna e GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus, soprattutto per utenti AWS esistenti) e Mistral Large. I prezzi attuali sono mostrati nell’app.</p>
@@ -251,7 +251,7 @@ Una chiave API non rende automaticamente un servizio conforme al GDPR. Verifica 
   <p>Con circa 2.200 token input e 450 output:</p>
   <ul>
     <li>Trascrizione Soniox: circa 0,026 USD</li><li>GPT-5 Nano: circa 0,0003 USD</li>
-    <li>Gemini 3.7 Flash: circa 0,003 USD</li><li>Claude Sonnet 5: circa 0,010 USD</li>
+    <li>Gemini 3.8 Flash: circa 0,004 USD</li><li>Claude Sonnet 5: circa 0,010 USD</li>
     <li>Claude Opus 5: circa 0,025 USD</li><li>GPT-5.6 Sol: circa 0,027 USD</li>
   </ul>
   <p>Il costo reale dipende da lunghezza, prompt, Informazioni supplementari e livello di reasoning.</p>

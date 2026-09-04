@@ -37,7 +37,7 @@ export const indexTranslations = {
   <p><strong>Requesty — rekommenderas för nya användare</strong></p>
   <p>Requesty ger tillgång till modeller från flera utvecklare genom en enda API-nyckel. Valen i appen är avsiktligt begränsade till utvalda driftsättningar som är avsedda för behandling inom EU, utan återanvändning för modellträning och med lämpliga inställningar för lagring.</p>
   <ul>
-    <li>Claude Opus 5</li><li>Claude Sonnet 5</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 3.7 Flash</li><li>Kimi K3</li>
+    <li>Claude Opus 5</li><li>Claude Sonnet 5</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 3.8 Flash</li><li>Kimi K3</li>
   </ul>
   <p><strong>Andra leverantörer som stöds</strong></p>
   <ul>
@@ -51,7 +51,7 @@ export const indexTranslations = {
   <ul>
     <li><strong>Högsta kvalitet:</strong> Claude Opus 5 och GPT-5.6 Sol</li>
     <li><strong>Starka allroundval:</strong> Claude Sonnet 5, GPT-5.6 Terra och GPT-5.5</li>
-    <li><strong>Snabbhet och värde:</strong> GPT-5.6 Luna och Gemini 3.7 Flash</li>
+    <li><strong>Snabbhet och värde:</strong> GPT-5.6 Luna och Gemini 3.8 Flash</li>
     <li><strong>Billigast för sammanfattning och förbehandling:</strong> GPT-5 Nano</li>
     <li><strong>Ytterligare alternativ:</strong> Kimi K3</li>
   </ul>
@@ -182,7 +182,7 @@ Den enklaste rekommenderade konfigurationen för nya användare är:<br>
 2. <strong>Requesty</strong> för anteckningsgenerering.<br><br>
 
 <strong>STT-alternativ:</strong> Soniox batch, Soniox batch med talaretiketter, Soniox realtid, OpenAI gpt-4o-transcribe och Mistral Voxtral Mini Transcribe.<br><br>
-<strong>Anteckningsleverantörer:</strong> Requesty (Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.7 Flash och Kimi K3), OpenAI (GPT-5.6 Sol/Terra/Luna och GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) och Mistral Large.<br><br>
+<strong>Anteckningsleverantörer:</strong> Requesty (Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash och Kimi K3), OpenAI (GPT-5.6 Sol/Terra/Luna och GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) och Mistral Large.<br><br>
 
 <hr><br>
 <strong>Soniox — rekommenderad STT-konfiguration</strong><br>
@@ -245,7 +245,7 @@ En API-nyckel gör inte en tjänst automatiskt GDPR-kompatibel. Kontrollera DPA,
     <li>GPT-5.6 Luna: cirka 0,22 / 1,32 USD</li>
     <li>GPT-5.5: cirka 5,00 / 30,00 USD</li>
     <li>GPT-5 Nano: cirka 0,05 / 0,40 USD</li>
-    <li>Gemini 3.7 Flash: cirka 0,66 / 3,30 USD</li>
+    <li>Gemini 3.8 Flash: cirka 0,825 / 4,125 USD (nuvarande 50 % rabatt på slutpunkten)</li>
     <li>Kimi K3: cirka 3,00 / 15,00 USD</li>
   </ul>
   <p>Beloppen motsvarar appens nuvarande uppskattningar och kan ändras när Requesty eller uppströmsleverantören ändrar pris. Kontrollera priset bredvid modellen och Requestys användningsrapport.</p>
@@ -261,7 +261,7 @@ En API-nyckel gör inte en tjänst automatiskt GDPR-kompatibel. Kontrollera DPA,
   <ul>
     <li>Soniox-transkription: cirka 0,026 USD</li>
     <li>GPT-5 Nano-anteckning: cirka 0,0003 USD</li>
-    <li>Gemini 3.7 Flash: cirka 0,003 USD</li>
+    <li>Gemini 3.8 Flash: cirka 0,004 USD</li>
     <li>Claude Sonnet 5: cirka 0,010 USD</li>
     <li>Claude Opus 5: cirka 0,025 USD</li>
     <li>GPT-5.6 Sol: cirka 0,027 USD</li>

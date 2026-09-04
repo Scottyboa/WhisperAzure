@@ -151,7 +151,7 @@ import {
   // gpt-5.5:         azure/gpt-5.5@swedencentral rates
   // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
   // gpt-5.6-*:       Azure Sweden Central rates from Requesty's model cards
-  // gemini-3.7-flash: vertex/gemini-3.7-flash@eu discounted endpoint rates
+  // gemini-3.8-flash: vertex/gemini-3.8-flash@eu discounted endpoint rates
   // kimi-k3:          nebius/kimi-k3 rates
   const REQUESTY_USD_PER_MTOK = {
     "claude-opus-5": { input: 5.5, output: 27.5 },
@@ -161,7 +161,7 @@ import {
     "gpt-5.6-luna": { input: 0.22, output: 1.32 },
     "gpt-5.6-terra": { input: 2.2, output: 13.2 },
     "gpt-5.6-sol": { input: 5.5, output: 33.0 },
-    "gemini-3.7-flash": { input: 0.66, output: 3.3 },
+    "gemini-3.8-flash": { input: 0.825, output: 4.125 },
     "kimi-k3": { input: 3.0, output: 15.0 },
   };
 
@@ -205,7 +205,11 @@ import {
 
   function fmtRate(value) {
     const amount = Number(value);
-    return Number.isFinite(amount) ? `$${amount.toFixed(2)}` : "—";
+    if (!Number.isFinite(amount)) return "—";
+    // Preserve third-decimal endpoint rates such as Gemini 3.8 Flash's
+    // $0.825/$4.125 instead of rounding them before the user sees them.
+    const roundedToCents = Math.round(amount * 100) / 100;
+    return `$${amount.toFixed(Math.abs(amount - roundedToCents) > 1e-9 ? 3 : 2)}`;
   }
 
   function fmtRateRange(first, second) {

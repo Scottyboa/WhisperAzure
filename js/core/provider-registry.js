@@ -176,14 +176,14 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './requesty.js',
     initExportName: 'initRequestyGpt56Sol',
   },
-  'requesty-gemini37-flash': {
-    id: 'requesty-gemini37-flash',
-    label: 'Requesty Gemini 3.7 Flash',
+  'requesty-gemini38-flash': {
+    id: 'requesty-gemini38-flash',
+    label: 'Requesty Gemini 3.8 Flash',
     uiProvider: 'requesty',
-    requestyModel: 'gemini-3.7-flash',
+    requestyModel: 'gemini-3.8-flash',
     mode: DEFAULTS.noteMode,
     modulePath: './requesty.js',
-    initExportName: 'initRequestyGemini37Flash',
+    initExportName: 'initRequestyGemini38Flash',
   },
   'requesty-kimi-k3': {
     id: 'requesty-kimi-k3',
@@ -211,7 +211,7 @@ const REQUESTY_MODEL_OPTIONS = [
   { value: 'gpt-5.6-luna', label: 'GPT-5.6 Luna' },
   { value: 'gpt-5.5', label: 'GPT-5.5' },
   { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
-  { value: 'gemini-3.7-flash', label: 'Gemini 3.7 Flash' },
+  { value: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash' },
   { value: 'kimi-k3', label: 'Kimi K3' },
 ];
 
@@ -236,9 +236,9 @@ const REQUESTY_GPT56_REASONING_OPTIONS = [
   { value: 'xhigh', label: 'X-high' },
 ];
 
-// Gemini 3.7 Flash supports exactly low | medium | high. The upstream model
+// Gemini 3.8 Flash supports exactly low | medium | high. The upstream model
 // defaults to medium, but the app intentionally defaults it to low.
-const REQUESTY_GEMINI37_REASONING_OPTIONS = [
+const REQUESTY_GEMINI38_REASONING_OPTIONS = [
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
   { value: 'high', label: 'High' },
@@ -392,6 +392,9 @@ export function listRequestyModelOptions() {
 
 export function normalizeRequestyModel(value) {
   const raw = String(value || '').trim().toLowerCase();
+  // Backward compatibility: existing browser state and imported Workspace
+  // Sets that selected the retired 3.7 route move to its 3.8 replacement.
+  if (raw === 'gemini-3.7-flash') return 'gemini-3.8-flash';
   return REQUESTY_MODEL_OPTIONS.some((item) => item.value === raw)
     ? raw
     : DEFAULTS.requestyModel;
@@ -404,8 +407,8 @@ export function listRequestyNanoReasoningOptions(
   const options =
     normalizedModel === 'kimi-k3'
       ? REQUESTY_KIMI_K3_REASONING_OPTIONS
-      : normalizedModel === 'gemini-3.7-flash'
-        ? REQUESTY_GEMINI37_REASONING_OPTIONS
+      : normalizedModel === 'gemini-3.8-flash'
+        ? REQUESTY_GEMINI38_REASONING_OPTIONS
         : REQUESTY_GPT56_MODELS.has(normalizedModel)
           ? REQUESTY_GPT56_REASONING_OPTIONS
           : REQUESTY_NANO_REASONING_OPTIONS;
@@ -414,7 +417,7 @@ export function listRequestyNanoReasoningOptions(
 
 export function getDefaultRequestyReasoning(modelId = 'gpt-5-nano') {
   const normalizedModel = normalizeRequestyModel(modelId);
-  return normalizedModel === 'gemini-3.7-flash' || normalizedModel === 'kimi-k3'
+  return normalizedModel === 'gemini-3.8-flash' || normalizedModel === 'kimi-k3'
     ? 'low'
     : DEFAULTS.requestyNanoReasoning;
 }
@@ -496,6 +499,8 @@ export function getTranscribeProviderShortLabel(provider) {
 
 export function normalizeNoteEffectiveProvider(value) {
   const raw = String(value || '').trim().toLowerCase();
+  // Migrate effective-provider ids saved before Gemini 3.8 replaced 3.7.
+  if (raw === 'requesty-gemini37-flash') return 'requesty-gemini38-flash';
   // Retired direct OpenAI providers remain OpenAI and migrate to GPT-5.6 Sol.
   if (
     raw === 'openai' || raw === 'gpt4' || raw === 'gpt5' ||
@@ -687,7 +692,7 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   const usesDedicatedRequestyReasoning =
     isRequesty &&
     (reqModel === 'gpt-5-nano' ||
-      reqModel === 'gemini-3.7-flash' ||
+      reqModel === 'gemini-3.8-flash' ||
       reqModel === 'kimi-k3' ||
       REQUESTY_GPT56_MODELS.has(reqModel));
 
@@ -696,7 +701,7 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   // (#gpt5Reasoning, None/Low/Medium/High): the Anthropic models (Opus 5,
   // Sonnet 5) map reasoning_effort to a thinking budget ("None" omits it),
   // and GPT-5.5 uses the native OpenAI effort string. GPT-5 Nano, GPT-5.6,
-  // Gemini 3.7 Flash and Kimi K3 use the dedicated Requesty selector because
+  // Gemini 3.8 Flash and Kimi K3 use the dedicated Requesty selector because
   // their valid option sets differ from the shared selector.
 
   return {
