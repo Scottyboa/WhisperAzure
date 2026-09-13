@@ -92,7 +92,7 @@ export const indexTranslations = {
     <li><strong>Lowest-cost summarisation and preprocessing:</strong> GPT-5 Nano</li>
     <li><strong>Additional alternative:</strong> Kimi K3</li>
   </ul>
-  <p>DeepSeek V4 Pro and DeepSeek V4.1 Flash support None, Low, High and Max reasoning; High is the default.</p>
+  <p>DeepSeek V4 Pro and DeepSeek V4.1 Flash support None, Low, High and Max reasoning; the app defaults to Low.</p>
   <p>
     For long source documents, a less expensive model such as GPT-5 Nano can first create a short summary for Supplementary Information.
     A stronger primary model can then generate the final note without receiving the full long document, which may substantially reduce cost.

@@ -56,7 +56,7 @@ export const indexTranslations = {
     <li><strong>Günstigste Zusammenfassung/Vorverarbeitung:</strong> GPT-5 Nano</li>
     <li><strong>Weitere Alternative:</strong> Kimi K3</li>
   </ul>
-  <p>DeepSeek V4 Pro und DeepSeek V4.1 Flash unterstützen die Reasoning-Stufen None, Low, High und Max; High ist die Standardeinstellung.</p>
+  <p>DeepSeek V4 Pro und DeepSeek V4.1 Flash unterstützen die Reasoning-Stufen None, Low, High und Max; die App verwendet standardmäßig Low.</p>
   <p>Bei langen Dokumenten kann zuerst ein günstiges Modell wie GPT-5 Nano eine kurze Zusammenfassung für Zusatzinformationen erstellen. Das stärkere Hauptmodell erhält dann nicht das vollständige Dokument, wodurch die Kosten deutlich sinken können.</p>
 
   <hr><br>

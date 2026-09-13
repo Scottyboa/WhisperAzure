@@ -272,7 +272,8 @@ const REQUESTY_KIMI_K3_REASONING_OPTIONS = [
 
 // DeepSeek V4 Pro and V4.1 Flash support thinking off plus three distinct
 // effort levels. DeepSeek maps medium/xhigh to high, so those aliases are not
-// shown. Thinking defaults to high upstream.
+// shown. DeepSeek defaults to high upstream, but the app intentionally uses
+// low to reduce latency and reasoning-token cost for routine note generation.
 const REQUESTY_DEEPSEEK_REASONING_OPTIONS = [
   { value: 'none', label: 'None' },
   { value: 'low', label: 'Low' },
@@ -454,7 +455,7 @@ export function listRequestyNanoReasoningOptions(
 
 export function getDefaultRequestyReasoning(modelId = 'gpt-5-nano') {
   const normalizedModel = normalizeRequestyModel(modelId);
-  if (REQUESTY_DEEPSEEK_MODELS.has(normalizedModel)) return 'high';
+  if (REQUESTY_DEEPSEEK_MODELS.has(normalizedModel)) return 'low';
   return normalizedModel === 'gemini-3.8-flash' || normalizedModel === 'kimi-k3'
     ? 'low'
     : DEFAULTS.requestyNanoReasoning;

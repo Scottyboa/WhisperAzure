@@ -56,7 +56,7 @@ export const indexTranslations = {
     <li><strong>Résumé/prétraitement au coût minimal :</strong> GPT-5 Nano</li>
     <li><strong>Autre possibilité :</strong> Kimi K3</li>
   </ul>
-  <p>DeepSeek V4 Pro et DeepSeek V4.1 Flash prennent en charge les niveaux de raisonnement None, Low, High et Max ; High est la valeur par défaut.</p>
+  <p>DeepSeek V4 Pro et DeepSeek V4.1 Flash prennent en charge les niveaux de raisonnement None, Low, High et Max ; l’application utilise Low par défaut.</p>
   <p>Pour un long document, un modèle économique comme GPT-5 Nano peut d’abord produire un résumé destiné aux Informations supplémentaires. Le modèle principal plus puissant crée ensuite la note sans recevoir tout le document, ce qui peut fortement réduire le coût.</p>
 
   <hr><br>

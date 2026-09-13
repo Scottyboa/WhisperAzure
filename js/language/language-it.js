@@ -56,7 +56,7 @@ export const indexTranslations = {
     <li><strong>Riepilogo/pre-elaborazione al minor costo:</strong> GPT-5 Nano</li>
     <li><strong>Altra alternativa:</strong> Kimi K3</li>
   </ul>
-  <p>DeepSeek V4 Pro e DeepSeek V4.1 Flash supportano i livelli di reasoning None, Low, High e Max; High è il valore predefinito.</p>
+  <p>DeepSeek V4 Pro e DeepSeek V4.1 Flash supportano i livelli di reasoning None, Low, High e Max; l’app usa Low come valore predefinito.</p>
   <p>Per documenti lunghi, un modello economico come GPT-5 Nano può creare prima un breve riepilogo per le Informazioni supplementari. Il modello principale più potente genera poi la nota senza ricevere l’intero documento, riducendo sensibilmente il costo.</p>
 
   <hr><br>

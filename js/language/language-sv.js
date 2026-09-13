@@ -55,7 +55,7 @@ export const indexTranslations = {
     <li><strong>Billigast för sammanfattning och förbehandling:</strong> GPT-5 Nano</li>
     <li><strong>Ytterligare alternativ:</strong> Kimi K3</li>
   </ul>
-  <p>DeepSeek V4 Pro och DeepSeek V4.1 Flash stöder reasoning-nivåerna None, Low, High och Max; High är standard.</p>
+  <p>DeepSeek V4 Pro och DeepSeek V4.1 Flash stöder reasoning-nivåerna None, Low, High och Max; appens standardval är Low.</p>
   <p>För långa dokument kan en billigare modell, till exempel GPT-5 Nano, först skapa en kort sammanfattning för Kompletterande information. En starkare huvudmodell kan sedan skapa slutanteckningen utan att ta emot hela dokumentet, vilket kan sänka kostnaden avsevärt.</p>
 
   <hr><br>
