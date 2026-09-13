@@ -120,6 +120,18 @@ const REQUESTY_VARIANTS = {
     pricingModelId: "gemini-3.8-flash",
     reasoningSelector: "dedicated"
   },
+  "deepseek-v4-pro-0813": {
+    requestyModelId: "tensorx/deepseek-v4-pro-0813",
+    pricingModelId: "deepseek-v4-pro-0813",
+    reasoningSelector: "dedicated",
+    sendNoneReasoning: true
+  },
+  "deepseek-v4.1-flash": {
+    requestyModelId: "sference/deepseek-v4.1-flash",
+    pricingModelId: "deepseek-v4.1-flash",
+    reasoningSelector: "dedicated",
+    sendNoneReasoning: true
+  },
   "kimi-k3": {
     requestyModelId: "nebius/kimi-k3",
     pricingModelId: "kimi-k3",
@@ -890,7 +902,10 @@ async function generateRequesty({ selections, sourceText, promptText, outputFiel
     requestBody.stream = true;
     requestBody.stream_options = { include_usage: true };
   }
-  if (reasoningLevel && reasoningLevel !== "none") {
+  if (
+    reasoningLevel &&
+    (reasoningLevel !== "none" || variantConfig.sendNoneReasoning === true)
+  ) {
     requestBody.reasoning_effort = reasoningLevel;
   }
 
@@ -901,7 +916,8 @@ async function generateRequesty({ selections, sourceText, promptText, outputFiel
       modelId: variantConfig.pricingModelId,
       usage,
       meta: {
-        reasoningTokens: usage?.completion_tokens_details?.reasoning_tokens ?? 0
+        reasoningTokens: usage?.completion_tokens_details?.reasoning_tokens ?? 0,
+        requestyReportedCost: typeof usage?.cost === "number" ? usage.cost : null
       }
     });
   };
@@ -1238,7 +1254,7 @@ function initSecondaryNoteModule() {
       onChange: (modelId) => {
         clearSecondaryUsageAndCost();
         const reasoningSelect = el("secondaryNanoReasoning");
-        const previous = modelId === "gemini-3.8-flash"
+        const previous = modelId === "gemini-3.8-flash" || modelId.startsWith("deepseek-")
           ? getDefaultRequestyReasoning(modelId)
           : String(reasoningSelect?.value || "");
         setSelectOptions(

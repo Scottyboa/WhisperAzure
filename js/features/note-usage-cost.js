@@ -152,6 +152,8 @@ import {
   // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
   // gpt-5.6-*:       Azure Sweden Central rates from Requesty's model cards
   // gemini-3.8-flash: vertex/gemini-3.8-flash@eu discounted endpoint rates
+  // deepseek-v4-pro-0813: tensorx/deepseek-v4-pro-0813 rates
+  // deepseek-v4.1-flash: sference/deepseek-v4.1-flash rates
   // kimi-k3:          nebius/kimi-k3 rates
   const REQUESTY_USD_PER_MTOK = {
     "claude-opus-5": { input: 5.5, output: 27.5 },
@@ -162,6 +164,8 @@ import {
     "gpt-5.6-terra": { input: 2.2, output: 13.2 },
     "gpt-5.6-sol": { input: 5.5, output: 33.0 },
     "gemini-3.8-flash": { input: 0.825, output: 4.125 },
+    "deepseek-v4-pro-0813": { input: 1.75, output: 3.5 },
+    "deepseek-v4.1-flash": { input: 0.5, output: 1.5 },
     "kimi-k3": { input: 3.0, output: 15.0 },
   };
 

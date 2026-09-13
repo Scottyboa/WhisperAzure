@@ -185,6 +185,24 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './requesty.js',
     initExportName: 'initRequestyGemini38Flash',
   },
+  'requesty-deepseek-v4-pro': {
+    id: 'requesty-deepseek-v4-pro',
+    label: 'Requesty DeepSeek V4 Pro',
+    uiProvider: 'requesty',
+    requestyModel: 'deepseek-v4-pro-0813',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyDeepSeekV4Pro',
+  },
+  'requesty-deepseek-v41-flash': {
+    id: 'requesty-deepseek-v41-flash',
+    label: 'Requesty DeepSeek V4.1 Flash',
+    uiProvider: 'requesty',
+    requestyModel: 'deepseek-v4.1-flash',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyDeepSeekV41Flash',
+  },
   'requesty-kimi-k3': {
     id: 'requesty-kimi-k3',
     label: 'Requesty Kimi K3',
@@ -212,6 +230,8 @@ const REQUESTY_MODEL_OPTIONS = [
   { value: 'gpt-5.5', label: 'GPT-5.5' },
   { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
   { value: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash' },
+  { value: 'deepseek-v4-pro-0813', label: 'DeepSeek V4 Pro' },
+  { value: 'deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash' },
   { value: 'kimi-k3', label: 'Kimi K3' },
 ];
 
@@ -249,6 +269,21 @@ const REQUESTY_KIMI_K3_REASONING_OPTIONS = [
   { value: 'high', label: 'High' },
   { value: 'max', label: 'Max' },
 ];
+
+// DeepSeek V4 Pro and V4.1 Flash support thinking off plus three distinct
+// effort levels. DeepSeek maps medium/xhigh to high, so those aliases are not
+// shown. Thinking defaults to high upstream.
+const REQUESTY_DEEPSEEK_REASONING_OPTIONS = [
+  { value: 'none', label: 'None' },
+  { value: 'low', label: 'Low' },
+  { value: 'high', label: 'High' },
+  { value: 'max', label: 'Max' },
+];
+
+const REQUESTY_DEEPSEEK_MODELS = new Set([
+  'deepseek-v4-pro-0813',
+  'deepseek-v4.1-flash',
+]);
 
 const REQUESTY_GPT56_MODELS = new Set([
   'gpt-5.6-luna',
@@ -405,7 +440,9 @@ export function listRequestyNanoReasoningOptions(
 ) {
   const normalizedModel = normalizeRequestyModel(modelId);
   const options =
-    normalizedModel === 'kimi-k3'
+    REQUESTY_DEEPSEEK_MODELS.has(normalizedModel)
+      ? REQUESTY_DEEPSEEK_REASONING_OPTIONS
+      : normalizedModel === 'kimi-k3'
       ? REQUESTY_KIMI_K3_REASONING_OPTIONS
       : normalizedModel === 'gemini-3.8-flash'
         ? REQUESTY_GEMINI38_REASONING_OPTIONS
@@ -417,6 +454,7 @@ export function listRequestyNanoReasoningOptions(
 
 export function getDefaultRequestyReasoning(modelId = 'gpt-5-nano') {
   const normalizedModel = normalizeRequestyModel(modelId);
+  if (REQUESTY_DEEPSEEK_MODELS.has(normalizedModel)) return 'high';
   return normalizedModel === 'gemini-3.8-flash' || normalizedModel === 'kimi-k3'
     ? 'low'
     : DEFAULTS.requestyNanoReasoning;
@@ -693,6 +731,7 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
     isRequesty &&
     (reqModel === 'gpt-5-nano' ||
       reqModel === 'gemini-3.8-flash' ||
+      REQUESTY_DEEPSEEK_MODELS.has(reqModel) ||
       reqModel === 'kimi-k3' ||
       REQUESTY_GPT56_MODELS.has(reqModel));
 
@@ -701,8 +740,9 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   // (#gpt5Reasoning, None/Low/Medium/High): the Anthropic models (Opus 5,
   // Sonnet 5) map reasoning_effort to a thinking budget ("None" omits it),
   // and GPT-5.5 uses the native OpenAI effort string. GPT-5 Nano, GPT-5.6,
-  // Gemini 3.8 Flash and Kimi K3 use the dedicated Requesty selector because
-  // their valid option sets differ from the shared selector.
+  // Gemini 3.8 Flash, DeepSeek V4 Pro/V4.1 Flash and Kimi K3 use the dedicated
+  // Requesty selector because their valid option sets differ from the shared
+  // selector.
 
   return {
     showOpenAi: isOpenAi,

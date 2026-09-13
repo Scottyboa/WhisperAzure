@@ -672,7 +672,10 @@ import {
         requestyNanoReasoningSelect,
         listRequestyNanoReasoningOptions(modelId)
       );
-      if (requestyNanoReasoningSelect && modelId === 'gemini-3.8-flash') {
+      if (
+        requestyNanoReasoningSelect &&
+        (modelId === 'gemini-3.8-flash' || modelId.startsWith('deepseek-'))
+      ) {
         requestyNanoReasoningSelect.value = getDefaultRequestyReasoning(modelId);
       }
       await persistAndSwitchNoteProvider();

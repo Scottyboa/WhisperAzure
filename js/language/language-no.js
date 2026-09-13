@@ -64,6 +64,8 @@ export const indexTranslations = {
     <li>GPT-5.5</li>
     <li>GPT-5 Nano</li>
     <li>Gemini 3.8 Flash</li>
+    <li>DeepSeek V4 Pro</li>
+    <li>DeepSeek V4.1 Flash</li>
     <li>Kimi K3</li>
   </ul>
 
@@ -85,11 +87,12 @@ export const indexTranslations = {
   <p>Dette er en skjønnsmessig veiledning for vanlig notatgenerering, ikke en objektiv medisinsk benchmark:</p>
   <ul>
     <li><strong>Maksimal kvalitet:</strong> Claude Opus 5 og GPT-5.6 Sol</li>
-    <li><strong>Sterke allroundvalg:</strong> Claude Sonnet 5, GPT-5.6 Terra og GPT-5.5</li>
-    <li><strong>Raskere og rimeligere valg:</strong> GPT-5.6 Luna og Gemini 3.8 Flash</li>
+    <li><strong>Sterke allroundvalg:</strong> Claude Sonnet 5, GPT-5.6 Terra, GPT-5.5 og DeepSeek V4 Pro</li>
+    <li><strong>Raskere og rimeligere valg:</strong> GPT-5.6 Luna, Gemini 3.8 Flash og DeepSeek V4.1 Flash</li>
     <li><strong>Billigst til sammendrag og forbehandling:</strong> GPT-5 Nano</li>
     <li><strong>Ytterligere alternativ:</strong> Kimi K3</li>
   </ul>
+  <p>DeepSeek V4 Pro og DeepSeek V4.1 Flash støtter reasoning-nivåene None, Low, High og Max; High er standard.</p>
   <p>
     Ved svært lange kildedokumenter kan en rimelig modell som GPT-5 Nano først lage et kort sammendrag til Supplerende informasjon.
     En sterkere hovedmodell kan deretter lage sluttresultatet uten å motta hele dokumentet, noe som kan redusere kostnaden betydelig.
@@ -244,7 +247,7 @@ Dette gir tilgang til transkripsjon av høy kvalitet og et kuratert utvalg nyere
 - Mistral Voxtral Mini Transcribe<br><br>
 
 <strong>Leverandører for notatgenerering i appen</strong><br>
-- Requesty: Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash og Kimi K3<br>
+- Requesty: Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash og Kimi K3<br>
 - OpenAI: GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna og GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 og Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
@@ -356,6 +359,8 @@ En API-nøkkel alene gjør ikke en tjeneste GDPR-kompatibel. Kontroller leverand
     <li>GPT-5.5: omtrent 5,00 / 30,00 USD</li>
     <li>GPT-5 Nano: omtrent 0,05 / 0,40 USD</li>
     <li>Gemini 3.8 Flash: omtrent 0,825 / 4,125 USD (nåværende endepunktsrabatt på 50 %)</li>
+    <li>DeepSeek V4 Pro: omtrent 1,75 / 3,50 USD (bufret input: 0,44 USD)</li>
+    <li>DeepSeek V4.1 Flash: omtrent 0,50 / 1,50 USD (bufret input: 0,05 USD)</li>
     <li>Kimi K3: omtrent 3,00 / 15,00 USD</li>
   </ul>
   <p>

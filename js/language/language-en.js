@@ -64,6 +64,8 @@ export const indexTranslations = {
     <li>GPT-5.5</li>
     <li>GPT-5 Nano</li>
     <li>Gemini 3.8 Flash</li>
+    <li>DeepSeek V4 Pro</li>
+    <li>DeepSeek V4.1 Flash</li>
     <li>Kimi K3</li>
   </ul>
 
@@ -85,11 +87,12 @@ export const indexTranslations = {
   <p>This is an opinionated guide for typical note-generation use rather than an objective medical benchmark:</p>
   <ul>
     <li><strong>Maximum quality:</strong> Claude Opus 5 and GPT-5.6 Sol</li>
-    <li><strong>Strong general-purpose choices:</strong> Claude Sonnet 5, GPT-5.6 Terra and GPT-5.5</li>
-    <li><strong>Faster/value-oriented choices:</strong> GPT-5.6 Luna and Gemini 3.8 Flash</li>
+    <li><strong>Strong general-purpose choices:</strong> Claude Sonnet 5, GPT-5.6 Terra, GPT-5.5 and DeepSeek V4 Pro</li>
+    <li><strong>Faster/value-oriented choices:</strong> GPT-5.6 Luna, Gemini 3.8 Flash and DeepSeek V4.1 Flash</li>
     <li><strong>Lowest-cost summarisation and preprocessing:</strong> GPT-5 Nano</li>
     <li><strong>Additional alternative:</strong> Kimi K3</li>
   </ul>
+  <p>DeepSeek V4 Pro and DeepSeek V4.1 Flash support None, Low, High and Max reasoning; High is the default.</p>
   <p>
     For long source documents, a less expensive model such as GPT-5 Nano can first create a short summary for Supplementary Information.
     A stronger primary model can then generate the final note without receiving the full long document, which may substantially reduce cost.
@@ -245,7 +248,7 @@ This gives access to high-quality transcription and a curated selection of newer
 - Mistral Voxtral Mini Transcribe<br><br>
 
 <strong>Note-generation providers in the app</strong><br>
-- Requesty: Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash and Kimi K3<br>
+- Requesty: Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash and Kimi K3<br>
 - OpenAI: GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna and GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 and Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
@@ -357,6 +360,8 @@ priceModalText: `
     <li>GPT-5.5: approximately 5.00 / 30.00 USD</li>
     <li>GPT-5 Nano: approximately 0.05 / 0.40 USD</li>
     <li>Gemini 3.8 Flash: approximately 0.825 / 4.125 USD (current 50% endpoint discount)</li>
+    <li>DeepSeek V4 Pro: approximately 1.75 / 3.50 USD (cached input: 0.44 USD)</li>
+    <li>DeepSeek V4.1 Flash: approximately 0.50 / 1.50 USD (cached input: 0.05 USD)</li>
     <li>Kimi K3: approximately 3.00 / 15.00 USD</li>
   </ul>
   <p>

@@ -12,6 +12,8 @@
 //   - GPT-5.6 Terra    -> azure/gpt-5.6-terra@swedencentral  (Azure, Sweden Central)
 //   - GPT-5.6 Sol      -> azure/gpt-5.6-sol@swedencentral    (Azure, Sweden Central)
 //   - Gemini 3.8 Flash -> vertex/gemini-3.8-flash@eu          (Google Vertex AI, EU)
+//   - DeepSeek V4 Pro  -> tensorx/deepseek-v4-pro-0813         (TensorX, EU)
+//   - DeepSeek V4.1    -> sference/deepseek-v4.1-flash        (Sference, EU)
 //   - Kimi K3          -> nebius/kimi-k3                      (Nebius, EU)
 //
 // sessionStorage keys used:
@@ -113,6 +115,21 @@ const VARIANTS = Object.freeze({
     pricingModelId: "gemini-3.8-flash",
     reasoningSelector: "dedicated"
   },
+  "deepseek-v4-pro-0813": {
+    // Pinned TensorX EU deployment. The friendly UI name intentionally omits
+    // the provider's 0813 snapshot suffix.
+    requestyModelId: "tensorx/deepseek-v4-pro-0813",
+    pricingModelId: "deepseek-v4-pro-0813",
+    reasoningSelector: "dedicated",
+    sendNoneReasoning: true
+  },
+  "deepseek-v4.1-flash": {
+    // Pinned Sference EU deployment.
+    requestyModelId: "sference/deepseek-v4.1-flash",
+    pricingModelId: "deepseek-v4.1-flash",
+    reasoningSelector: "dedicated",
+    sendNoneReasoning: true
+  },
   "kimi-k3": {
     // Nebius's EU-hosted endpoint. Kimi K3 always reasons and supports
     // reasoning_effort low | high | max. The app defaults to low.
@@ -146,8 +163,8 @@ function resolveEffectiveMode() {
 }
 
 function resolveReasoningLevel(variantKey, variantConfig) {
-  // GPT-5 Nano, GPT-5.6, Gemini 3.8 Flash, and Kimi K3 use the dedicated
-  // Requesty selector.
+  // GPT-5 Nano, GPT-5.6, Gemini 3.8 Flash, DeepSeek, and Kimi K3 use the
+  // dedicated Requesty selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
     return normalizeRequestyNanoReasoning(
@@ -172,7 +189,8 @@ function buildRequestBody({
   supplementaryWrapped,
   transcriptionText,
   streaming,
-  reasoningLevel
+  reasoningLevel,
+  sendNoneReasoning = false
 }) {
   const requestBody = {
     model: requestyModelId,
@@ -188,7 +206,7 @@ function buildRequestBody({
     requestBody.stream_options = { include_usage: true };
   }
 
-  if (reasoningLevel && reasoningLevel !== "none") {
+  if (reasoningLevel && (reasoningLevel !== "none" || sendNoneReasoning)) {
     requestBody.reasoning_effort = reasoningLevel;
   }
 
@@ -274,7 +292,8 @@ async function generateNote() {
     supplementaryWrapped,
     transcriptionText,
     streaming,
-    reasoningLevel
+    reasoningLevel,
+    sendNoneReasoning: variantConfig.sendNoneReasoning === true
   });
 
   try {
@@ -338,7 +357,7 @@ async function generateNote() {
 //
 // All effective providers (requesty-claude / requesty-sonnet /
 // requesty-gpt55 / requesty-nano / requesty-gpt56-* /
-// requesty-gemini38-flash / requesty-kimi-k3)
+// requesty-gemini38-flash / requesty-deepseek-* / requesty-kimi-k3)
 // bind the same generate function; the active model is read from the
 // #requestyModel select / requesty_model session key at click time. Separate
 // exports are kept so the provider-registry entries stay explicit and
@@ -376,6 +395,14 @@ function initRequestyGemini38Flash() {
   bindGenerateNoteButton(generateNote);
 }
 
+function initRequestyDeepSeekV4Pro() {
+  bindGenerateNoteButton(generateNote);
+}
+
+function initRequestyDeepSeekV41Flash() {
+  bindGenerateNoteButton(generateNote);
+}
+
 function initRequestyKimiK3() {
   bindGenerateNoteButton(generateNote);
 }
@@ -389,5 +416,7 @@ export {
   initRequestyGpt56Terra,
   initRequestyGpt56Sol,
   initRequestyGemini38Flash,
+  initRequestyDeepSeekV4Pro,
+  initRequestyDeepSeekV41Flash,
   initRequestyKimiK3
 };
