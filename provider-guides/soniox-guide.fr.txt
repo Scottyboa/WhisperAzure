@@ -6,7 +6,7 @@ Rendez-vous sur https://console.soniox.com, créez un compte et ouvrez Billing o
 
 2. Demander l’accès européen
 
-Envoyez un e-mail à support@soniox.com pour demander l’accès au EU regional deployment de Soniox. Précisez que vous avez besoin d’un projet UE et d’une clé API européenne. N’envoyez aucune donnée patient.
+Envoyez un e-mail à support@soniox.com pour demander l’accès au EU regional deployment de Soniox. Précisez que vous avez besoin d’un projet UE et d’une clé API européenne.
 
 Message suggéré :
 

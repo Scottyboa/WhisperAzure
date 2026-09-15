@@ -6,7 +6,7 @@ Rufen Sie https://console.soniox.com auf, erstellen Sie ein Konto und öffnen Si
 
 2. EU-Zugang beantragen
 
-Senden Sie eine E-Mail an support@soniox.com und bitten Sie um Zugang zu Soniox’ EU regional deployment. Erklären Sie, dass Sie ein EU-Projekt und einen EU-API-Schlüssel benötigen. Senden Sie keine Patientendaten.
+Senden Sie eine E-Mail an support@soniox.com und bitten Sie um Zugang zu Soniox’ EU regional deployment. Erklären Sie, dass Sie ein EU-Projekt und einen EU-API-Schlüssel benötigen.
 
 Vorschlag für die Nachricht:
 

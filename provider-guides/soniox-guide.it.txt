@@ -6,7 +6,7 @@ Vai su https://console.soniox.com, crea un account e apri Billing o Credits. Agg
 
 2. Richiedi l’accesso UE
 
-Invia un’e-mail a support@soniox.com e richiedi l’accesso al EU regional deployment di Soniox. Spiega che ti servono un progetto UE e una chiave API europea. Non inviare dati dei pazienti.
+Invia un’e-mail a support@soniox.com e richiedi l’accesso al EU regional deployment di Soniox. Spiega che ti servono un progetto UE e una chiave API europea.
 
 Messaggio suggerito:
 

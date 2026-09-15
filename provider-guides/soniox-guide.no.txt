@@ -6,7 +6,7 @@ Gå til https://console.soniox.com, opprett en konto og åpne Billing eller Cred
 
 2. Søk om EU-tilgang
 
-Send en e-post til support@soniox.com og be om tilgang til Soniox’ EU regional deployment. Opplys at du trenger et EU-prosjekt og en EU-API-nøkkel. Ikke send pasientopplysninger.
+Send en e-post til support@soniox.com og be om tilgang til Soniox’ EU regional deployment. Opplys at du trenger et EU-prosjekt og en EU-API-nøkkel.
 
 Forslag til melding:
 
