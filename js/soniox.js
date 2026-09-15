@@ -31,9 +31,9 @@
 
 import {
   createRecordingUiHelpers,
-  flushPendingVadSegmentsGuarded,
   installSafeRecordingLoadStop,
 } from './core/recording-runner.js';
+import { createDrainableSonioxVAD } from './core/soniox-vad-drain.js';
 
 // ════════════════════════════════════════════════════════════════════════════
 // SHARED — logging, constants, helpers
@@ -199,7 +199,7 @@ let audioWorkletNode = null;
 let sileroVAD = null;
 let pendingVADChunks = [];
 let pendingVADLock = false;
-let pendingVADLastFlushToken = 0;
+let asyncCaptureTransition = false;
 
 let recordingActive = false;
 let processedAnyAudioFrames = false;
@@ -225,6 +225,9 @@ let transcriptionQueue = []; // [{ sessionId, signal, chunkNum, wavBlob }]
 let isProcessingQueue = false;
 let processingQueueSessionId = null;
 let enqueuedChunks = 0;
+// Failed audio stays in this Workspace's memory for an explicit retry.
+// Never included in exports/storage; cleared on Abort or a new recording.
+const failedAsyncChunks = new Map();
 let expectedChunks = 0;
 
 // ── Realtime-only state (WebSocket pipeline) ────────────────────────────────
@@ -704,10 +707,13 @@ async function fetchSonioxTranscriptText(
       const j = await rsp.json();
 
       // Diarized mode prefers speaker-labeled rendering when available.
+      let text = '';
       if (diarized && Array.isArray(j.tokens) && j.tokens.some(t => t && typeof t.speaker !== 'undefined')) {
-        return renderDiarizedTranscript(j.tokens);
+        text = renderDiarizedTranscript(j.tokens);
       }
-      return j.text || '';
+      text = text.trim() ? text : (typeof j.text === 'string' ? j.text : '');
+      if (!text.trim()) throw new Error('Soniox returned an empty transcript for an audio chunk.');
+      return text;
     } catch (err) {
       if (signal?.aborted) throw err;
       attempt += 1;
@@ -834,6 +840,7 @@ const sileroVADOptions = {
   minSpeechFrames: 3,
   onSpeechStart: () => {
     if (!canShowRecordingStatus()) return;
+    if (asyncCaptureTransition) return; // Keep the Pausing/Finishing status visible.
     logInfo('Silero VAD: speech started');
     recordingActive = true;
     chunkStartTime = Date.now();
@@ -849,45 +856,41 @@ const sileroVADOptions = {
 
     const totalSamples = pendingVADChunks.reduce((sum, seg) => sum + seg.length, 0);
     const minSamples = getAsyncMinChunkSeconds() * 16000;
-    if (totalSamples >= minSamples) {
-      const combined = new Float32Array(totalSamples);
-      let offset = 0;
-      for (const seg of pendingVADChunks) {
-        combined.set(seg, offset);
-        offset += seg.length;
-      }
-      const wavBlob = encodeWAV(floatTo16BitPCM(combined), 16000, 1);
-      enqueueAsyncTranscription(wavBlob, chunkNumber++);
-      pendingVADChunks = [];
+    if (totalSamples >= minSamples && !asyncCaptureTransition) {
+      flushPendingVADOnce('threshold');
     }
   },
 };
 
 function flushPendingVADOnce(reason, extraAudioFloat32 = null) {
-  const token = Date.now();
-  if (token === pendingVADLastFlushToken) return;
-  pendingVADLastFlushToken = token;
-
   if (extraAudioFloat32 && extraAudioFloat32.length) {
     const last = pendingVADChunks[pendingVADChunks.length - 1];
-    const looksSame = last && last.length === extraAudioFloat32.length;
+    const looksSame = last === extraAudioFloat32;
     if (!looksSame) pendingVADChunks.push(extraAudioFloat32);
   }
-
-  const nextChunkNumber = flushPendingVadSegmentsGuarded({
-    segments: pendingVADChunks,
-    sampleRate: 16000,
-    floatTo16BitPCM,
-    encodeWAV,
-    enqueueTranscription: enqueueAsyncTranscription,
-    chunkNumber,
-    isLocked: () => pendingVADLock,
-    setLocked: (value) => { pendingVADLock = value; },
-  });
-
-  if (nextChunkNumber !== chunkNumber) {
-    chunkNumber = nextChunkNumber;
+  if (pendingVADLock) throw new Error('Audio buffer is already being queued.');
+  if (!pendingVADChunks.length) return;
+  pendingVADLock = true;
+  try {
+    // One PCM allocation, not a combined Float32 plus a second PCM copy.
+    // Crucially, retain ALL segments if conversion/queue registration fails.
+    const samples = pendingVADChunks.reduce((sum, seg) => sum + seg.length, 0);
+    if (!samples) { pendingVADChunks = []; return; }
+    const pcm = new Int16Array(samples);
+    let offset = 0;
+    for (const segment of pendingVADChunks) {
+      for (const value of segment) {
+        const s = Math.max(-1, Math.min(1, value));
+        pcm[offset++] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      }
+    }
+    const wavBlob = encodeWAV(pcm, 16000, 1);
+    enqueueAsyncTranscription(wavBlob, chunkNumber);
+    chunkNumber += 1;
+    pendingVADChunks = [];
     logInfo(`[VAD] Flushed pending segments (${reason}).`);
+  } finally {
+    pendingVADLock = false;
   }
 }
 
@@ -927,10 +930,34 @@ async function transcribeChunkDirectly(wavBlob, chunkNum, { signal, sessionId } 
     transcriptionError = true;
     return {
       text: `[Error transcribing chunk ${chunkNum}]`,
+      failed: true,
       cleanupJobToken,
       cleanupResource,
     };
   }
+}
+
+function updateFailedChunkRetryButton() {
+  let button = document.getElementById('sonioxRetryFailedChunks');
+  if (!button && failedAsyncChunks.size) {
+    button = document.createElement('button');
+    button.id = 'sonioxRetryFailedChunks';
+    button.type = 'button';
+    button.textContent = 'Retry failed audio chunks';
+    button.style.marginLeft = '6px';
+    button.addEventListener('click', () => {
+      if (asyncCaptureTransition || !failedAsyncChunks.size) return;
+      const chunks = [...failedAsyncChunks.entries()];
+      failedAsyncChunks.clear();
+      button.hidden = true;
+      transcriptFrozen = false;
+      transcriptionError = false;
+      updateStatusMessage('Retrying failed audio chunks…', 'blue');
+      for (const [chunkNum, wavBlob] of chunks) enqueueAsyncTranscription(wavBlob, chunkNum);
+    });
+    document.getElementById('stopButton')?.insertAdjacentElement('afterend', button);
+  }
+  if (button) button.hidden = failedAsyncChunks.size === 0;
 }
 
 function enqueueAsyncTranscription(wavBlob, chunkNum) {
@@ -941,6 +968,7 @@ function enqueueAsyncTranscription(wavBlob, chunkNum) {
     wavBlob,
   });
   enqueuedChunks += 1;
+  logInfo(`[Batch ${groupId}] chunk ${chunkNum} queued; bytes=${wavBlob.size}; seconds=${estimateWavSeconds(wavBlob).toFixed(1)}`);
 
   // Microtask kick avoids races where isProcessingQueue flips after our check.
   queueMicrotask(() => { processTranscriptionQueue(); });
@@ -981,8 +1009,12 @@ async function processTranscriptionQueue() {
       try {
         if (groupId !== mySessionId || mySignal.aborted) break;
 
+        if (chunkResult.failed) failedAsyncChunks.set(chunkNum, wavBlob);
+        else failedAsyncChunks.delete(chunkNum);
+        updateFailedChunkRetryButton();
         transcriptChunks[chunkNum] = chunkResult.text;
         updateAsyncTranscriptionOutput();
+        logInfo(`[Batch ${mySessionId}] chunk ${chunkNum} applied; characters=${chunkResult.text.length}`);
         wavBlob = null;
       } finally {
         // Mark the global chunk job settled only after its text has been
@@ -1558,11 +1590,14 @@ function beginFreshSession() {
   sessionAbortController = new AbortController();
 
   // Async-side state
+  failedAsyncChunks.clear();
+  updateFailedChunkRetryButton();
   transcriptionQueue = [];
   isProcessingQueue = false;
   processingQueueSessionId = null;
   pendingVADChunks = [];
   pendingVADLock = false;
+  asyncCaptureTransition = false;
   chunkProcessingLock = false;
   pendingStop = false;
   enqueuedChunks = 0;
@@ -1603,6 +1638,8 @@ function beginFreshSession() {
 // Fully tear down whichever pipeline was running. Used by the teardown
 // hook (when the user switches providers mid-session) and on page load.
 function teardownActivePipeline(reason = 'teardown') {
+  failedAsyncChunks.clear();
+  updateFailedChunkRetryButton();
   try {
     manualStop = true;
     recordingActive = false;
@@ -2010,7 +2047,7 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
 
     updateStatusMessage('Loading voice-activity model...', 'orange');
     try {
-      if (!sileroVAD) sileroVAD = await vad.MicVAD.new(sileroVADOptions);
+      if (!sileroVAD) sileroVAD = await createDrainableSonioxVAD(vad.MicVAD, sileroVADOptions);
       await sileroVAD.start();
       updateStatusMessage('Listening for speech…', 'green');
       logInfo('Silero VAD started');
@@ -2027,7 +2064,7 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
 
   // ── Pause / Resume ────────────────────────────────────────────────────────
   pauseResumeButton.addEventListener('click', async () => {
-    if (pauseResumeButton.disabled) return;
+    if (pauseResumeButton.disabled || asyncCaptureTransition) return;
     setStopPauseDisabled(true);
     setAbortButtonDisabled(true);
 
@@ -2047,7 +2084,7 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
         }
 
         if (sileroVAD === previousVAD) sileroVAD = null;
-        nextVAD = await vad.MicVAD.new(sileroVADOptions);
+        nextVAD = await createDrainableSonioxVAD(vad.MicVAD, sileroVADOptions);
         sileroVAD = nextVAD;
 
         // A late page-load safety teardown in an older build could leave
@@ -2084,41 +2121,49 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
         setAbortButtonDisabled(!resumed);
       }
     } else {
-      // PAUSE: do NOT flip recordingPaused yet — submitUserSpeechOnPause
-      // fires a final onSpeechEnd inside sileroVAD.pause() with the tail
-      // audio. onSpeechEnd guards on canShowRecordingStatus() which checks
-      // recordingPaused, so flipping the flag too early would silently drop
-      // the tail segment.
+      // Keep accepting speech-end callbacks until capture AND inference have
+      // drained. Resume stays disabled until the tail has entered the queue.
+      asyncCaptureTransition = true;
       recordingActive = false;
       if (chunkTimeoutId) { clearTimeout(chunkTimeoutId); chunkTimeoutId = null; }
 
       updateStatusMessage('Pausing recording…', 'orange');
       const vadToPause = sileroVAD;
+      const pauseSession = groupId;
+      const pauseSignal = sessionAbortController.signal;
+      const stillCurrent = () => !uiSignal.aborted && !pauseSignal.aborted && groupId === pauseSession;
+      const slowTimer = setTimeout(() => {
+        if (!stillCurrent()) return;
+        updateStatusMessage('Still securing recorded audio. Please wait; Abort discards this recording.', 'orange');
+        setAbortButtonDisabled(false);
+      }, 10000);
       try {
-        if (vadToPause && typeof vadToPause.pause === 'function') {
-          await vadToPause.pause();
-          logInfo('Silero VAD paused');
-        } else {
-          logInfo('Silero VAD was unavailable during pause; Resume can recreate it.');
-        }
+        if (!vadToPause?.drainAndPause) throw new Error('Safe audio drain is unavailable.');
+        await vadToPause.drainAndPause();
+        if (!stillCurrent()) return;
+        flushPendingVADOnce('pause');
+        recordingPaused = true;
+        recordingActive = false;
+        stopMicrophone();
+        asyncCaptureTransition = false;
+        pauseResumeButton.innerText = 'Resume Recording';
+        updateStatusMessage('Recording paused', 'orange');
+        logInfo(`[Batch ${groupId}] pause secured; Resume enabled.`);
+        setStopPauseDisabled(false);
+        setAbortButtonDisabled(true);
       } catch (err) {
-        logError('Error pausing Silero VAD:', err);
+        if (!stillCurrent()) return;
+        logError('Could not securely pause Silero VAD:', err);
+        // Do not advertise a safe Resume or destroy/clear the retained audio.
+        // Stop can retry securing it; Abort remains an explicit discard action.
+        asyncCaptureTransition = false;
+        updateStatusMessage('Could not secure paused audio. Resume is blocked. Try Stop; Abort discards the recording.', 'red');
+        stopButton.disabled = false;
+        pauseResumeButton.disabled = true;
+        setAbortButtonDisabled(false);
+      } finally {
+        clearTimeout(slowTimer);
       }
-      // Let the final onSpeechEnd land before we set the guard flag.
-      await Promise.resolve();
-      recordingPaused = true;
-
-      if (vadToPause?.stream) vadToPause.stream.getTracks().forEach(t => t.stop());
-      stopMicrophone();
-
-      // Flush the tail segment captured by the final onSpeechEnd.
-      flushPendingVADOnce('pause');
-
-      pauseResumeButton.innerText = 'Resume Recording';
-      updateStatusMessage('Recording paused', 'orange');
-      logInfo('Recording paused; buffered speech flushed');
-      setStopPauseDisabled(false);
-      setAbortButtonDisabled(true);
     }
   }, { signal: uiSignal });
 
@@ -2156,10 +2201,13 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
       sessionAbortController = new AbortController();
 
       transcriptionQueue = [];
+      failedAsyncChunks.clear();
+      updateFailedChunkRetryButton();
       isProcessingQueue = false;
       processingQueueSessionId = null;
       pendingVADChunks = [];
       pendingVADLock = false;
+      asyncCaptureTransition = false;
       chunkProcessingLock = false;
       pendingStop = false;
       stopInProgress = false;
@@ -2183,33 +2231,45 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
     setAbortButtonDisabled(true);
     updateStatusMessage('Finishing transcription...', 'blue');
 
-    // FORCE-FLUSH the in-flight VAD segment via the public API, if any.
+    // Stop uses the same acknowledged drain as Pause. Destroying the VAD
+    // before its inference queue settles would recreate the same tail race.
+    asyncCaptureTransition = true;
     const vadToStop = sileroVAD;
-    let forcedAudio = null;
-    if (vadToStop && typeof vadToStop.endSegment === 'function') {
-      const result = vadToStop.endSegment();
-      forcedAudio = result?.audio || null;
-    }
-
-    if (vadToStop) {
-      try { await vadToStop.pause(); logInfo('Silero VAD paused on stop'); }
-      catch (err) { logError('Error pausing Silero VAD on stop:', err); }
-
-      if (vadToStop.stream) vadToStop.stream.getTracks().forEach(t => t.stop());
-
-      if (!vadToStop._destroyed) {
-        vadToStop._destroyed = true;
-        try { await vadToStop.destroy?.(); }
-        catch (err) { logDebug('sileroVAD destroy error:', err); }
+    const stopSession = groupId;
+    const stopSignal = sessionAbortController.signal;
+    const stillCurrent = () => !uiSignal.aborted && !stopSignal.aborted && groupId === stopSession;
+    const slowTimer = setTimeout(() => {
+      if (!stillCurrent()) return;
+      updateStatusMessage('Still securing recorded audio. Please wait; Abort discards this recording.', 'orange');
+      setAbortButtonDisabled(false);
+    }, 10000);
+    try {
+      if (vadToStop) {
+        if (!vadToStop.drainAndPause) throw new Error('Safe audio drain is unavailable.');
+        await vadToStop.drainAndPause();
+      } else if (!recordingPaused) {
+        throw new Error('Audio capture is unavailable; cannot confirm the final segment.');
       }
+      if (!stillCurrent()) return;
+      flushPendingVADOnce('stop');
+      await vadToStop?.destroy?.();
       if (sileroVAD === vadToStop) sileroVAD = null;
+      stopMicrophone();
+      recordingActive = false;
+      asyncCaptureTransition = false;
+    } catch (err) {
+      if (!stillCurrent()) return;
+      stopInProgress = false;
+      asyncCaptureTransition = false;
+      logError('Could not secure final audio:', err);
+      updateStatusMessage('Could not secure final audio. Try Stop again; Abort discards the recording.', 'red');
+      stopButton.disabled = false;
+      pauseResumeButton.disabled = true;
+      setAbortButtonDisabled(false);
+      return;
+    } finally {
+      clearTimeout(slowTimer);
     }
-    stopMicrophone();
-
-    // Let pause-triggered onSpeechEnd() land, then flush exactly once.
-    await Promise.resolve();
-    flushPendingVADOnce('stop', forcedAudio);
-    await Promise.resolve(); // ensure flush enqueues are visible
 
     manualStop = true;
     if (chunkTimeoutId) { clearTimeout(chunkTimeoutId); chunkTimeoutId = null; }
