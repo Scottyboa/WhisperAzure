@@ -297,6 +297,8 @@ export const transcribeTranslations = {
   guideHeading: "Guida e Istruzioni",
 guideText: `Benvenuto in <strong>Transcribe Notes</strong>. L'app può registrare e trascrivere conversazioni e usare il testo finale per generare una nota. Ottieni sempre il consenso necessario prima della registrazione e controlla sempre il contenuto clinico prima dell'uso.<br><br>
 
+<strong>Browser consigliato:</strong> Google Chrome offre il supporto più affidabile per tutte le funzioni dell'app.<br><br>
+
 <strong>Avvio rapido</strong><br>
 <ol>
   <li>Seleziona un Workspace, il fornitore di trascrizione e le impostazioni necessarie.</li>
@@ -327,6 +329,7 @@ guideText: `Benvenuto in <strong>Transcribe Notes</strong>. L'app può registrar
 <details>
   <summary><strong>Mini Panel</strong></summary>
   <ul>
+    <li><strong>Google Chrome è consigliato per il Mini Panel.</strong> Questa funzione potrebbe non funzionare correttamente con altri browser.</li>
     <li>Aprilo con il pulsante <strong>Mini-panel</strong>. L'icona in alto a destra passa da una visualizzazione all'altra.</li>
     <li><strong>Mini Panel — Browser Tabs</strong> controlla schede Transcribe Notes separate ed è adatto a un Workspace per scheda.</li>
     <li><strong>Mini Panel — Workspaces</strong> mostra tutti i Workspaces nella scheda Transcribe Notes selezionata ed è adatto a più aree di lavoro nella stessa scheda.</li>
@@ -338,7 +341,7 @@ guideText: `Benvenuto in <strong>Transcribe Notes</strong>. L'app può registrar
   <summary><strong>Auto-generate, Auto-copy e generazione primaria</strong></summary>
   <ul>
     <li><strong>Auto-generate</strong> avvia automaticamente la generazione della nota al termine della trascrizione. Quando è disattivato, usa manualmente <strong>Genera nota</strong>.</li>
-    <li><strong>Auto-copy</strong> può copiare automaticamente la trascrizione o la nota completata e richiede l'estensione del browser associata. I pulsanti di copia manuale funzionano comunque.</li>
+    <li><strong>Auto-copy</strong> può copiare automaticamente la trascrizione o la nota completata e richiede l'estensione Chrome associata. I pulsanti di copia manuale funzionano comunque.</li>
     <li>La nota primaria usa la trascrizione, l'eventuale prompt selezionato e il testo in <strong>Informazioni supplementari</strong>. Prima della generazione seleziona fornitore, modello e, se disponibile, livello di reasoning.</li>
     <li>Le note generate dall'IA possono contenere errori o omettere informazioni. Controlla e convalida sempre una nota prima di salvarla o inviarla.</li>
   </ul>

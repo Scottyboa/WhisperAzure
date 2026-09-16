@@ -297,6 +297,8 @@ export const transcribeTranslations = {
   guideHeading: "Anleitung & Instruktionen",
 guideText: `Willkommen bei <strong>Transcribe Notes</strong>. Die App kann Gespräche aufnehmen und transkribieren und den fertigen Text zur Erstellung einer Notiz verwenden. Holen Sie vor einer Aufnahme immer die erforderliche Einwilligung ein und prüfen Sie medizinische Inhalte vor der Verwendung.<br><br>
 
+<strong>Empfohlener Browser:</strong> Google Chrome bietet die zuverlässigste Unterstützung für alle Funktionen der App.<br><br>
+
 <strong>Schnellstart</strong><br>
 <ol>
   <li>Workspace, Transkriptionsanbieter und gewünschte Einstellungen auswählen.</li>
@@ -327,6 +329,7 @@ guideText: `Willkommen bei <strong>Transcribe Notes</strong>. Die App kann Gespr
 <details>
   <summary><strong>Mini Panel</strong></summary>
   <ul>
+    <li><strong>Google Chrome wird für das Mini Panel empfohlen.</strong> Andere Browser funktionieren mit dieser Funktion möglicherweise nicht ordnungsgemäß.</li>
     <li>Mit der Schaltfläche <strong>Mini-panel</strong> öffnen. Das Symbol oben rechts wechselt zwischen den beiden Ansichten.</li>
     <li><strong>Mini Panel — Browser Tabs</strong> steuert separate Transcribe-Notes-Tabs und eignet sich für einen Workspace pro Browser-Tab.</li>
     <li><strong>Mini Panel — Workspaces</strong> zeigt alle Workspaces im ausgewählten Transcribe-Notes-Tab und eignet sich für mehrere Arbeitsbereiche in einem Tab.</li>
@@ -338,7 +341,7 @@ guideText: `Willkommen bei <strong>Transcribe Notes</strong>. Die App kann Gespr
   <summary><strong>Auto-generate, Auto-copy und primäre Notizgenerierung</strong></summary>
   <ul>
     <li><strong>Auto-generate</strong> startet die Notizgenerierung automatisch nach Abschluss der Transkription. Andernfalls wird <strong>Notiz generieren</strong> manuell verwendet.</li>
-    <li><strong>Auto-copy</strong> kann das fertige Transkript oder die fertige Notiz automatisch kopieren und benötigt die zugehörige Browser-Erweiterung. Manuelle Kopierschaltflächen funktionieren unabhängig davon.</li>
+    <li><strong>Auto-copy</strong> kann das fertige Transkript oder die fertige Notiz automatisch kopieren und benötigt die zugehörige Chrome-Erweiterung. Manuelle Kopierschaltflächen funktionieren unabhängig davon.</li>
     <li>Die primäre Notiz verwendet das Transkript, einen eventuell gewählten Prompt und den Text unter <strong>Ergänzende Informationen</strong>. Anbieter, Modell und gegebenenfalls Reasoning-Stufe vor der Generierung auswählen.</li>
     <li>KI-generierte Notizen können Fehler enthalten oder Angaben auslassen. Vor dem Speichern oder Versenden immer prüfen und validieren.</li>
   </ul>

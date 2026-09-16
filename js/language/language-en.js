@@ -468,6 +468,8 @@ export const transcribeTranslations = {
   guideHeading: "Guide & Instructions",
 guideText: `Welcome to <strong>Transcribe Notes</strong>. The app can record and transcribe conversations and use the finished text to generate a note. Always obtain any required consent before recording, and always review clinical content before use.<br><br>
 
+<strong>Recommended browser:</strong> Google Chrome provides the most reliable support for all app features.<br><br>
+
 <strong>Quick start</strong><br>
 <ol>
   <li>Select a Workspace, transcription provider and any required settings.</li>
@@ -498,6 +500,7 @@ guideText: `Welcome to <strong>Transcribe Notes</strong>. The app can record and
 <details>
   <summary><strong>Mini Panel</strong></summary>
   <ul>
+    <li><strong>Google Chrome is recommended for the Mini Panel.</strong> Other browsers may not work properly with this function.</li>
     <li>Open it with the <strong>Mini-panel</strong> button. The icon in the upper-right corner switches between its two views.</li>
     <li><strong>Mini Panel — Browser Tabs</strong> controls separate Transcribe Notes tabs. This is useful when you want one Workspace per browser tab.</li>
     <li><strong>Mini Panel — Workspaces</strong> shows every Workspace in the selected Transcribe Notes tab. This is useful when you want several work areas in one tab.</li>
@@ -509,7 +512,7 @@ guideText: `Welcome to <strong>Transcribe Notes</strong>. The app can record and
   <summary><strong>Auto-generate, Auto-copy and primary note generation</strong></summary>
   <ul>
     <li><strong>Auto-generate</strong> starts note generation automatically when transcription finishes. When it is off, use <strong>Generate Note</strong> manually.</li>
-    <li><strong>Auto-copy</strong> can automatically copy the completed transcript or completed note. It requires the companion browser extension. Manual copy buttons work independently.</li>
+    <li><strong>Auto-copy</strong> can automatically copy the completed transcript or completed note. It requires the companion Chrome extension. Manual copy buttons work independently.</li>
     <li>The primary note uses the transcript, any selected prompt and the text in <strong>Supplementary Information</strong>. Select the provider, model and reasoning level, when available, before generation.</li>
     <li>AI-generated notes can contain errors or omit information. Always review and validate a note before saving or sending it.</li>
   </ul>

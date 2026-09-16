@@ -467,6 +467,8 @@ export const transcribeTranslations = {
   guideHeading: "Guide & Instruksjoner",
 guideText: `Velkommen til <strong>Transcribe Notes</strong>. Appen kan ta opp og transkribere samtaler og bruke den ferdige teksten til å generere et notat. Innhent alltid nødvendig samtykke før opptak, og kontroller alltid medisinsk innhold før det brukes.<br><br>
 
+<strong>Anbefalt nettleser:</strong> Google Chrome gir den mest pålitelige støtten for alle funksjonene i appen.<br><br>
+
 <strong>Hurtigstart</strong><br>
 <ol>
   <li>Velg Workspace, transkripsjonstilbyder og eventuelle innstillinger.</li>
@@ -497,6 +499,7 @@ guideText: `Velkommen til <strong>Transcribe Notes</strong>. Appen kan ta opp og
 <details>
   <summary><strong>Mini Panel</strong></summary>
   <ul>
+    <li><strong>Google Chrome anbefales for Mini Panel.</strong> Andre nettlesere fungerer kanskje ikke som de skal med denne funksjonen.</li>
     <li>Åpne panelet med <strong>Mini-panel</strong>-knappen. Ikonet øverst til høyre bytter mellom de to visningene.</li>
     <li><strong>Mini Panel — Browser Tabs</strong> styrer separate Transcribe Notes-faner. Dette passer når du vil bruke ett Workspace per nettleserfane.</li>
     <li><strong>Mini Panel — Workspaces</strong> viser alle Workspaces i den valgte Transcribe Notes-fanen. Dette passer når du vil arbeide med flere oppgaver i samme fane.</li>
@@ -508,7 +511,7 @@ guideText: `Velkommen til <strong>Transcribe Notes</strong>. Appen kan ta opp og
   <summary><strong>Auto-generate, Auto-copy og primær notatgenerering</strong></summary>
   <ul>
     <li><strong>Auto-generate</strong> starter notatgenereringen automatisk når transkripsjonen er ferdig. Når funksjonen er av, bruker du <strong>Generer notat</strong> manuelt.</li>
-    <li><strong>Auto-copy</strong> kan automatisk kopiere den ferdige transkripsjonen eller det ferdige notatet. Funksjonen krever den tilhørende nettleserutvidelsen. Manuelle kopieringsknapper fungerer uavhengig av dette.</li>
+    <li><strong>Auto-copy</strong> kan automatisk kopiere den ferdige transkripsjonen eller det ferdige notatet. Funksjonen krever den tilhørende Chrome-utvidelsen. Manuelle kopieringsknapper fungerer uavhengig av dette.</li>
     <li>Hovednotatet bruker transkripsjonen, eventuell valgt prompt og teksten i <strong>Supplerende informasjon</strong>. Velg tilbyder, modell og eventuelt reasoning-nivå før generering.</li>
     <li>AI-genererte notater kan inneholde feil eller utelate opplysninger. Les og valider alltid notatet før det lagres eller sendes.</li>
   </ul>

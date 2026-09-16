@@ -1,23 +1,26 @@
-// Shared by the main page and the floating panel; resolve from this module so
-// downloads also work from an about:blank Firefox popup / Document PiP window.
+// Shared by the main page and the floating panel. Resolve the Chrome extension
+// download from this module so the same help content works in both views.
 const chromeZip = new URL('../../div/autocopy.zip', import.meta.url).href;
-const firefoxZip = new URL('../../div/Autocopy_ff.zip', import.meta.url).href;
 
 export function autoCopyHelpHtml(language = 'en') {
   const no = ['no', 'nb', 'nn'].includes(language);
   return no
-    ? `<strong>Auto-copy krever en nettleserutvidelse</strong><br><br>
-<strong>Chrome / Edge:</strong> <a href="${chromeZip}" download>autocopy.zip</a><br>
-Pakk ut og les README. Åpne <code>chrome://extensions</code> (Edge: <code>edge://extensions</code>), slå på Developer mode og velg Load unpacked. Velg utvidelsens mappe og oppdater appen.<br><br>
-<strong>Firefox:</strong> <a href="${firefoxZip}" download>Autocopy_ff.zip</a><br>
-Pakk ut og les README. Åpne <code>about:debugging#/runtime/this-firefox</code>, velg Load Temporary Add-on og åpne <code>manifest.json</code>. Oppdater appen. Denne testinstallasjonen må gjentas etter omstart av Firefox; permanent installasjon krever en Mozilla-signert XPI-fil.<br><br>
-Velg Transkripsjon eller Notat etter installasjon. Utvidelsen aktiverer også «Jump to selected tab».<br><br>
-Auto-generer PÅ velger Notat; AV velger Transkripsjon. Et manuelt Auto-copy-valg beholdes til du endrer Auto-generer igjen. Varsler vises hvis nettleseren og operativsystemet tillater det.`
-    : `<strong>Auto-copy requires a browser extension</strong><br><br>
-<strong>Chrome / Edge:</strong> <a href="${chromeZip}" download>autocopy.zip</a><br>
-Unzip and read the README. Open <code>chrome://extensions</code> (Edge: <code>edge://extensions</code>), enable Developer mode and choose Load unpacked. Select the extension folder and refresh the app.<br><br>
-<strong>Firefox:</strong> <a href="${firefoxZip}" download>Autocopy_ff.zip</a><br>
-Unzip and read the README. Open <code>about:debugging#/runtime/this-firefox</code>, choose Load Temporary Add-on and open <code>manifest.json</code>. Refresh the app. Repeat this test installation after restarting Firefox; permanent installation requires a Mozilla-signed XPI file.<br><br>
-Choose Transcript or Note after installation. The extension also enables “Jump to selected tab”.<br><br>
-Auto-generate ON selects Note; OFF selects Transcript. A manual Auto-copy choice stays active until you change Auto-generate again. Notifications appear if allowed by your browser and operating system.`;
+    ? `<strong>Krever Chrome-utvidelse</strong><br/>
+For å bruke Auto-copy må du først laste ned og installere Chrome-utvidelsen:
+<a href="${chromeZip}" download>autocopy.zip</a><br/><br/>
+Pakk ut filen, les README-filen inni mappen, åpne <code>chrome://extensions</code>, slå på Developer mode, velg Load unpacked og oppdater siden etterpå.<br/><br/>
+Når utvidelsen er installert, kan ferdige transkripsjoner eller notater kopieres automatisk avhengig av valgt modus.<br/><br/>
+Når du slår Auto-generer PÅ, byttes Auto-copy automatisk til Notat.
+Når du slår Auto-generer AV, byttes Auto-copy automatisk til Transkripsjon.<br/><br/>
+Du kan fortsatt endre Auto-copy manuelt etterpå. Det valget beholdes helt til du bytter Auto-generer igjen.<br/><br/>
+Hvis varsler er tillatt i Chrome/Windows, kan du også få et varsel når kopieringen er fullført.`
+    : `<strong>Chrome extension required</strong><br/>
+To use Auto-copy, first download and install the Chrome extension:
+<a href="${chromeZip}" download>autocopy.zip</a><br/><br/>
+Unzip the file, read the README inside the folder, open <code>chrome://extensions</code>, turn on Developer mode, choose Load unpacked, and refresh this page afterwards.<br/><br/>
+After installation, finished transcripts or notes can be copied automatically depending on the selected mode.<br/><br/>
+When you turn Auto-generate ON, Auto-copy automatically switches to Note.
+When you turn Auto-generate OFF, Auto-copy automatically switches to Transcript.<br/><br/>
+You can still change Auto-copy manually afterward. That manual choice stays active until Auto-generate is toggled again.<br/><br/>
+If notifications are allowed in Chrome/Windows, you may also get a notification when copying is complete.`;
 }

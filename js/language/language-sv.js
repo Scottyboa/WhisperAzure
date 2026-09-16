@@ -311,6 +311,8 @@ export const transcribeTranslations = {
   guideHeading: "Guide & instruktioner",
 guideText: `Välkommen till <strong>Transcribe Notes</strong>. Appen kan spela in och transkribera samtal och använda den färdiga texten för att skapa en anteckning. Inhämta alltid nödvändigt samtycke före inspelning och granska alltid medicinskt innehåll före användning.<br><br>
 
+<strong>Rekommenderad webbläsare:</strong> Google Chrome ger det mest tillförlitliga stödet för alla funktioner i appen.<br><br>
+
 <strong>Snabbstart</strong><br>
 <ol>
   <li>Välj Workspace, transkriptionsleverantör och önskade inställningar.</li>
@@ -341,6 +343,7 @@ guideText: `Välkommen till <strong>Transcribe Notes</strong>. Appen kan spela i
 <details>
   <summary><strong>Mini Panel</strong></summary>
   <ul>
+    <li><strong>Google Chrome rekommenderas för Mini Panel.</strong> Funktionen kanske inte fungerar korrekt i andra webbläsare.</li>
     <li>Öppna panelen med knappen <strong>Mini-panel</strong>. Ikonen uppe till höger växlar mellan de två vyerna.</li>
     <li><strong>Mini Panel — Browser Tabs</strong> styr separata Transcribe Notes-flikar och passar när du vill ha ett Workspace per webbläsarflik.</li>
     <li><strong>Mini Panel — Workspaces</strong> visar alla Workspaces i den valda Transcribe Notes-fliken och passar när du vill ha flera arbetsytor i samma flik.</li>
@@ -352,7 +355,7 @@ guideText: `Välkommen till <strong>Transcribe Notes</strong>. Appen kan spela i
   <summary><strong>Auto-generate, Auto-copy och primär anteckningsgenerering</strong></summary>
   <ul>
     <li><strong>Auto-generate</strong> startar anteckningsgenereringen automatiskt när transkriptionen är klar. När funktionen är av använder du <strong>Generera anteckning</strong> manuellt.</li>
-    <li><strong>Auto-copy</strong> kan automatiskt kopiera den färdiga transkriptionen eller anteckningen och kräver det tillhörande webbläsartillägget. Manuella kopieringsknappar fungerar ändå.</li>
+    <li><strong>Auto-copy</strong> kan automatiskt kopiera den färdiga transkriptionen eller anteckningen och kräver det tillhörande Chrome-tillägget. Manuella kopieringsknappar fungerar ändå.</li>
     <li>Huvudanteckningen använder transkriptionen, eventuell vald prompt och texten i <strong>Kompletterande information</strong>. Välj leverantör, modell och eventuellt reasoning-nivå före generering.</li>
     <li>AI-genererade anteckningar kan innehålla fel eller utelämna information. Granska och validera alltid anteckningen före användning.</li>
   </ul>

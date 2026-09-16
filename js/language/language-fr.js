@@ -297,6 +297,8 @@ export const transcribeTranslations = {
   guideHeading: "Guide et instructions",
 guideText: `Bienvenue dans <strong>Transcribe Notes</strong>. L'application peut enregistrer et transcrire des conversations, puis utiliser le texte obtenu pour générer une note. Obtenez toujours le consentement requis avant l'enregistrement et vérifiez tout contenu clinique avant de l'utiliser.<br><br>
 
+<strong>Navigateur recommandé :</strong> Google Chrome offre la prise en charge la plus fiable de toutes les fonctionnalités de l'application.<br><br>
+
 <strong>Démarrage rapide</strong><br>
 <ol>
   <li>Sélectionnez un Workspace, un fournisseur de transcription et les réglages nécessaires.</li>
@@ -327,6 +329,7 @@ guideText: `Bienvenue dans <strong>Transcribe Notes</strong>. L'application peut
 <details>
   <summary><strong>Mini Panel</strong></summary>
   <ul>
+    <li><strong>Google Chrome est recommandé pour le Mini Panel.</strong> Cette fonction peut ne pas fonctionner correctement dans d'autres navigateurs.</li>
     <li>Ouvrez-le avec le bouton <strong>Mini-panel</strong>. L'icône en haut à droite permet de passer d'une vue à l'autre.</li>
     <li><strong>Mini Panel — Browser Tabs</strong> contrôle des onglets Transcribe Notes séparés et convient à un Workspace par onglet.</li>
     <li><strong>Mini Panel — Workspaces</strong> affiche tous les Workspaces de l'onglet Transcribe Notes sélectionné et convient à plusieurs espaces dans un seul onglet.</li>
@@ -338,7 +341,7 @@ guideText: `Bienvenue dans <strong>Transcribe Notes</strong>. L'application peut
   <summary><strong>Auto-generate, Auto-copy et génération principale</strong></summary>
   <ul>
     <li><strong>Auto-generate</strong> lance automatiquement la génération de la note à la fin de la transcription. Sinon, utilisez manuellement <strong>Générer la note</strong>.</li>
-    <li><strong>Auto-copy</strong> peut copier automatiquement la transcription ou la note terminée et nécessite l'extension de navigateur associée. Les boutons de copie manuelle restent disponibles.</li>
+    <li><strong>Auto-copy</strong> peut copier automatiquement la transcription ou la note terminée et nécessite l'extension Chrome associée. Les boutons de copie manuelle restent disponibles.</li>
     <li>La note principale utilise la transcription, le prompt éventuellement sélectionné et le texte du champ <strong>Informations complémentaires</strong>. Sélectionnez le fournisseur, le modèle et, si disponible, le niveau de raisonnement avant la génération.</li>
     <li>Les notes générées par l'IA peuvent contenir des erreurs ou omettre des éléments. Vérifiez et validez toujours une note avant de l'enregistrer ou de l'envoyer.</li>
   </ul>
