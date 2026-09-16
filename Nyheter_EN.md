@@ -1,3 +1,58 @@
+## 16 September, 2026
+
+### Better Workspaces, Mini Panel, backups and new AI models
+
+Several improvements have been added to make it easier to work with multiple tasks, restore previous content and move settings between devices.
+
+#### Workspaces and history
+
+You can now:
+
+- **Clone a Workspace** to create an identical copy.
+- Reorder Workspaces by dragging them.
+- Share history between Workspaces cloned from each other.
+- Restore a previous history entry into the active Workspace or a new Workspace.
+- Restore the transcript, supplementary information and generated note together.
+- Keep the selected Auto-copy setting when exporting and importing Workspace Sets.
+
+Workspaces created with **+** continue to have their own separate history. Up to 12 Workspaces can be open at the same time.
+
+#### Improved Mini Panel
+
+The Mini Panel now synchronizes more reliably with the selected browser tab and Workspace. This makes it more dependable when controlling recordings and note generation from the panel.
+
+**Google Chrome is recommended for the Mini Panel**, as other browsers may not work properly with this function.
+
+#### New and updated AI models
+
+The following models are now available directly through OpenAI:
+
+- **GPT-5.6 Sol**
+- **GPT-5.6 Terra**
+- **GPT-5.6 Luna**
+- **GPT-5 Nano**
+
+Through Requesty, **Gemini 3.7 Flash** has been replaced by **Gemini 3.8 Flash EU**. The following models have also been added:
+
+- **DeepSeek V4 Pro**
+- **DeepSeek V4.1 Flash**
+
+Reasoning options, token prices and cost calculations have been updated for the new models.
+
+#### Easier backup and restoration
+
+One shared **Cloud Backup Password** can now be used for API keys, prompts and Workspace Sets during the active browser-tab session.
+
+After API keys are imported from Google Drive or Microsoft OneDrive, the app can also find available prompt and Workspace Set backups. You can then choose which backups you want to restore.
+
+Older backups that use separate passwords remain supported. Importing a Workspace Set now asks for its encryption password only once.
+
+#### Simpler prompts and additional improvements
+
+The visible Prompt Profile ID feature has been removed. The prompt list is now stored more simply in the browser, while all 20 prompt slots and their names can still be included in backups.
+
+---
+
 ## 20 August, 2026
 
 ### New Workspaces, two Mini Panel views and separate history

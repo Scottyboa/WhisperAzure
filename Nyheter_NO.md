@@ -1,3 +1,58 @@
+## 16. september 2026
+
+### Bedre Workspaces, Mini Panel, sikkerhetskopiering og nye AI-modeller
+
+Det har kommet flere forbedringer som gjør det enklere å arbeide med flere oppgaver, gjenopprette tidligere innhold og flytte innstillinger mellom ulike enheter.
+
+#### Workspaces og historikk
+
+Du kan nå:
+
+- **Klone et Workspace** for å opprette en identisk kopi.
+- Endre rekkefølgen på Workspaces ved å dra dem.
+- Dele historikk mellom Workspaces som er klonet fra hverandre.
+- Gjenopprette et tidligere historikkelement i det aktive Workspace-et eller i et nytt Workspace.
+- Gjenopprette transkripsjon, supplerende informasjon og generert notat samlet.
+- Beholde valgt Auto-copy-innstilling ved eksport og import av Workspace Sets.
+
+Workspaces som opprettes med **+**, har fortsatt sin egen separate historikk. Det kan være opptil 12 Workspaces åpne samtidig.
+
+#### Forbedret Mini Panel
+
+Mini Panel har fått bedre synkronisering med den valgte nettleserfanen og det valgte Workspace-et. Dette gjør styring av opptak og notatgenerering fra panelet mer pålitelig.
+
+**Google Chrome anbefales for Mini Panel**, siden andre nettlesere kanskje ikke fungerer riktig med denne funksjonen.
+
+#### Nye og oppdaterte AI-modeller
+
+Følgende modeller er nå tilgjengelige direkte via OpenAI:
+
+- **GPT-5.6 Sol**
+- **GPT-5.6 Terra**
+- **GPT-5.6 Luna**
+- **GPT-5 Nano**
+
+Via Requesty er **Gemini 3.7 Flash** erstattet med **Gemini 3.8 Flash EU**. Følgende modeller er også lagt til:
+
+- **DeepSeek V4 Pro**
+- **DeepSeek V4.1 Flash**
+
+Valg for reasoning, tokenpriser og kostnadsberegning er oppdatert for de nye modellene.
+
+#### Enklere sikkerhetskopiering og gjenoppretting
+
+Et felles **Cloud Backup Password** kan nå brukes for API-nøkler, prompter og Workspace Sets i den aktive faneøkten.
+
+Når API-nøkler importeres fra Google Drive eller Microsoft OneDrive, kan appen også finne tilgjengelige sikkerhetskopier av prompter og Workspace Sets. Du kan deretter velge hvilke av dem du ønsker å hente inn.
+
+Eldre sikkerhetskopier med separate passord støttes fortsatt. Import av et Workspace Set spør nå bare én gang etter krypteringspassordet.
+
+#### Enklere prompter og flere små forbedringer
+
+Den synlige Prompt Profile ID-funksjonen er fjernet. Promptlisten lagres nå enklere i nettleseren, mens alle de 20 promptplassene og navnene deres fortsatt kan inkluderes i sikkerhetskopier.
+
+---
+
 ## 20. august 2026
 
 ### Nye Workspaces, to Mini Panel-visninger og separat historikk
