@@ -1,3 +1,4 @@
+import { bindRecordingAction, startVerifiedVAD } from './core/recording-lifecycle.js';
 import {
   createRecordingUiBindingScope,
   createRecordingUiHelpers,
@@ -781,12 +782,11 @@ function initRecording() {
     }
   }
 
-  startButton.addEventListener("click", async () => {
+  bindRecordingAction(startButton, 'start', async (operation) => {
     // Retrieve the API key before starting.
     const apiKey = getAPIKey();
     if (!apiKey) {
-      alert("Please enter your Mistral (Voxtral) API key before starting the recording.");
-      return;
+      throw new Error("Please enter your Mistral (Voxtral) API key before starting the recording.");
     }
     startButton.disabled = true;
 
@@ -799,24 +799,23 @@ function initRecording() {
     // initialize and start Silero VAD
     updateStatusMessage("Loading voice-activity model...", "orange");
     try {
-      if (!sileroVAD) {
-        sileroVAD = await vad.MicVAD.new(sileroVADOptions);
-      }
-      await sileroVAD.start();
+      sileroVAD = await startVerifiedVAD(options => vad.MicVAD.new(options), sileroVADOptions, operation);
       updateStatusMessage("Listening for speech…", "green");
       logInfo("Silero VAD started");
       setStopPauseDisabled(false);
       pauseResumeButton.innerText = "Pause Recording";
       setAbortButtonDisabled(false);
+      return 'recording';
     } catch (error) {
       updateStatusMessage("VAD initialization error: " + error, "red");
       logError("Silero VAD error", error);
       startButton.disabled = false;
       setAbortButtonDisabled(true);
+      throw error;
     }
   }, uiListenerOptions);
 
-  pauseResumeButton.addEventListener("click", async () => {
+  bindRecordingAction(pauseResumeButton, 'pauseResume', async (operation) => {
     if (pauseResumeButton.disabled) return;
     setStopPauseDisabled(true);
     setAbortButtonDisabled(true);
@@ -827,19 +826,21 @@ function initRecording() {
       try {
         // ── destroy previous VAD instance to free WASM and buffers ──
         if (sileroVAD && typeof sileroVAD.destroy === "function") {
-          await sileroVAD.destroy();
+          await operation.wait(sileroVAD.destroy());
         }
         // re-create the VAD (this will re-prompt/open the mic)
-        sileroVAD = await vad.MicVAD.new(sileroVADOptions);
-        await sileroVAD.start();
+        sileroVAD = await startVerifiedVAD(options => vad.MicVAD.new(options), sileroVADOptions, operation);
         recordingPaused = false;
 
         pauseResumeButton.innerText = "Pause Recording";
         updateStatusMessage("Listening for speech…", "green");
         logInfo("Silero VAD resumed");
+        return 'recording';
       } catch (err) {
         updateStatusMessage("Error resuming VAD: " + err, "red");
+        recordingPaused = true;
         logError("Error resuming Silero VAD:", err);
+          throw err;
       } finally {
         setStopPauseDisabled(false);
         setAbortButtonDisabled(false);
@@ -862,6 +863,7 @@ function initRecording() {
         logInfo("Silero VAD paused");
       } catch (err) {
         logError("Error pausing Silero VAD:", err);
+      throw err;
       }
       // Let the final onSpeechEnd land before we set the guard flag.
       await Promise.resolve();
@@ -882,11 +884,12 @@ function initRecording() {
       setAbortButtonDisabled(true);
       updateStatusMessage("Recording paused", "orange");
       logInfo("Recording paused; buffered speech flushed");
+      return 'paused';
     }
   }, uiListenerOptions);
 
   if (abortButton) {
-    abortButton.addEventListener("click", async () => {
+    bindRecordingAction(abortButton, 'abort', async (operation) => {
       if (abortButton.disabled) return;
       setAbortButtonDisabled(true);
       setStopPauseDisabled(true);
@@ -917,7 +920,7 @@ function initRecording() {
 
       try {
         if (sileroVAD && typeof sileroVAD.destroy === "function") {
-          await sileroVAD.destroy();
+          await operation.wait(sileroVAD.destroy());
         }
       } catch (err) {
         logDebug("Silero VAD destroy on abort failed:", err);
@@ -949,7 +952,7 @@ function initRecording() {
     }, uiListenerOptions);
   }
 
-  stopButton.addEventListener("click", async () => {
+  bindRecordingAction(stopButton, 'stop', async (operation) => {
     if (stopButton.disabled) return;
     setStopPauseDisabled(true);
     setAbortButtonDisabled(true);
@@ -971,6 +974,7 @@ function initRecording() {
         logInfo("Silero VAD paused on stop");
       } catch (err) {
         logError("Error pausing Silero VAD on stop:", err);
+      throw err;
       }
       // stop the mic Silero opened
       if (sileroVAD.stream) {
@@ -978,7 +982,7 @@ function initRecording() {
       }
       // destroy the VAD instance to free WASM/model memory
       if (typeof sileroVAD.destroy === "function") {
-        await sileroVAD.destroy();
+        await operation.wait(sileroVAD.destroy());
       }
       sileroVAD = null;
     }

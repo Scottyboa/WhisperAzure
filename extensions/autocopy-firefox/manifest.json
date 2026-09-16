@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Note Auto-Copy — Firefox",
+  "version": "1.0.0",
+  "description": "Copy completed transcripts and notes, and jump from the Mini Panel to the selected app tab.",
+  "permissions": ["clipboardWrite", "notifications"],
+  "host_permissions": ["https://scottyboa.github.io/*", "https://tn-beta.netlify.app/*"],
+  "background": {"scripts": ["background.js"]},
+  "content_scripts": [{
+    "matches": ["https://scottyboa.github.io/*", "https://tn-beta.netlify.app/*"],
+    "js": ["content-script.js"],
+    "run_at": "document_idle",
+    "all_frames": true
+  }],
+  "icons": {"16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png"},
+  "browser_specific_settings": {"gecko": {
+    "id": "note-autocopy-firefox@whisperazure.scottyboa.github.io",
+    "strict_min_version": "128.0",
+    "data_collection_permissions": {"required": ["none"]}
+  }}
+}

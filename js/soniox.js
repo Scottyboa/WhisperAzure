@@ -1,3 +1,4 @@
+import { bindRecordingAction, startVerifiedVAD, verifyAudioCapture } from './core/recording-lifecycle.js';
 // soniox.js
 //
 // Unified Soniox speech-to-text recording module — replaces the three
@@ -1482,10 +1483,10 @@ function rtWaitForServerFinalizedOrTimeout(timeoutMs) {
   });
 }
 
-async function rtStartAudioCapture() {
+async function rtStartAudioCapture(operation) {
   // Note: getUserMedia({ sampleRate }) is a hint — many browsers ignore it.
   // The actual resampling happens via AudioContext at SONIOX_RT_SAMPLE_RATE.
-  mediaStream = await navigator.mediaDevices.getUserMedia({
+  mediaStream = await operation.wait(navigator.mediaDevices.getUserMedia({
     audio: {
       channelCount: 1,
       sampleRate: SONIOX_RT_SAMPLE_RATE,
@@ -1494,7 +1495,7 @@ async function rtStartAudioCapture() {
       autoGainControl: true,
     },
     video: false,
-  });
+  }), late => late.getTracks().forEach(track => track.stop()));
 
   const Ctx = window.AudioContext || window.webkitAudioContext;
   audioContext = new Ctx({ sampleRate: SONIOX_RT_SAMPLE_RATE });
@@ -1506,7 +1507,7 @@ async function rtStartAudioCapture() {
     );
   }
 
-  await audioContext.audioWorklet.addModule(getRtAudioWorkletBlobUrl());
+  await operation.wait(audioContext.audioWorklet.addModule(getRtAudioWorkletBlobUrl()));
 
   audioSourceNode = audioContext.createMediaStreamSource(mediaStream);
   audioWorkletNode = new AudioWorkletNode(audioContext, 'soniox-rt-capture');
@@ -1521,7 +1522,7 @@ async function rtStartAudioCapture() {
   audioSourceNode.connect(audioWorkletNode);
   // We do NOT connect to destination — we only consume, no playback.
 
-  if (audioContext.state === 'suspended') await audioContext.resume();
+  await verifyAudioCapture(audioContext, mediaStream, operation);
 }
 
 function rtTeardownAudioCapture() {
@@ -1724,11 +1725,10 @@ function initRecording() {
 
 function bindRealtimeHandlers({ startButton, stopButton, pauseResumeButton, abortButton, uiSignal }) {
   // ── Start ─────────────────────────────────────────────────────────────────
-  startButton.addEventListener('click', async () => {
+  bindRecordingAction(startButton, 'start', async (operation) => {
     const apiKey = getAPIKey();
     if (!apiKey) {
-      alert('Please enter your Soniox API key first.');
-      return;
+      throw new Error('Please enter your Soniox API key first.');
     }
     startButton.disabled = true;
 
@@ -1740,22 +1740,24 @@ function bindRealtimeHandlers({ startButton, stopButton, pauseResumeButton, abor
 
     try {
       // Open WS first so the config is queued before any audio arrives.
-      await rtOpenWebSocketSession();
+      await operation.wait(rtOpenWebSocketSession());
     } catch (err) {
+      rtHardCloseWebSocket('start-failed');
       logError('Failed to open Soniox WS', err);
       updateStatusMessage('Could not connect to Soniox real-time. Check key/region.', 'red');
       startButton.disabled = false;
-      return;
+      throw err;
     }
 
     try {
-      await rtStartAudioCapture();
+      await rtStartAudioCapture(operation);
     } catch (err) {
       logError('Failed to start audio capture', err);
       rtHardCloseWebSocket('mic-failed');
+      rtTeardownAudioCapture();
       updateStatusMessage('Microphone error: ' + (err?.message || err), 'red');
       startButton.disabled = false;
-      return;
+      throw err;
     }
 
     recordingActive = true;
@@ -1764,10 +1766,11 @@ function bindRealtimeHandlers({ startButton, stopButton, pauseResumeButton, abor
     pauseResumeButton.innerText = 'Pause Recording';
     updateStatusMessage('Recording…', 'green');
     logInfo('Soniox real-time session started.');
+    return 'recording';
   }, { signal: uiSignal });
 
   // ── Pause / Resume ────────────────────────────────────────────────────────
-  pauseResumeButton.addEventListener('click', async () => {
+  bindRecordingAction(pauseResumeButton, 'pauseResume', async (operation) => {
     if (pauseResumeButton.disabled) return;
     setStopPauseDisabled(true);
     setAbortButtonDisabled(true);
@@ -1791,16 +1794,22 @@ function bindRealtimeHandlers({ startButton, stopButton, pauseResumeButton, abor
         serverFinalized = false;
         pendingAudioQueue = [];
 
-        await rtOpenWebSocketSession();
-        await rtStartAudioCapture();
+        await operation.wait(rtOpenWebSocketSession());
+        await rtStartAudioCapture(operation);
         recordingActive = true;
 
         pauseResumeButton.innerText = 'Pause Recording';
         updateStatusMessage('Recording…', 'green');
         logInfo('Soniox real-time session resumed (new WS).');
+        return 'recording';
       } catch (err) {
+        recordingPaused = true;
+        recordingActive = false;
+        rtHardCloseWebSocket('resume-failed');
+        rtTeardownAudioCapture();
         logError('Resume failed', err);
         updateStatusMessage('Error resuming Soniox real-time: ' + (err?.message || err), 'red');
+        throw err;
       } finally {
         setStopPauseDisabled(false);
         setAbortButtonDisabled(false);
@@ -1843,12 +1852,13 @@ function bindRealtimeHandlers({ startButton, stopButton, pauseResumeButton, abor
       logInfo('Soniox real-time session paused (WS closed).');
       setStopPauseDisabled(false);
       setAbortButtonDisabled(true);
+      return 'paused';
     }
   }, { signal: uiSignal });
 
   // ── Abort ─────────────────────────────────────────────────────────────────
   if (abortButton) {
-    abortButton.addEventListener('click', async () => {
+    bindRecordingAction(abortButton, 'abort', async (operation) => {
       if (abortButton.disabled) return;
       setAbortButtonDisabled(true);
       setStopPauseDisabled(true);
@@ -1902,7 +1912,7 @@ function bindRealtimeHandlers({ startButton, stopButton, pauseResumeButton, abor
   //   5. Send the empty-frame EOS to close the stream.
   //   6. Wait for serverFinished=true and socket close (cleanup).
   //   7. Tear down the audio graph and finalize the UI.
-  stopButton.addEventListener('click', async () => {
+  bindRecordingAction(stopButton, 'stop', async (operation) => {
     if (stopButton.disabled) return;
     if (stopInProgress) {
       logDebug('Stop already in progress; ignoring duplicate click.');
@@ -2031,11 +2041,10 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
   }
 
   // ── Start ─────────────────────────────────────────────────────────────────
-  startButton.addEventListener('click', async () => {
+  bindRecordingAction(startButton, 'start', async (operation) => {
     const apiKey = getAPIKey();
     if (!apiKey) {
-      alert('Please enter your Soniox API key first.');
-      return;
+      throw new Error('Please enter your Soniox API key first.');
     }
     startButton.disabled = true;
 
@@ -2047,23 +2056,24 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
 
     updateStatusMessage('Loading voice-activity model...', 'orange');
     try {
-      if (!sileroVAD) sileroVAD = await createDrainableSonioxVAD(vad.MicVAD, sileroVADOptions);
-      await sileroVAD.start();
+      sileroVAD = await startVerifiedVAD(options => createDrainableSonioxVAD(vad.MicVAD, options), sileroVADOptions, operation);
       updateStatusMessage('Listening for speech…', 'green');
       logInfo('Silero VAD started');
       setStopPauseDisabled(false);
       pauseResumeButton.innerText = 'Pause Recording';
       setAbortButtonDisabled(false);
+      return 'recording';
     } catch (error) {
       updateStatusMessage('VAD initialization error: ' + error, 'red');
       logError('Silero VAD error', error);
       startButton.disabled = false;
       setAbortButtonDisabled(true);
+      throw error;
     }
   }, { signal: uiSignal });
 
   // ── Pause / Resume ────────────────────────────────────────────────────────
-  pauseResumeButton.addEventListener('click', async () => {
+  bindRecordingAction(pauseResumeButton, 'pauseResume', async (operation) => {
     if (pauseResumeButton.disabled || asyncCaptureTransition) return;
     setStopPauseDisabled(true);
     setAbortButtonDisabled(true);
@@ -2077,15 +2087,14 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
         const previousVAD = sileroVAD;
         if (previousVAD && typeof previousVAD.destroy === 'function') {
           try {
-            await previousVAD.destroy();
+            await operation.wait(previousVAD.destroy());
           } finally {
             if (sileroVAD === previousVAD) sileroVAD = null;
           }
         }
 
         if (sileroVAD === previousVAD) sileroVAD = null;
-        nextVAD = await createDrainableSonioxVAD(vad.MicVAD, sileroVADOptions);
-        sileroVAD = nextVAD;
+
 
         // A late page-load safety teardown in an older build could leave
         // manualStop set even though the UI still showed a paused recording.
@@ -2101,12 +2110,14 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
         chunkStartTime = Date.now();
         lastSpeechTime = Date.now();
 
-        await nextVAD.start();
+        nextVAD = await startVerifiedVAD(options => createDrainableSonioxVAD(vad.MicVAD, options), sileroVADOptions, operation);
+        sileroVAD = nextVAD;
         resumed = true;
 
         pauseResumeButton.innerText = 'Pause Recording';
         updateStatusMessage('Listening for speech…', 'green');
         logInfo('Silero VAD resumed');
+        return 'recording';
       } catch (err) {
         recordingPaused = true;
         recordingActive = false;
@@ -2116,6 +2127,7 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
         if (sileroVAD === nextVAD) sileroVAD = null;
         updateStatusMessage('Error resuming VAD: ' + err, 'red');
         logError('Error resuming Silero VAD:', err);
+        throw err;
       } finally {
         setStopPauseDisabled(false);
         setAbortButtonDisabled(!resumed);
@@ -2131,7 +2143,7 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
       const vadToPause = sileroVAD;
       const pauseSession = groupId;
       const pauseSignal = sessionAbortController.signal;
-      const stillCurrent = () => !uiSignal.aborted && !pauseSignal.aborted && groupId === pauseSession;
+      const stillCurrent = () => !operation.signal.aborted && !uiSignal.aborted && !pauseSignal.aborted && groupId === pauseSession;
       const slowTimer = setTimeout(() => {
         if (!stillCurrent()) return;
         updateStatusMessage('Still securing recorded audio. Please wait; Abort discards this recording.', 'orange');
@@ -2151,6 +2163,7 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
         logInfo(`[Batch ${groupId}] pause secured; Resume enabled.`);
         setStopPauseDisabled(false);
         setAbortButtonDisabled(true);
+        return 'paused';
       } catch (err) {
         if (!stillCurrent()) return;
         logError('Could not securely pause Silero VAD:', err);
@@ -2161,6 +2174,7 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
         stopButton.disabled = false;
         pauseResumeButton.disabled = true;
         setAbortButtonDisabled(false);
+        throw err;
       } finally {
         clearTimeout(slowTimer);
       }
@@ -2169,7 +2183,7 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
 
   // ── Abort ─────────────────────────────────────────────────────────────────
   if (abortButton) {
-    abortButton.addEventListener('click', async () => {
+    bindRecordingAction(abortButton, 'abort', async (operation) => {
       if (abortButton.disabled) return;
       setAbortButtonDisabled(true);
       setStopPauseDisabled(true);
@@ -2220,7 +2234,7 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
   }
 
   // ── Stop ──────────────────────────────────────────────────────────────────
-  stopButton.addEventListener('click', async () => {
+  bindRecordingAction(stopButton, 'stop', async (operation) => {
     if (stopButton.disabled) return;
     if (stopInProgress) {
       logDebug('Stop already in progress; ignoring duplicate click.');
@@ -2237,7 +2251,7 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
     const vadToStop = sileroVAD;
     const stopSession = groupId;
     const stopSignal = sessionAbortController.signal;
-    const stillCurrent = () => !uiSignal.aborted && !stopSignal.aborted && groupId === stopSession;
+    const stillCurrent = () => !operation.signal.aborted && !uiSignal.aborted && !stopSignal.aborted && groupId === stopSession;
     const slowTimer = setTimeout(() => {
       if (!stillCurrent()) return;
       updateStatusMessage('Still securing recorded audio. Please wait; Abort discards this recording.', 'orange');
@@ -2266,7 +2280,7 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
       stopButton.disabled = false;
       pauseResumeButton.disabled = true;
       setAbortButtonDisabled(false);
-      return;
+      throw err;
     } finally {
       clearTimeout(slowTimer);
     }

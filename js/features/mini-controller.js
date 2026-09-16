@@ -1,3 +1,5 @@
+import { createMiniCommandChannel } from './mini-command-channel.js';
+import { autoCopyHelpHtml } from './autocopy-help.js';
 import {
   DEFAULTS,
   getNoteUiVisibility,
@@ -22,7 +24,33 @@ const MINI_PANEL_WINDOW_NAME = 'whisperazure-mini-panel';
 const MINI_PANEL_WIDTH = 370;
 const MINI_PANEL_HEIGHT = 255;
 const STATE_REFRESH_MS = 350;
-const AUTO_COPY_DOWNLOAD_HREF = 'div/autocopy.zip';
+let commandChannel;
+const commandErrors = new Map();
+function commandKey(tabId, presetId = '') { return tabId + ':' + presetId; }
+function commands() {
+  if (!commandChannel) commandChannel = createMiniCommandChannel({
+    tabId: getOrCreateLocalTabId(),
+    send: postHubMessage,
+    run: callLocalAppAction,
+    onResult: (result, message) => {
+      const presetId = message.actionName === 'runWorkspacePresetAction' ? message.args[0] : '';
+      const key = commandKey(message.targetTabId, presetId);
+      if (!result.ok) {
+        const snapshot = hubTabs.get(message.targetTabId);
+        const state = presetId
+          ? snapshot?.workspacePresets?.items?.find(item => item.id === presetId)?.state
+          : snapshot?.state;
+        commandErrors.set(key, {
+          text: String(result.error || 'Action failed.'),
+          sequence: Number(result.state?.sequence ?? state?.recordingSequence ?? 0),
+        });
+      }
+      else commandErrors.delete(key);
+      requestUiRefresh();
+    },
+  });
+  return commandChannel;
+}
 const MINI_HUB_CHANNEL_NAME = 'whisperazure-mini-panel-hub';
 const MINI_HUB_PAGE_SESSION_KEY = 'mini_panel_page_session_id';
 const MINI_WORKSPACE_PANEL_MODE_KEY = 'whisper_workspace_mini_panel_mode';
@@ -1117,11 +1145,12 @@ function toggleMiniTabPicker() {
 
 function postHubMessage(message) {
   ensureHubChannel();
-  if (!hubChannel) return;
+  if (!hubChannel) return false;
 
   try {
     hubChannel.postMessage(message);
-  } catch (_) {}
+    return true;
+  } catch (_) { return false; }
 }
 
 function publishLocalHubSnapshot(reason = 'state') {
@@ -1358,14 +1387,9 @@ function ensureHubChannel() {
       return;
     }
 
-    if (type === 'mini-hub-command') {
-      const targetTabId = String(data?.targetTabId || '').trim();
-      if (!targetTabId || targetTabId !== getOrCreateLocalTabId()) return;
-
-      const actionName = String(data?.actionName || '').trim();
-      const args = Array.isArray(data?.args) ? data.args : [];
-      callLocalAppAction(actionName, ...args);
-      publishLocalHubSnapshot(`command:${actionName}`);
+    if (type === 'mini-hub-command' || type === 'mini-hub-command-result') {
+      commands().receive(data);
+      return;
     }
 
     if (type === 'mini-hub-focus-tab') {
@@ -2103,6 +2127,19 @@ function syncAutoCopyOptions() {
 }
 
 function getMiniPhasePresentation(state) {
+  const no = getPageLanguage().startsWith('n');
+  const labels = {
+    starting: no ? 'Starter opptak …' : 'Starting recording…',
+    pausing: no ? 'Sikrer opptaket før pause …' : 'Securing audio before pause…',
+    resuming: no ? 'Gjenopptar opptak …' : 'Resuming recording…',
+    stopping: no ? 'Stopper og sikrer opptaket …' : 'Stopping and securing audio…',
+    aborting: no ? 'Avbryter opptak …' : 'Aborting recording…',
+    error: no ? 'Opptakshandlingen mislyktes' : 'Recording action failed',
+  };
+  if (labels[state?.miniPanelStatusPhase]) {
+    const text = labels[state.miniPanelStatusPhase];
+    return { badge: text, text, tone: state.miniPanelStatusPhase === 'error' ? 'error' : 'idle' };
+  }
   const phase = String(state?.miniPanelStatusPhase || 'idle').trim();
 
   switch (phase) {
@@ -2359,10 +2396,18 @@ function updateMiniPanelUi() {
   const statusText = String(state.statusText || '').trim();
   const pauseResumeLabel = String(state.pauseResumeLabel || '').trim() || tMini('pause');
   const phaseUi = getMiniPhasePresentation(state);
+  const targetId = ensureSelectedHubTab();
+  const presetId = getHighlightedWorkspacePresetId();
+  const pending = !!state.recordingPending || commands().isPending(targetId, presetId);
+  const errorKey = commandKey(targetId, presetId);
+  const priorError = commandErrors.get(errorKey);
+  // A fresh action in the main tab can also recover from a panel error.
+  if (priorError && Number(state.recordingSequence || 0) > priorError.sequence) commandErrors.delete(errorKey);
+  const commandError = commandErrors.get(errorKey)?.text || '';
 
-  setDisabled('miniStartButton', !state.canStart);
-  setDisabled('miniStopButton', !state.canStop);
-  setDisabled('miniPauseButton', !state.canPauseResume);
+  setDisabled('miniStartButton', !state.canStart || pending);
+  setDisabled('miniStopButton', !state.canStop || pending);
+  setDisabled('miniPauseButton', !state.canPauseResume || pending);
   setDisabled('miniCopyTranscriptButton', !state.hasTranscript);
   setDisabled('miniCopyNoteButton', !state.hasNote);
   setDisabled('miniGenerateNoteButton', !state.hasTranscript || !!state.noteBusy);
@@ -2391,6 +2436,9 @@ function updateMiniPanelUi() {
   } else {
     recordingLineText = statusText || phaseUi?.text || (snapshot ? tMini('ready') : tMini('noTabSelected'));
   }
+  if (state.recordingPending) recordingLineText = phaseUi?.text || recordingLineText;
+  if (commandError || state.recordingError) recordingLineText = commandError || state.recordingError;
+  else if (pending && !state.recordingPending) recordingLineText = getPageLanguage().startsWith('n') ? 'Venter på bekreftelse …' : 'Waiting for confirmation…';
   setText('miniStatusText', recordingLineText);
   syncMiniSttSummary(state);
   setText(
@@ -2414,14 +2462,21 @@ function updateMiniPanelUi() {
 
   const miniAutoCopyHelp = $('miniAutoCopyHelp');
   if (miniAutoCopyHelp) {
-    miniAutoCopyHelp.title =
-      state.autoCopyExtensionAvailable
-        ? ''
-        : `Chrome extension required.\n\nDownload: ${AUTO_COPY_DOWNLOAD_HREF}\nUnzip it, read the README, then load the unpacked folder in chrome://extensions and refresh the page.\n\nWhen Auto-generate is turned on, Auto-copy switches to Note.\nWhen Auto-generate is turned off, Auto-copy switches to Transcript.\n\nYou can still change Auto-copy manually afterward. That manual choice stays active until Auto-generate is toggled again.`;
-    miniAutoCopyHelp.setAttribute('aria-label', tMini('autoCopyHelpShort'));
+    miniAutoCopyHelp.title = '';
+    miniAutoCopyHelp.setAttribute('aria-label',
+      getPageLanguage() === 'no' ? 'Installasjonsguide for Chrome og Firefox' : 'Chrome and Firefox installation guide');
+  }
+  const help = $('miniAutoCopyTooltip');
+  if (help && help.dataset.language !== getPageLanguage()) {
+    help.innerHTML = autoCopyHelpHtml(getPageLanguage());
+    help.dataset.language = getPageLanguage();
   }
 
-  if (phaseUi) {
+  if (commandError || state.recordingError) {
+    setBadge(getPageLanguage().startsWith('n') ? 'Feil' : 'Error', 'error');
+  } else if (pending && !state.recordingPending) {
+    setBadge('…', 'idle');
+  } else if (phaseUi) {
     setBadge(phaseUi.badge, phaseUi.tone);
   } else {
     setBadge(tMini('idle'), 'idle');
@@ -2458,38 +2513,30 @@ function stopRefreshLoop() {
   }
 }
 
-function callLocalAppAction(actionName, ...args) {
+async function callLocalAppAction(actionName, ...args) {
   const app = getApp();
   if (!app || typeof app[actionName] !== 'function') return false;
-
-  try {
-    app[actionName](...args);
+  try { return await app[actionName](...args); }
+  finally {
+    publishLocalHubSnapshot('command:' + actionName);
     requestUiRefresh();
-    return true;
-  } catch (err) {
-    console.warn(`[mini-panel] action failed: ${actionName}`, err);
-    return false;
   }
 }
 
 function dispatchHubAction(actionName, ...args) {
   const targetTabId = ensureSelectedHubTab();
-  if (!targetTabId) return false;
-
-  if (targetTabId === getOrCreateLocalTabId()) {
-    return callLocalAppAction(actionName, ...args);
+  if (!targetTabId) return Promise.resolve({ ok: false, error: 'No browser tab selected.' });
+  const presetId = actionName === 'runWorkspacePresetAction' ? args[0] : '';
+  const key = commandKey(targetTabId, presetId);
+  const actualAction = presetId ? args[1] : actionName;
+  if (commands().isPending(targetTabId, presetId) &&
+      ['startRecording', 'pauseResumeRecording', 'stopRecording'].includes(actualAction)) {
+    return Promise.resolve({ ok: false, error: 'Wait for the current action to finish.' });
   }
-
-  postHubMessage({
-    type: 'mini-hub-command',
-    targetTabId,
-    actionName,
-    args,
-    at: Date.now(),
-  });
-
+  commandErrors.delete(key);
+  const result = commands().request(targetTabId, actionName, args);
   requestUiRefresh();
-  return true;
+  return result;
 }
 
 // Bring the Chrome tab currently selected in the mini panel to the
@@ -2503,6 +2550,7 @@ function dispatchFocusSelectedTab() {
 
   if (targetTabId === getOrCreateLocalTabId()) {
     try {
+      window.postMessage({ type: 'AUTO_COPY_EXTENSION_FOCUS_TAB', source: 'mini-panel' }, window.location.origin);
       window.focus();
     } catch (_) {}
     return true;
@@ -2974,7 +3022,7 @@ function refreshFocusTabButtonVisibility() {
   const btn = $('miniFocusTabButton');
   if (!btn) return;
 
-  const supported = isFocusTabSupportedByAnyTab();
+  const supported = getSelectedHubSnapshot()?.state?.autoCopyExtensionFocusTabSupported === true;
   btn.hidden = !supported;
 
   const selectedTabId = ensureSelectedHubTab();
@@ -4127,18 +4175,10 @@ function renderMiniPanelDocument(targetWindow) {
     class="mini-help"
     tabindex="0"
     aria-describedby="miniAutoCopyTooltip"
-    aria-label="Chrome extension required"
+    aria-label="Chrome and Firefox installation guide"
   >?</span>
   <span id="miniAutoCopyTooltip" class="mini-tooltip" role="tooltip">
-    <strong>Chrome extension required</strong><br>
-    Download and install:
-    <a href="div/autocopy.zip" download>autocopy.zip</a><br><br>
-    Unzip it, read the README, then load the unpacked folder in
-    <code>chrome://extensions</code> and refresh the page.<br><br>
-    When you toggle Auto-generate ON, Auto-copy switches to Note.
-    When you toggle Auto-generate OFF, Auto-copy switches to Transcript.<br><br>
-    You can still change Auto-copy manually afterward.
-    That manual choice stays active until Auto-generate is toggled again.
+    ${autoCopyHelpHtml(getPageLanguage())}
   </span>
 </span>
           </div>
@@ -4287,7 +4327,7 @@ async function openMiniPanel() {
     } else {
       miniWindow = window.open(
         '',
-        MINI_PANEL_WINDOW_NAME,
+        MINI_PANEL_WINDOW_NAME + '-' + getOrCreateLocalTabId(),
         `popup=yes,width=${MINI_PANEL_WIDTH},height=${preferredHeight},resizable=yes`
       );
       if (!miniWindow) {

@@ -32,179 +32,28 @@ function getRecordingUiBusyState() {
 }
 
 function initRecordingTimerUi() {
-  // Prevent double-init (in case of soft reloads / hot switches)
   if (window.__recordTimerControllerInitialized) return;
   window.__recordTimerControllerInitialized = true;
-
-  const PREFIX = "Recording Timer:";
-
   const timerEl = document.getElementById("recordTimer");
-  const startBtn = document.getElementById("startButton");
-  const stopBtn = document.getElementById("stopButton");
-  const pauseBtn = document.getElementById("pauseResumeButton");
-  const transcriptionEl = document.getElementById("transcription");
-
-  if (!timerEl || !startBtn || !stopBtn || !pauseBtn) return;
-
-  let elapsedMs = 0;
-  let running = false;
-  let startedAtMs = 0;
-  let intervalId = null;
-  let blockedUntilStart = true;
-  let pendingStart = false;
-  let pendingStartTimeoutId = null;
-  let pendingStartPollId = null;
-
-  function formatTime(ms) {
-    const totalSec = Math.floor(ms / 1000);
-    if (totalSec < 60) return `${totalSec} sec`;
-    const m = Math.floor(totalSec / 60);
-    const s = totalSec % 60;
-    return s > 0 ? `${m} min ${s} sec` : `${m} min`;
-  }
-
-  function currentElapsedMs() {
-    return running ? (elapsedMs + (Date.now() - startedAtMs)) : elapsedMs;
-  }
-
+  if (!timerEl) return;
+  let elapsed = 0, started = 0;
   function render() {
-    timerEl.textContent = `${PREFIX} ${formatTime(currentElapsedMs())}`;
+    const sec = Math.floor((elapsed + (started ? Date.now() - started : 0)) / 1000);
+    timerEl.textContent = "Recording Timer: " + (sec < 60 ? sec + " sec" : Math.floor(sec / 60) + " min " + (sec % 60) + " sec");
   }
-
-  function clearTick() {
-    if (intervalId) {
-      clearInterval(intervalId);
-      intervalId = null;
+  function freeze() { if (started) elapsed += Date.now() - started; started = 0; }
+  window.addEventListener("recording:lifecycle", ({ detail }) => {
+    if (detail.phase === "starting" || detail.phase === "aborted") {
+      elapsed = 0; started = 0;
+      if (detail.phase === "starting") document.getElementById("transcription")?.style.removeProperty("height");
     }
-  }
-
-  function startTicking() {
-    clearTick();
-    intervalId = setInterval(render, 1000);
-  }
-
-  function clearPendingStartTimeout() {
-    if (pendingStartTimeoutId) {
-      clearTimeout(pendingStartTimeoutId);
-      pendingStartTimeoutId = null;
-    }
-  }
-
-  function clearPendingStartPoll() {
-    if (pendingStartPollId) {
-      clearInterval(pendingStartPollId);
-      pendingStartPollId = null;
-    }
-  }
-
-  function armStart() {
-    clearPendingStartTimeout();
-    clearPendingStartPoll();
-
-    pendingStart = true;
-    blockedUntilStart = true;
-
-    elapsedMs = 0;
-    running = false;
-    clearTick();
+    else if (detail.phase === "recording") { if (!started) started = Date.now(); }
+    else if (["paused", "stopping", "stopped", "error"].includes(detail.phase)) freeze();
     render();
-
-    // Poll for the current busy state so this survives main.js button cloning
-    // and future controller-side changes to what counts as "actively transcribing".
-    pendingStartPollId = setInterval(() => {
-      if (!pendingStart) return;
-      if (getRecordingUiBusyState()) {
-        confirmStart();
-      }
-    }, 100);
-
-    pendingStartTimeoutId = setTimeout(() => {
-      if (!pendingStart) return;
-      cancelStart();
-    }, 60000);
-  }
-
-  function confirmStart() {
-    if (!pendingStart) return;
-    pendingStart = false;
-    clearPendingStartTimeout();
-    clearPendingStartPoll();
-
-    blockedUntilStart = false;
-    elapsedMs = 0;
-    running = true;
-    startedAtMs = Date.now();
-    render();
-    startTicking();
-  }
-
-  function cancelStart() {
-    if (!pendingStart) return;
-    pendingStart = false;
-    clearPendingStartTimeout();
-    clearPendingStartPoll();
-
-    blockedUntilStart = true;
-    running = false;
-    elapsedMs = 0;
-    clearTick();
-    render();
-  }
-
-  function freeze() {
-    if (!running) {
-      render();
-      return;
-    }
-    elapsedMs += Date.now() - startedAtMs;
-    running = false;
-    clearTick();
-    render();
-  }
-
-  function resume() {
-    if (blockedUntilStart) return;
-    if (running) return;
-    if (elapsedMs <= 0) return;
-    running = true;
-    startedAtMs = Date.now();
-    render();
-    startTicking();
-  }
-
-  function resetTranscriptionWindowSize() {
-    if (!transcriptionEl) return;
-    transcriptionEl.style.removeProperty("height");
-  }
-
-  render();
-
-  document.addEventListener("click", (event) => {
-    const id = event.target && event.target.id;
-    if (id === "startButton") {
-      resetTranscriptionWindowSize();
-      armStart();
-      return;
-    }
-
-    if (id === "stopButton" || id === "abortButton") {
-      cancelStart();
-      freeze();
-      blockedUntilStart = true;
-      return;
-    }
-
-    if (id === "pauseResumeButton") {
-      if (running) freeze();
-      else resume();
-    }
-  }, true);
-
-  window.addEventListener("transcription:finished", () => {
-    cancelStart();
-    freeze();
-    blockedUntilStart = true;
   });
+  render();
+  const timer = setInterval(render, 1000);
+  window.addEventListener("pagehide", () => clearInterval(timer), { once: true });
 }
 
 function initProviderLockWhileRecording() {

@@ -1,3 +1,4 @@
+import { getRecordingLifecycle, requestRecordingAction } from './core/recording-lifecycle.js';
 import { initTranscribeLanguage } from './languageLoaderUsage.js';
 import {
   DEFAULTS,
@@ -660,7 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       const onMessage = (event) => {
-        if (event.source !== window) return;
+        if (event.source !== window || event.origin !== location.origin) return;
         const data = event?.data || {};
         if (data.type !== AUTO_COPY_EXTENSION_SIGNAL) return;
 
@@ -1095,6 +1096,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const app = getApp();
     if (app.__autoCopyExtensionCopyBridgeBound) return;
     app.__autoCopyExtensionCopyBridgeBound = true;
+    let useFirefoxEventBridge = false;
+    const forward = (event, copyKind) => {
+      if (!useFirefoxEventBridge) return;
+      const detail = event.detail || {};
+      if (detail.aborted || detail.failed || ['aborted', 'error', 'failed'].includes(detail.status)) return;
+      const redactor = event.type === 'redactor:autocopy';
+      if (redactor ? !document.getElementById('redactorAutocopyToggle')?.checked : getAutoCopyMode() !== copyKind) return;
+      const field = copyKind === 'note' ? 'generatedNote' : 'transcription';
+      const text = typeof detail.text === 'string' ? detail.text : String(document.getElementById(field)?.value || '');
+      if (!text.trim()) return;
+      window.postMessage({ type: 'AUTO_COPY_APP_EVENT', copyKind, text, sourceEvent: event.type }, location.origin);
+    };
+    for (const name of ['note:finished', 'note-generation-finished']) {
+      window.addEventListener(name, event => forward(event, 'note'));
+    }
+    for (const name of ['transcription:finished', 'redactor:autocopy']) {
+      window.addEventListener(name, event => forward(event, 'transcript'));
+    }
+    const resetBridge = () => {
+      if (useFirefoxEventBridge) window.postMessage({ type: 'AUTO_COPY_APP_EVENT', reset: true }, location.origin);
+    };
+    window.addEventListener('recording:lifecycle', event => {
+      if (event.detail?.phase === 'starting') resetBridge();
+    });
+    window.addEventListener('note-generation-started', resetBridge);
 
     // Permanent listener for unsolicited presence announcements. The
     // extension's content script announces itself once on page load
@@ -1104,13 +1130,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // older extension versions don't include `capabilities`, so the
     // focus-tab flag stays false for them.
     window.addEventListener('message', (event) => {
-      if (event.source !== window) return;
+      if (event.source !== window || event.origin !== location.origin) return;
       const data = event?.data || {};
       if (data.type !== AUTO_COPY_EXTENSION_SIGNAL) return;
 
       setAutoCopyExtensionAvailable(true);
 
       const caps = Array.isArray(data?.capabilities) ? data.capabilities : [];
+      useFirefoxEventBridge = data.browser === 'firefox' && caps.includes('event-bridge-v1');
       const supportsFocusTab = caps
         .map((c) => String(c || '').trim().toLowerCase())
         .includes('focus-tab');
@@ -1118,7 +1145,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.addEventListener('message', (event) => {
-      if (event.source !== window) return;
+      if (event.source !== window || event.origin !== location.origin) return;
 
       const data = event?.data || {};
       if (data.type !== AUTO_COPY_EXTENSION_COPY_RESULT) return;
@@ -1852,6 +1879,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function isTranscribeBusy() {
+    if (['starting', 'resuming', 'pausing', 'aborting'].includes(getRecordingLifecycle().phase)) return true;
     const stopBtn = document.getElementById('stopButton');
     if (stopBtn && stopBtn.disabled === false) return true;
 
@@ -1990,6 +2018,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function setSharedStatusMessage(message, color = '') {
     const text = String(message || '').trim();
     if (!text) return;
+    const captureState = getRecordingLifecycle();
+    if (captureState.pending || captureState.phase === 'recording' || captureState.phase === 'error') return;
 
     try {
       if (typeof window.updateStatusMessage === 'function') {
@@ -2020,8 +2050,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (reason === 'note-generation-begin') {
         setSharedStatusMessage('Generating note...', 'blue');
-      } else if (reason === 'start-recording-click' || reason === 'record-hotkey') {
-        setSharedStatusMessage('Recording...', 'red');
       }
     });
 
@@ -2222,9 +2250,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusEl = document.getElementById('statusMessage');
     const statusText = String(statusEl?.innerText || '').trim();
     const pauseResumeLabel = String(pauseBtn?.textContent || '').trim();
-    const canStart = !(startBtn?.disabled ?? true);
-    const canStop = !(stopBtn?.disabled ?? true);
-    const canPauseResume = !(pauseBtn?.disabled ?? true);
+    const lifecycle = getRecordingLifecycle();
+    const canStart = !(startBtn?.disabled ?? true) && !lifecycle.pending;
+    const canStop = !(stopBtn?.disabled ?? true) && !lifecycle.pending;
+    const canPauseResume = !(pauseBtn?.disabled ?? true) && !lifecycle.pending;
     const canAbort = !(abortBtn?.disabled ?? true);
     const transcribeBusy = !!app.isTranscribeBusy?.();
     const noteBusy = !!app.isNoteGenerationBusy?.();
@@ -2256,9 +2285,11 @@ document.addEventListener('DOMContentLoaded', () => {
       /^(recording|paused|transcribing|generating-transcript|note-generating)$/
         .test(effectiveMiniPanelStatusPhase);
 
-    if (looksPausedByUi) {
+    if (lifecycle.pending || lifecycle.phase === 'error') {
+      effectiveMiniPanelStatusPhase = lifecycle.phase;
+    } else if (lifecycle.phase === 'paused') {
       effectiveMiniPanelStatusPhase = 'paused';
-    } else if (looksRecordingByUi) {
+    } else if (lifecycle.phase === 'recording') {
       effectiveMiniPanelStatusPhase = 'recording';
     } else if (looksIdleByUi && staleActivePhase) {
       effectiveMiniPanelStatusPhase = 'idle';
@@ -2280,6 +2311,9 @@ document.addEventListener('DOMContentLoaded', () => {
       autoCopyExtensionAvailable: isAutoCopyExtensionAvailable(),
       autoCopyExtensionFocusTabSupported: isAutoCopyExtensionFocusTabSupported(),
       miniPanelStatusPhase: effectiveMiniPanelStatusPhase,
+      recordingPending: lifecycle.pending,
+      recordingError: lifecycle.error,
+      recordingSequence: lifecycle.sequence,
       miniPanelCopiedState: String(app.miniPanelCopiedState || ''),
       miniPanelCopiedAt: Number(app.miniPanelCopiedAt || 0),
       recordingStartedAt,
@@ -2430,63 +2464,38 @@ document.addEventListener('DOMContentLoaded', () => {
       resetMiniPanelNoteGenerationTimer();
     }
 
-    const startBtn = document.getElementById('startButton');
-    const stopBtn = document.getElementById('stopButton');
-    const pauseBtn = document.getElementById('pauseResumeButton');
-    const abortBtn = document.getElementById('abortButton');
-
-    if (startBtn && startBtn.dataset.miniPanelStatusBound !== '1') {
-      startBtn.dataset.miniPanelStatusBound = '1';
-      startBtn.addEventListener('click', () => {
-        clearMiniPanelCopyState('recording-started');
+    window.addEventListener('recording:lifecycle', (event) => {
+      const lifecycle = event.detail;
+      const phase = lifecycle.phase;
+      if (phase === 'starting') {
+        clearMiniPanelCopyState('recording-start-requested');
         resetAllMiniPanelTimers();
-        beginMiniPanelRecordingTimer();
+        setMiniPanelStatusPhase('starting');
+      } else if (phase === 'recording') {
+        if (lifecycle.action === 'start') beginMiniPanelRecordingTimer();
+        else resumeMiniPanelRecordingTimer();
         setMiniPanelStatusPhase('recording');
-        emitAppStateChanged('mini-panel-recording-started');
-      });
-    }
-
-    if (stopBtn && stopBtn.dataset.miniPanelStatusBound !== '1') {
-      stopBtn.dataset.miniPanelStatusBound = '1';
-      stopBtn.addEventListener('click', () => {
+      } else if (phase === 'paused') {
+        pauseMiniPanelRecordingTimer();
+        setMiniPanelStatusPhase('paused');
+      } else if (phase === 'stopping') {
         finishMiniPanelRecordingTimer();
         beginMiniPanelTranscriptTimer();
-        setMiniPanelStatusPhase('transcribing');
-        emitAppStateChanged('mini-panel-recording-stopped');
-      });
-    }
-
-    if (pauseBtn && pauseBtn.dataset.miniPanelStatusBound !== '1') {
-      pauseBtn.dataset.miniPanelStatusBound = '1';
-      pauseBtn.addEventListener('click', () => {
-        const labelBeforeClick = String(pauseBtn.textContent || '').trim().toLowerCase();
-        const wasPausedBeforeClick = /resume/.test(labelBeforeClick);
-
-        window.setTimeout(() => {
-          if (!wasPausedBeforeClick) {
-            clearMiniPanelCopyState('recording-paused');
-            pauseMiniPanelRecordingTimer();
-            setMiniPanelStatusPhase('paused');
-            emitAppStateChanged('mini-panel-recording-paused');
-          } else {
-            clearMiniPanelCopyState('recording-resumed');
-            resumeMiniPanelRecordingTimer();
-            setMiniPanelStatusPhase('recording');
-            emitAppStateChanged('mini-panel-recording-resumed');
-          }
-        }, 0);
-      });
-    }
-
-    if (abortBtn && abortBtn.dataset.miniPanelStatusBound !== '1') {
-      abortBtn.dataset.miniPanelStatusBound = '1';
-      abortBtn.addEventListener('click', () => {
-        clearMiniPanelCopyState('recording-aborted');
+        setMiniPanelStatusPhase('stopping');
+      } else if (phase === 'stopped') {
+        // Completion may already have arrived while Stop was draining audio.
+        if (app.miniPanelStatusPhase === 'stopping') setMiniPanelStatusPhase('transcribing');
+      } else if (phase === 'aborted') {
         resetAllMiniPanelTimers();
         setMiniPanelStatusPhase('aborted');
-        emitAppStateChanged('mini-panel-recording-aborted');
-      });
-    }
+      } else if (phase === 'error') {
+        pauseMiniPanelRecordingTimer();
+        setMiniPanelStatusPhase('error');
+      } else {
+        setMiniPanelStatusPhase(phase);
+      }
+      emitAppStateChanged('recording-lifecycle-confirmed');
+    });
 
     window.addEventListener('transcription:finished', (event) => {
       const detail = event?.detail || {};
@@ -2526,11 +2535,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (reason === 'note-generation-begin') {
         beginMiniPanelNoteGenerationTimer();
         setMiniPanelStatusPhase('note-generating');
-      } else if (reason === 'start-recording-click' || reason === 'record-hotkey') {
-        clearMiniPanelCopyState(reason);
-        resetAllMiniPanelTimers();
-        beginMiniPanelRecordingTimer();
-        setMiniPanelStatusPhase('recording');
       }
     });
 
@@ -2617,26 +2621,11 @@ document.addEventListener('DOMContentLoaded', () => {
   app.loadCachedModule = loadCachedModule;
   app.initRecordingProvider = initRecordingProvider;
   app.initNoteProvider = initNoteProvider;
-  app.startRecording = () => {
-    document.getElementById('startButton')?.click();
-    emitAppStateChanged('start-recording-click');
-  };
-  app.stopRecording = () => {
-    document.getElementById('stopButton')?.click();
-    emitAppStateChanged('stop-recording-click');
-  };
-  app.togglePauseResume = () => {
-    document.getElementById('pauseResumeButton')?.click();
-    emitAppStateChanged('pause-resume-click');
-  };
-  app.pauseResumeRecording = () => {
-    document.getElementById('pauseResumeButton')?.click();
-    emitAppStateChanged('pause-resume-click');
-  };
-  app.abortRecording = () => {
-    document.getElementById('abortButton')?.click();
-    emitAppStateChanged('abort-recording-click');
-  };
+  app.startRecording = () => requestRecordingAction('start');
+  app.stopRecording = () => requestRecordingAction('stop');
+  app.togglePauseResume = () => requestRecordingAction('pauseResume');
+  app.pauseResumeRecording = () => requestRecordingAction('pauseResume');
+  app.abortRecording = () => requestRecordingAction('abort');
   app.copyGeneratedNote = () => copyGeneratedNoteToClipboard();
   app.copyTranscription = () => copyTranscriptionToClipboard();
   app.setMiniPanelCopyFeedback = (kind) => {
