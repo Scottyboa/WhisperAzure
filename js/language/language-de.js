@@ -10,7 +10,6 @@ export const indexTranslations = {
   guideButton: "API-Anleitung – So nutzen Sie es",
   securityButton: "Sicherheit",
   aboutButton: "Über",
-  adRevenueMessage: "Da diese Website kostenlos genutzt werden kann und ausschließlich auf Werbeeinnahmen angewiesen ist, stimmen Sie bitte personalisierter Werbung zu, um den Dienst zu unterstützen.",
   // Accordion tab #1 (left): AI models
   modelsModalHeading: "KI-Modelle",
   modelsModalText: `
@@ -173,8 +172,7 @@ Viele bestehende Anbieter offerieren ähnliche Dienste, verlangen jedoch deutlic
 <strong>Wichtige Punkte:</strong><br>
 • Kein Abonnement, kein Konto erforderlich.<br>
 • Sie zahlen nur OpenAI direkt für die tatsächlich genutzte Leistung.<br>
-• Die Website selbst ist völlig kostenlos.<br><br>
-Damit wir diesen kostenlosen Dienst weiterhin anbieten können, würden wir uns sehr freuen, wenn du der Anzeige von Werbung über Google Ads zustimmst. Die Werbeeinnahmen helfen uns, die Kosten für Hosting und Betrieb zu decken, damit der Dienst für alle verfügbar bleiben kann.`,
+• Die Website selbst ist völlig kostenlos.`,
   guideModalHeading: "API-Schlüssel – Einstieg",
   guideModalText: `
 <strong>API-Schlüssel — erste Schritte</strong><br><br>
@@ -270,7 +268,7 @@ Ein API-Schlüssel macht einen Dienst nicht automatisch DSGVO-konform. Prüfen S
 };
 
 export const transcribeTranslations = {
-  pageTitle: "Transkriptionstool mit Werbung und Anleitung",
+  pageTitle: "Transkriptionstool",
   openaiUsageLinkText: "Kostenübersicht",
   openaiWalletLinkText: "Kontostand",
   btnFunctions: "Funktionen",
@@ -293,7 +291,6 @@ export const transcribeTranslations = {
   customPromptTitle: "Benutzerdefinierter Prompt",
   promptSlotLabel: "Prompt-Slot:",
   customPromptPlaceholder: "Benutzerdefinierten Prompt hier eingeben",
-  adUnitText: "Ihre Anzeige hier",
   guideHeading: "Anleitung & Instruktionen",
 guideText: `Willkommen bei <strong>Transcribe Notes</strong>. Die App kann Gespräche aufnehmen und transkribieren und den fertigen Text zur Erstellung einer Notiz verwenden. Holen Sie vor einer Aufnahme immer die erforderliche Einwilligung ein und prüfen Sie medizinische Inhalte vor der Verwendung.<br><br>
 

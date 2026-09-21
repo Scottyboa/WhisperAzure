@@ -479,13 +479,6 @@
       font-size: 12px;
       margin-top: 6px;
     }
-    .ad-revenue-message {
-      margin-top: 20px;
-      font-size: 18px;
-      font-weight: bold;
-      color: #555;
-      display: none !important; /* TEMP: hide ad-revenue message */
-    }
    /* New Horizontal Accordion (Tabbed Interface) */
     .accordion {
       margin: 20px auto;
@@ -1070,9 +1063,6 @@
     
     <button id="enterTranscriptionBtn">Enter Transcription Tool</button>
     <br>
-    <p class="ad-revenue-message" id="ad-revenue-message">
-      As this website is free to use and relies solely on ad revenue, please consent to personalized ads to help support the service.
-    </p>
     <div id="offerText"></div>
   </div>
 
@@ -1112,22 +1102,11 @@
     <div id="aboutModalText-content"></div>
   </div>
 
-  <!-- Inline Script for API Key Handling and Consent -->
+  <!-- Inline Script for API Key Handling -->
   <script type="module">
     import { PromptManager } from "./js/promptManager.js";
     import { PromptCloudBackup } from "./js/features/prompt-cloud-backup.js";
     import { CloudBackupSession } from "./js/features/cloud-backup-session.js";
-
-    // Helper function to set a cookie
-    function setCookie(name, value, days) {
-      var expires = "";
-      if (days) {
-        var date = new Date();
-        date.setTime(date.getTime() + (days*24*60*60*1000));
-        expires = "; expires=" + date.toUTCString();
-      }
-      document.cookie = name + "=" + (value || "")  + expires + "; path=/";
-    }
 
   document.addEventListener("DOMContentLoaded", function() {
     [
@@ -2108,7 +2087,6 @@
       };
       Object.entries(values).forEach(([key, value]) => sessionStorage.setItem(key, value));
       sessionStorage.setItem("user_api_key", values.openai_api_key);
-      setCookie("user_consent", "accepted", 365);
       try {
         // Preserve an existing legacy namespace. New browsers use one hidden
         // default namespace, initialized only after the entered key is stored

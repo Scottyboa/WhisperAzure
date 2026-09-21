@@ -1,3 +1,5 @@
+import { registerWorkspaceDisposer } from "../core/workspace-disposal.js";
+
 (function initRecordingUiFeature() {
   if (window.__recordingUiFeatureInitialized) return;
   window.__recordingUiFeatureInitialized = true;
@@ -43,7 +45,7 @@ function initRecordingTimerUi() {
   }
   function freeze() { if (started) elapsed += Date.now() - started; started = 0; }
   window.addEventListener("recording:lifecycle", ({ detail }) => {
-    if (detail.phase === "starting" || detail.phase === "aborted") {
+    if (detail.phase === "starting" || detail.phase === "aborted" || detail.phase === "idle") {
       elapsed = 0; started = 0;
       if (detail.phase === "starting") document.getElementById("transcription")?.style.removeProperty("height");
     }
@@ -53,7 +55,7 @@ function initRecordingTimerUi() {
   });
   render();
   const timer = setInterval(render, 1000);
-  window.addEventListener("pagehide", () => clearInterval(timer), { once: true });
+  registerWorkspaceDisposer(() => clearInterval(timer), { scope: "window" });
 }
 
 function initProviderLockWhileRecording() {
@@ -97,5 +99,6 @@ function initProviderLockWhileRecording() {
 
   // Keep a light polling fallback because main.js can replace buttons and
   // provider engines can update busy state asynchronously.
-  setInterval(syncLockedState, 200);
+  const lockTimer = setInterval(syncLockedState, 200);
+  registerWorkspaceDisposer(() => clearInterval(lockTimer), { scope: "window" });
 }

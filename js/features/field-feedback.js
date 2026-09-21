@@ -4,6 +4,8 @@
 // main.js remains the controller; this file only listens to controller events
 // and exposes a small set of UI sync helpers on window.__app.
 
+import { registerWorkspaceDisposer } from "../core/workspace-disposal.js";
+
 (function initNoteTimerFeedback() {
   const timerEl = document.getElementById("noteTimer");
   if (!timerEl) return;
@@ -94,6 +96,7 @@
   });
 
   observer.observe(timerEl, { childList: true, characterData: true, subtree: true });
+  registerWorkspaceDisposer(() => observer.disconnect(), { scope: "window" });
 
   const genBtn = document.getElementById("generateNoteButton");
   if (genBtn) {

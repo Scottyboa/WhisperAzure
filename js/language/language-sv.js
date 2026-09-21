@@ -8,8 +8,6 @@ export const indexTranslations = {
   guideButton: "API-guide – Så använder du den",
   securityButton: "Säkerhet",
   aboutButton: "Om",
-  adRevenueMessage: "Eftersom denna webbplats är gratis att använda och uteslutande finansieras av annonsintäkter, uppskattar vi mycket om du godkänner annonser för att stödja tjänsten.",
-  
   // Accordion tab #1 (left): AI models
   modelsModalHeading: "AI-modeller",
   modelsModalText: `
@@ -284,7 +282,7 @@ En API-nyckel gör inte en tjänst automatiskt GDPR-kompatibel. Kontrollera DPA,
 };
 
 export const transcribeTranslations = {
-  pageTitle: "Transkriberingsverktyg med annonser och guideöverlägg",
+  pageTitle: "Transkriberingsverktyg",
   openaiUsageLinkText: "Kostnadsöversikt",
   openaiWalletLinkText: "Kredit",
   btnFunctions: "Funktioner",
@@ -307,7 +305,6 @@ export const transcribeTranslations = {
   customPromptTitle: "Anpassad prompt",
   promptSlotLabel: "Promptplats:",
   customPromptPlaceholder: "Skriv in anpassad prompt här",
-  adUnitText: "Din annons här",
   guideHeading: "Guide & instruktioner",
 guideText: `Välkommen till <strong>Transcribe Notes</strong>. Appen kan spela in och transkribera samtal och använda den färdiga texten för att skapa en anteckning. Inhämta alltid nödvändigt samtycke före inspelning och granska alltid medicinskt innehåll före användning.<br><br>
 

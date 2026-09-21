@@ -1,4 +1,3 @@
-const ADS_ENABLED_DEFAULT = false;
 const AUTO_COPY_STORAGE_KEY = "auto_copy_mode";
 import { autoCopyHelpHtml } from "./autocopy-help.js";
 
@@ -14,20 +13,7 @@ function setGridHeight() {
   grid.style.height = `${height}px`;
 }
 
-function applyAdsEnabled(enabled) {
-  const grid = document.querySelector(".grid-container");
-  if (!grid) return;
-  if (enabled) grid.classList.remove("ads-disabled");
-  else grid.classList.add("ads-disabled");
-}
-
-function setupAdsAndGridHeight() {
-  window.setAdsEnabled = function setAdsEnabled(enabled) {
-    applyAdsEnabled(Boolean(enabled));
-  };
-
-  applyAdsEnabled(ADS_ENABLED_DEFAULT);
-
+function setupGridHeight() {
   window.addEventListener("load", () => {
     setGridHeight();
     const interval = setInterval(setGridHeight, 200);
@@ -271,7 +257,7 @@ function setupSupplementaryDateToggleCopy() {
 }
 
 function initPageUi() {
-  setupAdsAndGridHeight();
+  setupGridHeight();
   setupAutoGenerateTooltip();
   setupAutoCopyModeUi();
   setupPromptInclusionToggle();

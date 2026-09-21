@@ -1,5 +1,7 @@
 import { createMiniCommandChannel } from './mini-command-channel.js';
 import { autoCopyHelpHtml } from './autocopy-help.js';
+import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
+import { createSnapshotPublisher } from '../core/snapshot-publisher.js';
 import {
   DEFAULTS,
   getNoteUiVisibility,
@@ -111,8 +113,14 @@ let miniWindow = null;
 let refreshTimer = null;
 let appRef = null;
 let hubChannel = null;
+let disposed = false;
+const refreshTimeouts = new Set();
+const snapshotPublisher = createSnapshotPublisher(postHubMessage);
 let hubHeartbeatTimer = null;
 let probeTimer = null;
+let lateAppRetryTimer = null;
+let statusObserverRetryTimer = null;
+let statusMessageObserver = null;
 // tabId -> timeout handle for in-flight probes
 const pendingProbes = new Map();
 // requestId -> { resolve, timeoutHandle, targetTabId, kind }
@@ -977,7 +985,7 @@ function resolveProbe(tabId) {
 }
 
 function startProbeScanner() {
-  if (probeTimer) return;
+  if (disposed || probeTimer) return;
   probeTimer = window.setInterval(() => {
     pruneStaleHubTabs();
   }, getProbeIntervalMs());
@@ -1154,25 +1162,28 @@ function postHubMessage(message) {
 }
 
 function publishLocalHubSnapshot(reason = 'state') {
+  if (disposed) return;
   const snapshot = buildLocalHubSnapshot();
 
   // upsertHubTab handles sticky-field preservation via mergeTabSnapshot
   // and triggers local-own color pick via pickOwnColor() when needed.
   upsertHubTab(snapshot);
 
-  postHubMessage({
-    type: 'mini-hub-tab-state',
-    reason,
-    snapshot,
+  const sent = snapshotPublisher.publish(snapshot, reason, {
+    force: reason === 'heartbeat' || reason === 'open-request' || reason === 'bridge-ready',
   });
 
   // Always re-broadcast our own accent. This is cheap, idempotent,
   // and ensures new tabs that come online learn our color from every
   // heartbeat instead of waiting for the next pickOwnColor event.
-  broadcastOwnAccentAssignment();
+  if (sent) {
+    broadcastOwnAccentAssignment();
+    updateMiniPanelUi();
+  }
 }
 
 function activateLocalHubTab(reason = 'activate') {
+  if (disposed) return;
   const tabId = getOrCreateLocalTabId();
   const snapshot = buildLocalHubSnapshot();
   snapshot.activatedAt = Date.now();
@@ -1195,6 +1206,7 @@ function activateLocalHubTab(reason = 'activate') {
 }
 
 function removeLocalHubTab() {
+  if (disposed) return;
   const tabId = getOrCreateLocalTabId();
   hubTabs.delete(tabId);
   releaseColorForTab(tabId);
@@ -1239,6 +1251,7 @@ function broadcastOwnAccentAssignment() {
 }
 
 function ensureHubChannel() {
+  if (disposed) return null;
   if (hubChannel || typeof BroadcastChannel !== 'function') return hubChannel;
 
   try {
@@ -1421,7 +1434,7 @@ function ensureHubChannel() {
 }
 
 function startHubHeartbeat() {
-  if (hubHeartbeatTimer) return;
+  if (disposed || hubHeartbeatTimer) return;
   hubHeartbeatTimer = window.setInterval(() => {
     publishLocalHubSnapshot('heartbeat');
   }, MINI_HUB_HEARTBEAT_MS);
@@ -2496,12 +2509,18 @@ function updateMiniPanelUi() {
 }
 
 function requestUiRefresh() {
-  window.setTimeout(updateMiniPanelUi, 20);
-  window.setTimeout(updateMiniPanelUi, 120);
-  window.setTimeout(updateMiniPanelUi, 300);
+  if (disposed || refreshTimeouts.size) return;
+  [20, 120, 300].forEach((delay) => {
+    const handle = window.setTimeout(() => {
+      refreshTimeouts.delete(handle);
+      if (!disposed) updateMiniPanelUi();
+    }, delay);
+    refreshTimeouts.add(handle);
+  });
 }
 
 function startRefreshLoop() {
+  if (disposed) return;
   stopRefreshLoop();
   refreshTimer = window.setInterval(updateMiniPanelUi, STATE_REFRESH_MS);
 }
@@ -4304,6 +4323,7 @@ function installMiniPanelWakeupLoop(targetWindow) {
 }
 
 async function openMiniPanel() {
+  if (disposed) return;
   ensureHubChannel();
   publishLocalHubSnapshot('open-request');
   const preferredHeight = getMiniPanelPreferredHeight();
@@ -4345,6 +4365,11 @@ async function openMiniPanel() {
       }
     }
 
+    if (disposed) {
+      try { miniWindow?.close?.(); } catch (_) {}
+      miniWindow = null;
+      return;
+    }
     renderMiniPanelDocument(miniWindow);
     attachWindowLifecycle(miniWindow);
     installMiniPanelWakeupLoop(miniWindow);
@@ -4470,15 +4495,8 @@ function initMiniPanelBridge() {
   } catch (_) {}
 
   try {
-    window.addEventListener('beforeunload', () => {
-      removeLocalHubTab();
-      stopHubHeartbeat();
-      stopProbeScanner();
-    });
-  } catch (_) {}
-
-  try {
-    window.addEventListener('pagehide', () => {
+    window.addEventListener('pagehide', (event) => {
+      if (event.persisted) return;
       removeLocalHubTab();
       stopHubHeartbeat();
       stopProbeScanner();
@@ -4494,16 +4512,18 @@ function bootMiniController() {
   const app = discoverApp();
   if (!app) {
     const retryUntil = Date.now() + 8000;
-    const timer = window.setInterval(() => {
+    lateAppRetryTimer = window.setInterval(() => {
       const found = discoverApp();
       if (found) {
-        window.clearInterval(timer);
+        window.clearInterval(lateAppRetryTimer);
+        lateAppRetryTimer = null;
         publishLocalHubSnapshot('app-found-late');
         requestUiRefresh();
         return;
       }
       if (Date.now() > retryUntil) {
-        window.clearInterval(timer);
+        window.clearInterval(lateAppRetryTimer);
+        lateAppRetryTimer = null;
       }
     }, 250);
   }
@@ -4576,13 +4596,14 @@ function bootMiniController() {
         // even when the parent tab is backgrounded (PiP focus case).
         Promise.resolve().then(() => {
           queued = false;
+          if (disposed) return;
           publishLocalHubSnapshot('status-text-observed');
           updateMiniPanelUi();
         });
       };
 
-      const observer = new MutationObserver(() => queuePublish());
-      observer.observe(statusEl, {
+      statusMessageObserver = new MutationObserver(() => queuePublish());
+      statusMessageObserver.observe(statusEl, {
         childList: true,
         characterData: true,
         subtree: true,
@@ -4594,18 +4615,66 @@ function bootMiniController() {
       // The status element may not exist yet at boot. Retry a few
       // times on DOMContentLoaded-ish intervals.
       let tries = 0;
-      const retry = window.setInterval(() => {
+      statusObserverRetryTimer = window.setInterval(() => {
         tries += 1;
         if (bindStatusObserver() || tries > 20) {
-          window.clearInterval(retry);
+          window.clearInterval(statusObserverRetryTimer);
+          statusObserverRetryTimer = null;
         }
       }, 250);
     }
   } catch (_) {}
 }
 
+function disposeMiniController() {
+  if (disposed) return;
+  try { removeLocalHubTab(); } catch (_) {}
+  disposed = true;
+  for (const handle of refreshTimeouts) window.clearTimeout(handle);
+  refreshTimeouts.clear();
+  stopRefreshLoop();
+  stopHubHeartbeat();
+  stopProbeScanner();
+
+  if (lateAppRetryTimer) window.clearInterval(lateAppRetryTimer);
+  if (statusObserverRetryTimer) window.clearInterval(statusObserverRetryTimer);
+  lateAppRetryTimer = null;
+  statusObserverRetryTimer = null;
+
+  try { statusMessageObserver?.disconnect?.(); } catch (_) {}
+  statusMessageObserver = null;
+
+  for (const handle of pendingProbes.values()) window.clearTimeout(handle);
+  pendingProbes.clear();
+  for (const pending of pendingContentRequests.values()) {
+    window.clearTimeout(pending.timeoutHandle);
+    try { pending.resolve(''); } catch (_) {}
+  }
+  pendingContentRequests.clear();
+  for (const handle of miniControlReleaseTimers.values()) window.clearTimeout(handle);
+  miniControlReleaseTimers.clear();
+  miniControlPointerLocks.clear();
+
+  try { commandChannel?.close?.('The browser tab was closed.'); } catch (_) {}
+  commandChannel = null;
+  commandErrors.clear();
+
+  try { miniWindow?.close?.(); } catch (_) {}
+  miniWindow = null;
+  try { hubChannel?.close?.(); } catch (_) {}
+  hubChannel = null;
+  hubTabs.clear();
+  tabColors.clear();
+  snapshotPublisher.reset();
+  appRef = null;
+
+  try { window.__miniPanelController = null; } catch (_) {}
+  try { window.__openMiniPanel = null; } catch (_) {}
+}
+
 if (!window.__workspacePresetFrame) {
   bootMiniController();
+  registerWorkspaceDisposer(disposeMiniController, { scope: 'window' });
 } else {
   // An embedded preset has its own recording/generation runtime, but the
   // browser tab must still have exactly one Mini Panel hub/controller.

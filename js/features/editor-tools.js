@@ -1,6 +1,8 @@
 // Extracted from transcribe.html inline editor/redactor utilities.
 // Keeps page behavior unchanged while reducing page-owned runtime logic.
 
+import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
+
 
   // 3) Log pageview after DOM is ready + log clicks with provider context
   document.addEventListener('DOMContentLoaded', () => {
@@ -492,6 +494,9 @@
 
     let currentOcrImageBlob = null;
     let currentOcrImageObjectUrl = '';
+    let cleanSpecificTimer = null;
+    let editorGeneration = 0;
+    const ocrWorkers = new Set();
 
     const normalizeNewlines = (value) => (value || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
@@ -857,8 +862,6 @@
     });
 
     if (redactorTermsEl) {
-      let cleanSpecificTimer = null;
-
       redactorTermsEl.addEventListener('blur', () => {
         const cleaned = cleanSpecificBlock(redactorTermsEl.value || '');
         if (cleaned !== (redactorTermsEl.value || '')) {
@@ -1205,6 +1208,32 @@
       } catch (_) {}
       currentOcrImageObjectUrl = '';
     };
+
+    registerWorkspaceDisposer(() => {
+      editorGeneration += 1;
+      for (const worker of ocrWorkers) {
+        try { Promise.resolve(worker.terminate()).catch(() => {}); } catch (_) {}
+      }
+      ocrWorkers.clear();
+      clearTimeout(cleanSpecificTimer);
+      cleanSpecificTimer = null;
+      revokeCurrentImageUrl();
+      currentOcrImageBlob = null;
+      if (redactorImagePreview) {
+        redactorImagePreview.removeAttribute('src');
+        redactorImagePreview.hidden = true;
+      }
+      if (redactorImagePlaceholder) redactorImagePlaceholder.hidden = false;
+      if (fetchRedactorRawTextButton) {
+        fetchRedactorRawTextButton.disabled = false;
+        fetchRedactorRawTextButton.textContent = getRedactorStrings().fetchOcrRaw;
+      }
+      if (fetchRedactorImageTextButton) {
+        fetchRedactorImageTextButton.disabled = false;
+        fetchRedactorImageTextButton.textContent = getRedactorStrings().fetchOcrSpecific;
+      }
+      setRedactorStatus('');
+    });
 
     const setOcrImage = (blob) => {
       if (!redactorImagePreview || !redactorImagePlaceholder) return;
@@ -1660,14 +1689,39 @@
     };
 
     const runTesseractOnCurrentImage = async ({ logger } = {}) => {
+      const generation = editorGeneration;
+      const imageBlob = currentOcrImageBlob;
       let recognizedText = '';
       let usedLanguage = 'nor+eng';
+      const ensureCurrent = () => {
+        if (generation === editorGeneration) return;
+        const error = new Error('OCR was cancelled because the Workspace closed.');
+        error.name = 'AbortError';
+        throw error;
+      };
+      const safeLogger = (message) => {
+        if (generation === editorGeneration) logger?.(message);
+      };
+      const recognize = async (language) => {
+        const worker = await window.Tesseract.createWorker(language, 1, { logger: safeLogger });
+        ocrWorkers.add(worker);
+        try {
+          ensureCurrent();
+          return await worker.recognize(imageBlob);
+        } finally {
+          // The disposer may already have terminated this worker.
+          if (ocrWorkers.delete(worker)) await worker.terminate().catch(() => {});
+        }
+      };
 
       try {
-        const result = await window.Tesseract.recognize(currentOcrImageBlob, 'nor+eng', { logger });
+        const result = await recognize('nor+eng');
+        ensureCurrent();
         recognizedText = result?.data?.text || '';
       } catch (primaryError) {
-        const fallback = await window.Tesseract.recognize(currentOcrImageBlob, 'eng', { logger });
+        ensureCurrent();
+        const fallback = await recognize('eng');
+        ensureCurrent();
         recognizedText = fallback?.data?.text || '';
         usedLanguage = 'eng';
       }
@@ -1709,6 +1763,7 @@
       };
 
       const originalLabel = fetchRedactorRawTextButton?.textContent || getRedactorStrings().fetchOcrRaw;
+      const generation = editorGeneration;
       if (fetchRedactorRawTextButton) {
         fetchRedactorRawTextButton.disabled = true;
         fetchRedactorRawTextButton.textContent = getRedactorStrings().fetching;
@@ -1725,9 +1780,10 @@
         setRawOcrOutput(recognizedText);
         setRedactorStatusByKey('rawOcrComplete', { usedLanguage });
       } catch (error) {
+        if (error?.name === 'AbortError') return;
         setRedactorStatusByKey('ocrError', { errorMessage: error?.message || error }, true);
       } finally {
-        if (fetchRedactorRawTextButton) {
+        if (generation === editorGeneration && fetchRedactorRawTextButton) {
           fetchRedactorRawTextButton.disabled = false;
           fetchRedactorRawTextButton.textContent = originalLabel;
         }
@@ -1761,6 +1817,7 @@
       };
 
       const originalLabel = fetchRedactorImageTextButton?.textContent || getRedactorStrings().fetchOcrSpecific;
+      const generation = editorGeneration;
       if (fetchRedactorImageTextButton) {
         fetchRedactorImageTextButton.disabled = true;
         fetchRedactorImageTextButton.textContent = getRedactorStrings().fetching;
@@ -1813,9 +1870,10 @@
           detectedBirthdate ? { usedLanguage, addedCount, detectedBirthdate } : { usedLanguage, addedCount }
         );
       } catch (error) {
+        if (error?.name === 'AbortError') return;
         setRedactorStatusByKey('ocrError', { errorMessage: error?.message || error }, true);
       } finally {
-        if (fetchRedactorImageTextButton) {
+        if (generation === editorGeneration && fetchRedactorImageTextButton) {
           fetchRedactorImageTextButton.disabled = false;
           fetchRedactorImageTextButton.textContent = originalLabel;
         }

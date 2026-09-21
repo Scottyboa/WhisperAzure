@@ -28,10 +28,6 @@
       min-height: 1200px;
     }
 
-    /* ✅ Hide sidebars completely (no reserved space) */
-    .sidebar,
-    .ad-sidebar { display: none !important; }
-
     .main-content {
       grid-column: 1 / 2;
       grid-row: 1 / 2;
@@ -300,9 +296,6 @@
 
 <body>
   <div class="grid-container">
-    <!-- Sidebars kept in DOM but hidden by CSS (no space reserved) -->
-    <aside class="sidebar"></aside>
-
     <main class="main-content">
       <div class="top-bar">
         <div style="display:flex; flex-direction:column; gap:2px;">
@@ -440,7 +433,6 @@
       </div>
     </main>
 
-    <aside class="ad-sidebar"></aside>
   </div>
 
   <script>

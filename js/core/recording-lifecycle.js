@@ -8,6 +8,15 @@ let state = { phase: 'idle', pending: false, error: '', action: '', sequence: 0 
 
 export function getRecordingLifecycle() { return { ...state }; }
 
+export function resetRecordingLifecycle() {
+  const operation = current;
+  current = null;
+  lastRequest = null;
+  handlers.clear();
+  operation?.controller.abort(new Error('Workspace disposed.'));
+  publish('idle', 'reset');
+}
+
 function publish(phase, action, error = '', pending = false) {
   state = { phase, action, error, pending, sequence: state.sequence + 1 };
   window.dispatchEvent(new CustomEvent('recording:lifecycle', { detail: getRecordingLifecycle() }));
@@ -146,6 +155,7 @@ export async function startVerifiedVAD(factory, options, operation) {
     mic = await operation.wait(factory(guarded), late => { valid = false; return disposeVAD(late); });
     const destroy = mic.destroy.bind(mic);
     mic.destroy = () => {
+      valid = false;
       stream.getTracks().forEach(track => track.stop());
       return destroy();
     };

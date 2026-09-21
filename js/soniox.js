@@ -233,6 +233,7 @@ let expectedChunks = 0;
 
 // ── Realtime-only state (WebSocket pipeline) ────────────────────────────────
 let ws = null;
+let rtSocketCleanup = null;
 let configSent = false;
 let pendingAudioQueue = []; // ArrayBuffer[] chunks queued before WS open
 let finalTranscriptRT = ''; // final-only running transcript for realtime
@@ -1339,6 +1340,28 @@ async function rtOpenWebSocketSession() {
     catch (err) { reject(err); return; }
 
     socket.binaryType = 'arraybuffer';
+    // Own the socket while CONNECTING too, so closing a Workspace or timing
+    // out startup cannot leave a connection that opens unexpectedly later.
+    ws = socket;
+    const events = new AbortController();
+    const sessionSignal = sessionAbortController.signal;
+    const detach = () => {
+      events.abort();
+      sessionSignal.removeEventListener('abort', closeOwned);
+      if (rtSocketCleanup === closeOwned) rtSocketCleanup = null;
+    };
+    const closeOwned = () => {
+      detach();
+      if (ws === socket) { ws = null; configSent = false; }
+      try { socket.close(); } catch (_) {}
+      if (!settled) {
+        settled = true;
+        reject(new DOMException('Soniox connection cancelled.', 'AbortError'));
+      }
+    };
+    rtSocketCleanup = closeOwned;
+    sessionSignal.addEventListener('abort', closeOwned, { once: true });
+    if (sessionSignal.aborted) { closeOwned(); return; }
 
     socket.addEventListener('open', () => {
       try {
@@ -1351,23 +1374,24 @@ async function rtOpenWebSocketSession() {
       } catch (err) {
         if (!settled) { settled = true; reject(err); }
       }
-    });
+    }, { signal: events.signal });
 
-    socket.addEventListener('message', rtHandleSocketMessage);
+    socket.addEventListener('message', rtHandleSocketMessage, { signal: events.signal });
     socket.addEventListener('close', (ev) => {
+      detach();
       rtHandleSocketClose(ev);
       if (!settled) {
         settled = true;
         reject(new Error(`WebSocket closed before open: code=${ev.code}`));
       }
-    });
+    }, { signal: events.signal });
     socket.addEventListener('error', (ev) => {
       rtHandleSocketError(ev);
       if (!settled) {
         settled = true;
         reject(new Error('WebSocket error before open'));
       }
-    });
+    }, { signal: events.signal });
   });
 }
 
@@ -1408,6 +1432,7 @@ function rtRequestFinalize() {
 
 // Hard-close: used on Abort and provider switches. We don't wait for finish.
 function rtHardCloseWebSocket(reason = 'closed') {
+  if (rtSocketCleanup) { rtSocketCleanup(); return; }
   if (!ws) return;
   try { ws.close(1000, reason); }
   catch (err) { logDebug('rtHardCloseWebSocket failed', err); }
@@ -1537,7 +1562,7 @@ function rtTeardownAudioCapture() {
       audioSourceNode = null;
     }
     if (audioContext) {
-      try { audioContext.close(); } catch (_) {}
+      try { void audioContext.close().catch(() => {}); } catch (_) {}
       audioContext = null;
     }
     if (mediaStream) {
@@ -1669,12 +1694,57 @@ function teardownActivePipeline(reason = 'teardown') {
   try {
     if (sileroVAD && !sileroVAD._destroyed) {
       sileroVAD._destroyed = true;
-      try { sileroVAD.destroy?.(); } catch (_) {}
+      try { Promise.resolve(sileroVAD.destroy?.()).catch(() => {}); } catch (_) {}
     }
   } catch (_) {}
   sileroVAD = null;
 
   try { stopMicrophone(); } catch (_) {}
+}
+
+function releaseAudioFrames() {
+  audioFrames.forEach((frame) => {
+    try { frame?.close?.(); } catch (_) {}
+  });
+  audioFrames = [];
+}
+
+async function disposeRecording({ reason = 'workspace-dispose' } = {}) {
+  try { window.__sonioxUIAbort?.abort?.(reason); } catch (_) {}
+  try { sessionAbortController.abort(reason); } catch (_) {}
+
+  teardownActivePipeline(reason);
+  if (chunkTimeoutId) clearTimeout(chunkTimeoutId);
+  chunkTimeoutId = null;
+  freezeCompletionTimer();
+
+  releaseAudioFrames();
+  pendingVADChunks = [];
+  pendingVADLock = false;
+  transcriptionQueue = [];
+  isProcessingQueue = false;
+  processingQueueSessionId = null;
+  failedAsyncChunks.clear();
+  updateFailedChunkRetryButton();
+  pendingAudioQueue = [];
+  transcriptChunks = {};
+  finalTranscriptRT = '';
+  transcriptFrozen = true;
+  asyncCommittedTranscriptChunks.clear();
+  asyncManualTranscriptBase = '';
+  asyncManualTranscriptBaseActive = false;
+  expectedChunks = 0;
+  enqueuedChunks = 0;
+  processedAnyAudioFrames = false;
+  chunkProcessingLock = false;
+  pendingStop = false;
+  stopInProgress = false;
+  asyncCaptureTransition = false;
+
+  if (rtAudioWorkletBlobUrl) {
+    try { URL.revokeObjectURL(rtAudioWorkletBlobUrl); } catch (_) {}
+    rtAudioWorkletBlobUrl = null;
+  }
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1707,7 +1777,7 @@ function initRecording() {
   // Centralized teardown hook called by main.js when the user switches
   // providers mid-session. It releases the mic and closes the WS / VAD
   // regardless of which mode is active.
-  window.__sonioxTeardown = () => teardownActivePipeline('provider-switch');
+  window.__sonioxTeardown = (reason = 'provider-switch') => disposeRecording({ reason });
 
   activeMode = detectModeFromSession();
   logInfo('initRecording mode =', activeMode);
@@ -2345,7 +2415,7 @@ function bindAsyncHandlers({ startButton, stopButton, pauseResumeButton, abortBu
 // MODULE EXPORTS + LOAD-TIME SAFETY
 // ════════════════════════════════════════════════════════════════════════════
 
-export { initRecording };
+export { disposeRecording, initRecording };
 
 // On page load, ensure we don't have a hanging mic / WS / VAD from a
 // previous tab state.

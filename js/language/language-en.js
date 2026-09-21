@@ -13,8 +13,6 @@ export const indexTranslations = {
   guideButton: "API guide - How to use",
   securityButton: "Security",
   aboutButton: "About",
-  adRevenueMessage: "As this website is free to use and relies solely on ad revenue, please consent to ads to help support the service.",
-
   // Accordion tab #1 (left): AI models
   modelsModalHeading: "AI models",
   modelsModalText: `
@@ -438,7 +436,7 @@ priceModalText: `
 };
 
 export const transcribeTranslations = {
-  pageTitle: "Transcription Tool with Ads and Guide Overlay",
+  pageTitle: "Transcription Tool",
   openaiUsageLinkText: "Cost Usage Overview",
   openaiWalletLinkText: "Wallet Balance",
   btnFunctions: "Functions",
@@ -464,7 +462,6 @@ export const transcribeTranslations = {
   promptImportButton: "Import",
   promptSlotLabel: "Prompt Slot:",
   customPromptPlaceholder: "Enter custom prompt here",
-  adUnitText: "Your Ad Here",
   guideHeading: "Guide & Instructions",
 guideText: `Welcome to <strong>Transcribe Notes</strong>. The app can record and transcribe conversations and use the finished text to generate a note. Always obtain any required consent before recording, and always review clinical content before use.<br><br>
 

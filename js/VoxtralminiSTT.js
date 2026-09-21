@@ -1,4 +1,4 @@
-import { bindRecordingAction, startVerifiedVAD } from './core/recording-lifecycle.js';
+import { bindRecordingAction, disposeVAD, startVerifiedVAD } from './core/recording-lifecycle.js';
 import {
   createRecordingUiBindingScope,
   createRecordingUiHelpers,
@@ -728,6 +728,47 @@ function resetRecordingState() {
   recordingActive = false;
 }
 
+function releaseAudioFrames() {
+  audioFrames.forEach((frame) => {
+    try { frame?.close?.(); } catch (_) {}
+  });
+  audioFrames = [];
+}
+
+async function disposeRecording({ reason = "workspace-dispose" } = {}) {
+  try { window.__recordingUIAbort_voxtral?.abort?.(reason); } catch (_) {}
+  try { transcriptionSessionAbortController.abort(reason); } catch (_) {}
+
+  manualStop = true;
+  abortRequested = true;
+  transcriptFrozen = true;
+  recordingActive = false;
+  recordingPaused = false;
+  pendingStop = false;
+  chunkProcessingLock = false;
+
+  clearTimeout(chunkTimeoutId);
+  chunkTimeoutId = null;
+  if (completionTimerInterval) clearInterval(completionTimerInterval);
+  completionTimerInterval = null;
+  Object.values(pollingIntervals).forEach((interval) => clearInterval(interval));
+  pollingIntervals = {};
+
+  const vadToDispose = sileroVAD;
+  sileroVAD = null;
+  try { stopMicrophone(); } catch (_) {}
+
+  releaseAudioFrames();
+  pendingVADChunks = [];
+  transcriptionQueue = [];
+  transcriptChunks = {};
+  isProcessingQueue = false;
+  processingQueueSessionId = null;
+  expectedChunks = 0;
+  processedAnyAudioFrames = false;
+  await disposeVAD(vadToDispose);
+}
+
 function initRecording() {
   const startButton = document.getElementById("startButton");
   const stopButton = document.getElementById("stopButton");
@@ -1108,7 +1149,7 @@ function initRecording() {
   }, uiListenerOptions);
 }
 
-export { initRecording };
+export { disposeRecording, initRecording };
 
 // As soon as the page loads, ensure we never auto-open the mic:
 window.addEventListener("load", () => {

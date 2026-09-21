@@ -10,28 +10,7 @@
 <!-- Removed hard-coded recording.js include; provider will choose module -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
- <!-- 1) Load Google’s Funding Choices library -->
- <script async src="https://fundingchoicesmessages.google.com/i/pub-3747901131960450?ers=1"></script>
-
- <!-- 2) Immediately signal that Funding Choices is running -->
- <script>
-    (function() {
-      function signalGooglefcPresent() {
-        if (!window.frames['googlefcPresent']) {
-          if (document.body) {
-            const iframe = document.createElement('iframe');
-            iframe.style = 'width: 0; height: 0; border: none; z-index: -1000; left: -1000px; top: -1000px;';
-            iframe.style.display = 'none';
-            iframe.name = 'googlefcPresent';
-            document.body.appendChild(iframe);
-          } else {
-            setTimeout(signalGooglefcPresent, 0);
-          }
-        }
-      }
-      signalGooglefcPresent();
-    })();
-  </script>  <title id="page-title-transcribe">Transcribe Notes – AI Medical Transcription & Clinical Notes for Doctors</title>
+  <title id="page-title-transcribe">Transcribe Notes – AI Medical Transcription & Clinical Notes for Doctors</title>
   <!-- Meta description for crawlers -->
   <meta name="description"
         content="Secure, AI-powered medical transcription and clinical note generation for healthcare professionals. Ideal for documenting hypertension, diabetes, COPD, and medication regimens." />
@@ -50,27 +29,6 @@
   <meta name="twitter:description" content="Secure, AI-powered medical transcription and clinical note generation for healthcare professionals.">
   <meta name="twitter:image" content="https://transcribe-notes.netlify.app/Preview.png">
 
-
-<script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
-<script>
-  window.googletag = window.googletag || { cmd: [] };
-  googletag.cmd.push(function() {
-    // define slots and save them globally
-    window.slotTopLeft     = googletag.defineSlot('/23295908256/Big-top-left',  [300,600], 'div-gpt-ad-1744469658576-0').addService(googletag.pubads());
-    window.slotTopRight    = googletag.defineSlot('/23295908256/big-top-right',[300,600], 'div-gpt-ad-1744469682244-0').addService(googletag.pubads());
-    window.slotBottomLeft  = googletag.defineSlot('/23295908256/bottom-left',  [300,250], 'div-gpt-ad-1744473133809-0').addService(googletag.pubads());
-    window.slotBottomRight = googletag.defineSlot('/23295908256/bottom-right',[300,250], 'div-gpt-ad-1744473114007-0').addService(googletag.pubads());
-
-    // declare inventory as refreshable…
-    googletag.pubads().setTargeting('refreshable','true');
-    // …and fetch all slots in a single request
-    googletag.pubads().enableSingleRequest();
-    googletag.pubads().setForceSafeFrame(true);
-
-    // only call enableServices() once
-    googletag.enableServices();
-  });
-</script>
   <link
     href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=Merriweather:wght@300;400&display=swap"
     rel="stylesheet"
@@ -155,32 +113,17 @@
       font-family: inherit;
       font-weight: 400;
     }
-    /* Grid Layout: history rail, optional left ad, main content, optional right ad */
+    /* Grid Layout: history rail and main content */
     .grid-container {
       --history-rail-width: clamp(172px, 13vw, 190px);
       display: grid;
-      grid-template-columns: var(--history-rail-width) 300px minmax(0, 1fr) 300px;
+      grid-template-columns: var(--history-rail-width) minmax(0, 1fr);
       grid-template-rows: auto; /* Allow rows to size based on content */
       min-height: 1200px;       /* Ensure the grid is always at least 1200px tall */
       transition: grid-template-columns 160ms ease;
     }
     .grid-container.history-collapsed {
       --history-rail-width: 42px;
-    }
-   /* When ad columns are disabled, keep the compact history rail beside the app */
-    .grid-container.ads-disabled {
-      grid-template-columns: var(--history-rail-width) minmax(0, 1fr);
-    }
-    .grid-container.ads-disabled .sidebar,
-    .grid-container.ads-disabled .ad-sidebar {
-      display: none;
-    }
-    .grid-container.ads-disabled .note-history-sidebar {
-      grid-column: 1 / 2;
-    }
-    /* When ads are off, main content occupies the column beside history */
-    .grid-container.ads-disabled .main-content {
-      grid-column: 2 / 3;
     }
     /* Per-workspace note history */
     .note-history-sidebar {
@@ -534,31 +477,9 @@
         transition: none;
       }
     }
-    /* Left Sidebar - Updated: No padding and no gap so ads fill the space */
-    .sidebar {
-      grid-column: 2 / 3;
-      grid-row: 1 / 2;
-      background-color: #e0e0e0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      position: relative;
-    }
-    /* Right Sidebar (Ad Area) */
-    .ad-sidebar {
-      grid-column: 4 / 5;
-      grid-row: 1 / 2;
-      background-color: #e0e0e0;
-      /* Remove top padding so the ad is pushed up */
-      padding: 0 20px 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
     /* Main Content */
     .main-content {
-      grid-column: 3 / 4;
+      grid-column: 2 / 3;
       grid-row: 1 / 2;
       display: flex;
       flex-direction: column;
@@ -1651,38 +1572,6 @@
       font-size: 12px;
       line-height: 1.35;
     }
-    /* Ad Containers for Right Sidebar */
-    #right-ad-unit-1 {
-      width: 300px;
-      min-height: 250px;
-      background: transparent;
-      margin-bottom: 0;
-    }
-    #right-ad-unit-2 {
-      width: 300px;
-      min-height: 250px;
-      background: transparent;
-      margin-top: 10px;
-    }
-    /* Ad Containers for Left Sidebar */
-    #left-ad-unit-1 {
-      width: 100%;
-      min-height: 150px;
-      background: transparent;
-      margin-bottom: 10px;
-    }
-    #left-ad-unit-2 {
-      width: 100%;
-      min-height: 150px;
-      background: transparent;
-    }
-    /* Hide leftover forced-color-adjust elements */
-    div[style*="forced-color-adjust: initial"] {
-      display: none !important;
-      height: 0 !important;
-      margin: 0 !important;
-      padding: 0 !important;
-    }
     /* Guide Overlay Styles */
     #guideView {
       display: none;
@@ -2213,21 +2102,6 @@
         <div id="noteHistoryList" class="note-history-list" aria-live="polite"></div>
         <p id="noteHistoryEmpty" class="note-history-empty">No generated notes yet.</p>
       </div>
-    </aside>
-    <!-- Left Sidebar (reserved for ads) with two new ad units -->
-    <aside class="sidebar">
-<!-- /23295908256/Big-top-left -->
-<div id='div-gpt-ad-1744469658576-0' style='min-width: 300px; min-height: 600px;'>
-  <script>
-    googletag.cmd.push(function() { googletag.display('div-gpt-ad-1744469658576-0'); });
-  </script>
-</div>
-<!-- /23295908256/bottom-left -->
-<div id='div-gpt-ad-1744473133809-0' style='min-width: 300px; min-height: 250px;'>
-  <script>
-    googletag.cmd.push(function() { googletag.display('div-gpt-ad-1744473133809-0'); });
-  </script>
-</div>
     </aside>
     <!-- Main Content (center column) -->
     <main class="main-content">
@@ -3161,21 +3035,6 @@
         </div>
       </div>
     </main>
-    <!-- Right Sidebar (Ad Area) -->
-    <aside class="ad-sidebar">
-<!-- /23295908256/big-top-right -->
-<div id='div-gpt-ad-1744469682244-0' style='min-width: 300px; min-height: 600px;'>
-  <script>
-    googletag.cmd.push(function() { googletag.display('div-gpt-ad-1744469682244-0'); });
-  </script>
-</div>
-<!-- /23295908256/bottom-right -->
-<div id='div-gpt-ad-1744473114007-0' style='min-width: 300px; min-height: 250px;'>
-  <script>
-    googletag.cmd.push(function() { googletag.display('div-gpt-ad-1744473114007-0'); });
-  </script>
-</div>
-    </aside>
   </div>
   <div
     id="noteHistoryModal"
@@ -3267,30 +3126,11 @@
       </div>
     </div>
   </div>
-  <!-- Preset runtime storage isolation must run before provider modules. -->
-  <script src="./js/features/workspace-preset-bootstrap.js"></script>
+  <!-- One application shell with isolated state/runtime factories per Workspace. -->
+  <script type="module" src="./js/workspace-app.js"></script>
 
-  <!-- Caps Lock warning for prompt-list and Workspace Set passwords. -->
-  <script type="module" src="./js/features/caps-lock-indicator.js"></script>
-
-  <!-- Provider persistence + provider UI wiring -->
-  <script type="module" src="./js/features/provider-persistence.js"></script>
-  <script type="module" src="./js/features/page-ui.js"></script>
-
-<!-- Note usage + cost UI (safe: does NOT touch timer/status DOM) -->
-  <script type="module" src="./js/features/note-usage-cost.js"></script>
-  <script type="module" src="./js/features/recording-ui.js"></script>
+  <!-- Analytics is a shell service and is loaded only once. -->
   <script type="module" src="./js/features/analytics.js"></script>
-
-  
-
-  <!-- Ensure main boot script runs after provider wiring -->
-  <script type="module" src="./js/main.js"></script>
-
-  <!-- Secondary Note Generator (independent generation session beside the
-       Recording Transcript). Loads after main.js so window.__app helpers
-       (usage/cost formatting, supplementary date handling) are available. -->
-  <script type="module" src="./js/features/secondary-note.js"></script>
 
   <!-- Floating Mini Panel (multi-tab controller).
        Must load after main.js so window.__app exists by the time
@@ -3327,19 +3167,6 @@
 
   <script type="module" src="./js/features/overlays.js"></script>
 
-
-<script type="module" src="./js/features/editor-tools.js"></script>
-  <!-- Prompt slot control extracted from inline transcribe.html logic -->
-  <script type="module" src="./js/features/prompt-slots-ui.js"></script>
-
-  <!-- Per-workspace history of the 30 most recent successfully generated primary notes -->
-  <script type="module" src="./js/features/note-history.js"></script>
-
-  <script type="module" src="./js/features/ad-refresh.js"></script>
-
-
-<!-- Page-owned field feedback helpers (kept after main boot on purpose) -->
-  <script type="module" src="./js/features/field-feedback.js"></script>
 
   <!-- Concurrent preset workspaces, preset backup, and preset toolbar. -->
   <script type="module" src="./js/features/workspace-presets.js"></script>

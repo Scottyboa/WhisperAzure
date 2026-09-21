@@ -14,6 +14,7 @@ export function createMiniCommandChannel({ tabId, send, run, onResult = () => {}
   const completed = new Map();
   const clientId = globalThis.crypto?.randomUUID?.() || `${now()}-${Math.random()}`;
   let sequence = 0;
+  let closed = false;
 
   function allowed(action, args) {
     return ACTIONS.has(action) && (action !== 'runWorkspacePresetAction' ||
@@ -21,6 +22,7 @@ export function createMiniCommandChannel({ tabId, send, run, onResult = () => {}
   }
 
   function request(targetTabId, actionName, args = []) {
+    if (closed) return Promise.resolve({ ok: false, error: 'Command channel closed.' });
     const requestId = `${clientId}-${++sequence}`;
     const message = { type: 'mini-hub-command', requestId, sourceTabId: tabId,
       targetTabId, actionName, args, expiresAt: now() + 15000 };
@@ -44,6 +46,7 @@ export function createMiniCommandChannel({ tabId, send, run, onResult = () => {}
   }
 
   function reply(message, result, received = false) {
+    if (closed) return;
     const response = { type: 'mini-hub-command-result', requestId: message.requestId,
       sourceTabId: tabId, targetTabId: message.sourceTabId, received, result };
     if (response.targetTabId === tabId) receive(response);
@@ -51,6 +54,7 @@ export function createMiniCommandChannel({ tabId, send, run, onResult = () => {}
   }
 
   function receive(message) {
+    if (closed) return false;
     if (message?.targetTabId !== tabId) return false;
     if (message.type === 'mini-hub-command-result') {
       const entry = pending.get(message.requestId);
@@ -87,8 +91,19 @@ export function createMiniCommandChannel({ tabId, send, run, onResult = () => {}
     return true;
   }
 
+  function close(reason = 'Command channel closed.') {
+    closed = true;
+    const result = { ok: false, error: String(reason), uncertain: true };
+    for (const [id, entry] of pending) {
+      clearTimeout(entry.timeout);
+      pending.delete(id);
+      try { entry.resolve(result); } catch (_) {}
+    }
+    completed.clear();
+  }
+
   return { request, receive, isPending(targetTabId, presetId = '') {
     return [...pending.values()].some(({ message }) => message.targetTabId === targetTabId &&
       (!presetId || message.actionName === 'runWorkspacePresetAction' && message.args[0] === presetId));
-  } };
+  }, close };
 }

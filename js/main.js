@@ -1,4 +1,10 @@
-import { getRecordingLifecycle, requestRecordingAction } from './core/recording-lifecycle.js';
+import { getRecordingLifecycle, requestRecordingAction, resetRecordingLifecycle } from './core/recording-lifecycle.js';
+import {
+  disposeWorkspaceResources as disposeRegisteredWorkspaceResources,
+  installWorkspaceDisposalLifecycle,
+  isWorkspaceFinalized,
+  registerWorkspaceDisposer,
+} from './core/workspace-disposal.js';
 import { initTranscribeLanguage } from './languageLoaderUsage.js';
 import {
   DEFAULTS,
@@ -25,6 +31,7 @@ import {
 } from './core/provider-registry.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+  installWorkspaceDisposalLifecycle();
   initTranscribeLanguage();
 
   const STATE_KEY = '__ui_state_v1';
@@ -42,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const MINI_FAVICON_SYMBOL_URL = 'favicon-32x32.png';
   const MINI_HUB_STALE_MS = 45 * 1000;
   let miniHubChannel = null;
+  let miniHubClosed = false;
   let miniHubTabId = '';
   let miniHubPageSessionId = '';
   let miniHubAppliedFaviconDataUrl = '';
@@ -52,6 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let miniHubOwnAccentKey = '';
   let miniHubOwnAccentColor = '';
   let miniHubLiveTabCount = 1;
+  let recordingProviderInitSequence = 0;
+  let noteProviderInitSequence = 0;
 
   function getApp() {
     const existing = window.__app || {};
@@ -227,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Embedded preset runtimes are represented by their parent tab. Letting
     // every same-origin iframe join the BroadcastChannel would make one
     // browser tab appear as several unrelated tabs in the Mini Panel.
-    if (window.__workspacePresetFrame) return null;
+    if (window.__workspacePresetFrame || miniHubClosed) return null;
 
     if (miniHubChannel || typeof BroadcastChannel !== 'function') {
       return miniHubChannel;
@@ -382,14 +392,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function publishMiniHubSnapshot(reason = 'state') {
-    const snapshot = buildMiniHubSnapshot();
+    if (miniHubClosed || window.__workspacePresetFrame) return;
     void applyMiniHubAccentFavicon();
-
-    postMiniHubMessage({
-      type: 'mini-hub-tab-state',
-      reason,
-      snapshot,
-    });
+    // The controller is the sole publisher; it also updates its local registry
+    // and deduplicates state. Its boot snapshot covers events before it loads.
+    window.__miniPanelController?.publishState?.(reason);
   }
 
   function activateMiniHubTab(reason = 'activate') {
@@ -513,10 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
       void applyMiniHubAccentFavicon();
     });
 
-    window.addEventListener('app:state-changed', (event) => {
-      const reason = String(event?.detail?.reason || 'unknown').trim() || 'unknown';
-      publishMiniHubSnapshot(`app-state:${reason}`);
-    });
+    // app:state-changed is consumed by mini-controller.js, not by both modules.
 
     window.addEventListener('prompt-slot-selection-changed', () => {
       publishMiniHubSnapshot('prompt-slot-selection-changed');
@@ -544,14 +548,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('mini-panel:status', () => {
       publishMiniHubSnapshot('mini-panel-status');
-    });
-
-    window.addEventListener('beforeunload', () => {
-      closeMiniHubTab();
-    });
-
-    window.addEventListener('pagehide', () => {
-      closeMiniHubTab();
     });
 
     window.setTimeout(() => publishMiniHubSnapshot('bridge-ready'), 0);
@@ -1098,7 +1094,7 @@ document.addEventListener('DOMContentLoaded', () => {
     app.__autoCopyExtensionCopyBridgeBound = true;
     let useFirefoxEventBridge = false;
     const forward = (event, copyKind) => {
-      if (!useFirefoxEventBridge) return;
+      if (!useFirefoxEventBridge && !window.__workspaceSharedRuntime) return;
       const detail = event.detail || {};
       if (detail.aborted || detail.failed || ['aborted', 'error', 'failed'].includes(detail.status)) return;
       const redactor = event.type === 'redactor:autocopy';
@@ -1106,7 +1102,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const field = copyKind === 'note' ? 'generatedNote' : 'transcription';
       const text = typeof detail.text === 'string' ? detail.text : String(document.getElementById(field)?.value || '');
       if (!text.trim()) return;
-      window.postMessage({ type: 'AUTO_COPY_APP_EVENT', copyKind, text, sourceEvent: event.type }, location.origin);
+      window.postMessage({
+        type: 'AUTO_COPY_APP_EVENT',
+        copyKind,
+        text,
+        sourceEvent: event.type,
+        workspaceId: String(window.__workspacePresetRuntimeId || ''),
+      }, location.origin);
     };
     for (const name of ['note:finished', 'note-generation-finished']) {
       window.addEventListener(name, event => forward(event, 'note'));
@@ -1115,7 +1117,13 @@ document.addEventListener('DOMContentLoaded', () => {
       window.addEventListener(name, event => forward(event, 'transcript'));
     }
     const resetBridge = () => {
-      if (useFirefoxEventBridge) window.postMessage({ type: 'AUTO_COPY_APP_EVENT', reset: true }, location.origin);
+      if (useFirefoxEventBridge || window.__workspaceSharedRuntime) {
+        window.postMessage({
+          type: 'AUTO_COPY_APP_EVENT',
+          reset: true,
+          workspaceId: String(window.__workspacePresetRuntimeId || ''),
+        }, location.origin);
+      }
     };
     window.addEventListener('recording:lifecycle', event => {
       if (event.detail?.phase === 'starting') resetBridge();
@@ -1149,6 +1157,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = event?.data || {};
       if (data.type !== AUTO_COPY_EXTENSION_COPY_RESULT) return;
+      const resultWorkspaceId = String(data.workspaceId || '');
+      const currentWorkspaceId = String(window.__workspacePresetRuntimeId || '');
+      if (resultWorkspaceId !== currentWorkspaceId) return;
 
       const copyKind = String(data.copyKind || '').trim().toLowerCase();
       const ok = !!data.ok;
@@ -1785,29 +1796,45 @@ document.addEventListener('DOMContentLoaded', () => {
     '__sonioxTeardown',
   ];
 
-  function teardownRecordingProviderRuntime(reason = 'provider-switch') {
+  async function teardownRecordingProviderRuntime(reason = 'provider-switch') {
+    const disposalTasks = [];
+    const disposableModules = Object.values(getApp().cachedModules || {})
+      .filter((mod) => typeof mod?.disposeRecording === 'function');
     RECORDING_UI_ABORT_KEYS.forEach((key) => {
       try {
         window[key]?.abort?.(reason);
       } catch (_) {}
     });
 
-    RECORDING_VAD_TEARDOWN_KEYS.forEach((key) => {
+    if (!disposableModules.length) {
+      RECORDING_VAD_TEARDOWN_KEYS.forEach((key) => {
+        try {
+          disposalTasks.push(Promise.resolve(window[key]?.(reason)));
+        } catch (_) {}
+      });
+    }
+
+    disposableModules.forEach((mod) => {
       try {
-        window[key]?.();
+        disposalTasks.push(Promise.resolve(mod.disposeRecording({ reason })));
       } catch (_) {}
     });
+
+    if (disposalTasks.length) await Promise.allSettled(disposalTasks);
   }
 
   async function initRecordingProvider(provider) {
     const normalized = normalizeTranscribeProvider(provider || getSelectedTranscribeProvider());
     const path = resolveTranscribeModulePath(normalized);
+    const initSequence = ++recordingProviderInitSequence;
 
     console.info('[recording:init] provider:', normalized, 'module:', path);
 
     try {
-      teardownRecordingProviderRuntime(`switch-to:${normalized}`);
+      await teardownRecordingProviderRuntime(`switch-to:${normalized}`);
+      if (initSequence !== recordingProviderInitSequence || isWorkspaceFinalized()) return;
       const mod = await loadCachedModule(path);
+      if (initSequence !== recordingProviderInitSequence || isWorkspaceFinalized()) return;
       if (mod && typeof mod.initRecording === 'function') {
         mod.initRecording();
         emitAppStateChanged('recording-provider-initialized', { provider: normalized });
@@ -1820,6 +1847,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function initNoteProvider(choice) {
+    const initSequence = ++noteProviderInitSequence;
     const effectiveChoice = choice || getSelectedEffectiveNoteProvider();
     const path = resolveNoteModulePath(effectiveChoice);
     const initExportName = resolveNoteInitExportName(effectiveChoice);
@@ -1832,6 +1860,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // legacy 'initNoteGeneration' export for modules that don't declare
     // initExportName (Mistral, AWS Bedrock).
     const callInit = (mod, name) => {
+      if (initSequence !== noteProviderInitSequence || isWorkspaceFinalized()) return true;
       if (mod && typeof mod[name] === 'function') {
         mod[name]();
         return true;
@@ -2543,6 +2572,50 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const app = getApp();
+
+  registerWorkspaceDisposer(async ({ reason, final }) => {
+    // Invalidate a provider import that may still be resolving while this
+    // Workspace is being removed or repurposed.
+    recordingProviderInitSequence += 1;
+    noteProviderInitSequence += 1;
+
+    try { app.noteGenerationAbortController?.abort?.(reason); } catch (_) {}
+    app.noteGenerationInFlight = false;
+    app.noteGenerationAbortController = null;
+    app.noteGenerationMeta = null;
+    const teardown = teardownRecordingProviderRuntime(reason);
+    resetRecordingLifecycle();
+    if (!final) {
+      syncNoteActionButtons();
+      ['miniPanelRecordingStartedAt', 'miniPanelRecordingPausedAt', 'miniPanelRecordingAccumulatedMs',
+        'miniPanelTranscriptStartedAt', 'miniPanelTranscriptElapsedMs', 'miniPanelNoteGenerationStartedAt',
+        'miniPanelNoteGenerationElapsedMs', 'miniPanelCopiedAt'].forEach((key) => { app[key] = 0; });
+      app.miniPanelStatusPhase = 'idle';
+      app.miniPanelCopiedState = '';
+      ['stopButton', 'pauseResumeButton', 'abortButton'].forEach((id) => {
+        const button = document.getElementById(id);
+        if (button) button.disabled = true;
+      });
+      const start = document.getElementById('startButton');
+      if (start) start.disabled = false;
+      const status = document.getElementById('statusMessage');
+      if (status) status.textContent = '';
+    }
+    await teardown;
+  });
+
+  registerWorkspaceDisposer(() => {
+    // Notify peer tabs before closing this Workspace's channel. This mirrors
+    // the existing unload notification but also covers deterministic disposal.
+    closeMiniHubTab();
+    miniHubClosed = true;
+    try { miniHubChannel?.close?.(); } catch (_) {}
+    miniHubChannel = null;
+
+    try { app.__miniPanelButtonStateObserver?.disconnect?.(); } catch (_) {}
+    app.__miniPanelButtonStateObserver = null;
+  }, { scope: 'window' });
+
   app.saveState = saveState;
   app.restoreState = restoreState;
   app.reloadWithSavedState = reloadWithSavedState;
@@ -2561,6 +2634,8 @@ document.addEventListener('DOMContentLoaded', () => {
   app.abortNoteGeneration = abortNoteGeneration;
   app.emitNoteFinished = emitNoteFinished;
   app.resetNoteGenerationState = resetNoteGenerationState;
+  app.disposeWorkspaceResources = (options = {}) =>
+    disposeRegisteredWorkspaceResources(options);
   app.isNoteGenerationBusy = () => !!getApp().noteGenerationInFlight;
   app.triggerGenerateNote = function triggerGenerateNote() {
     const btn = document.getElementById('generateNoteButton');

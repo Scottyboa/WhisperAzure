@@ -15,7 +15,6 @@ export const indexTranslations = {
   guideButton: "API-guide – Slik bruker du den",
   securityButton: "Sikkerhet",
   aboutButton: "Om",
-  adRevenueMessage: "Siden dette nettstedet er gratis å bruke og utelukkende finansieres av annonseinntekter, setter vi stor pris på om du godtar annonser for å støtte tjenesten.",
   modelsModalHeading: "AI-modeller",
   modelsModalText: `
 <div>
@@ -437,7 +436,7 @@ En API-nøkkel alene gjør ikke en tjeneste GDPR-kompatibel. Kontroller leverand
 };
 
 export const transcribeTranslations = {
-  pageTitle: "Transkripsjonsverktøy med annonser og guideoverlegg",
+  pageTitle: "Transkripsjonsverktøy",
   openaiUsageLinkText: "Kostnadsoversikt",
   openaiWalletLinkText: "Kreditt",
   btnFunctions: "Funksjoner",
@@ -463,7 +462,6 @@ export const transcribeTranslations = {
   promptImportButton: "Importer",
   promptSlotLabel: "Prompt Slot:",
   customPromptPlaceholder: "Skriv inn tilpasset prompt her",
-  adUnitText: "Din annonse her",
   guideHeading: "Guide & Instruksjoner",
 guideText: `Velkommen til <strong>Transcribe Notes</strong>. Appen kan ta opp og transkribere samtaler og bruke den ferdige teksten til å generere et notat. Innhent alltid nødvendig samtykke før opptak, og kontroller alltid medisinsk innhold før det brukes.<br><br>
 

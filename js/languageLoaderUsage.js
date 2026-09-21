@@ -1,5 +1,6 @@
 import { loadLanguageModule } from './languageLoader.js';
 import { initIndexAccordions } from './ui.js';
+import { registerWorkspaceDisposer } from './core/workspace-disposal.js';
 
 // For the index page
 export async function initIndexLanguage() {
@@ -81,8 +82,6 @@ function updateIndexUI(trans) {
   const aboutBtn = document.getElementById("openAboutButton");
   if (aboutBtn) aboutBtn.textContent = trans.aboutButton;
 
-  const adRevenueMessageEl = document.getElementById("ad-revenue-message");
-  if (adRevenueMessageEl) adRevenueMessageEl.textContent = trans.adRevenueMessage;
 
   const offerElem = document.getElementById("offerText");
   if (offerElem && trans.offerText) {
@@ -459,17 +458,20 @@ function updateRedactorUI(trans) {
 }
 
 function updateTranscribeUI(trans) {
-  document.getElementById("page-title-transcribe").textContent = trans.pageTitle;
+  const pageTitle = document.getElementById("page-title-transcribe");
+  if (pageTitle) pageTitle.textContent = trans.pageTitle;
   const usageEl = document.getElementById("openaiUsageLink");
   if (usageEl) usageEl.textContent = trans.openaiUsageLinkText;
   const walletEl = document.getElementById("openaiWalletLink");
   if (walletEl) walletEl.textContent = trans.openaiWalletLinkText;
-  document.getElementById("btnGuide").textContent = trans.btnGuide;
+  const guideButton = document.getElementById("btnGuide");
+  if (guideButton) guideButton.textContent = trans.btnGuide;
   const newsBtn = document.getElementById("btnNews");
   if (newsBtn) {
     newsBtn.textContent = trans.btnNews ?? "Status & Updates";
   }
-  document.getElementById("backToHomeButton").textContent = trans.backToHome;
+  const backButton = document.getElementById("backToHomeButton");
+  if (backButton) backButton.textContent = trans.backToHome;
   document.getElementById("recordingAreaTitle").textContent = trans.recordingAreaTitle;
   const readFirstElem = document.getElementById("read-first-text");
   if (readFirstElem && trans.readFirstText) {
@@ -508,8 +510,10 @@ function updateTranscribeUI(trans) {
     promptSlotLabelEl.textContent = trans.promptSlotLabel;
   }
   document.getElementById("customPrompt").placeholder = trans.customPromptPlaceholder;
-  document.getElementById("guideHeading").textContent = trans.guideHeading;
-  document.getElementById("guideText").innerHTML = trans.guideText;
+  const guideHeading = document.getElementById("guideHeading");
+  if (guideHeading) guideHeading.textContent = trans.guideHeading;
+  const guideText = document.getElementById("guideText");
+  if (guideText) guideText.innerHTML = trans.guideText;
   updateRedactorUI(trans);
   updateSecondaryNoteUI(trans);
   installTimerI18nGuards(trans);
@@ -524,6 +528,15 @@ function installTimerI18nGuards(trans) {
 
   window.__timerI18nState = window.__timerI18nState || {};
   const state = window.__timerI18nState;
+  if (!state.disposerRegistered) {
+    state.disposerRegistered = true;
+    registerWorkspaceDisposer(() => {
+      (state.observers || []).forEach((observer) => {
+        try { observer.disconnect(); } catch (_) {}
+      });
+      state.observers = [];
+    }, { scope: "window" });
+  }
   if (Array.isArray(state.observers)) {
     state.observers.forEach((o) => {
       try { o.disconnect(); } catch {}

@@ -10,7 +10,6 @@ export const indexTranslations = {
   guideButton: "Guide API – Mode d'emploi",
   securityButton: "Sécurité",
   aboutButton: "À propos",
-  adRevenueMessage: "Comme ce site est gratuit et financé uniquement par la publicité, veuillez accepter les publicités personnalisées afin de soutenir le service.",
   // Accordion tab #1 (left): AI models
   modelsModalHeading: "Modèles d’IA",
   modelsModalText: `
@@ -173,8 +172,7 @@ De nombreux fournisseurs proposent des services similaires, mais à des tarifs b
 <strong>Points clés :</strong><br>
 • Aucun abonnement, aucun compte requis.<br>
 • Vous payez uniquement OpenAI directement pour ce que vous utilisez.<br>
-• Le site lui-même est entièrement gratuit.<br><br>
-Pour continuer à offrir ce service gratuitement, nous vous serions très reconnaissants d’accepter l’affichage de publicités Google Ads. Les revenus publicitaires nous aident à couvrir les frais d’hébergement et de fonctionnement, afin que le service reste accessible à tous.`,
+• Le site lui-même est entièrement gratuit.`,
   guideModalHeading: "Clés API – démarrage",
   guideModalText: `
 <strong>Clés API — premiers pas</strong><br><br>
@@ -270,7 +268,7 @@ Une clé API ne rend pas un service automatiquement conforme au RGPD. Vérifiez 
 };
 
 export const transcribeTranslations = {
-  pageTitle: "Outil de transcription avec publicités et superposition de guide",
+  pageTitle: "Outil de transcription",
   openaiUsageLinkText: "Aperçu des coûts d'utilisation",
   openaiWalletLinkText: "Solde du portefeuille",
   btnFunctions: "Fonctions",
@@ -293,7 +291,6 @@ export const transcribeTranslations = {
   customPromptTitle: "Invite personnalisée",
   promptSlotLabel: "Emplacement de l'invite :",
   customPromptPlaceholder: "Saisissez l'invite personnalisée ici",
-  adUnitText: "Votre publicité ici",
   guideHeading: "Guide et instructions",
 guideText: `Bienvenue dans <strong>Transcribe Notes</strong>. L'application peut enregistrer et transcrire des conversations, puis utiliser le texte obtenu pour générer une note. Obtenez toujours le consentement requis avant l'enregistrement et vérifiez tout contenu clinique avant de l'utiliser.<br><br>
 

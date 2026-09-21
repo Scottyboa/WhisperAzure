@@ -1,3 +1,5 @@
+import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
+
 const STORAGE_KEY = "note_history_v1";
 const COLLAPSED_STORAGE_KEY = "note_history_collapsed_v1";
 const MAX_ENTRIES = 30;
@@ -161,9 +163,13 @@ const STRINGS = {
   },
 };
 
+let historyRecord = { entries: [], nextSequence: 1 };
+let persistSharedHistory = null;
 const state = {
-  entries: [],
-  nextSequence: 1,
+  get entries() { return historyRecord.entries; },
+  set entries(value) { historyRecord.entries = value; },
+  get nextSequence() { return historyRecord.nextSequence; },
+  set nextSequence(value) { historyRecord.nextSequence = value; },
   pendingRun: null,
   activeEntryId: "",
   previousFocus: null,
@@ -304,6 +310,7 @@ function buildStoragePayload() {
 }
 
 function persistHistory() {
+  if (persistSharedHistory) return persistSharedHistory();
   while (true) {
     try {
       sessionStorage.setItem(STORAGE_KEY, buildStoragePayload());
@@ -351,7 +358,7 @@ function replaceLocalHistorySnapshot(
   if (!preservePendingRun) state.pendingRun = null;
 
   try {
-    if (state.entries.length) {
+    if (persistSharedHistory || state.entries.length) {
       persistHistory();
     } else {
       sessionStorage.removeItem(STORAGE_KEY);
@@ -371,7 +378,8 @@ function clearLocalHistory({ notify = true } = {}) {
   state.pendingRun = null;
 
   try {
-    sessionStorage.removeItem(STORAGE_KEY);
+    if (persistSharedHistory) persistHistory();
+    else sessionStorage.removeItem(STORAGE_KEY);
   } catch (_) {}
 
   closeModal();
@@ -801,6 +809,25 @@ window.__noteHistory = Object.freeze({
   getSnapshot: getLocalHistorySnapshot,
   clearLocal: clearLocalHistory,
   replaceLocal: replaceLocalHistorySnapshot,
+  bindShared(record, persist) {
+    historyRecord = record;
+    persistSharedHistory = persist;
+    renderHistory();
+    syncModalContent();
+  },
 });
 
 init();
+// Frames bind before the user can start a note; a delayed frame must not
+// overwrite newer history generated in another clone while it was loading.
+if (window.__workspacePresetFrame) {
+  window.parent.__workspacePresets?.bindHistoryRuntime?.(window.__workspacePresetRuntimeId, window.__noteHistory);
+}
+registerWorkspaceDisposer(({ final }) => {
+  state.pendingRun = null;
+  state.previousFocus = null;
+  if (final) {
+    historyRecord = { entries: [], nextSequence: 1 };
+    persistSharedHistory = null;
+  }
+});

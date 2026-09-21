@@ -48,6 +48,7 @@ import {
   normalizeSharedRequestyReasoning
 } from "../core/provider-registry.js";
 import { PromptManager } from "../promptManager.js";
+import { registerWorkspaceDisposer } from "../core/workspace-disposal.js";
 
 // -----------------------------------------------------------------------------
 // Storage keys (secondary-only — never overlap with the primary generator)
@@ -1036,6 +1037,7 @@ async function generateSecondaryNote() {
         break;
     }
 
+    if (state.abortController !== controller) return;
     stopSecondaryTimer();
 
     if (!result || !result.ok) {
@@ -1057,6 +1059,7 @@ async function generateSecondaryNote() {
       }
     }
   } catch (error) {
+    if (state.abortController !== controller) return;
     stopSecondaryTimer();
 
     if (error?.name === "AbortError") {
@@ -1073,8 +1076,10 @@ async function generateSecondaryNote() {
       outputField.value = "Error generating note: " + String(error);
     }
   } finally {
-    state.abortController = null;
-    setBusy(false);
+    if (state.abortController === controller) {
+      state.abortController = null;
+      setBusy(false);
+    }
   }
 }
 
@@ -1085,6 +1090,15 @@ function abortSecondaryNote() {
       controller.abort();
     } catch (_) {}
   }
+}
+
+function disposeSecondaryNote({ final = false } = {}) {
+  abortSecondaryNote();
+  stopSecondaryTimer();
+  state.abortController = null;
+  state.inFlight = false;
+  state.timerStartedAt = 0;
+  if (!final) setBusy(false);
 }
 
 // -----------------------------------------------------------------------------
@@ -1324,6 +1338,7 @@ function initSecondaryNoteModule() {
 
 window.__secondaryNoteModuleReady = false;
 window.__initSecondaryNoteModule = initSecondaryNoteModule;
+registerWorkspaceDisposer(disposeSecondaryNote);
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initSecondaryNoteModule, { once: true });

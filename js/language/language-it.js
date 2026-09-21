@@ -10,7 +10,6 @@ export const indexTranslations = {
   guideButton: "Guida API - Come utilizzare",
   securityButton: "Sicurezza",
   aboutButton: "Informazioni",
-  adRevenueMessage: "Poiché questo sito è gratuito e si basa esclusivamente sui ricavi pubblicitari, ti preghiamo di acconsentire alla visualizzazione di annunci personalizzati per sostenere il servizio.",
   // Accordion tab #1 (left): AI models
   modelsModalHeading: "Modelli di IA",
   modelsModalText: `
@@ -173,8 +172,7 @@ Molti fornitori offrono servizi simili, ma applicano prezzi significativamente p
 <strong>Punti chiave:</strong><br>
 • Nessun abbonamento, nessun account richiesto.<br>
 • Paghi solo OpenAI per ciò che utilizzi.<br>
-• Il sito stesso è completamente gratuito.<br><br>
-Per continuare a offrire questo servizio gratuito, ti saremmo molto grati se accettassi la visualizzazione degli annunci Google Ads. I ricavi pubblicitari ci aiutano a coprire i costi di hosting e gestione, permettendo al servizio di rimanere accessibile a tutti.`,
+• Il sito stesso è completamente gratuito.`,
   guideModalHeading: "Chiavi API – come iniziare",
   guideModalText: `
 <strong>Chiavi API — primi passi</strong><br><br>
@@ -270,7 +268,7 @@ Una chiave API non rende automaticamente un servizio conforme al GDPR. Verifica 
 };
 
 export const transcribeTranslations = {
-  pageTitle: "Strumento di Trascrizione con Annunci e Sovrapposizione della Guida",
+  pageTitle: "Strumento di trascrizione",
   openaiUsageLinkText: "Riepilogo dei costi",
   openaiWalletLinkText: "Saldo Portafoglio",
   btnFunctions: "Funzioni",
@@ -293,7 +291,6 @@ export const transcribeTranslations = {
   customPromptTitle: "Prompt Personalizzato",
   promptSlotLabel: "Slot del Prompt:",
   customPromptPlaceholder: "Inserisci qui il prompt personalizzato",
-  adUnitText: "Il tuo annuncio qui",
   guideHeading: "Guida e Istruzioni",
 guideText: `Benvenuto in <strong>Transcribe Notes</strong>. L'app può registrare e trascrivere conversazioni e usare il testo finale per generare una nota. Ottieni sempre il consenso necessario prima della registrazione e controlla sempre il contenuto clinico prima dell'uso.<br><br>
 

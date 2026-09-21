@@ -1,4 +1,5 @@
 // js/core/note-runner.js
+import { registerWorkspaceDisposer } from './workspace-disposal.js';
 
 function getNoteCoordinator() {
   return window.__app || {};
@@ -28,10 +29,19 @@ function startNoteTimer(noteTimerElement) {
         "Note Generation Timer: " + formatTime(Date.now() - noteStartTime);
     }
   }, 1000);
+  let disposed = false;
+  let unregister = () => {};
+  unregister = registerWorkspaceDisposer(() => {
+    disposed = true;
+    clearInterval(intervalId);
+    unregister();
+  });
 
   return {
     stop(finalText = "") {
       clearInterval(intervalId);
+      unregister();
+      if (disposed) return;
       if (noteTimerElement) {
         noteTimerElement.innerText = finalText;
       }
