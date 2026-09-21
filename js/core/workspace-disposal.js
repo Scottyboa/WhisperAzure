@@ -1,10 +1,10 @@
 // Window-local resource disposal for one Workspace runtime.
 //
-// Every Workspace currently owns its own page runtime (the first Workspace is
-// the top-level page; additional Workspaces are same-origin iframes). Removing
-// an iframe does not give asynchronous providers a reliable opportunity to
-// stop first, so resource owners register their teardown here. The registry is
-// deliberately window-local: disposing one Workspace cannot affect another.
+// Every Workspace owns its own runtime context (the first Workspace uses the
+// top-level page; additional Workspaces use isolated shared-page contexts).
+// Async providers need an explicit stop before a context is removed, so
+// resource owners register their teardown here. The registry is deliberately
+// context-local: disposing one Workspace cannot affect another.
 
 const STATE_KEY = "__workspaceDisposalStateV1";
 
