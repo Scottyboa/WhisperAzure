@@ -1,3 +1,33 @@
+## 21 September, 2026
+
+### Better performance and lower resource usage
+
+The app has received a major technical update designed to reduce unnecessary memory usage and make the app more efficient, particularly when it remains open for longer periods.
+
+#### More efficient Workspace handling
+
+Workspaces now use fewer resources, and unnecessary background activity has been reduced. This should provide smoother performance and reduce the risk of the app becoming slow when it remains open for a long time.
+
+The appearance and normal workflow are largely unchanged.
+
+#### The Auto-copy extension must be updated
+
+Because of the changes to how Workspaces are handled, the updated Auto-copy extension must be downloaded and installed again.
+
+[Download the updated Auto-copy extension](./div/autocopy.zip)
+
+You can also download it from the Auto-copy tooltip in the Mini Panel. Extract the ZIP file and follow the README file included in the folder.
+
+#### After the update
+
+The update was published today, 21 September. If you already had the app open in a browser tab before the update, we recommend closing that tab. Then open the app again in a new tab.
+
+This ensures that the latest version of the app loads correctly.
+
+Google Chrome remains the recommended browser for optimal Mini Panel and Auto-copy functionality.
+
+---
+
 ## 16 September, 2026
 
 ### Better Workspaces, Mini Panel, backups and new AI models

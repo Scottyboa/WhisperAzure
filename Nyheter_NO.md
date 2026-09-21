@@ -1,3 +1,33 @@
+## 21. september 2026
+
+### Bedre ytelse og lavere ressursbruk
+
+Appen har fått en større teknisk oppdatering som er laget for å redusere unødvendig minnebruk og gjøre appen mer effektiv, særlig når den står åpen over lengre tid.
+
+#### Mer effektiv håndtering av Workspaces
+
+Workspaces bruker nå mindre ressurser, og unødvendig arbeid i bakgrunnen er redusert. Dette skal gi jevnere ytelse og redusere risikoen for at appen blir treg når den står åpen lenge.
+
+Utseendet og den vanlige arbeidsflyten er i hovedsak uendret.
+
+#### Auto-copy-utvidelsen må oppdateres
+
+På grunn av endringene i hvordan Workspaces håndteres, må den oppdaterte Auto-copy-utvidelsen lastes ned og installeres på nytt.
+
+[Last ned den oppdaterte Auto-copy-utvidelsen](./div/autocopy.zip)
+
+Du kan også laste den ned fra Auto-copy-tooltipen i Mini Panel. Pakk ut ZIP-filen og følg README-filen som ligger i mappen.
+
+#### Etter oppdateringen
+
+Oppdateringen ble publisert i dag, 21. september. Hvis du allerede hadde appen åpen i en nettleserfane før oppdateringen, anbefales det at du lukker denne fanen. Åpne deretter appen på nytt i en ny fane.
+
+Dette sikrer at den nyeste versjonen av appen lastes inn på riktig måte.
+
+Google Chrome anbefales fortsatt som nettleser for optimal funksjon med tanke på Mini Panel og Auto-copy.
+
+---
+
 ## 16. september 2026
 
 ### Bedre Workspaces, Mini Panel, sikkerhetskopiering og nye AI-modeller
