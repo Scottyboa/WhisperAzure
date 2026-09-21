@@ -5,6 +5,7 @@
 // and exposes a small set of UI sync helpers on window.__app.
 
 import { registerWorkspaceDisposer } from "../core/workspace-disposal.js";
+import { analyzeTextForCounter } from "../core/text-performance.js";
 
 (function initNoteTimerFeedback() {
   const timerEl = document.getElementById("noteTimer");
@@ -244,8 +245,9 @@ import { registerWorkspaceDisposer } from "../core/workspace-disposal.js";
     { inputId: "generatedNote", counterId: "generatedNoteLiveCounter" },
   ];
 
-  const wordRegex = /\S+/g;
   const syncMap = new Map();
+  const COUNTER_DEBOUNCE_MS = 160;
+  const pendingCounterTimers = new Set();
 
   function getApp() {
     const existing = window.__app || {};
@@ -253,36 +255,34 @@ import { registerWorkspaceDisposer } from "../core/workspace-disposal.js";
     return existing;
   }
 
-  function countWords(value) {
-    const matches = (value || "").match(wordRegex);
-    return matches ? matches.length : 0;
-  }
-
-  function estimateTokens(value) {
-    const text = String(value || "");
-    if (!text.trim()) return 0;
-
-    const chars = text.length;
-    const words = countWords(text);
-    const roughByChars = Math.ceil(chars / 4);
-    const roughByWords = Math.ceil(words * 1.33);
-
-    return Math.max(1, Math.max(roughByChars, roughByWords));
-  }
-
   function renderCounter(input, counter) {
     if (!input || !counter) return;
-    const value = input.value || "";
-    const words = countWords(value);
-    const tokens = estimateTokens(value);
+    const { words, tokens } = analyzeTextForCounter(input.value || "");
     counter.textContent = `${words} words · ${tokens} tokens`;
   }
 
-  function queueSync(sync) {
-    sync();
-    requestAnimationFrame(sync);
-    setTimeout(sync, 0);
-    setTimeout(sync, 60);
+  function makeCounterScheduler(sync) {
+    let timer = 0;
+    const cancel = () => {
+      if (!timer) return;
+      clearTimeout(timer);
+      pendingCounterTimers.delete(timer);
+      timer = 0;
+    };
+    const run = () => {
+      cancel();
+      sync();
+    };
+    const schedule = (delay = COUNTER_DEBOUNCE_MS) => {
+      cancel();
+      timer = setTimeout(() => {
+        pendingCounterTimers.delete(timer);
+        timer = 0;
+        sync();
+      }, delay);
+      pendingCounterTimers.add(timer);
+    };
+    return { run, schedule, cancel };
   }
 
   function bindLiveCounter({ inputId, counterId }) {
@@ -292,18 +292,19 @@ import { registerWorkspaceDisposer } from "../core/workspace-disposal.js";
     if (input.dataset.liveCounterBound === "1") return;
 
     const sync = () => renderCounter(input, counter);
+    const scheduler = makeCounterScheduler(sync);
     input.dataset.liveCounterBound = "1";
-    syncMap.set(inputId, sync);
+    syncMap.set(inputId, scheduler);
 
-    input.addEventListener("input", sync);
-    input.addEventListener("change", sync);
-    sync();
+    input.addEventListener("input", () => scheduler.schedule());
+    input.addEventListener("change", scheduler.run);
+    scheduler.run();
   }
 
   function syncCounterByInputId(inputId) {
-    const sync = syncMap.get(inputId);
-    if (typeof sync === "function") {
-      queueSync(sync);
+    const scheduler = syncMap.get(inputId);
+    if (scheduler) {
+      scheduler.schedule(0);
       return;
     }
 
@@ -350,6 +351,13 @@ import { registerWorkspaceDisposer } from "../core/workspace-disposal.js";
       });
     }
   }
+
+  registerWorkspaceDisposer(() => {
+    syncMap.forEach((scheduler) => scheduler.cancel());
+    pendingCounterTimers.forEach((timer) => clearTimeout(timer));
+    pendingCounterTimers.clear();
+    syncMap.clear();
+  }, { scope: "window" });
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initCounters, { once: true });

@@ -13,6 +13,7 @@ const PRIMARY_RUNTIME_KEY = "whisper_workspace_primary_runtime_v1";
 const PANEL_MODE_KEY = "whisper_workspace_mini_panel_mode";
 const DRAFT_KEY = "whisper_workspace_draft_v1";
 const MAX_PRESETS = 12;
+const DRAFT_SAVE_DELAY_MS = 250;
 
 const VALUE_IDS = [
   "transcribeProvider", "sonioxSpeakerLabels", "sonioxRegion",
@@ -284,6 +285,43 @@ function captureDraft(doc) {
   };
 }
 
+function createDraftSaver({ win, doc, storage, getKey, shouldSkip = () => false }) {
+  let timer = 0;
+  let dirty = false;
+
+  const cancelTimer = () => {
+    if (!timer) return;
+    win.clearTimeout(timer);
+    timer = 0;
+  };
+
+  const flush = () => {
+    cancelTimer();
+    if (!dirty || shouldSkip()) return false;
+    try {
+      storage.setItem(getKey(), JSON.stringify(captureDraft(doc)));
+      dirty = false;
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const schedule = () => {
+    if (shouldSkip()) return;
+    dirty = true;
+    cancelTimer();
+    timer = win.setTimeout(flush, DRAFT_SAVE_DELAY_MS);
+  };
+
+  const cancel = () => {
+    cancelTimer();
+    dirty = false;
+  };
+
+  return { schedule, flush, cancel, get dirty() { return dirty; } };
+}
+
 function applyDraft(win, doc, draft) {
   const fields = draft?.fields && typeof draft.fields === "object" ? draft.fields : {};
   const supplementary = doc.getElementById("supplementaryInfo");
@@ -373,6 +411,9 @@ function initTopLevelManager() {
   let dragDropTarget = null;
   let lastGeneralTerms = String(document.getElementById("redactorGeneralTerms")?.value || "");
   let configTimer = 0;
+  let nativeDraftSaver = null;
+  let hubPublishSnapshot = null;
+  let lastHubStateSignature = "";
   let workspaceMutationPending = false;
   let managerDisposed = false;
   let modalState = { mode: "", provider: "", bundle: null, legacyPasswordMode: false };
@@ -402,17 +443,19 @@ function initTopLevelManager() {
   }
 
   const poll = window.setInterval(() => {
-    render();
-    notifyHub();
+    const snapshot = render();
+    notifyHub(snapshot);
   }, 500);
   window.addEventListener("mini-hub:prompt-ui-refresh", () => {
-    render();
-    notifyHub();
+    const snapshot = render();
+    notifyHub(snapshot);
   });
   registerWorkspaceDisposer(async () => {
     managerDisposed = true;
     window.clearInterval(poll);
     window.clearTimeout(configTimer);
+    nativeDraftSaver?.flush();
+    runtimes.forEach((runtime) => runtime.draftSaver?.flush());
     window.removeEventListener("note-history-updated", handleNativeHistoryUpdate);
     await Promise.allSettled(
       [...runtimes.values()]
@@ -454,7 +497,7 @@ function initTopLevelManager() {
       return String(document.getElementById(fieldId)?.value || "");
     },
     decorateHubSnapshot(snapshot) {
-      const workspacePresets = buildWorkspaceSnapshot();
+      const workspacePresets = hubPublishSnapshot || buildWorkspaceSnapshot();
       const activeItem = workspacePresets.items.find((item) => item.id === activeId);
       const activeRuntime = runtimes.get(activeId);
       const promptOptions = runtimeAction(activeRuntime, "getMiniPanelPromptOptions");
@@ -546,6 +589,13 @@ function initTopLevelManager() {
     view.element.title = definition.name;
     view.element.hidden = definition.id !== activeId;
     const { win, doc } = view;
+    runtime.draftSaver = createDraftSaver({
+      win,
+      doc,
+      storage: view.context.sessionStorage,
+      getKey: () => DRAFT_KEY,
+      shouldSkip: () => managerDisposed || runtime.disposing || runtime.disposed,
+    });
 
     win.__workspacePresetBridge = Object.freeze({
       captureConfig: () => captureConfig(doc),
@@ -553,9 +603,11 @@ function initTopLevelManager() {
       captureDraft: () => captureDraft(doc),
       applyDraft: (draft) => applyDraft(win, doc, draft),
       clearDraft() {
+        runtime.draftSaver.cancel();
         applyDraft(win, doc, {
           fields: Object.fromEntries(DRAFT_FIELD_IDS.map((key) => [key, ""])),
         });
+        runtime.draftSaver.cancel();
         view.context.sessionStorage.removeItem(DRAFT_KEY);
       },
       getSnapshot: () => getRuntimeSnapshot(win, doc),
@@ -580,18 +632,16 @@ function initTopLevelManager() {
 
     bindHistoryRuntime(runtime.id, win.__noteHistory);
     bindRuntimeDocument(runtime);
-    const saveDraft = () => {
-      if (runtime.disposing || runtime.disposed) return;
-      try {
-        view.context.sessionStorage.setItem(DRAFT_KEY, JSON.stringify(captureDraft(doc)));
-      } catch {}
-    };
-    DRAFT_FIELD_IDS.forEach((id) => doc.getElementById(id)?.addEventListener("input", saveDraft));
+    DRAFT_FIELD_IDS.forEach((id) => {
+      const field = doc.getElementById(id);
+      field?.addEventListener("input", runtime.draftSaver.schedule);
+      field?.addEventListener("change", runtime.draftSaver.flush);
+    });
     const changed = () => {
       if (managerDisposed || runtime.disposing || runtime.disposed || !runtime.ready) return;
-      saveDraft();
-      render();
-      notifyHub();
+      runtime.draftSaver.schedule();
+      const snapshot = render();
+      notifyHub(snapshot);
     };
     win.addEventListener("app:state-changed", changed);
     win.addEventListener("mini-hub:prompt-ui-refresh", changed);
@@ -626,6 +676,7 @@ function initTopLevelManager() {
 
   async function disposeRuntime(runtime, reason, { final = true } = {}) {
     if (!runtime || runtime.disposed) return;
+    runtime.draftSaver?.flush();
     runtime.disposing = true;
     try {
       let disposal;
@@ -669,11 +720,21 @@ function initTopLevelManager() {
       runtime.doc.getElementById(id)?.addEventListener("click", () => setTimeout(handler, 0));
     });
     if (runtime.kind === "native") {
-      const saveDraft = () => {
-        const currentPrimary = primaryPresetId;
-        try { sessionStorage.setItem(`${DRAFT_KEY}::${currentPrimary}`, JSON.stringify(captureDraft(document))); } catch {}
-      };
-      DRAFT_FIELD_IDS.forEach((id) => runtime.doc.getElementById(id)?.addEventListener("input", saveDraft));
+      if (!nativeDraftSaver) {
+        nativeDraftSaver = createDraftSaver({
+          win: window,
+          doc: document,
+          storage: sessionStorage,
+          getKey: () => `${DRAFT_KEY}::${primaryPresetId}`,
+          shouldSkip: () => managerDisposed,
+        });
+      }
+      runtime.draftSaver = nativeDraftSaver;
+      DRAFT_FIELD_IDS.forEach((id) => {
+        const field = runtime.doc.getElementById(id);
+        field?.addEventListener("input", nativeDraftSaver.schedule);
+        field?.addEventListener("change", nativeDraftSaver.flush);
+      });
       try {
         const raw = sessionStorage.getItem(`${DRAFT_KEY}::${runtime.id}`);
         if (raw) applyDraft(window, document, JSON.parse(raw));
@@ -855,15 +916,16 @@ function initTopLevelManager() {
     if (!findDefinition(next) || next === activeId) return false;
     const current = runtimes.get(activeId);
     if (current?.ready) {
+      (current.draftSaver || (current.kind === "native" ? nativeDraftSaver : null))?.flush();
       syncGeneralTermsFrom(current);
       const definition = findDefinition(activeId);
       if (definition) definition.config = captureRuntimeConfig(current);
     }
     activeId = next;
     writeSessionRaw(ACTIVE_KEY, activeId);
-    applyActiveWorkspace();
+    const snapshot = applyActiveWorkspace();
     persistDefinitions();
-    notifyHub();
+    notifyHub(snapshot);
     return true;
   }
 
@@ -880,8 +942,9 @@ function initTopLevelManager() {
       syncGeneralTermsTo(activeRuntime);
       if (applySavedConfig) applyConfig(activeRuntime.win, activeRuntime.doc, findDefinition(activeId)?.config || {});
     }
-    render();
+    const snapshot = render();
     notifyHistoryViewChanged("workspace-switched");
+    return snapshot;
   }
 
   function buildToolbar() {
@@ -989,17 +1052,42 @@ function initTopLevelManager() {
 
     definitions.splice(targetIndex + (placement === "after" ? 1 : 0), 0, moved);
     persistDefinitions();
-    render();
-    notifyHub();
+    const snapshot = render();
+    notifyHub(snapshot);
     return true;
+  }
+
+  function setTextIfChanged(element, value) {
+    const next = String(value ?? "");
+    if (element && element.textContent !== next) element.textContent = next;
+  }
+
+  function setHtmlIfChanged(element, value) {
+    const next = String(value ?? "");
+    if (element && element.innerHTML !== next) element.innerHTML = next;
+  }
+
+  function setAttributeIfChanged(element, name, value) {
+    const next = String(value ?? "");
+    if (element && element.getAttribute(name) !== next) element.setAttribute(name, next);
+  }
+
+  function setPropertyIfChanged(element, name, value) {
+    if (element && element[name] !== value) element[name] = value;
   }
 
   function render() {
     syncDefinitionNames();
+    const workspaceSnapshot = buildWorkspaceSnapshot();
+    const snapshotById = new Map(workspaceSnapshot.items.map((item) => [item.id, item]));
     const copy = t();
-    toolbar.help.setAttribute("aria-label", copy.help); toolbar.helpContent.innerHTML = copy.helpHtml;
-    toolbar.importButton.textContent = copy.import; toolbar.exportButton.textContent = copy.export;
-    toolbar.label.textContent = copy.presets; toolbar.add.setAttribute("aria-label", copy.add); toolbar.add.title = copy.add;
+    setAttributeIfChanged(toolbar.help, "aria-label", copy.help);
+    setHtmlIfChanged(toolbar.helpContent, copy.helpHtml);
+    setTextIfChanged(toolbar.importButton, copy.import);
+    setTextIfChanged(toolbar.exportButton, copy.export);
+    setTextIfChanged(toolbar.label, copy.presets);
+    setAttributeIfChanged(toolbar.add, "aria-label", copy.add);
+    setPropertyIfChanged(toolbar.add, "title", copy.add);
 
     const liveIds = new Set(definitions.map((definition) => definition.id));
     workspaceUi.forEach((ui, id) => {
@@ -1009,8 +1097,7 @@ function initTopLevelManager() {
     });
 
     definitions.forEach((definition, index) => {
-      const runtime = runtimes.get(definition.id);
-      const snapshot = runtimeSnapshot(runtime);
+      const snapshot = snapshotById.get(definition.id) || { state: {}, busy: false };
       let ui = workspaceUi.get(definition.id);
       if (!ui) {
         ui = createWorkspaceUi(definition.id);
@@ -1022,17 +1109,18 @@ function initTopLevelManager() {
 
       const active = definition.id === activeId;
       ui.chip.classList.toggle("is-active", active);
-      ui.select.setAttribute("aria-pressed", active ? "true" : "false");
-      ui.select.title = statusTitle(snapshot, copy);
-      ui.dot.className = `workspace-preset-dot ${statusClass(snapshot)}`;
-      ui.name.textContent = definition.name;
-      ui.dragHandle.setAttribute("aria-label", copy.move);
-      ui.dragHandle.title = copy.move;
-      ui.clone.setAttribute("aria-label", copy.clone);
-      ui.clone.title = copy.clone;
-      ui.close.setAttribute("aria-label", copy.close);
-      ui.close.title = copy.close;
+      setAttributeIfChanged(ui.select, "aria-pressed", active ? "true" : "false");
+      setPropertyIfChanged(ui.select, "title", statusTitle(snapshot, copy));
+      setPropertyIfChanged(ui.dot, "className", `workspace-preset-dot ${statusClass(snapshot)}`);
+      setTextIfChanged(ui.name, definition.name);
+      setAttributeIfChanged(ui.dragHandle, "aria-label", copy.move);
+      setPropertyIfChanged(ui.dragHandle, "title", copy.move);
+      setAttributeIfChanged(ui.clone, "aria-label", copy.clone);
+      setPropertyIfChanged(ui.clone, "title", copy.clone);
+      setAttributeIfChanged(ui.close, "aria-label", copy.close);
+      setPropertyIfChanged(ui.close, "title", copy.close);
     });
+    return workspaceSnapshot;
   }
 
   function createWorkspaceUi(id) {
@@ -1197,7 +1285,7 @@ function initTopLevelManager() {
       runtimes.delete(replacement.id);
       clearRuntimeDraft(runtime);
       runtimes.delete(id);
-      runtimes.set(replacement.id, { id: replacement.id, kind: "native", win: window, doc: document, ready: true, bound: true });
+      runtimes.set(replacement.id, { id: replacement.id, kind: "native", win: window, doc: document, ready: true, bound: true, draftSaver: nativeDraftSaver });
       primaryPresetId = replacement.id;
       definitions = definitions.filter((item) => item.id !== id);
       activeId = replacement.id;
@@ -1213,7 +1301,9 @@ function initTopLevelManager() {
     }
     writeSessionRaw(ACTIVE_KEY, activeId);
     historyStore.retain(definitions.map((item) => historyGroupIdFor(item.id)));
-    persistDefinitions(); applyActiveWorkspace(); notifyHub();
+    persistDefinitions();
+    const nextSnapshot = applyActiveWorkspace();
+    notifyHub(nextSnapshot);
     } finally {
       workspaceMutationPending = false;
     }
@@ -1224,6 +1314,7 @@ function initTopLevelManager() {
     if (runtime.kind === "view") runtime.win?.__workspacePresetBridge?.clearDraft();
     else {
       applyDraft(window, document, empty);
+      nativeDraftSaver?.cancel();
       try { sessionStorage.removeItem(`${DRAFT_KEY}::${runtime.id}`); } catch {}
     }
   }
@@ -1263,9 +1354,21 @@ function initTopLevelManager() {
     };
   }
 
-  function notifyHub() {
+  function notifyHub(workspaceSnapshot = null, { force = false } = {}) {
     if (managerDisposed) return;
-    try { window.__app?.emitAppStateChanged?.("workspace-presets-updated", { activePresetId: activeId }); } catch {}
+    const snapshot = workspaceSnapshot || buildWorkspaceSnapshot();
+    const signature = JSON.stringify(snapshot);
+    if (!force && signature === lastHubStateSignature) return false;
+    lastHubStateSignature = signature;
+    hubPublishSnapshot = snapshot;
+    try {
+      window.__app?.emitAppStateChanged?.("workspace-presets-updated", { activePresetId: activeId });
+      return true;
+    } catch {
+      return false;
+    } finally {
+      hubPublishSnapshot = null;
+    }
   }
 
   function buildExportBundle() {
@@ -1380,7 +1483,7 @@ function initTopLevelManager() {
       definitions = validated.presets;
       primaryPresetId = definitions[0].id; activeId = primaryPresetId;
       writeSessionRaw(PRIMARY_RUNTIME_KEY, primaryPresetId);
-      runtimes.set(primaryPresetId, { id: primaryPresetId, kind: "native", win: window, doc: document, ready: true, bound: true });
+      runtimes.set(primaryPresetId, { id: primaryPresetId, kind: "native", win: window, doc: document, ready: true, bound: true, draftSaver: nativeDraftSaver });
       bindHistoryRuntime(primaryPresetId, window.__noteHistory);
       await applyConfig(window, document, definitions[0].config);
       definitions.filter((item) => item.id !== primaryPresetId).forEach((definition) => {
@@ -1403,7 +1506,10 @@ function initTopLevelManager() {
           .map((runtime) => runtime.readyPromise)
       );
     }
-    writeSessionRaw(ACTIVE_KEY, activeId); persistDefinitions(); applyActiveWorkspace(); render(); notifyHub();
+    writeSessionRaw(ACTIVE_KEY, activeId);
+    persistDefinitions();
+    const snapshot = applyActiveWorkspace();
+    notifyHub(snapshot);
     return true;
     } finally {
       workspaceMutationPending = false;
@@ -1445,8 +1551,8 @@ function initTopLevelManager() {
       window.dispatchEvent(new CustomEvent("prompt-slots-imported", {
         detail: { source: "cloud-entry-restore" },
       }));
-      render();
-      notifyHub();
+      const snapshot = render();
+      notifyHub(snapshot);
       toast(t().cloudRestored);
     } catch (error) {
       toast(fmt(t().failed, { error: error?.message || "Unknown error" }), true);

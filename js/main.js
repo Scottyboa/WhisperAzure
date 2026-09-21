@@ -1,4 +1,5 @@
 import { getRecordingLifecycle, requestRecordingAction, resetRecordingLifecycle } from './core/recording-lifecycle.js';
+import { hasNonEmptyText } from './core/text-performance.js';
 import {
   disposeWorkspaceResources as disposeRegisteredWorkspaceResources,
   installWorkspaceDisposalLifecycle,
@@ -2331,8 +2332,8 @@ document.addEventListener('DOMContentLoaded', () => {
       canStop,
       canPauseResume,
       canAbort,
-      hasTranscript: !!String(transcriptEl?.value || '').trim(),
-      hasNote: !!String(noteEl?.value || '').trim(),
+      hasTranscript: hasNonEmptyText(transcriptEl?.value),
+      hasNote: hasNonEmptyText(noteEl?.value),
       statusText,
       pauseResumeLabel,
       autoGenerateEnabled: !!getAutoGenerateEnabled(),
