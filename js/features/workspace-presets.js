@@ -3,7 +3,6 @@ import { PromptCloudBackup } from "./prompt-cloud-backup.js";
 import { CloudBackupSession } from "./cloud-backup-session.js";
 import { registerWorkspaceDisposer } from "../core/workspace-disposal.js";
 import { createWorkspaceHistoryStore } from "../core/workspace-history-store.js";
-import { createWorkspaceView } from "../workspace-app.js";
 
 const PRESET_SCHEMA = "whisper.workspace-presets";
 const PRESET_VERSION = 1;
@@ -327,6 +326,147 @@ function getRuntimeSnapshot(win, doc, getStateOverride = null) {
   };
 }
 
+function injectFrameStyle() {
+  const style = document.createElement("style");
+  style.textContent = `
+    html.workspace-preset-frame, html.workspace-preset-frame body { background:#f8f8f8; min-height:0; }
+    body.workspace-preset-frame-body { margin:0; padding:0; overflow:hidden; }
+    .workspace-preset-frame-root { width:100%; box-sizing:border-box; }
+    .workspace-preset-frame-root > .recording-area { margin-top:0 !important; }
+    .workspace-preset-frame-root > .bottom-half { margin-bottom:0 !important; }
+  `;
+  document.head.appendChild(style);
+}
+
+function initFrameRuntime() {
+  document.documentElement.classList.add("workspace-preset-frame");
+  injectFrameStyle();
+  const id = window.__workspacePresetRuntimeId;
+  const root = document.createElement("div");
+  root.className = "workspace-preset-frame-root";
+  const recording = document.querySelector(".recording-area");
+  const bottom = document.querySelector(".bottom-half");
+  const noteHistoryModal = document.getElementById("noteHistoryModal");
+  if (!recording || !bottom) return;
+  let disposed = false;
+  let readyTimer = 0;
+
+  root.append(recording, bottom);
+  if (noteHistoryModal) root.appendChild(noteHistoryModal);
+  document.body.appendChild(root);
+  document.body.classList.add("workspace-preset-frame-body");
+  [...document.body.children].forEach((child) => {
+    if (child !== root && !["SCRIPT", "STYLE"].includes(child.tagName)) child.style.display = "none";
+  });
+
+  const saveDraft = () => {
+    try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify(captureDraft(document))); } catch {}
+  };
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    if (raw) applyDraft(window, document, JSON.parse(raw));
+  } catch {}
+  DRAFT_FIELD_IDS.forEach((fieldId) => {
+    document.getElementById(fieldId)?.addEventListener("input", saveDraft);
+  });
+
+  const notifyParent = (reason = "state", detail = {}) => {
+    if (disposed) return;
+    saveDraft();
+    try {
+      window.parent.postMessage(
+        { type: "workspace-preset-frame-update", id, reason, ...detail },
+        window.location.origin
+      );
+    } catch {}
+  };
+  document.addEventListener("change", () => notifyParent("config"), true);
+  document.addEventListener("click", () => window.setTimeout(() => notifyParent("click"), 0), true);
+  window.addEventListener("app:state-changed", () => notifyParent("app-state"));
+  window.addEventListener("note-history-updated", (event) => {
+    notifyParent("history", { historyReason: String(event?.detail?.reason || "updated") });
+  });
+  window.addEventListener("mini-hub:prompt-ui-refresh", () => notifyParent("prompt-title"));
+
+  window.__workspacePresetBridge = Object.freeze({
+    id,
+    captureConfig: () => captureConfig(document),
+    applyConfig: (config) => applyConfig(window, document, config),
+    captureDraft: () => captureDraft(document),
+    applyDraft: (draft) => applyDraft(window, document, draft),
+    clearDraft() {
+      applyDraft(window, document, { fields: Object.fromEntries(DRAFT_FIELD_IDS.map((key) => [key, ""])) });
+      try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
+    },
+    getSnapshot: () => getRuntimeSnapshot(window, document),
+    getHistorySnapshot: () => window.__noteHistory?.getSnapshot?.() || { entries: [], nextSequence: 1 },
+    clearHistory: (options = {}) => window.__noteHistory?.clearLocal?.(options) !== false,
+    replaceHistory(snapshot, options = {}) {
+      const replace = window.__noteHistory?.replaceLocal;
+      return typeof replace === "function" ? replace(snapshot, options) !== false : false;
+    },
+    getGeneralTerms: () => String(document.getElementById("redactorGeneralTerms")?.value || ""),
+    setGeneralTerms(value) {
+      const el = document.getElementById("redactorGeneralTerms");
+      if (!el) return;
+      el.value = String(value || "");
+      dispatchInput(window, el);
+    },
+    runAction(actionName, ...args) {
+      const fn = window.__app?.[String(actionName || "")];
+      return typeof fn === "function" ? fn(...args) : false;
+    },
+    getContent(kind) {
+      const idForKind = String(kind || "").toLowerCase() === "note" ? "generatedNote" : "transcription";
+      return String(document.getElementById(idForKind)?.value || "");
+    },
+    dispose(options = {}) {
+      disposed = true;
+      window.clearTimeout(readyTimer);
+      return window.__app?.disposeWorkspaceResources?.({
+        reason: String(options.reason || "workspace-close"),
+        final: options.final !== false,
+      });
+    },
+  });
+
+  const sendHeight = () => {
+    const height = Math.max(600, Math.ceil(root.getBoundingClientRect().height + 4));
+    try {
+      window.parent.postMessage({ type: "workspace-preset-frame-height", id, height }, window.location.origin);
+    } catch {}
+  };
+  const resizeObserver = new ResizeObserver(sendHeight);
+  resizeObserver.observe(root);
+  registerWorkspaceDisposer(() => {
+    disposed = true;
+    window.clearTimeout(readyTimer);
+    resizeObserver.disconnect();
+  }, { scope: "window" });
+  window.__openMiniPanel = () => window.parent.__openMiniPanel?.();
+  window.addEventListener("mini-panel:open-requested", () => window.parent.__openMiniPanel?.());
+  sendHeight();
+
+  let secondaryReadyAttempts = 0;
+  const notifyWhenRuntimeReady = () => {
+    if (disposed) return;
+    if (ensureSecondaryNoteModuleReady(window, document)) {
+      notifyParent("ready");
+      return;
+    }
+
+    secondaryReadyAttempts += 1;
+    if (secondaryReadyAttempts < 200) {
+      readyTimer = window.setTimeout(notifyWhenRuntimeReady, 25);
+      return;
+    }
+
+    console.warn("[workspace-presets] Secondary Note readiness timed out; continuing with the frame runtime.");
+    notifyParent("ready-secondary-timeout");
+  };
+  notifyWhenRuntimeReady();
+}
+
 function injectManagerStyle() {
   const style = document.createElement("style");
   style.textContent = `
@@ -341,7 +481,7 @@ function injectManagerStyle() {
     .workspace-preset-drag{align-self:stretch;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:25px;padding:0;border:0;border-radius:999px 5px 5px 999px;background:transparent;color:#8a9691;font-size:17px;line-height:1;cursor:grab}.workspace-preset-drag:hover,.workspace-preset-drag:focus-visible{background:rgba(90,169,153,.12);color:#46705f;outline:none}.workspace-preset-drag:active{cursor:grabbing}.workspace-preset-select{display:inline-flex;align-items:center;gap:10px;align-self:stretch;min-width:0;max-width:246px;padding:9px 7px;border:0;border-radius:5px;background:transparent;color:inherit;cursor:pointer}.workspace-preset-select:hover,.workspace-preset-select:focus-visible{background:rgba(90,169,153,.09);outline:none}.workspace-preset-select[aria-pressed="true"]{font-weight:600}.workspace-preset-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .workspace-preset-dot{width:10.5px;height:10.5px;border-radius:50%;background:#b8c0bd;flex:0 0 auto}.workspace-preset-dot.recording{background:#d7263d;box-shadow:0 0 0 0 rgba(215,38,61,.5);animation:workspacePulse 1.3s infinite}.workspace-preset-dot.generating{background:#7b61c9;animation:workspaceSpin 1.2s linear infinite}.workspace-preset-dot.transcribing{background:#2c7bd9}.workspace-preset-dot.complete{background:#2f9d61}
     .workspace-preset-clone,.workspace-preset-close{position:relative;flex:0 0 auto;border:0;background:transparent;color:#87918d;padding:0;cursor:pointer}.workspace-preset-clone{width:25px;height:29px;border-radius:5px}.workspace-preset-clone::before,.workspace-preset-clone::after{content:"";position:absolute;width:9px;height:9px;border:1.5px solid currentColor;border-radius:2px;box-sizing:border-box}.workspace-preset-clone::before{left:7px;top:7px}.workspace-preset-clone::after{left:10px;top:10px}.workspace-preset-clone:hover,.workspace-preset-clone:focus-visible{background:rgba(90,169,153,.12);color:#46705f;outline:none}.workspace-preset-close{width:24px;height:29px;border-radius:5px;line-height:1;font-size:19px}.workspace-preset-close:hover,.workspace-preset-close:focus-visible{background:rgba(164,0,30,.07);color:#a4001e;outline:none}.workspace-preset-add{width:47px;height:47px;padding:0;border:1px dashed #aebbb5;border-radius:50%;background:#fff;color:#426857;font-size:26px;line-height:1;cursor:pointer;flex:0 0 auto}
-    .workspace-preset-frame-host{position:relative;width:100%}.workspace-preset-view{display:block;width:100%;background:#f8f8f8}.workspace-preset-view[hidden]{display:none!important}
+    .workspace-preset-frame-host{position:relative;width:100%}.workspace-preset-frame{border:0;background:#f8f8f8}.workspace-preset-frame.is-active{position:relative;display:block;width:100%;min-height:600px;opacity:1;pointer-events:auto}.workspace-preset-frame.is-parked{position:fixed;left:-10000px;top:0;width:2px!important;height:2px!important;opacity:0;pointer-events:none}
     .workspace-preset-toast{position:fixed;z-index:10020;left:50%;bottom:18px;transform:translateX(-50%);padding:8px 13px;border-radius:8px;background:#24352d;color:white;font-size:13px;box-shadow:0 5px 20px rgba(0,0,0,.2)}
     .workspace-backdrop{position:fixed;z-index:10010;inset:0;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.4)}.workspace-backdrop[hidden]{display:none}.workspace-modal{width:min(480px,94vw);max-height:88vh;overflow:auto;background:#fff;border-radius:12px;padding:16px;box-shadow:0 16px 48px rgba(0,0,0,.3)}.workspace-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.workspace-modal-head h2{font-size:18px;margin:0}.workspace-modal-close{border:0;background:transparent;color:#a4001e;padding:2px 6px;font-size:22px;cursor:pointer}.workspace-modal-notice{padding:9px;border:1px solid #b8d6ca;border-radius:8px;background:#f3faf7;font-size:12px;line-height:1.4}.workspace-modal-option{display:block;width:100%;margin-top:10px!important;padding:9px;border:1px solid #9bc4b2;border-radius:8px;background:#fff;color:#2e5544;text-align:left;cursor:pointer}.workspace-modal-option:hover{background:#f1f8f5;color:#2e5544}.workspace-modal-field{display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:8px;border:1px solid #cbd5d1;border-radius:7px}.workspace-modal-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.workspace-modal-actions button{padding:7px 11px;border-radius:7px;font-size:12px}.workspace-modal-status{min-height:18px;font-size:12px}.workspace-import-preview{margin-top:10px;padding:9px;border:1px solid #d8dfdc;border-radius:8px;background:#fafafa;font-size:12px}
     @keyframes workspacePulse{0%{box-shadow:0 0 0 0 rgba(215,38,61,.48)}70%{box-shadow:0 0 0 5px rgba(215,38,61,0)}100%{box-shadow:0 0 0 0 rgba(215,38,61,0)}}@keyframes workspaceSpin{50%{opacity:.35}}
@@ -389,11 +529,62 @@ function initTopLevelManager() {
   runtimes.set(primaryPresetId, { id: primaryPresetId, kind: "native", win: window, doc: document, ready: true });
   definitions.forEach((definition) => getHistoryRecord(definition.id));
   bindHistoryRuntime(primaryPresetId, window.__noteHistory);
+  window.addEventListener("message", handleFrameMessage);
   window.addEventListener("note-history-updated", handleNativeHistoryUpdate);
-  definitions.filter((item) => item.id !== primaryPresetId).forEach(createViewRuntime);
+  definitions.filter((item) => item.id !== primaryPresetId).forEach(createFrameRuntime);
   bindRuntimeDocument(runtimes.get(primaryPresetId));
   installAppDelegation();
   applyActiveWorkspace({ applySavedConfig: true });
+
+  function handleFrameMessage(event) {
+    if (managerDisposed) return;
+    if (event.origin !== window.location.origin) return;
+    const data = event.data || {};
+    const runtime = runtimes.get(String(data.id || ""));
+    if (!runtime || runtime.kind !== "frame" || runtime.disposing || runtime.disposed) return;
+    if (event.source !== runtime.frame.contentWindow) return;
+    if (data.type === "workspace-preset-frame-height") {
+      runtime.height = Math.max(600, Math.min(6000, Number(data.height) || 600));
+      if (runtime.id === activeId) runtime.frame.style.height = `${runtime.height}px`;
+      return;
+    }
+    if (data.type === "workspace-preset-frame-update") {
+      let becameReady = false;
+      if (!runtime.ready && runtime.frame.contentWindow?.__workspacePresetBridge) {
+        const secondaryReady = ensureSecondaryNoteModuleReady(
+          runtime.frame.contentWindow,
+          runtime.frame.contentDocument
+        );
+        const secondaryTimedOut = data.reason === "ready-secondary-timeout";
+        if (!secondaryReady && !secondaryTimedOut) return;
+        if (!secondaryReady) {
+          console.warn("[workspace-presets] Frame became ready without a confirmed Secondary Note module.");
+        }
+
+        runtime.ready = true;
+        becameReady = true;
+        runtime.win = runtime.frame.contentWindow;
+        runtime.doc = runtime.frame.contentDocument;
+        bindHistoryRuntime(runtime.id, runtime.win.__noteHistory);
+        bindRuntimeDocument(runtime);
+        const definition = findDefinition(runtime.id);
+        if (definition?.config) runtime.win.__workspacePresetBridge.applyConfig(definition.config);
+        runtime.win.__workspacePresetBridge.setGeneralTerms(lastGeneralTerms);
+        if (runtime.pendingDraft) {
+          runtime.win.__workspacePresetBridge.applyDraft(runtime.pendingDraft);
+          runtime.pendingDraft = null;
+        }
+      }
+      scheduleConfigSave(runtime.id);
+      render();
+      notifyHub();
+      if (data.reason === "history") {
+        synchronizeHistoryGroup(runtime.id, String(data.historyReason || "updated"));
+      } else if (becameReady) {
+        synchronizeHistoryGroup(runtime.id, "runtime-ready");
+      }
+    }
+  }
 
   function handleNativeHistoryUpdate(event) {
     const runtime = runtimes.get(primaryPresetId);
@@ -413,10 +604,11 @@ function initTopLevelManager() {
     managerDisposed = true;
     window.clearInterval(poll);
     window.clearTimeout(configTimer);
+    window.removeEventListener("message", handleFrameMessage);
     window.removeEventListener("note-history-updated", handleNativeHistoryUpdate);
     await Promise.allSettled(
       [...runtimes.values()]
-        .filter((runtime) => runtime.kind === "view")
+        .filter((runtime) => runtime.kind === "frame")
         .map((runtime) => disposeRuntime(runtime, "parent-tab-close", { final: true }))
     );
     runtimes.clear();
@@ -449,7 +641,7 @@ function initTopLevelManager() {
     getContent(kind, presetId = activeId) {
       const requestedId = String(presetId || activeId);
       const runtime = runtimes.get(requestedId) || runtimes.get(activeId);
-      if (runtime?.kind === "view") return runtime.win?.__workspacePresetBridge?.getContent(kind) || "";
+      if (runtime?.kind === "frame") return runtime.win?.__workspacePresetBridge?.getContent(kind) || "";
       const fieldId = String(kind || "").toLowerCase() === "note" ? "generatedNote" : "transcription";
       return String(document.getElementById(fieldId)?.value || "");
     },
@@ -508,7 +700,7 @@ function initTopLevelManager() {
   function writeSessionRaw(key, value) {
     try { sessionStorage.setItem(key, String(value || "")); } catch {}
   }
-  function clearViewRuntimeStorage(id) {
+  function clearFrameRuntimeStorage(id) {
     const prefix = `whisper_workspace_runtime::${String(id || "")}::`;
     if (!id) return;
     for (const storageName of ["sessionStorage", "localStorage"]) {
@@ -533,95 +725,18 @@ function initTopLevelManager() {
     return definitions.filter((definition) => historyGroupIdFor(definition.id) === groupId);
   }
 
-  function createViewRuntime(definition, pendingDraft = null) {
-    const view = createWorkspaceView(definition.id, frameHost);
-    const runtime = {
-      ...view,
-      id: definition.id,
-      kind: "view",
-      ready: false,
-      pendingDraft,
-    };
+  function createFrameRuntime(definition) {
+    const frame = document.createElement("iframe");
+    frame.className = "workspace-preset-frame is-parked";
+    frame.title = definition.name;
+    frame.allow = "microphone; clipboard-read; clipboard-write";
+    const url = new URL(window.location.href);
+    url.searchParams.set("workspacePresetFrame", definition.id);
+    url.hash = "";
+    frame.src = url.toString();
+    frameHost.appendChild(frame);
+    const runtime = { id: definition.id, kind: "frame", frame, win: null, doc: null, ready: false, height: 900 };
     runtimes.set(definition.id, runtime);
-    view.element.title = definition.name;
-    view.element.hidden = definition.id !== activeId;
-    const { win, doc } = view;
-
-    win.__workspacePresetBridge = Object.freeze({
-      captureConfig: () => captureConfig(doc),
-      applyConfig: (config) => applyConfig(win, doc, config),
-      captureDraft: () => captureDraft(doc),
-      applyDraft: (draft) => applyDraft(win, doc, draft),
-      clearDraft() {
-        applyDraft(win, doc, {
-          fields: Object.fromEntries(DRAFT_FIELD_IDS.map((key) => [key, ""])),
-        });
-        view.context.sessionStorage.removeItem(DRAFT_KEY);
-      },
-      getSnapshot: () => getRuntimeSnapshot(win, doc),
-      getGeneralTerms: () => String(doc.getElementById("redactorGeneralTerms")?.value || ""),
-      setGeneralTerms(value) {
-        const el = doc.getElementById("redactorGeneralTerms");
-        if (!el) return;
-        el.value = String(value || "");
-        dispatchInput(win, el);
-      },
-      runAction(actionName, ...args) {
-        const fn = win.__app?.[String(actionName || "")];
-        return typeof fn === "function" ? fn(...args) : false;
-      },
-      getContent(kind) {
-        const fieldId = String(kind || "").toLowerCase() === "note"
-          ? "generatedNote"
-          : "transcription";
-        return String(doc.getElementById(fieldId)?.value || "");
-      },
-    });
-
-    bindHistoryRuntime(runtime.id, win.__noteHistory);
-    bindRuntimeDocument(runtime);
-    const saveDraft = () => {
-      if (runtime.disposing || runtime.disposed) return;
-      try {
-        view.context.sessionStorage.setItem(DRAFT_KEY, JSON.stringify(captureDraft(doc)));
-      } catch {}
-    };
-    DRAFT_FIELD_IDS.forEach((id) => doc.getElementById(id)?.addEventListener("input", saveDraft));
-    const changed = () => {
-      if (managerDisposed || runtime.disposing || runtime.disposed || !runtime.ready) return;
-      saveDraft();
-      render();
-      notifyHub();
-    };
-    win.addEventListener("app:state-changed", changed);
-    win.addEventListener("mini-hub:prompt-ui-refresh", changed);
-    win.addEventListener("note-history-updated", (event) => {
-      if (!runtime.disposed) {
-        synchronizeHistoryGroup(runtime.id, String(event?.detail?.reason || "updated"));
-      }
-    });
-    win.addEventListener("mini-panel:open-requested", () => window.__openMiniPanel?.());
-
-    runtime.readyPromise = (async () => {
-      await applyConfig(win, doc, definition.config || {});
-      if (runtime.disposing || runtime.disposed) return;
-      win.__workspacePresetBridge.setGeneralTerms(lastGeneralTerms);
-      let draft = runtime.pendingDraft;
-      if (!draft) {
-        try {
-          draft = JSON.parse(view.context.sessionStorage.getItem(DRAFT_KEY) || "null");
-        } catch {}
-      }
-      if (draft) applyDraft(win, doc, draft);
-      runtime.pendingDraft = null;
-      runtime.ready = true;
-      changed();
-    })().catch((error) => {
-      console.error("[workspaces] Could not initialize Workspace", error);
-      void disposeRuntime(runtime, "initialization-failed", { final: true });
-      toast(String(error?.message || error), true);
-    });
-    return runtime;
   }
 
   async function disposeRuntime(runtime, reason, { final = true } = {}) {
@@ -629,8 +744,10 @@ function initTopLevelManager() {
     runtime.disposing = true;
     try {
       let disposal;
-      if (runtime.kind === "view") {
-        disposal = runtime.win?.__app?.disposeWorkspaceResources?.({ reason, final });
+      if (runtime.kind === "frame") {
+        const frameWindow = runtime.win || runtime.frame?.contentWindow;
+        disposal = frameWindow?.__workspacePresetBridge?.dispose?.({ reason, final })
+          || frameWindow?.__app?.disposeWorkspaceResources?.({ reason, final });
       } else {
         disposal = runtime.win?.__app?.disposeWorkspaceResources?.({ reason, final });
       }
@@ -652,11 +769,7 @@ function initTopLevelManager() {
       console.warn(`[workspace-presets] Resource disposal failed for ${runtime.id}.`, error);
     } finally {
       runtime.disposing = false;
-      if (final) {
-        runtime.disposed = true;
-        runtime.context?.close();
-        runtime.modules?.close();
-      }
+      if (final) runtime.disposed = true;
     }
   }
 
@@ -695,16 +808,16 @@ function initTopLevelManager() {
   }
 
   function captureRuntimeConfig(runtime) {
-    if (runtime.kind === "view") return runtime.win?.__workspacePresetBridge?.captureConfig() || {};
+    if (runtime.kind === "frame") return runtime.win?.__workspacePresetBridge?.captureConfig() || {};
     return captureConfig(document);
   }
   function captureRuntimeDraft(runtime) {
-    if (runtime.kind === "view") return runtime.win?.__workspacePresetBridge?.captureDraft() || { fields: {} };
+    if (runtime.kind === "frame") return runtime.win?.__workspacePresetBridge?.captureDraft() || { fields: {} };
     return captureDraft(document);
   }
   function runtimeSnapshot(runtime) {
     if (!runtime?.ready) return { state: {}, secondaryBusy: false, busy: false };
-    if (runtime.kind === "view") return runtime.win?.__workspacePresetBridge?.getSnapshot() || { state: {}, busy: false };
+    if (runtime.kind === "frame") return runtime.win?.__workspacePresetBridge?.getSnapshot() || { state: {}, busy: false };
     // The top-level __app.getMiniPanelState function is delegated to whichever
     // preset is currently selected. Using it here would make inactive Preset 1
     // inherit the selected preset's idle/recording state. Call the captured
@@ -714,7 +827,7 @@ function initTopLevelManager() {
   function runtimeAction(runtime, actionName, ...args) {
     if (!runtime?.ready || runtime.disposing || runtime.disposed) return false;
     if (workspaceMutationPending && !String(actionName).startsWith("get")) return false;
-    if (runtime.kind === "view") return runtime.win?.__workspacePresetBridge?.runAction(actionName, ...args);
+    if (runtime.kind === "frame") return runtime.win?.__workspacePresetBridge?.runAction(actionName, ...args);
     const original = originalActions[String(actionName || "")];
     return typeof original === "function" ? original(...args) : false;
   }
@@ -734,7 +847,7 @@ function initTopLevelManager() {
 
   function applyHistoryDraft(runtime, draft) {
     if (!runtime?.ready) return false;
-    if (runtime.kind === "view") {
+    if (runtime.kind === "frame") {
       runtime.win?.__workspacePresetBridge?.applyDraft(draft);
     } else {
       applyDraft(window, document, draft);
@@ -755,7 +868,11 @@ function initTopLevelManager() {
         config: {},
       };
       definitions.push(definition);
-      createViewRuntime(definition, draft);
+      createFrameRuntime(definition);
+      const runtime = runtimes.get(definition.id);
+      if (runtime) {
+        runtime.pendingDraft = draft;
+      }
       persistDefinitions();
       switchPreset(definition.id);
       return { ok: true, workspaceId: definition.id };
@@ -792,7 +909,7 @@ function initTopLevelManager() {
   function notifyHistoryGroup(workspaceId, reason) {
     for (const definition of historyGroupDefinitions(workspaceId)) {
       const runtime = runtimes.get(definition.id);
-      if (runtime?.kind !== "view" || !runtime.ready) continue;
+      if (runtime?.kind !== "frame" || !runtime.ready) continue;
       const target = runtime.win;
       target.dispatchEvent(new target.CustomEvent("workspace-history-updated", {
         detail: { reason, workspaceId },
@@ -836,13 +953,13 @@ function initTopLevelManager() {
 
   function syncGeneralTermsFrom(runtime) {
     if (!runtime?.ready) return;
-    lastGeneralTerms = runtime.kind === "view"
+    lastGeneralTerms = runtime.kind === "frame"
       ? String(runtime.win?.__workspacePresetBridge?.getGeneralTerms() || "")
       : String(document.getElementById("redactorGeneralTerms")?.value || "");
   }
   function syncGeneralTermsTo(runtime) {
     if (!runtime?.ready) return;
-    if (runtime.kind === "view") runtime.win?.__workspacePresetBridge?.setGeneralTerms(lastGeneralTerms);
+    if (runtime.kind === "frame") runtime.win?.__workspacePresetBridge?.setGeneralTerms(lastGeneralTerms);
     else {
       const el = document.getElementById("redactorGeneralTerms");
       if (el) { el.value = lastGeneralTerms; dispatchInput(window, el); }
@@ -872,9 +989,11 @@ function initTopLevelManager() {
     nativeRecording.style.display = activeRuntime?.kind === "native" ? "" : "none";
     nativeBottom.style.display = activeRuntime?.kind === "native" ? "" : "none";
     runtimes.forEach((runtime) => {
-      if (runtime.kind !== "view") return;
+      if (runtime.kind !== "frame") return;
       const active = runtime.id === activeId;
-      runtime.element.hidden = !active;
+      runtime.frame.classList.toggle("is-active", active);
+      runtime.frame.classList.toggle("is-parked", !active);
+      runtime.frame.style.height = active ? `${runtime.height || 900}px` : "2px";
     });
     if (activeRuntime?.ready) {
       syncGeneralTermsTo(activeRuntime);
@@ -1105,7 +1224,7 @@ function initTopLevelManager() {
       const nextName = safeName(title, fmt(t().defaultName, { n: index + 1 }));
       if (definition.name === nextName) return;
       definition.name = nextName;
-      if (runtime.element) runtime.element.title = nextName;
+      if (runtime.frame) runtime.frame.title = nextName;
       changed = true;
     });
     if (changed) {
@@ -1139,7 +1258,7 @@ function initTopLevelManager() {
     const id = uid();
     const definition = { id, historyGroupId: id, name: suggested, config: {} };
     definitions.push(definition);
-    createViewRuntime(definition);
+    createFrameRuntime(definition);
     const runtime = runtimes.get(definition.id);
     persistDefinitions();
     switchPreset(definition.id);
@@ -1165,7 +1284,11 @@ function initTopLevelManager() {
       config: sanitizeConfig(source.config),
     };
     definitions.push(definition);
-    createViewRuntime(definition, draft);
+    createFrameRuntime(definition);
+    const runtime = runtimes.get(definition.id);
+    if (runtime) {
+      runtime.pendingDraft = draft;
+    }
     persistDefinitions();
     switchPreset(definition.id);
   }
@@ -1192,8 +1315,8 @@ function initTopLevelManager() {
       replacement.config = captureRuntimeConfig(replacementRuntime);
       await disposeRuntime(replacementRuntime, "workspace-promoted", { final: true });
       await disposeRuntime(runtime, "workspace-closed", { final: false });
-      replacementRuntime.element?.remove();
-      clearViewRuntimeStorage(replacement.id);
+      replacementRuntime.frame?.remove();
+      clearFrameRuntimeStorage(replacement.id);
       runtimes.delete(replacement.id);
       clearRuntimeDraft(runtime);
       runtimes.delete(id);
@@ -1206,8 +1329,8 @@ function initTopLevelManager() {
       await applyConfig(window, document, replacement.config);
     } else {
       await disposeRuntime(runtime, "workspace-closed", { final: true });
-      runtime.element.remove(); runtimes.delete(id);
-      clearViewRuntimeStorage(id);
+      runtime.frame.remove(); runtimes.delete(id);
+      clearFrameRuntimeStorage(id);
       definitions = definitions.filter((item) => item.id !== id);
       if (activeId === id) activeId = primaryPresetId;
     }
@@ -1221,7 +1344,7 @@ function initTopLevelManager() {
 
   function clearRuntimeDraft(runtime) {
     const empty = { fields: Object.fromEntries(DRAFT_FIELD_IDS.map((key) => [key, ""])) };
-    if (runtime.kind === "view") runtime.win?.__workspacePresetBridge?.clearDraft();
+    if (runtime.kind === "frame") runtime.win?.__workspacePresetBridge?.clearDraft();
     else {
       applyDraft(window, document, empty);
       try { sessionStorage.removeItem(`${DRAFT_KEY}::${runtime.id}`); } catch {}
@@ -1366,14 +1489,14 @@ function initTopLevelManager() {
     try {
     if (importPrompts) importPromptDependencies(validated.prompts);
     if (mode === "replace") {
-      const viewRuntimes = [...runtimes.values()].filter((runtime) => runtime.kind === "view");
+      const frameRuntimes = [...runtimes.values()].filter((runtime) => runtime.kind === "frame");
       await Promise.allSettled(
-        viewRuntimes.map((runtime) => disposeRuntime(runtime, "workspace-set-replaced", { final: true }))
+        frameRuntimes.map((runtime) => disposeRuntime(runtime, "workspace-set-replaced", { final: true }))
       );
       await disposeRuntime(runtimes.get(primaryPresetId), "workspace-set-replaced", { final: false });
-      viewRuntimes.forEach((runtime) => {
-        runtime.element.remove();
-        clearViewRuntimeStorage(runtime.id);
+      frameRuntimes.forEach((runtime) => {
+        runtime.frame.remove();
+        clearFrameRuntimeStorage(runtime.id);
       });
       historyStore.retain([]);
       runtimes.clear(); clearRuntimeDraft({ id: primaryPresetId, kind: "native", win: window, doc: document });
@@ -1384,24 +1507,16 @@ function initTopLevelManager() {
       bindHistoryRuntime(primaryPresetId, window.__noteHistory);
       await applyConfig(window, document, definitions[0].config);
       definitions.filter((item) => item.id !== primaryPresetId).forEach((definition) => {
-        createViewRuntime(definition);
+        createFrameRuntime(definition);
+        const runtime = runtimes.get(definition.id);
       });
-      await Promise.all(
-        [...runtimes.values()]
-          .filter((runtime) => runtime.kind === "view" && runtime.readyPromise)
-          .map((runtime) => runtime.readyPromise)
-      );
     } else {
       const available = Math.max(0, MAX_PRESETS - definitions.length);
       validated.presets.slice(0, available).forEach((definition) => {
         definitions.push(definition);
-        createViewRuntime(definition);
+        createFrameRuntime(definition);
+        const runtime = runtimes.get(definition.id);
       });
-      await Promise.all(
-        [...runtimes.values()]
-          .filter((runtime) => runtime.kind === "view" && runtime.readyPromise)
-          .map((runtime) => runtime.readyPromise)
-      );
     }
     writeSessionRaw(ACTIVE_KEY, activeId); persistDefinitions(); applyActiveWorkspace(); render(); notifyHub();
     return true;
@@ -1633,6 +1748,11 @@ function sanitizeConfig(config) {
 }
 
 function bootWorkspacePresets() {
+  if (window.__workspacePresetFrame) {
+    initFrameRuntime();
+    return;
+  }
+
   // ES modules with dependency graphs do not guarantee that this module's
   // DOMContentLoaded listener runs after main.js has finished registering its
   // window.__app actions. Preset 1 uses the native page runtime and captures

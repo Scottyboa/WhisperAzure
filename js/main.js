@@ -1094,7 +1094,7 @@ document.addEventListener('DOMContentLoaded', () => {
     app.__autoCopyExtensionCopyBridgeBound = true;
     let useFirefoxEventBridge = false;
     const forward = (event, copyKind) => {
-      if (!useFirefoxEventBridge && !window.__workspaceSharedRuntime) return;
+      if (!useFirefoxEventBridge) return;
       const detail = event.detail || {};
       if (detail.aborted || detail.failed || ['aborted', 'error', 'failed'].includes(detail.status)) return;
       const redactor = event.type === 'redactor:autocopy';
@@ -1102,13 +1102,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const field = copyKind === 'note' ? 'generatedNote' : 'transcription';
       const text = typeof detail.text === 'string' ? detail.text : String(document.getElementById(field)?.value || '');
       if (!text.trim()) return;
-      window.postMessage({
-        type: 'AUTO_COPY_APP_EVENT',
-        copyKind,
-        text,
-        sourceEvent: event.type,
-        workspaceId: String(window.__workspacePresetRuntimeId || ''),
-      }, location.origin);
+      window.postMessage({ type: 'AUTO_COPY_APP_EVENT', copyKind, text, sourceEvent: event.type }, location.origin);
     };
     for (const name of ['note:finished', 'note-generation-finished']) {
       window.addEventListener(name, event => forward(event, 'note'));
@@ -1117,13 +1111,7 @@ document.addEventListener('DOMContentLoaded', () => {
       window.addEventListener(name, event => forward(event, 'transcript'));
     }
     const resetBridge = () => {
-      if (useFirefoxEventBridge || window.__workspaceSharedRuntime) {
-        window.postMessage({
-          type: 'AUTO_COPY_APP_EVENT',
-          reset: true,
-          workspaceId: String(window.__workspacePresetRuntimeId || ''),
-        }, location.origin);
-      }
+      if (useFirefoxEventBridge) window.postMessage({ type: 'AUTO_COPY_APP_EVENT', reset: true }, location.origin);
     };
     window.addEventListener('recording:lifecycle', event => {
       if (event.detail?.phase === 'starting') resetBridge();
@@ -1157,9 +1145,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = event?.data || {};
       if (data.type !== AUTO_COPY_EXTENSION_COPY_RESULT) return;
-      const resultWorkspaceId = String(data.workspaceId || '');
-      const currentWorkspaceId = String(window.__workspacePresetRuntimeId || '');
-      if (resultWorkspaceId !== currentWorkspaceId) return;
 
       const copyKind = String(data.copyKind || '').trim().toLowerCase();
       const ok = !!data.ok;

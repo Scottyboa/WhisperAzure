@@ -3126,11 +3126,28 @@
       </div>
     </div>
   </div>
-  <!-- One application shell with isolated state/runtime factories per Workspace. -->
-  <script type="module" src="./js/workspace-app.js"></script>
+  <!-- Preset runtime storage isolation must run before provider modules. -->
+  <script src="./js/features/workspace-preset-bootstrap.js"></script>
 
-  <!-- Analytics is a shell service and is loaded only once. -->
+  <!-- Caps Lock warning for prompt-list and Workspace Set passwords. -->
+  <script type="module" src="./js/features/caps-lock-indicator.js"></script>
+
+  <!-- Provider persistence + provider UI wiring -->
+  <script type="module" src="./js/features/provider-persistence.js"></script>
+  <script type="module" src="./js/features/page-ui.js"></script>
+
+  <!-- Note usage + cost UI (safe: does NOT touch timer/status DOM) -->
+  <script type="module" src="./js/features/note-usage-cost.js"></script>
+  <script type="module" src="./js/features/recording-ui.js"></script>
   <script type="module" src="./js/features/analytics.js"></script>
+
+  <!-- Ensure main boot script runs after provider wiring -->
+  <script type="module" src="./js/main.js"></script>
+
+  <!-- Secondary Note Generator (independent generation session beside the
+       Recording Transcript). Loads after main.js so window.__app helpers
+       (usage/cost formatting, supplementary date handling) are available. -->
+  <script type="module" src="./js/features/secondary-note.js"></script>
 
   <!-- Floating Mini Panel (multi-tab controller).
        Must load after main.js so window.__app exists by the time
@@ -3166,6 +3183,17 @@
   </div>
 
   <script type="module" src="./js/features/overlays.js"></script>
+
+
+  <script type="module" src="./js/features/editor-tools.js"></script>
+  <!-- Prompt slot control extracted from inline transcribe.html logic -->
+  <script type="module" src="./js/features/prompt-slots-ui.js"></script>
+
+  <!-- Per-workspace history of the 30 most recent successfully generated primary notes -->
+  <script type="module" src="./js/features/note-history.js"></script>
+
+  <!-- Page-owned field feedback helpers (kept after main boot on purpose) -->
+  <script type="module" src="./js/features/field-feedback.js"></script>
 
 
   <!-- Concurrent preset workspaces, preset backup, and preset toolbar. -->
