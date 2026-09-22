@@ -564,7 +564,13 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
       ? tok.replace(/\s+/g, '')
       : tok;
 
-    const collapseInternalSpacesInAlphaToken = (tok) => /^(?:[A-Za-zÆØÅæøå\-]+\s+)+[A-Za-zÆØÅæøå\-]+$/.test(tok)
+    // Accept names from every Unicode alphabet, including decomposed accent
+    // marks, apostrophes and typographic hyphens. The previous ASCII/Norwegian
+    // character class caused one accented token to keep an entire pasted name
+    // on a single line instead of splitting it like other names.
+    const isNameLikeToken = (tok) => /^(?=.*\p{L})[\p{L}\p{M}\p{Pd}'’ʼ]+$/u.test(tok);
+
+    const collapseInternalSpacesInAlphaToken = (tok) => /^(?:[\p{L}\p{M}\p{Pd}'’ʼ]+\s+)+[\p{L}\p{M}\p{Pd}'’ʼ]+$/u.test(tok)
       ? tok.replace(/\s+/g, '')
       : tok;
 
@@ -665,7 +671,7 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
           continue;
         }
 
-        if (/^(?:år|ar|moss|familie|Vei|Forelder|bostdsadresse|kvinne|mann|telefon|Telefonnummer|Moss|Bam|Barn|foreldre|ektefelle|tlf|ikke|funnet)$/i.test(s)) {
+        if (/^(?:år|ar|moss|familie|Vei|Forelder|bostdsadresse|kvinne|mann|telefon|Telefonnummer|Moss|Bam|Barn|foreldre|ektefelle|tlf|ikke|funnet|nærmeste|pårørende)$/iu.test(s)) {
           if (/^(?:år|ar)$/i.test(s) && out.length && /^\d{1,3}$/.test(out[out.length - 1])) {
             out.pop();
           }
@@ -784,7 +790,7 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
 
           if (!tokens.length) continue;
 
-          if (tokens.every((token) => /^[A-Za-zÆØÅæøå\-]+$/.test(token) || /^\d+$/.test(token))) {
+          if (tokens.every((token) => isNameLikeToken(token) || /^\d+$/.test(token))) {
             for (const token of tokens) {
               linesOut.push(token);
             }
