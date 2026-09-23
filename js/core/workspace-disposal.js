@@ -1,8 +1,8 @@
 // Window-local resource disposal for one Workspace runtime.
 //
-// Every Workspace owns its own runtime context (the first Workspace uses the
-// top-level page; additional Workspaces use isolated shared-page contexts).
-// Async providers need an explicit stop before a context is removed, so
+// Every user Workspace owns its own isolated frame runtime. The top-level
+// document is only the shared application shell and never doubles as a
+// Workspace. Async providers need an explicit stop before a frame is removed, so
 // resource owners register their teardown here. The registry is deliberately
 // context-local: disposing one Workspace cannot affect another.
 

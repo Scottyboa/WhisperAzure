@@ -522,11 +522,14 @@ function initTopLevelManager() {
   }, historyBodyStore);
   const workspaceUi = new Map();
   let definitions = loadDefinitions();
-  let primaryPresetId = readSessionRaw(PRIMARY_RUNTIME_KEY);
-  if (!definitions.some((item) => item.id === primaryPresetId)) primaryPresetId = definitions[0].id;
-  writeSessionRaw(PRIMARY_RUNTIME_KEY, primaryPresetId);
-  let activeId = readSessionRaw(ACTIVE_KEY) || primaryPresetId;
-  if (!definitions.some((item) => item.id === activeId)) activeId = primaryPresetId;
+  // Before this version, one Workspace lived directly in the top-level page.
+  // Keep its id only as a one-time migration hint for unscoped draft/history
+  // data. Every user Workspace now runs in the same isolated frame runtime.
+  let legacyPrimaryPresetId = readSessionRaw(PRIMARY_RUNTIME_KEY);
+  if (!definitions.some((item) => item.id === legacyPrimaryPresetId)) legacyPrimaryPresetId = "";
+  const defaultWorkspaceId = () => String(definitions[0]?.id || "");
+  let activeId = readSessionRaw(ACTIVE_KEY) || legacyPrimaryPresetId || defaultWorkspaceId();
+  if (!definitions.some((item) => item.id === activeId)) activeId = defaultWorkspaceId();
   let draggedWorkspaceId = "";
   let dragDropTarget = null;
   let lastGeneralTerms = String(document.getElementById("redactorGeneralTerms")?.value || "");
@@ -544,14 +547,54 @@ function initTopLevelManager() {
   const modal = buildModal();
   document.body.appendChild(modal.backdrop);
 
-  runtimes.set(primaryPresetId, { id: primaryPresetId, kind: "native", win: window, doc: document, ready: true });
+  // The top-level document is now only the shared application shell. Keep its
+  // toolbar/history UI, but never use its large editable fields as a Workspace.
+  nativeRecording.style.display = "none";
+  nativeBottom.style.display = "none";
+
+  let legacyPrimaryDraft = null;
+  if (legacyPrimaryPresetId) {
+    try {
+      const rawDraft = sessionStorage.getItem(`${DRAFT_KEY}::${legacyPrimaryPresetId}`);
+      if (rawDraft) legacyPrimaryDraft = JSON.parse(rawDraft);
+    } catch {}
+    // A same-tab refresh can preserve DOM values even when the old draft write
+    // was interrupted. Prefer those values only when they actually contain text.
+    const domDraft = captureDraft(document);
+    if (hasDraftText(domDraft)) {
+      const mergedFields = { ...(legacyPrimaryDraft?.fields || {}) };
+      Object.entries(domDraft.fields || {}).forEach(([fieldId, value]) => {
+        if (String(value || "").length) mergedFields[fieldId] = value;
+      });
+      legacyPrimaryDraft = {
+        ...(legacyPrimaryDraft || domDraft),
+        ...domDraft,
+        fields: mergedFields,
+      };
+    }
+  }
+
+  // Release any large legacy strings from the shell DOM immediately. The
+  // captured draft above is handed to the isolated frame when it becomes ready.
+  DRAFT_FIELD_IDS.forEach((fieldId) => {
+    const field = document.getElementById(fieldId);
+    if (field && "value" in field) field.value = "";
+  });
+
+  // Seed/migrate history before the frame runtimes bind to the shared records.
   definitions.forEach((definition) => getHistoryRecord(definition.id));
-  bindHistoryRuntime(primaryPresetId, window.__noteHistory);
   window.addEventListener("message", handleFrameMessage);
-  window.addEventListener("note-history-updated", handleNativeHistoryUpdate);
-  definitions.filter((item) => item.id !== primaryPresetId).forEach(createFrameRuntime);
-  bindRuntimeDocument(runtimes.get(primaryPresetId));
+  definitions.forEach(createFrameRuntime);
+  if (legacyPrimaryDraft && legacyPrimaryPresetId) {
+    const runtime = runtimes.get(legacyPrimaryPresetId);
+    if (runtime) {
+      runtime.pendingDraft = legacyPrimaryDraft;
+      runtime.legacyDraftKey = `${DRAFT_KEY}::${legacyPrimaryPresetId}`;
+    }
+  }
   installAppDelegation();
+  // The shell history view follows whichever isolated Workspace is active.
+  bindHistoryRuntime(activeId, window.__noteHistory);
   applyActiveWorkspace({ applySavedConfig: true });
 
   function handleFrameMessage(event) {
@@ -591,6 +634,10 @@ function initTopLevelManager() {
         if (runtime.pendingDraft) {
           runtime.win.__workspacePresetBridge.applyDraft(runtime.pendingDraft);
           runtime.pendingDraft = null;
+          if (runtime.legacyDraftKey) {
+            try { sessionStorage.removeItem(runtime.legacyDraftKey); } catch {}
+            runtime.legacyDraftKey = "";
+          }
         }
       }
       scheduleConfigSave(runtime.id);
@@ -602,12 +649,6 @@ function initTopLevelManager() {
         synchronizeHistoryGroup(runtime.id, "runtime-ready");
       }
     }
-  }
-
-  function handleNativeHistoryUpdate(event) {
-    const runtime = runtimes.get(primaryPresetId);
-    if (!runtime || runtime.kind !== "native") return;
-    synchronizeHistoryGroup(primaryPresetId, String(event?.detail?.reason || "updated"));
   }
 
   const poll = window.setInterval(() => {
@@ -623,7 +664,6 @@ function initTopLevelManager() {
     window.clearInterval(poll);
     window.clearTimeout(configTimer);
     window.removeEventListener("message", handleFrameMessage);
-    window.removeEventListener("note-history-updated", handleNativeHistoryUpdate);
     await Promise.allSettled(
       [...runtimes.values()]
         .filter((runtime) => runtime.kind === "frame")
@@ -659,9 +699,7 @@ function initTopLevelManager() {
     getContent(kind, presetId = activeId) {
       const requestedId = String(presetId || activeId);
       const runtime = runtimes.get(requestedId) || runtimes.get(activeId);
-      if (runtime?.kind === "frame") return runtime.win?.__workspacePresetBridge?.getContent(kind) || "";
-      const fieldId = String(kind || "").toLowerCase() === "note" ? "generatedNote" : "transcription";
-      return String(document.getElementById(fieldId)?.value || "");
+      return runtime?.win?.__workspacePresetBridge?.getContent(kind) || "";
     },
     decorateHubSnapshot(snapshot) {
       const workspacePresets = buildWorkspaceSnapshot();
@@ -708,7 +746,7 @@ function initTopLevelManager() {
       const runtime = runtimes.get(definition.id);
       if (runtime?.ready) definition.config = captureRuntimeConfig(runtime);
     });
-    writeSessionRaw(PRIMARY_RUNTIME_KEY, primaryPresetId);
+    writeSessionRaw(PRIMARY_RUNTIME_KEY, legacyPrimaryPresetId);
     try { localStorage.setItem(DEFINITIONS_KEY, JSON.stringify(definitions)); } catch {}
   }
 
@@ -761,14 +799,9 @@ function initTopLevelManager() {
     if (!runtime || runtime.disposed) return;
     runtime.disposing = true;
     try {
-      let disposal;
-      if (runtime.kind === "frame") {
-        const frameWindow = runtime.win || runtime.frame?.contentWindow;
-        disposal = frameWindow?.__workspacePresetBridge?.dispose?.({ reason, final })
-          || frameWindow?.__app?.disposeWorkspaceResources?.({ reason, final });
-      } else {
-        disposal = runtime.win?.__app?.disposeWorkspaceResources?.({ reason, final });
-      }
+      const frameWindow = runtime.win || runtime.frame?.contentWindow;
+      const disposal = frameWindow?.__workspacePresetBridge?.dispose?.({ reason, final })
+        || frameWindow?.__app?.disposeWorkspaceResources?.({ reason, final });
 
       if (disposal && typeof disposal.then === "function") {
         let timeoutId = 0;
@@ -794,42 +827,11 @@ function initTopLevelManager() {
   function bindRuntimeDocument(runtime) {
     if (!runtime?.doc || runtime.bound) return;
     runtime.bound = true;
-    const handler = () => scheduleConfigSave(runtime.kind === "native" ? primaryPresetId : runtime.id);
+    const handler = () => scheduleConfigSave(runtime.id);
     runtime.doc.addEventListener("change", handler, true);
     ["toggleRedactorButton", "toggleSecondaryNoteButton"].forEach((id) => {
       runtime.doc.getElementById(id)?.addEventListener("click", () => setTimeout(handler, 0));
     });
-    if (runtime.kind === "native") {
-      let draftSaveTimer = 0;
-      const saveDraftNow = () => {
-        window.clearTimeout(draftSaveTimer);
-        draftSaveTimer = 0;
-        const currentPrimary = primaryPresetId;
-        try {
-          sessionStorage.setItem(
-            `${DRAFT_KEY}::${currentPrimary}`,
-            JSON.stringify(captureDraft(document))
-          );
-        } catch {}
-      };
-      const scheduleDraftSave = () => {
-        window.clearTimeout(draftSaveTimer);
-        draftSaveTimer = window.setTimeout(saveDraftNow, DRAFT_SAVE_DEBOUNCE_MS);
-      };
-      DRAFT_FIELD_IDS.forEach((id) =>
-        runtime.doc.getElementById(id)?.addEventListener("input", scheduleDraftSave)
-      );
-      window.addEventListener("pagehide", saveDraftNow);
-      runtime.flushDraft = saveDraftNow;
-      runtime.cancelDraftSave = () => {
-        window.clearTimeout(draftSaveTimer);
-        draftSaveTimer = 0;
-      };
-      try {
-        const raw = sessionStorage.getItem(`${DRAFT_KEY}::${runtime.id}`);
-        if (raw) applyDraft(window, document, JSON.parse(raw));
-      } catch {}
-    }
   }
 
   function scheduleConfigSave(id) {
@@ -846,28 +848,19 @@ function initTopLevelManager() {
   }
 
   function captureRuntimeConfig(runtime) {
-    if (runtime.kind === "frame") return runtime.win?.__workspacePresetBridge?.captureConfig() || {};
-    return captureConfig(document);
+    return runtime?.win?.__workspacePresetBridge?.captureConfig() || {};
   }
   function captureRuntimeDraft(runtime) {
-    if (runtime.kind === "frame") return runtime.win?.__workspacePresetBridge?.captureDraft() || { fields: {} };
-    return captureDraft(document);
+    return runtime?.win?.__workspacePresetBridge?.captureDraft() || { fields: {} };
   }
   function runtimeSnapshot(runtime) {
     if (!runtime?.ready) return { state: {}, secondaryBusy: false, busy: false };
-    if (runtime.kind === "frame") return runtime.win?.__workspacePresetBridge?.getSnapshot() || { state: {}, busy: false };
-    // The top-level __app.getMiniPanelState function is delegated to whichever
-    // preset is currently selected. Using it here would make inactive Preset 1
-    // inherit the selected preset's idle/recording state. Call the captured
-    // native getter so its background recording dot remains independent.
-    return getRuntimeSnapshot(window, document, originalActions.getMiniPanelState);
+    return runtime.win?.__workspacePresetBridge?.getSnapshot() || { state: {}, busy: false };
   }
   function runtimeAction(runtime, actionName, ...args) {
     if (!runtime?.ready || runtime.disposing || runtime.disposed) return false;
     if (workspaceMutationPending && !String(actionName).startsWith("get")) return false;
-    if (runtime.kind === "frame") return runtime.win?.__workspacePresetBridge?.runAction(actionName, ...args);
-    const original = originalActions[String(actionName || "")];
-    return typeof original === "function" ? original(...args) : false;
+    return runtime.win?.__workspacePresetBridge?.runAction(actionName, ...args) ?? false;
   }
 
   function historyEntryDraft(entry) {
@@ -885,11 +878,7 @@ function initTopLevelManager() {
 
   function applyHistoryDraft(runtime, draft) {
     if (!runtime?.ready) return false;
-    if (runtime.kind === "frame") {
-      runtime.win?.__workspacePresetBridge?.applyDraft(draft);
-    } else {
-      applyDraft(window, document, draft);
-    }
+    runtime.win?.__workspacePresetBridge?.applyDraft(draft);
     return true;
   }
 
@@ -927,7 +916,7 @@ function initTopLevelManager() {
   function getHistoryRecord(workspaceId) {
     const groupId = historyGroupIdFor(workspaceId);
     const legacyKeys = historyGroupDefinitions(workspaceId).map((definition) =>
-      definition.id === primaryPresetId ? "note_history_v1"
+      definition.id === legacyPrimaryPresetId ? "note_history_v1"
         : `whisper_workspace_runtime::${definition.id}::note_history_v1`);
     return historyStore.ensure(groupId, legacyKeys);
   }
@@ -995,17 +984,11 @@ function initTopLevelManager() {
 
   function syncGeneralTermsFrom(runtime) {
     if (!runtime?.ready) return;
-    lastGeneralTerms = runtime.kind === "frame"
-      ? String(runtime.win?.__workspacePresetBridge?.getGeneralTerms() || "")
-      : String(document.getElementById("redactorGeneralTerms")?.value || "");
+    lastGeneralTerms = String(runtime.win?.__workspacePresetBridge?.getGeneralTerms() || "");
   }
   function syncGeneralTermsTo(runtime) {
     if (!runtime?.ready) return;
-    if (runtime.kind === "frame") runtime.win?.__workspacePresetBridge?.setGeneralTerms(lastGeneralTerms);
-    else {
-      const el = document.getElementById("redactorGeneralTerms");
-      if (el) { el.value = lastGeneralTerms; dispatchInput(window, el); }
-    }
+    runtime.win?.__workspacePresetBridge?.setGeneralTerms(lastGeneralTerms);
   }
 
   function switchPreset(id) {
@@ -1028,18 +1011,24 @@ function initTopLevelManager() {
 
   function applyActiveWorkspace({ applySavedConfig = false } = {}) {
     const activeRuntime = runtimes.get(activeId);
-    nativeRecording.style.display = activeRuntime?.kind === "native" ? "" : "none";
-    nativeBottom.style.display = activeRuntime?.kind === "native" ? "" : "none";
+    nativeRecording.style.display = "none";
+    nativeBottom.style.display = "none";
     runtimes.forEach((runtime) => {
-      if (runtime.kind !== "frame") return;
       const active = runtime.id === activeId;
       runtime.frame.classList.toggle("is-active", active);
       runtime.frame.classList.toggle("is-parked", !active);
       runtime.frame.style.height = active ? `${runtime.height || 900}px` : "2px";
     });
+
+    // The shell owns the visible history rail; point it at the selected
+    // Workspace's shared history record and async body loader.
+    bindHistoryRuntime(activeId, window.__noteHistory);
+
     if (activeRuntime?.ready) {
       syncGeneralTermsTo(activeRuntime);
-      if (applySavedConfig) applyConfig(activeRuntime.win, activeRuntime.doc, findDefinition(activeId)?.config || {});
+      if (applySavedConfig) activeRuntime.win?.__workspacePresetBridge?.applyConfig(
+        findDefinition(activeId)?.config || {}
+      );
     }
     render();
     notifyHistoryViewChanged("workspace-switched");
@@ -1344,53 +1333,41 @@ function initTopLevelManager() {
     if (definitions.length === 1) { toast(copy.atLeastOne, true); return; }
     const draft = captureRuntimeDraft(runtime);
     if (hasDraftText(draft) && !window.confirm(fmt(copy.closeConfirm, { name: definition.name }))) return;
+
+    const closingIndex = definitions.findIndex((item) => item.id === id);
+    const remaining = definitions.filter((item) => item.id !== id);
+    const nextActiveId = activeId === id
+      ? String(remaining[Math.min(closingIndex, remaining.length - 1)]?.id || remaining[0]?.id || "")
+      : activeId;
+
     workspaceMutationPending = true;
     try {
-    if (runtime.kind === "native") {
-      const replacement = definitions.find((item) => item.id !== id && runtimes.get(item.id)?.ready && !runtimeSnapshot(runtimes.get(item.id)).busy);
-      if (!replacement) {
-        toast(copy.busyClose, true);
-        return;
-      }
-      const replacementRuntime = runtimes.get(replacement.id);
-      const replacementDraft = captureRuntimeDraft(replacementRuntime);
-      replacement.config = captureRuntimeConfig(replacementRuntime);
-      await disposeRuntime(replacementRuntime, "workspace-promoted", { final: true });
-      await disposeRuntime(runtime, "workspace-closed", { final: false });
-      replacementRuntime.frame?.remove();
-      clearFrameRuntimeStorage(replacement.id);
-      runtimes.delete(replacement.id);
-      clearRuntimeDraft(runtime);
-      runtimes.delete(id);
-      runtimes.set(replacement.id, { id: replacement.id, kind: "native", win: window, doc: document, ready: true, bound: true });
-      primaryPresetId = replacement.id;
-      definitions = definitions.filter((item) => item.id !== id);
-      activeId = replacement.id;
-      bindHistoryRuntime(replacement.id, window.__noteHistory);
-      applyDraft(window, document, replacementDraft);
-      await applyConfig(window, document, replacement.config);
-    } else {
       await disposeRuntime(runtime, "workspace-closed", { final: true });
-      runtime.frame.remove(); runtimes.delete(id);
+      runtime.frame?.remove();
+      runtimes.delete(id);
       clearFrameRuntimeStorage(id);
-      definitions = definitions.filter((item) => item.id !== id);
-      if (activeId === id) activeId = primaryPresetId;
-    }
-    writeSessionRaw(ACTIVE_KEY, activeId);
-    historyStore.retain(definitions.map((item) => historyGroupIdFor(item.id)));
-    persistDefinitions(); applyActiveWorkspace(); notifyHub();
+      definitions = remaining;
+      activeId = nextActiveId;
+
+      // The legacy id is only a migration hint from versions where one
+      // Workspace lived in the top-level document. It has no runtime role.
+      if (legacyPrimaryPresetId === id) {
+        legacyPrimaryPresetId = "";
+        writeSessionRaw(PRIMARY_RUNTIME_KEY, "");
+      }
+
+      writeSessionRaw(ACTIVE_KEY, activeId);
+      historyStore.retain(definitions.map((item) => historyGroupIdFor(item.id)));
+      persistDefinitions();
+      applyActiveWorkspace();
+      notifyHub();
     } finally {
       workspaceMutationPending = false;
     }
   }
 
   function clearRuntimeDraft(runtime) {
-    const empty = { fields: Object.fromEntries(DRAFT_FIELD_IDS.map((key) => [key, ""])) };
-    if (runtime.kind === "frame") runtime.win?.__workspacePresetBridge?.clearDraft();
-    else {
-      applyDraft(window, document, empty);
-      try { sessionStorage.removeItem(`${DRAFT_KEY}::${runtime.id}`); } catch {}
-    }
+    runtime?.win?.__workspacePresetBridge?.clearDraft();
   }
 
   function installAppDelegation() {
@@ -1398,8 +1375,8 @@ function initTopLevelManager() {
     DELEGATED_APP_ACTIONS.forEach((name) => {
       if (typeof app[name] === "function") originalActions[name] = app[name].bind(app);
       app[name] = (...args) => {
-        // Configuration changes target this document even while another
-        // Workspace is selected, or while importing/replacing the native one.
+        // Shell-level configuration dispatch remains local; normal user
+        // actions are always forwarded to the selected isolated Workspace.
         if (window.__workspacePresetConfigDispatch) return originalActions[name]?.(...args);
         return runtimeAction(runtimes.get(activeId), name, ...args);
       };
@@ -1531,27 +1508,30 @@ function initTopLevelManager() {
     try {
     if (importPrompts) importPromptDependencies(validated.prompts);
     if (mode === "replace") {
-      const frameRuntimes = [...runtimes.values()].filter((runtime) => runtime.kind === "frame");
+      const oldRuntimes = [...runtimes.values()];
       await Promise.allSettled(
-        frameRuntimes.map((runtime) => disposeRuntime(runtime, "workspace-set-replaced", { final: true }))
+        oldRuntimes.map((runtime) => disposeRuntime(runtime, "workspace-set-replaced", { final: true }))
       );
-      await disposeRuntime(runtimes.get(primaryPresetId), "workspace-set-replaced", { final: false });
-      frameRuntimes.forEach((runtime) => {
-        runtime.frame.remove();
+      oldRuntimes.forEach((runtime) => {
+        runtime.frame?.remove();
         clearFrameRuntimeStorage(runtime.id);
       });
       historyStore.retain([]);
-      runtimes.clear(); clearRuntimeDraft({ id: primaryPresetId, kind: "native", win: window, doc: document });
+      runtimes.clear();
+
+      if (legacyPrimaryPresetId) {
+        try {
+          sessionStorage.removeItem(`${DRAFT_KEY}::${legacyPrimaryPresetId}`);
+          sessionStorage.removeItem("note_history_v1");
+        } catch {}
+      }
+      legacyPrimaryPresetId = "";
+      writeSessionRaw(PRIMARY_RUNTIME_KEY, "");
+
       definitions = validated.presets;
-      primaryPresetId = definitions[0].id; activeId = primaryPresetId;
-      writeSessionRaw(PRIMARY_RUNTIME_KEY, primaryPresetId);
-      runtimes.set(primaryPresetId, { id: primaryPresetId, kind: "native", win: window, doc: document, ready: true, bound: true });
-      bindHistoryRuntime(primaryPresetId, window.__noteHistory);
-      await applyConfig(window, document, definitions[0].config);
-      definitions.filter((item) => item.id !== primaryPresetId).forEach((definition) => {
-        createFrameRuntime(definition);
-        const runtime = runtimes.get(definition.id);
-      });
+      activeId = defaultWorkspaceId();
+      definitions.forEach(createFrameRuntime);
+      bindHistoryRuntime(activeId, window.__noteHistory);
     } else {
       const available = Math.max(0, MAX_PRESETS - definitions.length);
       validated.presets.slice(0, available).forEach((definition) => {
@@ -1796,10 +1776,9 @@ function bootWorkspacePresets() {
   }
 
   // ES modules with dependency graphs do not guarantee that this module's
-  // DOMContentLoaded listener runs after main.js has finished registering its
-  // window.__app actions. Preset 1 uses the native page runtime and captures
-  // those actions during manager installation, so binding even one tick too
-  // early leaves its Mini Panel command bridge permanently empty.
+  // DOMContentLoaded listener runs after main.js has finished registering the
+  // shell's window.__app actions. Capture those actions before installing the
+  // forwarding bridge used by the isolated Workspace frames.
   let attempts = 0;
   const waitForNativeActions = () => {
     const app = window.__app;
