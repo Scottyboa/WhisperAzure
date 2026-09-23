@@ -84,9 +84,10 @@ const REQUESTY_EU_CHAT_COMPLETIONS_URL =
   "https://router.eu.requesty.ai/v1/chat/completions";
 
 const REQUESTY_VARIANTS = {
-  "claude-opus-5": {
-    requestyModelId: "bedrock/claude-opus-5@eu-north-1",
-    pricingModelId: "claude-opus-5"
+  "claude-opus-5-5": {
+    requestyModelId: "bedrock/claude-opus-5-5@eu-north-1",
+    pricingModelId: "claude-opus-5-5",
+    reasoningSelector: "dedicated"
   },
   "claude-sonnet-5": {
     requestyModelId: "vertex/claude-sonnet-5@eu",
@@ -896,7 +897,7 @@ async function generateRequesty({ selections, sourceText, promptText, outputFiel
   );
   if (!apiKey) return { ok: false, silent: true };
 
-  const variantConfig = REQUESTY_VARIANTS[selections.requestyModel] || REQUESTY_VARIANTS["claude-opus-5"];
+  const variantConfig = REQUESTY_VARIANTS[selections.requestyModel] || REQUESTY_VARIANTS["claude-opus-5-5"];
   const streaming = selections.mode !== "non-streaming";
 
   const reasoningLevel =
@@ -1285,7 +1286,9 @@ function initSecondaryNoteModule() {
           ? (storedReasoning == null
               ? getDefaultRequestyReasoning(modelId)
               : storedReasoning)
-          : modelId === "gemini-3.8-flash" || modelId.startsWith("deepseek-")
+          : modelId === "claude-opus-5-5" ||
+              modelId === "gemini-3.8-flash" ||
+              modelId.startsWith("deepseek-")
             ? getDefaultRequestyReasoning(modelId)
             : String(reasoningSelect?.value || "");
         setSelectOptions(

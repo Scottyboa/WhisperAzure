@@ -54,7 +54,7 @@ export const indexTranslations = {
     to selected deployments intended for EU processing, no model-training reuse and suitable retention controls.
   </p>
   <ul>
-    <li>Claude Opus 5</li>
+    <li>Claude Opus 5.5</li>
     <li>Claude Sonnet 5</li>
     <li>GPT-6 Sol</li>
     <li>GPT-6 Luna</li>
@@ -86,12 +86,13 @@ export const indexTranslations = {
   <p><strong>Practical Requesty model guide</strong></p>
   <p>This is an opinionated guide for typical note-generation use rather than an objective medical benchmark:</p>
   <ul>
-    <li><strong>Maximum quality:</strong> Claude Opus 5 and GPT-5.6 Sol</li>
+    <li><strong>Maximum quality:</strong> Claude Opus 5.5 and GPT-5.6 Sol</li>
     <li><strong>Strong general-purpose choices:</strong> Claude Sonnet 5, GPT-5.6 Terra, GPT-5.5 and DeepSeek V4 Pro</li>
     <li><strong>Faster/value-oriented choices:</strong> GPT-5.6 Luna, Gemini 3.8 Flash and DeepSeek V4.1 Flash</li>
     <li><strong>Lowest-cost summarisation and preprocessing:</strong> GPT-5 Nano</li>
     <li><strong>Additional alternative:</strong> Kimi K3</li>
   </ul>
+  <p>Claude Opus 5.5 supports Low, Medium and High reasoning in the app; the default is Low.</p>
   <p>GPT-6 Sol and GPT-6 Luna support None, Low, Medium and High reasoning in the app; when no reasoning choice is stored, the app defaults to Low.</p>
   <p>DeepSeek V4 Pro and DeepSeek V4.1 Flash support None, Low, High and Max reasoning; the app defaults to Low.</p>
   <p>
@@ -249,7 +250,7 @@ This gives access to high-quality transcription and a curated selection of newer
 - Mistral Voxtral Mini Transcribe<br><br>
 
 <strong>Note-generation providers in the app</strong><br>
-- Requesty: Claude Opus 5, Claude Sonnet 5, GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash and Kimi K3<br>
+- Requesty: Claude Opus 5.5, Claude Sonnet 5, GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash and Kimi K3<br>
 - OpenAI: GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna and GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 and Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
@@ -353,7 +354,7 @@ priceModalText: `
 
   <p><strong>Requesty models currently configured in the app</strong></p>
   <ul>
-    <li>Claude Opus 5: approximately 5.50 / 27.50 USD</li>
+    <li>Claude Opus 5.5: approximately 4.40 / 22.00 USD</li>
     <li>Claude Sonnet 5: approximately 2.20 / 11.00 USD</li>
     <li>GPT-6 Sol: approximately 2.40 / 12.00 USD</li>
     <li>GPT-6 Luna: approximately 0.12 / 0.60 USD</li>
@@ -406,7 +407,7 @@ priceModalText: `
     <li><strong>GPT-5 Nano note:</strong> approximately 0.0003 USD at the example token count.</li>
     <li><strong>Gemini 3.8 Flash note:</strong> approximately 0.004 USD.</li>
     <li><strong>Claude Sonnet 5 note:</strong> approximately 0.010 USD.</li>
-    <li><strong>Claude Opus 5 note:</strong> approximately 0.025 USD.</li>
+    <li><strong>Claude Opus 5.5 note:</strong> approximately 0.020 USD.</li>
     <li><strong>GPT-5.6 Sol note:</strong> approximately 0.020 USD.</li>
   </ul>
   <p>
@@ -467,7 +468,7 @@ export const transcribeTranslations = {
     close: "Close",
     contextNote: "Context is the maximum published context window for the configured model or route.",
     requestyNote: "Requesty prices match the exact routes configured in this app. Any account-level Requesty markup is not included.",
-    sttNote: "Speech-to-text prices are current public pay-as-you-go rates. Soniox is token-billed; the hourly figures shown are Soniox's published approximate equivalents.",
+    sttNote: "Speech-to-text prices are current public pay-as-you-go rates. Soniox is token-billed; the per-minute figures shown are approximate equivalents derived from Soniox's published hourly rates.",
   },
   backToHome: "Back to frontpage",
   recordingAreaTitle: "Recording Area",
@@ -545,7 +546,7 @@ guideText: `Welcome to <strong>Transcribe Notes</strong>. The app can record and
 <details>
   <summary><strong>Secondary Note Generation</strong></summary>
   <p>This module is useful when a long document should be shortened first. Paste the text into the source field, select a separate prompt and model, and generate a summary. The result can be copied automatically or manually to <strong>Supplementary Information</strong>.</p>
-  <p>For example, you can use an inexpensive model such as GPT-5 Nano through Requesty to summarize a 50-page document. The primary model, such as GPT-5.6 Sol or Claude Opus 5, then receives the short summary with the transcript instead of the entire document. This can substantially reduce token use and cost. Review the summary before using it as clinical context.</p>
+  <p>For example, you can use an inexpensive model such as GPT-5 Nano through Requesty to summarize a 50-page document. The primary model, such as GPT-5.6 Sol or Claude Opus 5.5, then receives the short summary with the transcript instead of the entire document. This can substantially reduce token use and cost. Review the summary before using it as clinical context.</p>
 </details><br>
 
 <details>

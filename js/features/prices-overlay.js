@@ -4,7 +4,7 @@ const TEXT_PRICE_GROUPS = [
   {
     provider: "Requesty",
     rows: [
-      { model: "Claude Opus 5", id: "bedrock/claude-opus-5@eu-north-1", context: "1M", input: "$5.50", output: "$27.50" },
+      { model: "Claude Opus 5.5", id: "bedrock/claude-opus-5-5@eu-north-1", context: "1M", input: "$4.40", output: "$22.00" },
       { model: "Claude Sonnet 5", id: "vertex/claude-sonnet-5@eu", context: "1M", input: "$2.20", output: "$11.00" },
       { model: "GPT-6 Sol", id: "azure/gpt-6-sol@swedencentral", context: "1.1M", input: "$2.40", output: "$12.00" },
       { model: "GPT-6 Luna", id: "azure/gpt-6-luna@swedencentral", context: "1.1M", input: "$0.12", output: "$0.60" },
@@ -51,8 +51,8 @@ const STT_PRICE_GROUPS = [
   {
     provider: "Soniox",
     rows: [
-      { model: "Soniox", id: "stt-async-v5", billingType: "token", priceType: "hour", price: "$0.10", approximate: true },
-      { model: "Soniox Realtime", id: "stt-rt-v5", billingType: "token", priceType: "hour", price: "$0.12", approximate: true },
+      { model: "Soniox", id: "stt-async-v5", billingType: "token", priceType: "minute", price: "$0.0017", approximate: true },
+      { model: "Soniox Realtime", id: "stt-rt-v5", billingType: "token", priceType: "minute", price: "$0.002", approximate: true },
     ],
   },
   {
@@ -89,7 +89,7 @@ const FALLBACK_I18N = {
   close: "Close",
   contextNote: "Context is the maximum published context window for the configured model or route.",
   requestyNote: "Requesty prices match the exact routes configured in this app. Any account-level Requesty markup is not included.",
-  sttNote: "Speech-to-text prices are current public pay-as-you-go rates. Soniox is token-billed; the hourly figures shown are Soniox's published approximate equivalents.",
+  sttNote: "Speech-to-text prices are current public pay-as-you-go rates. Soniox is token-billed; the per-minute figures shown are approximate equivalents derived from Soniox's published hourly rates.",
 };
 
 function escapeHtml(value) {
@@ -153,10 +153,11 @@ function formatSttPrice(row, t) {
     return `${escapeHtml(row.price)} ${escapeHtml(t.perHour)}${row.approximate ? ` (${escapeHtml(t.approx)})` : ""}`;
   }
 
+  const approximate = row.approximate ? ` (${escapeHtml(t.approx)})` : "";
   const hourly = row.hourly
     ? ` · ≈ ${escapeHtml(row.hourly)} ${escapeHtml(t.perHour)}`
     : "";
-  return `${escapeHtml(row.price)} ${escapeHtml(t.perMinute)}${hourly}`;
+  return `${escapeHtml(row.price)} ${escapeHtml(t.perMinute)}${approximate}${hourly}`;
 }
 
 function renderSttTable(group, t) {

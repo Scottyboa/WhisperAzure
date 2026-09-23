@@ -6,7 +6,7 @@
 // models, so both Requesty's processing AND the model inference stay in
 // the EU (GDPR compliant):
 //
-//   - Claude Opus 5    -> bedrock/claude-opus-5@eu-north-1   (AWS Bedrock, Stockholm)
+//   - Claude Opus 5.5  -> bedrock/claude-opus-5-5@eu-north-1 (AWS Bedrock, Stockholm)
 //   - GPT-6 Luna       -> azure/gpt-6-luna@swedencentral     (Azure, Sweden Central)
 //   - GPT-6 Sol        -> azure/gpt-6-sol@swedencentral      (Azure, Sweden Central)
 //   - GPT-5.5          -> azure/gpt-5.5@swedencentral        (Azure, Sweden Central)
@@ -72,10 +72,12 @@ const REQUESTY_EU_CHAT_COMPLETIONS_URL =
 //                     and pushed as `modelId` in usage payloads
 
 const VARIANTS = Object.freeze({
-  "claude-opus-5": {
-    // AWS Bedrock, EU (Stockholm region).
-    requestyModelId: "bedrock/claude-opus-5@eu-north-1",
-    pricingModelId: "claude-opus-5"
+  "claude-opus-5-5": {
+    // AWS Bedrock, EU (Stockholm region). Opus 5.5 always reasons; the app
+    // intentionally exposes only low | medium | high and defaults to low.
+    requestyModelId: "bedrock/claude-opus-5-5@eu-north-1",
+    pricingModelId: "claude-opus-5-5",
+    reasoningSelector: "dedicated"
   },
   "claude-sonnet-5": {
     // Google Vertex AI, EU-resident deployment (GDPR). Confirmed model id
@@ -158,7 +160,7 @@ const VARIANTS = Object.freeze({
   }
 });
 
-const DEFAULT_VARIANT_KEY = "claude-opus-5";
+const DEFAULT_VARIANT_KEY = "claude-opus-5-5";
 
 // -----------------------------------------------------------------------------
 // Shared helpers
@@ -182,8 +184,8 @@ function resolveEffectiveMode() {
 }
 
 function resolveReasoningLevel(variantKey, variantConfig) {
-  // GPT-5 Nano, GPT-5.6, GPT-6 Luna/Sol, Gemini 3.8 Flash, DeepSeek, and
-  // Kimi K3 use the dedicated Requesty selector.
+  // Claude Opus 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna/Sol, Gemini 3.8
+  // Flash, DeepSeek, and Kimi K3 use the dedicated Requesty selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
     return normalizeRequestyNanoReasoning(
@@ -192,11 +194,10 @@ function resolveReasoningLevel(variantKey, variantConfig) {
     );
   }
   // All other Requesty models reuse the shared #gpt5Reasoning selector
-  // (none | low | medium | high). For the Anthropic models (Opus 5,
-  // Sonnet 5) Requesty accepts reasoning_effort on its OpenAI-compatible
-  // endpoint and maps it to a thinking budget; "none" is handled in
-  // buildRequestBody by omitting the parameter (the model then uses its own
-  // adaptive default). For GPT-5.5 it is the native OpenAI effort string.
+  // (none | low | medium | high). For Claude Sonnet 5, Requesty accepts
+  // reasoning_effort on its OpenAI-compatible endpoint and maps it to a
+  // thinking budget; "none" is handled in buildRequestBody by omitting the
+  // parameter. For GPT-5.5 it is the native OpenAI effort string.
   return normalizeSharedRequestyReasoning(
     getSelectValue("gpt5Reasoning", "low")
   );
@@ -382,7 +383,7 @@ async function generateNote() {
 // exports are kept so the provider-registry entries stay explicit and
 // symmetrical with the OpenAI module.
 
-function initRequestyClaudeOpus5() {
+function initRequestyClaudeOpus55() {
   bindGenerateNoteButton(generateNote);
 }
 
@@ -435,7 +436,7 @@ function initRequestyKimiK3() {
 }
 
 export {
-  initRequestyClaudeOpus5,
+  initRequestyClaudeOpus55,
   initRequestyClaudeSonnet5,
   initRequestyGpt6Luna,
   initRequestyGpt6Sol,

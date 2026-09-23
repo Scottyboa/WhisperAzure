@@ -682,6 +682,7 @@ import {
             modelId
           );
         } else if (
+          modelId === 'claude-opus-5-5' ||
           modelId === 'gemini-3.8-flash' ||
           modelId.startsWith('deepseek-')
         ) {

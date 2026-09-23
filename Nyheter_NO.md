@@ -1,10 +1,10 @@
 ## 23. september 2026
 
-### GPT-6 Sol og GPT-6 Luna er lagt til
+### GPT-6 Sol, GPT-6 Luna og Claude Opus 5.5 er lagt til
 
-**GPT-6 Sol** og **GPT-6 Luna** er nå tilgjengelige via Requesty.
+**GPT-6 Sol**, **GPT-6 Luna** og **Claude Opus 5.5** er nå tilgjengelige via Requesty.
 
-Begge modellene rutes gjennom **Azure OpenAI i Sweden Central**. Endepunktene har **zero data retention**, all databehandling skjer kun i **EU**, og forespørsler og svar brukes **ikke til modelltrening**.
+GPT-6 Sol og GPT-6 Luna rutes gjennom **Azure OpenAI i Sweden Central**, mens Claude Opus 5.5 rutes gjennom **AWS Bedrock i Stockholm (eu-north-1)**. Disse rutene har **zero data retention**, all databehandling skjer kun i **EU**, og forespørsler og svar brukes **ikke til modelltrening**.
 
 ---
 

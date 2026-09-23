@@ -18,7 +18,7 @@ export const DEFAULTS = {
   openaiReasoning: 'medium',
   noteMode: 'streaming',
   bedrockModel: 'opus-4-5',
-  requestyModel: 'claude-opus-5',
+  requestyModel: 'claude-opus-5-5',
   requestyNanoReasoning: 'medium',
 };
 
@@ -115,12 +115,12 @@ const NOTE_PROVIDER_REGISTRY = {
   // #noteProviderMode at run time, so one effective provider per model.
   'requesty-claude': {
     id: 'requesty-claude',
-    label: 'Requesty Claude Opus 5',
+    label: 'Requesty Claude Opus 5.5',
     uiProvider: 'requesty',
-    requestyModel: 'claude-opus-5',
+    requestyModel: 'claude-opus-5-5',
     mode: DEFAULTS.noteMode,
     modulePath: './requesty.js',
-    initExportName: 'initRequestyClaudeOpus5',
+    initExportName: 'initRequestyClaudeOpus55',
   },
   'requesty-sonnet': {
     id: 'requesty-sonnet',
@@ -240,7 +240,7 @@ const NOTE_UI_PROVIDER_OPTIONS = [
 ];
 
 const REQUESTY_MODEL_OPTIONS = [
-  { value: 'claude-opus-5', label: 'Claude Opus 5' },
+  { value: 'claude-opus-5-5', label: 'Claude Opus 5.5' },
   { value: 'claude-sonnet-5', label: 'Claude Sonnet 5' },
   { value: 'gpt-6-sol', label: 'GPT-6 Sol' },
   { value: 'gpt-6-luna', label: 'GPT-6 Luna' },
@@ -264,6 +264,15 @@ const REQUESTY_MODEL_OPTIONS = [
 // defaults to max when omitted, but the app intentionally defaults to low.
 const REQUESTY_NANO_REASONING_OPTIONS = [
   { value: 'minimal', label: 'Minimal' },
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+];
+
+// Claude Opus 5.5 always uses adaptive reasoning. The upstream model
+// supports additional effort levels, but the app intentionally exposes only
+// low | medium | high and defaults to low.
+const REQUESTY_OPUS55_REASONING_OPTIONS = [
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
   { value: 'high', label: 'High' },
@@ -463,8 +472,8 @@ export function listRequestyModelOptions() {
 
 export function normalizeRequestyModel(value) {
   const raw = String(value || '').trim().toLowerCase();
-  // Backward compatibility: existing browser state and imported Workspace
-  // Sets that selected the retired 3.7 route move to its 3.8 replacement.
+  // Backward compatibility: migrate retired model selections.
+  if (raw === 'claude-opus-5') return 'claude-opus-5-5';
   if (raw === 'gemini-3.7-flash') return 'gemini-3.8-flash';
   return REQUESTY_MODEL_OPTIONS.some((item) => item.value === raw)
     ? raw
@@ -476,23 +485,28 @@ export function listRequestyNanoReasoningOptions(
 ) {
   const normalizedModel = normalizeRequestyModel(modelId);
   const options =
-    REQUESTY_DEEPSEEK_MODELS.has(normalizedModel)
-      ? REQUESTY_DEEPSEEK_REASONING_OPTIONS
-      : normalizedModel === 'kimi-k3'
-      ? REQUESTY_KIMI_K3_REASONING_OPTIONS
-      : normalizedModel === 'gemini-3.8-flash'
-        ? REQUESTY_GEMINI38_REASONING_OPTIONS
-        : REQUESTY_GPT6_MODELS.has(normalizedModel)
-          ? REQUESTY_GPT6_REASONING_OPTIONS
-          : REQUESTY_GPT56_MODELS.has(normalizedModel)
-            ? REQUESTY_GPT56_REASONING_OPTIONS
-            : REQUESTY_NANO_REASONING_OPTIONS;
+    normalizedModel === 'claude-opus-5-5'
+      ? REQUESTY_OPUS55_REASONING_OPTIONS
+      : REQUESTY_DEEPSEEK_MODELS.has(normalizedModel)
+        ? REQUESTY_DEEPSEEK_REASONING_OPTIONS
+        : normalizedModel === 'kimi-k3'
+          ? REQUESTY_KIMI_K3_REASONING_OPTIONS
+          : normalizedModel === 'gemini-3.8-flash'
+            ? REQUESTY_GEMINI38_REASONING_OPTIONS
+            : REQUESTY_GPT6_MODELS.has(normalizedModel)
+              ? REQUESTY_GPT6_REASONING_OPTIONS
+              : REQUESTY_GPT56_MODELS.has(normalizedModel)
+                ? REQUESTY_GPT56_REASONING_OPTIONS
+                : REQUESTY_NANO_REASONING_OPTIONS;
   return options.map((item) => ({ ...item }));
 }
 
 export function getDefaultRequestyReasoning(modelId = 'gpt-5-nano') {
   const normalizedModel = normalizeRequestyModel(modelId);
-  if (REQUESTY_DEEPSEEK_MODELS.has(normalizedModel)) return 'low';
+  if (
+    normalizedModel === 'claude-opus-5-5' ||
+    REQUESTY_DEEPSEEK_MODELS.has(normalizedModel)
+  ) return 'low';
   return REQUESTY_GPT6_MODELS.has(normalizedModel) ||
     normalizedModel === 'gemini-3.8-flash' ||
     normalizedModel === 'kimi-k3'
@@ -769,7 +783,8 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   const isRequesty = uiProvider === 'requesty';
   const usesDedicatedRequestyReasoning =
     isRequesty &&
-    (reqModel === 'gpt-5-nano' ||
+    (reqModel === 'claude-opus-5-5' ||
+      reqModel === 'gpt-5-nano' ||
       reqModel === 'gemini-3.8-flash' ||
       REQUESTY_DEEPSEEK_MODELS.has(reqModel) ||
       reqModel === 'kimi-k3' ||
@@ -778,12 +793,12 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
 
   // Streaming/non-streaming (#noteProviderMode) is available for all Requesty
   // models. For reasoning, most Requesty models share the OpenAI selector
-  // (#gpt5Reasoning, None/Low/Medium/High): the Anthropic models (Opus 5,
-  // Sonnet 5) map reasoning_effort to a thinking budget ("None" omits it),
-  // and GPT-5.5 uses the native OpenAI effort string. GPT-5 Nano, GPT-5.6,
-  // GPT-6 Luna/Sol, Gemini 3.8 Flash, DeepSeek V4 Pro/V4.1 Flash and Kimi K3 use the dedicated
-  // Requesty selector because their valid option sets differ from the shared
-  // selector.
+  // (#gpt5Reasoning, None/Low/Medium/High). Claude Sonnet 5 maps
+  // reasoning_effort to a thinking budget ("None" omits it), while GPT-5.5
+  // uses the native OpenAI effort string. Claude Opus 5.5, GPT-5 Nano,
+  // GPT-5.6, GPT-6 Luna/Sol, Gemini 3.8 Flash, DeepSeek V4 Pro/V4.1 Flash
+  // and Kimi K3 use the dedicated Requesty selector because their valid
+  // option sets differ from the shared selector.
 
   return {
     showOpenAi: isOpenAi,

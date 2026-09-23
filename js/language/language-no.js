@@ -55,7 +55,7 @@ export const indexTranslations = {
     til utvalgte modellutrullinger som er ment for databehandling i EU, uten bruk til modelltrening og med egnede kontrollmuligheter for datalagring.
   </p>
   <ul>
-    <li>Claude Opus 5</li>
+    <li>Claude Opus 5.5</li>
     <li>Claude Sonnet 5</li>
     <li>GPT-6 Sol</li>
     <li>GPT-6 Luna</li>
@@ -87,12 +87,13 @@ export const indexTranslations = {
   <p><strong>Praktisk veiledning for Requesty-modellene</strong></p>
   <p>Dette er en skjønnsmessig veiledning for vanlig notatgenerering, ikke en objektiv medisinsk benchmark:</p>
   <ul>
-    <li><strong>Maksimal kvalitet:</strong> Claude Opus 5 og GPT-5.6 Sol</li>
+    <li><strong>Maksimal kvalitet:</strong> Claude Opus 5.5 og GPT-5.6 Sol</li>
     <li><strong>Sterke allroundvalg:</strong> Claude Sonnet 5, GPT-5.6 Terra, GPT-5.5 og DeepSeek V4 Pro</li>
     <li><strong>Raskere og rimeligere valg:</strong> GPT-5.6 Luna, Gemini 3.8 Flash og DeepSeek V4.1 Flash</li>
     <li><strong>Billigst til sammendrag og forbehandling:</strong> GPT-5 Nano</li>
     <li><strong>Ytterligere alternativ:</strong> Kimi K3</li>
   </ul>
+  <p>Claude Opus 5.5 støtter reasoning-nivåene Low, Medium og High i appen; standardvalget er Low.</p>
   <p>GPT-6 Sol og GPT-6 Luna støtter reasoning-nivåene None, Low, Medium og High i appen; når ingen tidligere reasoning-verdi er lagret, er standardvalget Low.</p>
   <p>DeepSeek V4 Pro og DeepSeek V4.1 Flash støtter reasoning-nivåene None, Low, High og Max; appens standardvalg er Low.</p>
   <p>
@@ -249,7 +250,7 @@ Dette gir tilgang til transkripsjon av høy kvalitet og et kuratert utvalg nyere
 - Mistral Voxtral Mini Transcribe<br><br>
 
 <strong>Leverandører for notatgenerering i appen</strong><br>
-- Requesty: Claude Opus 5, Claude Sonnet 5, GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash og Kimi K3<br>
+- Requesty: Claude Opus 5.5, Claude Sonnet 5, GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash og Kimi K3<br>
 - OpenAI: GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna og GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 og Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
@@ -353,7 +354,7 @@ En API-nøkkel alene gjør ikke en tjeneste GDPR-kompatibel. Kontroller leverand
 
   <p><strong>Requesty-modeller som nå er konfigurert i appen</strong></p>
   <ul>
-    <li>Claude Opus 5: omtrent 5,50 / 27,50 USD</li>
+    <li>Claude Opus 5.5: omtrent 4,40 / 22,00 USD</li>
     <li>Claude Sonnet 5: omtrent 2,20 / 11,00 USD</li>
     <li>GPT-6 Sol: omtrent 2,40 / 12,00 USD</li>
     <li>GPT-6 Luna: omtrent 0,12 / 0,60 USD</li>
@@ -406,7 +407,7 @@ En API-nøkkel alene gjør ikke en tjeneste GDPR-kompatibel. Kontroller leverand
     <li><strong>GPT-5 Nano-notat:</strong> omtrent 0,0003 USD med eksempelets tokenmengde.</li>
     <li><strong>Gemini 3.8 Flash-notat:</strong> omtrent 0,004 USD.</li>
     <li><strong>Claude Sonnet 5-notat:</strong> omtrent 0,010 USD.</li>
-    <li><strong>Claude Opus 5-notat:</strong> omtrent 0,025 USD.</li>
+    <li><strong>Claude Opus 5.5-notat:</strong> omtrent 0,020 USD.</li>
     <li><strong>GPT-5.6 Sol-notat:</strong> omtrent 0,020 USD.</li>
   </ul>
   <p>
@@ -467,7 +468,7 @@ export const transcribeTranslations = {
     close: "Lukk",
     contextNote: "Kontekst er det maksimale publiserte kontekstvinduet for den konfigurerte modellen eller ruten.",
     requestyNote: "Requesty-prisene gjelder de eksakte rutene som er konfigurert i appen. Eventuelt kontopåslag hos Requesty er ikke inkludert.",
-    sttNote: "Tale-til-tekst-prisene er gjeldende offentlige pay-as-you-go-priser. Soniox faktureres etter tokens; timeprisene som vises er Soniox sine publiserte omtrentlige ekvivalenter.",
+    sttNote: "Tale-til-tekst-prisene er gjeldende offentlige pay-as-you-go-priser. Soniox faktureres etter tokens; minuttprisene som vises er omtrentlige ekvivalenter beregnet fra Soniox sine publiserte timepriser.",
   },
   backToHome: "Tilbake til forsiden",
   recordingAreaTitle: "Opptaksområde",
@@ -545,7 +546,7 @@ guideText: `Velkommen til <strong>Transcribe Notes</strong>. Appen kan ta opp og
 <details>
   <summary><strong>Secondary Note Generation</strong></summary>
   <p>Denne modulen er nyttig når du har et langt dokument som først bør forkortes. Lim teksten inn i kildefeltet, velg en egen prompt og modell, og generer et sammendrag. Resultatet kan kopieres automatisk eller manuelt til <strong>Supplerende informasjon</strong>.</p>
-  <p>Du kan for eksempel bruke en rimelig modell som GPT-5 Nano via Requesty til å oppsummere et dokument på 50 sider. Hovedmodellen, for eksempel GPT-5.6 Sol eller Claude Opus 5, mottar da det korte sammendraget sammen med transkripsjonen i stedet for hele dokumentet. Dette kan redusere tokenbruken og kostnaden betydelig. Kontroller sammendraget før det brukes som medisinsk kontekst.</p>
+  <p>Du kan for eksempel bruke en rimelig modell som GPT-5 Nano via Requesty til å oppsummere et dokument på 50 sider. Hovedmodellen, for eksempel GPT-5.6 Sol eller Claude Opus 5.5, mottar da det korte sammendraget sammen med transkripsjonen i stedet for hele dokumentet. Dette kan redusere tokenbruken og kostnaden betydelig. Kontroller sammendraget før det brukes som medisinsk kontekst.</p>
 </details><br>
 
 <details>

@@ -1,10 +1,10 @@
 ## 23 September, 2026
 
-### GPT-6 Sol and GPT-6 Luna added
+### GPT-6 Sol, GPT-6 Luna and Claude Opus 5.5 added
 
-**GPT-6 Sol** and **GPT-6 Luna** are now available through Requesty.
+**GPT-6 Sol**, **GPT-6 Luna** and **Claude Opus 5.5** are now available through Requesty.
 
-Both models are routed through **Azure OpenAI in Sweden Central**. The endpoints use **zero data retention**, all data processing takes place only in the **EU**, and requests and responses are **not used for model training**.
+GPT-6 Sol and GPT-6 Luna are routed through **Azure OpenAI in Sweden Central**, while Claude Opus 5.5 is routed through **AWS Bedrock in Stockholm (eu-north-1)**. These routes use **zero data retention**, all data processing takes place only in the **EU**, and requests and responses are **not used for model training**.
 
 ---
 

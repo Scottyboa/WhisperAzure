@@ -689,6 +689,7 @@ const resolveEffectiveNoteProvider = shared0["resolveEffectiveNoteProvider"];
             modelId
           );
         } else if (
+          modelId === 'claude-opus-5-5' ||
           modelId === 'gemini-3.8-flash' ||
           modelId.startsWith('deepseek-')
         ) {
@@ -1183,7 +1184,7 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
   };
 
   // Requesty (EU router) — published endpoint rates, USD per 1M tokens.
-  // claude-opus-5: bedrock/claude-opus-5@eu-north-1 rates
+  // claude-opus-5-5: bedrock/claude-opus-5-5@eu-north-1 rates
   // claude-sonnet-5: vertex/claude-sonnet-5@eu rates (EU regional pricing)
   // gpt-6-luna/sol:  Azure Sweden Central rates from Requesty's model cards
   // gpt-5.5:         azure/gpt-5.5@swedencentral rates
@@ -1194,7 +1195,7 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
   // deepseek-v4.1-flash: sference/deepseek-v4.1-flash rates
   // kimi-k3:          nebius/kimi-k3 rates
   const REQUESTY_USD_PER_MTOK = {
-    "claude-opus-5": { input: 5.5, output: 27.5 },
+    "claude-opus-5-5": { input: 4.4, output: 22.0 },
     "claude-sonnet-5": { input: 2.2, output: 11.0 },
     "gpt-6-sol": { input: 2.4, output: 12.0 },
     "gpt-6-luna": { input: 0.12, output: 0.6 },
@@ -6044,9 +6045,10 @@ const REQUESTY_EU_CHAT_COMPLETIONS_URL =
   "https://router.eu.requesty.ai/v1/chat/completions";
 
 const REQUESTY_VARIANTS = {
-  "claude-opus-5": {
-    requestyModelId: "bedrock/claude-opus-5@eu-north-1",
-    pricingModelId: "claude-opus-5"
+  "claude-opus-5-5": {
+    requestyModelId: "bedrock/claude-opus-5-5@eu-north-1",
+    pricingModelId: "claude-opus-5-5",
+    reasoningSelector: "dedicated"
   },
   "claude-sonnet-5": {
     requestyModelId: "vertex/claude-sonnet-5@eu",
@@ -6856,7 +6858,7 @@ async function generateRequesty({ selections, sourceText, promptText, outputFiel
   );
   if (!apiKey) return { ok: false, silent: true };
 
-  const variantConfig = REQUESTY_VARIANTS[selections.requestyModel] || REQUESTY_VARIANTS["claude-opus-5"];
+  const variantConfig = REQUESTY_VARIANTS[selections.requestyModel] || REQUESTY_VARIANTS["claude-opus-5-5"];
   const streaming = selections.mode !== "non-streaming";
 
   const reasoningLevel =
@@ -7245,7 +7247,9 @@ function initSecondaryNoteModule() {
           ? (storedReasoning == null
               ? getDefaultRequestyReasoning(modelId)
               : storedReasoning)
-          : modelId === "gemini-3.8-flash" || modelId.startsWith("deepseek-")
+          : modelId === "claude-opus-5-5" ||
+              modelId === "gemini-3.8-flash" ||
+              modelId.startsWith("deepseek-")
             ? getDefaultRequestyReasoning(modelId)
             : String(reasoningSelect?.value || "");
         setSelectOptions(
@@ -19369,7 +19373,7 @@ const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout
 // models, so both Requesty's processing AND the model inference stay in
 // the EU (GDPR compliant):
 //
-//   - Claude Opus 5    -> bedrock/claude-opus-5@eu-north-1   (AWS Bedrock, Stockholm)
+//   - Claude Opus 5.5    -> bedrock/claude-opus-5-5@eu-north-1   (AWS Bedrock, Stockholm)
 //   - GPT-6 Luna       -> azure/gpt-6-luna@swedencentral     (Azure, Sweden Central)
 //   - GPT-6 Sol        -> azure/gpt-6-sol@swedencentral      (Azure, Sweden Central)
 //   - GPT-5.5          -> azure/gpt-5.5@swedencentral        (Azure, Sweden Central)
@@ -19431,10 +19435,12 @@ const REQUESTY_EU_CHAT_COMPLETIONS_URL =
 //                     and pushed as `modelId` in usage payloads
 
 const VARIANTS = Object.freeze({
-  "claude-opus-5": {
-    // AWS Bedrock, EU (Stockholm region).
-    requestyModelId: "bedrock/claude-opus-5@eu-north-1",
-    pricingModelId: "claude-opus-5"
+  "claude-opus-5-5": {
+    // AWS Bedrock, EU (Stockholm region). Opus 5.5 always reasons; the app
+    // intentionally exposes only low | medium | high and defaults to low.
+    requestyModelId: "bedrock/claude-opus-5-5@eu-north-1",
+    pricingModelId: "claude-opus-5-5",
+    reasoningSelector: "dedicated"
   },
   "claude-sonnet-5": {
     // Google Vertex AI, EU-resident deployment (GDPR). Confirmed model id
@@ -19517,7 +19523,7 @@ const VARIANTS = Object.freeze({
   }
 });
 
-const DEFAULT_VARIANT_KEY = "claude-opus-5";
+const DEFAULT_VARIANT_KEY = "claude-opus-5-5";
 
 // -----------------------------------------------------------------------------
 // Shared helpers
@@ -19541,8 +19547,8 @@ function resolveEffectiveMode() {
 }
 
 function resolveReasoningLevel(variantKey, variantConfig) {
-  // GPT-5 Nano, GPT-5.6, GPT-6 Luna/Sol, Gemini 3.8 Flash, DeepSeek, and
-  // Kimi K3 use the dedicated Requesty selector.
+  // Claude Opus 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna/Sol, Gemini 3.8
+  // Flash, DeepSeek, and Kimi K3 use the dedicated Requesty selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
     return normalizeRequestyNanoReasoning(
@@ -19741,7 +19747,7 @@ async function generateNote() {
 // exports are kept so the provider-registry entries stay explicit and
 // symmetrical with the OpenAI module.
 
-function initRequestyClaudeOpus5() {
+function initRequestyClaudeOpus55() {
   bindGenerateNoteButton(generateNote);
 }
 
@@ -19795,7 +19801,7 @@ function initRequestyKimiK3() {
 
 
 
-return Object.freeze(Object.defineProperties({}, {"initRequestyClaudeOpus5": { enumerable: true, get: () => initRequestyClaudeOpus5 },
+return Object.freeze(Object.defineProperties({}, {"initRequestyClaudeOpus55": { enumerable: true, get: () => initRequestyClaudeOpus55 },
 "initRequestyClaudeSonnet5": { enumerable: true, get: () => initRequestyClaudeSonnet5 },
 "initRequestyGpt6Luna": { enumerable: true, get: () => initRequestyGpt6Luna },
 "initRequestyGpt6Sol": { enumerable: true, get: () => initRequestyGpt6Sol },

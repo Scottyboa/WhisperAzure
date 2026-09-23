@@ -37,7 +37,7 @@ export const indexTranslations = {
   <p><strong>Requesty — für neue Nutzer empfohlen</strong></p>
   <p>Requesty bietet über einen API-Schlüssel Modelle mehrerer Entwickler. Die App beschränkt die Auswahl bewusst auf bestimmte Bereitstellungen, die für Verarbeitung in der EU, keine Nutzung zum Modelltraining und geeignete Aufbewahrungseinstellungen vorgesehen sind.</p>
   <ul>
-    <li>Claude Opus 5</li><li>Claude Sonnet 5</li><li>GPT-6 Sol</li><li>GPT-6 Luna</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 3.8 Flash</li><li>DeepSeek V4 Pro</li><li>DeepSeek V4.1 Flash</li><li>Kimi K3</li>
+    <li>Claude Opus 5.5</li><li>Claude Sonnet 5</li><li>GPT-6 Sol</li><li>GPT-6 Luna</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 3.8 Flash</li><li>DeepSeek V4 Pro</li><li>DeepSeek V4.1 Flash</li><li>Kimi K3</li>
   </ul>
   <p><strong>Weitere unterstützte Anbieter</strong></p>
   <ul>
@@ -49,12 +49,13 @@ export const indexTranslations = {
 
   <p><strong>Praktischer Requesty-Modellleitfaden</strong></p>
   <ul>
-    <li><strong>Maximale Qualität:</strong> Claude Opus 5 und GPT-5.6 Sol</li>
+    <li><strong>Maximale Qualität:</strong> Claude Opus 5.5 und GPT-5.6 Sol</li>
     <li><strong>Starke Allround-Modelle:</strong> Claude Sonnet 5, GPT-5.6 Terra, GPT-5.5 und DeepSeek V4 Pro</li>
     <li><strong>Schnell und preisorientiert:</strong> GPT-5.6 Luna, Gemini 3.8 Flash und DeepSeek V4.1 Flash</li>
     <li><strong>Günstigste Zusammenfassung/Vorverarbeitung:</strong> GPT-5 Nano</li>
     <li><strong>Weitere Alternative:</strong> Kimi K3</li>
   </ul>
+  <p>Claude Opus 5.5 unterstützt in der App die Reasoning-Stufen Low, Medium und High; standardmäßig wird Low verwendet.</p>
   <p>GPT-6 Sol und GPT-6 Luna unterstützen in der App die Reasoning-Stufen None, Low, Medium und High; wenn keine frühere Auswahl gespeichert ist, verwendet die App Low.</p>
   <p>DeepSeek V4 Pro und DeepSeek V4.1 Flash unterstützen die Reasoning-Stufen None, Low, High und Max; die App verwendet standardmäßig Low.</p>
   <p>Bei langen Dokumenten kann zuerst ein günstiges Modell wie GPT-5 Nano eine kurze Zusammenfassung für Zusatzinformationen erstellen. Das stärkere Hauptmodell erhält dann nicht das vollständige Dokument, wodurch die Kosten deutlich sinken können.</p>
@@ -182,7 +183,7 @@ Die einfachste Empfehlung für neue Nutzer:<br>
 2. <strong>Requesty</strong> für Notizerstellung.<br><br>
 
 <strong>STT-Optionen:</strong> Soniox Batch, Soniox Batch mit Sprecherkennzeichnung, Soniox Echtzeit, OpenAI gpt-4o-transcribe und Mistral Voxtral Mini.<br><br>
-<strong>Notizanbieter:</strong> Requesty (Claude Opus 5, Claude Sonnet 5, GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3), OpenAI (GPT-5.6 Sol/Terra/Luna und GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) und Mistral Large.<br><br>
+<strong>Notizanbieter:</strong> Requesty (Claude Opus 5.5, Claude Sonnet 5, GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3), OpenAI (GPT-5.6 Sol/Terra/Luna und GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) und Mistral Large.<br><br>
 
 <hr><br>
 <strong>Soniox — empfohlene STT-Einrichtung</strong><br>
@@ -234,7 +235,7 @@ Ein API-Schlüssel macht einen Dienst nicht automatisch DSGVO-konform. Prüfen S
   <hr><br>
   <p><strong>2. Notizerstellung</strong> (USD je eine Million Eingabe-/Ausgabe-Token)</p>
   <ul>
-    <li>Claude Opus 5: ca. 5,50 / 27,50 USD</li><li>Claude Sonnet 5: ca. 2,20 / 11,00 USD</li>
+    <li>Claude Opus 5.5: ca. 4,40 / 22,00 USD</li><li>Claude Sonnet 5: ca. 2,20 / 11,00 USD</li>
     <li>GPT-6 Sol: ca. 2,40 / 12,00 USD</li><li>GPT-6 Luna: ca. 0,12 / 0,60 USD</li>
     <li>GPT-5.6 Sol: ca. 4,40 / 22,00 USD</li><li>GPT-5.6 Terra: ca. 2,20 / 13,20 USD</li>
     <li>GPT-5.6 Luna: ca. 0,22 / 1,32 USD</li><li>GPT-5.5: ca. 5,00 / 30,00 USD</li>
@@ -253,7 +254,7 @@ Ein API-Schlüssel macht einen Dienst nicht automatisch DSGVO-konform. Prüfen S
   <ul>
     <li>Soniox-Transkription: ca. 0,026 USD</li><li>GPT-5 Nano: ca. 0,0003 USD</li>
     <li>Gemini 3.8 Flash: ca. 0,004 USD</li><li>Claude Sonnet 5: ca. 0,010 USD</li>
-    <li>Claude Opus 5: ca. 0,025 USD</li><li>GPT-5.6 Sol: ca. 0,020 USD</li>
+    <li>Claude Opus 5.5: ca. 0,020 USD</li><li>GPT-5.6 Sol: ca. 0,020 USD</li>
   </ul>
   <p>Die tatsächliche Menge hängt stark von Transkript, Prompt, Zusatzinformationen und Reasoning-Stufe ab.</p>
 
@@ -296,7 +297,7 @@ export const transcribeTranslations = {
     close: "Schließen",
     contextNote: "Der Kontext ist das maximal veröffentlichte Kontextfenster für das konfigurierte Modell bzw. die konfigurierte Route.",
     requestyNote: "Die Requesty-Preise gelten für die exakten, in dieser App konfigurierten Routen. Ein etwaiger kontoabhängiger Requesty-Aufschlag ist nicht enthalten.",
-    sttNote: "Die Speech-to-Text-Preise sind die aktuellen öffentlichen Pay-as-you-go-Preise. Soniox rechnet tokenbasiert ab; die angegebenen Stundenpreise sind die von Soniox veröffentlichten ungefähren Entsprechungen.",
+    sttNote: "Die Speech-to-Text-Preise sind die aktuellen öffentlichen Pay-as-you-go-Preise. Soniox rechnet tokenbasiert ab; die angegebenen Minutenpreise sind ungefähre, aus den veröffentlichten Soniox-Stundenpreisen abgeleitete Werte.",
   },
   backToHome: "Zurück zur Startseite",
   recordingAreaTitle: "Aufnahmebereich",
@@ -371,7 +372,7 @@ guideText: `Willkommen bei <strong>Transcribe Notes</strong>. Die App kann Gespr
 <details>
   <summary><strong>Secondary Note Generation</strong></summary>
   <p>Dieses Modul ist nützlich, wenn ein langes Dokument zuerst gekürzt werden soll. Text in das Quellfeld einfügen, einen eigenen Prompt und ein Modell auswählen und eine Zusammenfassung erstellen. Das Ergebnis kann automatisch oder manuell in <strong>Ergänzende Informationen</strong> übertragen werden.</p>
-  <p>Beispielsweise kann ein günstiges Modell wie GPT-5 Nano über Requesty ein 50-seitiges Dokument zusammenfassen. Das Hauptmodell, etwa GPT-5.6 Sol oder Claude Opus 5, erhält dann die kurze Zusammenfassung zusammen mit dem Transkript statt des vollständigen Dokuments. Dies kann Tokenverbrauch und Kosten deutlich senken. Die Zusammenfassung vor der Verwendung als medizinischen Kontext prüfen.</p>
+  <p>Beispielsweise kann ein günstiges Modell wie GPT-5 Nano über Requesty ein 50-seitiges Dokument zusammenfassen. Das Hauptmodell, etwa GPT-5.6 Sol oder Claude Opus 5.5, erhält dann die kurze Zusammenfassung zusammen mit dem Transkript statt des vollständigen Dokuments. Dies kann Tokenverbrauch und Kosten deutlich senken. Die Zusammenfassung vor der Verwendung als medizinischen Kontext prüfen.</p>
 </details><br>
 
 <details>
