@@ -13140,6 +13140,7 @@ const STRINGS = {
 
 let historyRecord = { entries: [], nextSequence: 1 };
 let persistSharedHistory = null;
+let loadSharedHistoryEntry = null;
 const state = {
   get entries() { return historyRecord.entries; },
   set entries(value) { historyRecord.entries = value; },
@@ -13147,6 +13148,7 @@ const state = {
   set nextSequence(value) { historyRecord.nextSequence = value; },
   pendingRun: null,
   activeEntryId: "",
+  activeEntryBody: null,
   previousFocus: null,
   language: "en",
   collapsed: false,
@@ -13177,33 +13179,36 @@ function normalizeStoredEntry(raw) {
 
   const sequence = Number(raw.sequence);
   const createdAt = Number(raw.createdAt);
-  const transcript = typeof raw.transcript === "string" ? raw.transcript : "";
-  const supplementary =
-    typeof raw.supplementary === "string" ? raw.supplementary : "";
-  const note = typeof raw.note === "string" ? raw.note : "";
-
   if (
     !Number.isInteger(sequence) ||
     sequence < 1 ||
     !Number.isFinite(createdAt) ||
-    createdAt < 1 ||
-    !transcript.trim() ||
-    !note.trim()
+    createdAt < 1
   ) {
     return null;
   }
 
-  return {
+  const entry = {
     id: String(raw.id || `note-${sequence}-${createdAt}`),
     sequence,
     createdAt,
-    transcript,
-    supplementary,
-    note,
     promptSlot: String(raw.promptSlot || ""),
     promptLabel: String(raw.promptLabel || ""),
     usedPrompt: raw.usedPrompt !== false,
   };
+
+  // Legacy/local snapshots can still contain their full body. Shared Workspace
+  // history normally contains metadata only; its body is loaded asynchronously
+  // from the separate history body store when the user opens an item.
+  if (typeof raw.transcript === "string" && typeof raw.note === "string") {
+    if (!raw.transcript.trim() || !raw.note.trim()) return null;
+    entry.transcript = raw.transcript;
+    entry.supplementary =
+      typeof raw.supplementary === "string" ? raw.supplementary : "";
+    entry.note = raw.note;
+  }
+
+  return entry;
 }
 
 function normalizeHistorySnapshot(raw) {
@@ -13383,6 +13388,28 @@ function findVisibleEntry(entryId) {
   return getVisibleEntries().find((item) => item.id === entryId) || null;
 }
 
+function hasEntryBody(entry) {
+  return typeof entry?.transcript === "string" &&
+    typeof entry?.note === "string" &&
+    Boolean(entry.transcript.trim()) &&
+    Boolean(entry.note.trim());
+}
+
+async function resolveVisibleEntry(entryId) {
+  const entry = findVisibleEntry(entryId);
+  if (!entry) return null;
+  if (hasEntryBody(entry)) return entry;
+  if (typeof loadSharedHistoryEntry !== "function") return null;
+
+  try {
+    const loaded = await loadSharedHistoryEntry(entry.id);
+    return loaded && hasEntryBody(loaded) ? { ...entry, ...loaded } : null;
+  } catch (error) {
+    console.warn("[note-history] History entry could not be loaded.", error);
+    return null;
+  }
+}
+
 function getEntryPromptLabel(entry) {
   const copy = strings();
   if (entry.usedPrompt === false) return copy.withoutPrompt;
@@ -13456,18 +13483,23 @@ function renderHistory() {
     )} · ${getEntryPromptLabel(entry)}`;
 
     card.append(title, meta);
-    card.addEventListener("click", () => openEntry(entry.id));
+    card.addEventListener("click", () => { void openEntry(entry.id); });
     list.appendChild(card);
   });
 }
 
 function syncModalContent() {
   if (!state.activeEntryId) return;
-  const entry = findVisibleEntry(state.activeEntryId);
-  if (!entry) {
+  const metadata = findVisibleEntry(state.activeEntryId);
+  if (!metadata) {
     closeModal();
     return;
   }
+
+  const body = state.activeEntryBody?.id === state.activeEntryId
+    ? state.activeEntryBody
+    : null;
+  const entry = body ? { ...metadata, ...body } : metadata;
 
   const title = byId("noteHistoryModalTitle");
   const transcript = byId("noteHistoryTranscript");
@@ -13479,8 +13511,10 @@ function syncModalContent() {
       entry.createdAt
     )} · ${getEntryPromptLabel(entry)}`;
   }
+  if (!body && !hasEntryBody(entry)) return;
+
   if (transcript) {
-    transcript.value = entry.transcript;
+    transcript.value = entry.transcript || "";
     transcript.scrollTop = 0;
   }
   if (supplementary) {
@@ -13488,7 +13522,7 @@ function syncModalContent() {
     supplementary.scrollTop = 0;
   }
   if (note) {
-    note.value = entry.note;
+    note.value = entry.note || "";
     note.scrollTop = 0;
   }
 }
@@ -13530,11 +13564,19 @@ function showRestoreError(reason) {
   window.alert(message);
 }
 
-function restoreActiveEntry(target) {
-  const entry = findVisibleEntry(state.activeEntryId);
-  if (!entry) return;
+async function restoreActiveEntry(target) {
+  const entryId = state.activeEntryId;
+  if (!entryId) return;
 
   if (target === "current" && !window.confirm(strings().confirmReplace)) return;
+
+  const entry = state.activeEntryBody?.id === entryId
+    ? { ...findVisibleEntry(entryId), ...state.activeEntryBody }
+    : await resolveVisibleEntry(entryId);
+  if (!entry || state.activeEntryId !== entryId) {
+    showRestoreError();
+    return;
+  }
 
   let result = null;
   try {
@@ -13554,13 +13596,31 @@ function restoreActiveEntry(target) {
   closeModal();
 }
 
-function openEntry(entryId) {
-  const entry = findVisibleEntry(entryId);
+async function openEntry(entryId) {
+  const metadata = findVisibleEntry(entryId);
   const modal = byId("noteHistoryModal");
-  if (!entry || !modal) return;
+  if (!metadata || !modal) return;
 
-  state.activeEntryId = entry.id;
+  const requestedId = metadata.id;
+  state.activeEntryId = requestedId;
+  state.activeEntryBody = null;
   state.previousFocus = document.activeElement;
+
+  const entry = await resolveVisibleEntry(requestedId);
+  if (state.activeEntryId !== requestedId) return;
+  if (!entry) {
+    state.activeEntryId = "";
+    state.activeEntryBody = null;
+    showRestoreError();
+    return;
+  }
+
+  state.activeEntryBody = {
+    id: entry.id,
+    transcript: String(entry.transcript || ""),
+    supplementary: String(entry.supplementary || ""),
+    note: String(entry.note || ""),
+  };
   syncModalContent();
 
   modal.classList.add("active");
@@ -13573,6 +13633,7 @@ function closeModal() {
   const modal = byId("noteHistoryModal");
   if (!modal || !modal.classList.contains("active")) {
     state.activeEntryId = "";
+    state.activeEntryBody = null;
     return;
   }
 
@@ -13581,6 +13642,7 @@ function closeModal() {
   modal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("note-history-modal-open");
   state.activeEntryId = "";
+  state.activeEntryBody = null;
 
   const previousFocus = state.previousFocus;
   state.previousFocus = null;
@@ -13711,11 +13773,11 @@ function bindEvents() {
   });
   byId("noteHistoryRestoreCurrent")?.addEventListener("click", () => {
     setRestoreMenuOpen(false);
-    restoreActiveEntry("current");
+    void restoreActiveEntry("current");
   });
   byId("noteHistoryRestoreNew")?.addEventListener("click", () => {
     setRestoreMenuOpen(false);
-    restoreActiveEntry("new");
+    void restoreActiveEntry("new");
   });
 
   byId("noteHistoryModal")?.addEventListener("click", (event) => {
@@ -13784,9 +13846,10 @@ window.__noteHistory = Object.freeze({
   getSnapshot: getLocalHistorySnapshot,
   clearLocal: clearLocalHistory,
   replaceLocal: replaceLocalHistorySnapshot,
-  bindShared(record, persist) {
+  bindShared(record, persist, loadEntry) {
     historyRecord = record;
     persistSharedHistory = persist;
+    loadSharedHistoryEntry = typeof loadEntry === "function" ? loadEntry : null;
     renderHistory();
     syncModalContent();
   },
@@ -13800,16 +13863,17 @@ if (window.__workspacePresetFrame) {
 }
 registerWorkspaceDisposer(({ final }) => {
   state.pendingRun = null;
+  state.activeEntryBody = null;
   state.previousFocus = null;
   if (final) {
     historyRecord = { entries: [], nextSequence: 1 };
     persistSharedHistory = null;
+    loadSharedHistoryEntry = null;
   }
 });
 
 return Object.freeze(Object.defineProperties({}, {}));
 };
-
 factories["features/field-feedback.js"] = (context, load, loadAsync) => {
 const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame, MutationObserver, ResizeObserver } = context;
 // js/features/field-feedback.js

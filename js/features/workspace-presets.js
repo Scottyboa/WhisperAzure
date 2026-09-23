@@ -3,6 +3,7 @@ import { PromptCloudBackup } from "./prompt-cloud-backup.js";
 import { CloudBackupSession } from "./cloud-backup-session.js";
 import { registerWorkspaceDisposer } from "../core/workspace-disposal.js";
 import { createWorkspaceHistoryStore } from "../core/workspace-history-store.js";
+import { createWorkspaceHistoryBodyStore } from "../core/workspace-history-body-store.js";
 
 const PRESET_SCHEMA = "whisper.workspace-presets";
 const PRESET_VERSION = 1;
@@ -11,6 +12,7 @@ const ACTIVE_KEY = "whisper_workspace_active_preset_v1";
 const PRIMARY_RUNTIME_KEY = "whisper_workspace_primary_runtime_v1";
 const PANEL_MODE_KEY = "whisper_workspace_mini_panel_mode";
 const DRAFT_KEY = "whisper_workspace_draft_v1";
+const DRAFT_SAVE_DEBOUNCE_MS = 750;
 const MAX_PRESETS = 12;
 
 const VALUE_IDS = [
@@ -359,20 +361,28 @@ function initFrameRuntime() {
     if (child !== root && !["SCRIPT", "STYLE"].includes(child.tagName)) child.style.display = "none";
   });
 
-  const saveDraft = () => {
+  let draftSaveTimer = 0;
+  const saveDraftNow = () => {
+    window.clearTimeout(draftSaveTimer);
+    draftSaveTimer = 0;
     try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify(captureDraft(document))); } catch {}
+  };
+  const scheduleDraftSave = () => {
+    window.clearTimeout(draftSaveTimer);
+    draftSaveTimer = window.setTimeout(saveDraftNow, DRAFT_SAVE_DEBOUNCE_MS);
   };
   try {
     const raw = sessionStorage.getItem(DRAFT_KEY);
     if (raw) applyDraft(window, document, JSON.parse(raw));
   } catch {}
   DRAFT_FIELD_IDS.forEach((fieldId) => {
-    document.getElementById(fieldId)?.addEventListener("input", saveDraft);
+    document.getElementById(fieldId)?.addEventListener("input", scheduleDraftSave);
   });
+  window.addEventListener("pagehide", saveDraftNow);
 
   const notifyParent = (reason = "state", detail = {}) => {
     if (disposed) return;
-    saveDraft();
+    scheduleDraftSave();
     try {
       window.parent.postMessage(
         { type: "workspace-preset-frame-update", id, reason, ...detail },
@@ -395,6 +405,8 @@ function initFrameRuntime() {
     captureDraft: () => captureDraft(document),
     applyDraft: (draft) => applyDraft(window, document, draft),
     clearDraft() {
+      window.clearTimeout(draftSaveTimer);
+      draftSaveTimer = 0;
       applyDraft(window, document, { fields: Object.fromEntries(DRAFT_FIELD_IDS.map((key) => [key, ""])) });
       try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
     },
@@ -421,8 +433,10 @@ function initFrameRuntime() {
       return String(document.getElementById(idForKind)?.value || "");
     },
     dispose(options = {}) {
+      saveDraftNow();
       disposed = true;
       window.clearTimeout(readyTimer);
+      window.clearTimeout(draftSaveTimer);
       return window.__app?.disposeWorkspaceResources?.({
         reason: String(options.reason || "workspace-close"),
         final: options.final !== false,
@@ -439,8 +453,11 @@ function initFrameRuntime() {
   const resizeObserver = new ResizeObserver(sendHeight);
   resizeObserver.observe(root);
   registerWorkspaceDisposer(() => {
+    saveDraftNow();
     disposed = true;
     window.clearTimeout(readyTimer);
+    window.clearTimeout(draftSaveTimer);
+    window.removeEventListener("pagehide", saveDraftNow);
     resizeObserver.disconnect();
   }, { scope: "window" });
   window.__openMiniPanel = () => window.parent.__openMiniPanel?.();
@@ -497,11 +514,12 @@ function initTopLevelManager() {
   if (!nativeRecording || !nativeBottom) return;
 
   const runtimes = new Map();
+  const historyBodyStore = createWorkspaceHistoryBodyStore({ storage: sessionStorage });
   const historyStore = createWorkspaceHistoryStore({
     getItem: (key) => sessionStorage.getItem(key),
     setItem: (key, value) => sessionStorage.setItem(key, value),
     removeItem: (key) => sessionStorage.removeItem(key),
-  });
+  }, historyBodyStore);
   const workspaceUi = new Map();
   let definitions = loadDefinitions();
   let primaryPresetId = readSessionRaw(PRIMARY_RUNTIME_KEY);
@@ -782,11 +800,31 @@ function initTopLevelManager() {
       runtime.doc.getElementById(id)?.addEventListener("click", () => setTimeout(handler, 0));
     });
     if (runtime.kind === "native") {
-      const saveDraft = () => {
+      let draftSaveTimer = 0;
+      const saveDraftNow = () => {
+        window.clearTimeout(draftSaveTimer);
+        draftSaveTimer = 0;
         const currentPrimary = primaryPresetId;
-        try { sessionStorage.setItem(`${DRAFT_KEY}::${currentPrimary}`, JSON.stringify(captureDraft(document))); } catch {}
+        try {
+          sessionStorage.setItem(
+            `${DRAFT_KEY}::${currentPrimary}`,
+            JSON.stringify(captureDraft(document))
+          );
+        } catch {}
       };
-      DRAFT_FIELD_IDS.forEach((id) => runtime.doc.getElementById(id)?.addEventListener("input", saveDraft));
+      const scheduleDraftSave = () => {
+        window.clearTimeout(draftSaveTimer);
+        draftSaveTimer = window.setTimeout(saveDraftNow, DRAFT_SAVE_DEBOUNCE_MS);
+      };
+      DRAFT_FIELD_IDS.forEach((id) =>
+        runtime.doc.getElementById(id)?.addEventListener("input", scheduleDraftSave)
+      );
+      window.addEventListener("pagehide", saveDraftNow);
+      runtime.flushDraft = saveDraftNow;
+      runtime.cancelDraftSave = () => {
+        window.clearTimeout(draftSaveTimer);
+        draftSaveTimer = 0;
+      };
       try {
         const raw = sessionStorage.getItem(`${DRAFT_KEY}::${runtime.id}`);
         if (raw) applyDraft(window, document, JSON.parse(raw));
@@ -897,7 +935,11 @@ function initTopLevelManager() {
   function bindHistoryRuntime(id, historyApi) {
     if (!findDefinition(String(id))) return false;
     const groupId = historyGroupIdFor(id);
-    historyApi?.bindShared?.(getHistoryRecord(id), () => historyStore.persist(groupId));
+    historyApi?.bindShared?.(
+      getHistoryRecord(id),
+      () => historyStore.persist(groupId),
+      (entryId) => historyStore.loadEntry(groupId, entryId)
+    );
     return true;
   }
 
