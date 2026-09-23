@@ -90,6 +90,10 @@ export function mergeHistorySnapshots(snapshots) {
 
 export function createWorkspaceHistoryStore(storage, bodyStore = null) {
   const groups = new Map();
+  // Temporary in-memory copy of recoverable legacy bodies. This lets history
+  // remain clickable while an asynchronous migration is in progress (or when
+  // IndexedDB is unavailable) without keeping full bodies in the active record.
+  const legacyRecovery = new Map();
 
   const read = (key) => {
     try { return JSON.parse(storage.getItem(key) || "null"); } catch { return null; }
@@ -112,7 +116,7 @@ export function createWorkspaceHistoryStore(storage, bodyStore = null) {
   }
 
   function commitMigratedMetadata(groupId, record, legacyKeys) {
-    const obsoleteKeys = [LEGACY_HISTORY_PREFIX + groupId, ...legacyKeys];
+    const obsoleteKeys = [...new Set([LEGACY_HISTORY_PREFIX + groupId, ...legacyKeys])];
     if (writeMetadata(groupId, record)) {
       obsoleteKeys.forEach(removeStorageKey);
       return true;
@@ -164,34 +168,73 @@ export function createWorkspaceHistoryStore(storage, bodyStore = null) {
 
     const current = read(HISTORY_PREFIX + groupId);
     const previousShared = read(LEGACY_HISTORY_PREFIX + groupId);
-    const sources = [];
+    const legacySnapshots = legacyKeys.map(read).filter(
+      (snapshot) => Array.isArray(snapshot?.entries)
+    );
 
+    // The v2 metadata index is authoritative when it exists. Older full-text
+    // snapshots are still inspected below for body recovery, but they must not
+    // re-introduce entries that were intentionally cleared from the v2 index.
+    let metadataSources;
     if (Array.isArray(current?.entries)) {
-      sources.push(current);
+      metadataSources = [current];
     } else if (Array.isArray(previousShared?.entries)) {
-      sources.push(previousShared);
+      metadataSources = [previousShared];
     } else {
-      legacyKeys.map(read).filter(Boolean).forEach((snapshot) => sources.push(snapshot));
+      metadataSources = legacySnapshots;
     }
 
-    const record = mergeHistorySnapshots(sources);
+    const record = mergeHistorySnapshots(metadataSources);
     groups.set(groupId, record);
 
-    const fullEntries = fullEntriesFromSnapshots(sources);
-    if (fullEntries.length && bodyStore) {
-      // Keep the legacy full-text payload until migration succeeds. This protects
-      // refresh-in-the-middle-of-migration, but the active JS record is already tiny.
-      void queueBodies(groupId, fullEntries, { sessionFallback: false }).then((results) => {
-        const storedAll = results.every(
+    // IMPORTANT: always inspect every legacy source for recoverable bodies even
+    // when a v2 metadata index already exists. Older builds could leave v2
+    // metadata in place before all bodies reached IndexedDB. Deleting the
+    // legacy snapshots in that state creates visible history cards that cannot
+    // be opened.
+    const bodySources = [
+      ...(Array.isArray(previousShared?.entries) ? [previousShared] : []),
+      ...legacySnapshots,
+    ];
+    const activeIds = new Set(record.entries.map((entry) => entry.id));
+    const recoverableEntries = fullEntriesFromSnapshots(bodySources).filter(
+      (entry) => activeIds.has(entry.id)
+    );
+
+    if (recoverableEntries.length) {
+      legacyRecovery.set(
+        groupId,
+        new Map(recoverableEntries.map((entry) => [entry.id, entry]))
+      );
+    } else {
+      legacyRecovery.delete(groupId);
+    }
+
+    if (recoverableEntries.length && bodyStore) {
+      // Keep every legacy full-text payload until every recoverable body has
+      // been stored successfully. This also protects a refresh in the middle of
+      // migration.
+      void queueBodies(groupId, recoverableEntries, { sessionFallback: false }).then((results) => {
+        const storedAll = results.length === recoverableEntries.length && results.every(
           (result) => result.status === "fulfilled" && result.value === true
         );
         if (!storedAll) return;
-        commitMigratedMetadata(groupId, record, legacyKeys);
+        if (commitMigratedMetadata(groupId, record, legacyKeys)) {
+          legacyRecovery.delete(groupId);
+        }
       }).catch(() => {});
-    } else {
+    } else if (recoverableEntries.length) {
+      // IndexedDB is unavailable. Keep the legacy snapshots intact; writing the
+      // small v2 index is safe because patched loads continue to inspect legacy
+      // bodies on the next refresh.
       writeMetadata(groupId, record);
-      removeStorageKey(LEGACY_HISTORY_PREFIX + groupId);
-      legacyKeys.forEach(removeStorageKey);
+    } else {
+      // No active entry depends on a legacy body. Only remove old snapshots
+      // after the replacement metadata index has definitely been persisted.
+      if (writeMetadata(groupId, record)) {
+        removeStorageKey(LEGACY_HISTORY_PREFIX + groupId);
+        legacyKeys.forEach(removeStorageKey);
+      }
     }
 
     return record;
@@ -219,8 +262,19 @@ export function createWorkspaceHistoryStore(storage, bodyStore = null) {
       if (hasBody(metadata)) return { ...metadata };
 
       const body = await bodyStore?.get?.(groupId, metadata.id);
-      if (!body) return null;
-      return { ...metadata, ...body };
+      if (body) return { ...metadata, ...body };
+
+      // Last-resort recovery for legacy snapshots that are still present while a
+      // migration is pending or has failed. Only body fields are copied so stale
+      // legacy metadata cannot override the authoritative v2 index.
+      const recovered = legacyRecovery.get(groupId)?.get(metadata.id);
+      if (!recovered || !hasBody(recovered)) return null;
+      return {
+        ...metadata,
+        transcript: recovered.transcript,
+        supplementary: recovered.supplementary,
+        note: recovered.note,
+      };
     },
 
     replace(groupId, snapshot) {
@@ -238,6 +292,7 @@ export function createWorkspaceHistoryStore(storage, bodyStore = null) {
       for (const id of [...groups.keys()]) {
         if (keep.has(id)) continue;
         groups.delete(id);
+        legacyRecovery.delete(id);
         removeStorageKey(HISTORY_PREFIX + id);
         removeStorageKey(LEGACY_HISTORY_PREFIX + id);
         void bodyStore?.clearGroup?.(id);
@@ -247,6 +302,7 @@ export function createWorkspaceHistoryStore(storage, bodyStore = null) {
 
     release() {
       groups.clear();
+      legacyRecovery.clear();
       bodyStore?.release?.();
     },
   };
