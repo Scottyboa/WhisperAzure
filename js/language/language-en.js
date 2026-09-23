@@ -56,6 +56,8 @@ export const indexTranslations = {
   <ul>
     <li>Claude Opus 5</li>
     <li>Claude Sonnet 5</li>
+    <li>GPT-6 Luna</li>
+    <li>GPT-6 Sol</li>
     <li>GPT-5.6 Sol</li>
     <li>GPT-5.6 Terra</li>
     <li>GPT-5.6 Luna</li>
@@ -90,6 +92,7 @@ export const indexTranslations = {
     <li><strong>Lowest-cost summarisation and preprocessing:</strong> GPT-5 Nano</li>
     <li><strong>Additional alternative:</strong> Kimi K3</li>
   </ul>
+  <p>GPT-6 Luna and GPT-6 Sol support None, Low, Medium and High reasoning in the app; when no reasoning choice is stored, the app defaults to Low.</p>
   <p>DeepSeek V4 Pro and DeepSeek V4.1 Flash support None, Low, High and Max reasoning; the app defaults to Low.</p>
   <p>
     For long source documents, a less expensive model such as GPT-5 Nano can first create a short summary for Supplementary Information.
@@ -246,7 +249,7 @@ This gives access to high-quality transcription and a curated selection of newer
 - Mistral Voxtral Mini Transcribe<br><br>
 
 <strong>Note-generation providers in the app</strong><br>
-- Requesty: Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash and Kimi K3<br>
+- Requesty: Claude Opus 5, Claude Sonnet 5, GPT-6 Luna, GPT-6 Sol, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash and Kimi K3<br>
 - OpenAI: GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna and GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 and Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
@@ -352,6 +355,8 @@ priceModalText: `
   <ul>
     <li>Claude Opus 5: approximately 5.50 / 27.50 USD</li>
     <li>Claude Sonnet 5: approximately 2.20 / 11.00 USD</li>
+    <li>GPT-6 Luna: approximately 0.12 / 0.60 USD</li>
+    <li>GPT-6 Sol: approximately 2.40 / 12.00 USD</li>
     <li>GPT-5.6 Sol: approximately 5.50 / 33.00 USD</li>
     <li>GPT-5.6 Terra: approximately 2.20 / 13.20 USD</li>
     <li>GPT-5.6 Luna: approximately 0.22 / 1.32 USD</li>

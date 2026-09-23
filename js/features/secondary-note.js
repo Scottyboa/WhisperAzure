@@ -92,6 +92,18 @@ const REQUESTY_VARIANTS = {
     requestyModelId: "vertex/claude-sonnet-5@eu",
     pricingModelId: "claude-sonnet-5"
   },
+  "gpt-6-luna": {
+    requestyModelId: "azure/gpt-6-luna@swedencentral",
+    pricingModelId: "gpt-6-luna",
+    reasoningSelector: "dedicated",
+    sendNoneReasoning: true
+  },
+  "gpt-6-sol": {
+    requestyModelId: "azure/gpt-6-sol@swedencentral",
+    pricingModelId: "gpt-6-sol",
+    reasoningSelector: "dedicated",
+    sendNoneReasoning: true
+  },
   "gpt-5.5": {
     requestyModelId: "azure/gpt-5.5@swedencentral",
     pricingModelId: "gpt-5.5"
@@ -1268,9 +1280,14 @@ function initSecondaryNoteModule() {
       onChange: (modelId) => {
         clearSecondaryUsageAndCost();
         const reasoningSelect = el("secondaryNanoReasoning");
-        const previous = modelId === "gemini-3.8-flash" || modelId.startsWith("deepseek-")
-          ? getDefaultRequestyReasoning(modelId)
-          : String(reasoningSelect?.value || "");
+        const storedReasoning = readSession(STORAGE_KEYS.requestyNanoReasoning, null);
+        const previous = modelId.startsWith("gpt-6-")
+          ? (storedReasoning == null
+              ? getDefaultRequestyReasoning(modelId)
+              : storedReasoning)
+          : modelId === "gemini-3.8-flash" || modelId.startsWith("deepseek-")
+            ? getDefaultRequestyReasoning(modelId)
+            : String(reasoningSelect?.value || "");
         setSelectOptions(
           reasoningSelect,
           listRequestyNanoReasoningOptions(modelId)

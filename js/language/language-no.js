@@ -57,6 +57,8 @@ export const indexTranslations = {
   <ul>
     <li>Claude Opus 5</li>
     <li>Claude Sonnet 5</li>
+    <li>GPT-6 Luna</li>
+    <li>GPT-6 Sol</li>
     <li>GPT-5.6 Sol</li>
     <li>GPT-5.6 Terra</li>
     <li>GPT-5.6 Luna</li>
@@ -91,6 +93,7 @@ export const indexTranslations = {
     <li><strong>Billigst til sammendrag og forbehandling:</strong> GPT-5 Nano</li>
     <li><strong>Ytterligere alternativ:</strong> Kimi K3</li>
   </ul>
+  <p>GPT-6 Luna og GPT-6 Sol støtter reasoning-nivåene None, Low, Medium og High i appen; når ingen tidligere reasoning-verdi er lagret, er standardvalget Low.</p>
   <p>DeepSeek V4 Pro og DeepSeek V4.1 Flash støtter reasoning-nivåene None, Low, High og Max; appens standardvalg er Low.</p>
   <p>
     Ved svært lange kildedokumenter kan en rimelig modell som GPT-5 Nano først lage et kort sammendrag til Supplerende informasjon.
@@ -246,7 +249,7 @@ Dette gir tilgang til transkripsjon av høy kvalitet og et kuratert utvalg nyere
 - Mistral Voxtral Mini Transcribe<br><br>
 
 <strong>Leverandører for notatgenerering i appen</strong><br>
-- Requesty: Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash og Kimi K3<br>
+- Requesty: Claude Opus 5, Claude Sonnet 5, GPT-6 Luna, GPT-6 Sol, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash og Kimi K3<br>
 - OpenAI: GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna og GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 og Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
@@ -352,6 +355,8 @@ En API-nøkkel alene gjør ikke en tjeneste GDPR-kompatibel. Kontroller leverand
   <ul>
     <li>Claude Opus 5: omtrent 5,50 / 27,50 USD</li>
     <li>Claude Sonnet 5: omtrent 2,20 / 11,00 USD</li>
+    <li>GPT-6 Luna: omtrent 0,12 / 0,60 USD</li>
+    <li>GPT-6 Sol: omtrent 2,40 / 12,00 USD</li>
     <li>GPT-5.6 Sol: omtrent 5,50 / 33,00 USD</li>
     <li>GPT-5.6 Terra: omtrent 2,20 / 13,20 USD</li>
     <li>GPT-5.6 Luna: omtrent 0,22 / 1,32 USD</li>

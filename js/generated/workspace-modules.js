@@ -671,7 +671,7 @@ const resolveEffectiveNoteProvider = shared0["resolveEffectiveNoteProvider"];
       await persistAndSwitchNoteProvider();
     });
     // Switching the Requesty model changes the EFFECTIVE provider
-    // (requesty-claude <-> requesty-gpt55 <-> requesty-gpt56-*), so run the full
+    // (requesty-claude <-> requesty-gpt6-* <-> requesty-gpt55 <-> requesty-gpt56-*), so run the full
     // persist-and-switch path — same as the OpenAI model selector.
     requestyModelSelect?.addEventListener('change', async () => {
       const modelId = normalizeRequestyModel(requestyModelSelect.value);
@@ -679,11 +679,21 @@ const resolveEffectiveNoteProvider = shared0["resolveEffectiveNoteProvider"];
         requestyNanoReasoningSelect,
         listRequestyNanoReasoningOptions(modelId)
       );
-      if (
-        requestyNanoReasoningSelect &&
-        (modelId === 'gemini-3.8-flash' || modelId.startsWith('deepseek-'))
-      ) {
-        requestyNanoReasoningSelect.value = getDefaultRequestyReasoning(modelId);
+      if (requestyNanoReasoningSelect) {
+        if (modelId.startsWith('gpt-6-')) {
+          const storedReasoning = readSession(STORAGE_KEYS.requestyNanoReasoning, null);
+          requestyNanoReasoningSelect.value = normalizeRequestyNanoReasoning(
+            storedReasoning == null
+              ? getDefaultRequestyReasoning(modelId)
+              : storedReasoning,
+            modelId
+          );
+        } else if (
+          modelId === 'gemini-3.8-flash' ||
+          modelId.startsWith('deepseek-')
+        ) {
+          requestyNanoReasoningSelect.value = getDefaultRequestyReasoning(modelId);
+        }
       }
       await persistAndSwitchNoteProvider();
     });
@@ -1175,6 +1185,7 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
   // Requesty (EU router) — published endpoint rates, USD per 1M tokens.
   // claude-opus-5: bedrock/claude-opus-5@eu-north-1 rates
   // claude-sonnet-5: vertex/claude-sonnet-5@eu rates (EU regional pricing)
+  // gpt-6-luna/sol:  Azure Sweden Central rates from Requesty's model cards
   // gpt-5.5:         azure/gpt-5.5@swedencentral rates
   // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
   // gpt-5.6-*:       Azure Sweden Central rates from Requesty's model cards
@@ -1185,6 +1196,8 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
   const REQUESTY_USD_PER_MTOK = {
     "claude-opus-5": { input: 5.5, output: 27.5 },
     "claude-sonnet-5": { input: 2.2, output: 11.0 },
+    "gpt-6-luna": { input: 0.12, output: 0.6 },
+    "gpt-6-sol": { input: 2.4, output: 12.0 },
     "gpt-5.5": { input: 5.0, output: 30.0 },
     "gpt-5-nano": { input: 0.05, output: 0.4 },
     "gpt-5.6-luna": { input: 0.22, output: 1.32 },
@@ -6039,6 +6052,18 @@ const REQUESTY_VARIANTS = {
     requestyModelId: "vertex/claude-sonnet-5@eu",
     pricingModelId: "claude-sonnet-5"
   },
+  "gpt-6-luna": {
+    requestyModelId: "azure/gpt-6-luna@swedencentral",
+    pricingModelId: "gpt-6-luna",
+    reasoningSelector: "dedicated",
+    sendNoneReasoning: true
+  },
+  "gpt-6-sol": {
+    requestyModelId: "azure/gpt-6-sol@swedencentral",
+    pricingModelId: "gpt-6-sol",
+    reasoningSelector: "dedicated",
+    sendNoneReasoning: true
+  },
   "gpt-5.5": {
     requestyModelId: "azure/gpt-5.5@swedencentral",
     pricingModelId: "gpt-5.5"
@@ -7215,9 +7240,14 @@ function initSecondaryNoteModule() {
       onChange: (modelId) => {
         clearSecondaryUsageAndCost();
         const reasoningSelect = el("secondaryNanoReasoning");
-        const previous = modelId === "gemini-3.8-flash" || modelId.startsWith("deepseek-")
-          ? getDefaultRequestyReasoning(modelId)
-          : String(reasoningSelect?.value || "");
+        const storedReasoning = readSession(STORAGE_KEYS.requestyNanoReasoning, null);
+        const previous = modelId.startsWith("gpt-6-")
+          ? (storedReasoning == null
+              ? getDefaultRequestyReasoning(modelId)
+              : storedReasoning)
+          : modelId === "gemini-3.8-flash" || modelId.startsWith("deepseek-")
+            ? getDefaultRequestyReasoning(modelId)
+            : String(reasoningSelect?.value || "");
         setSelectOptions(
           reasoningSelect,
           listRequestyNanoReasoningOptions(modelId)
@@ -19340,6 +19370,8 @@ const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout
 // the EU (GDPR compliant):
 //
 //   - Claude Opus 5    -> bedrock/claude-opus-5@eu-north-1   (AWS Bedrock, Stockholm)
+//   - GPT-6 Luna       -> azure/gpt-6-luna@swedencentral     (Azure, Sweden Central)
+//   - GPT-6 Sol        -> azure/gpt-6-sol@swedencentral      (Azure, Sweden Central)
 //   - GPT-5.5          -> azure/gpt-5.5@swedencentral        (Azure, Sweden Central)
 //   - GPT-5.6 Luna     -> azure/gpt-5.6-luna@swedencentral   (Azure, Sweden Central)
 //   - GPT-5.6 Terra    -> azure/gpt-5.6-terra@swedencentral  (Azure, Sweden Central)
@@ -19364,8 +19396,9 @@ const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout
 //                 Anthropic models. Requesty forwards the standard OpenAI
 //                 efforts, including model-supported "xhigh", and converts
 //                 Anthropic efforts to a thinking-token budget.
-//                 "none" is handled here by omitting the parameter, matching
-//                 the native OpenAI note module's behaviour.
+//                 "none" is normally omitted for variants that use adaptive
+//                 defaults; GPT-6 and DeepSeek variants explicitly send
+//                 "none" when the user selects it.
 
 const beginNoteRun = load("core/note-runner.js")["beginNoteRun"];
 const bindGenerateNoteButton = load("core/note-runner.js")["bindGenerateNoteButton"];
@@ -19408,6 +19441,22 @@ const VARIANTS = Object.freeze({
     // on Requesty: vertex/claude-sonnet-5@eu.
     requestyModelId: "vertex/claude-sonnet-5@eu",
     pricingModelId: "claude-sonnet-5"
+  },
+  "gpt-6-luna": {
+    // Azure OpenAI, Sweden Central (EU). The app intentionally exposes only
+    // none | low | medium | high and defaults to low when no choice is stored.
+    requestyModelId: "azure/gpt-6-luna@swedencentral",
+    pricingModelId: "gpt-6-luna",
+    reasoningSelector: "dedicated",
+    sendNoneReasoning: true
+  },
+  "gpt-6-sol": {
+    // Azure OpenAI, Sweden Central (EU). The app intentionally exposes only
+    // none | low | medium | high and defaults to low when no choice is stored.
+    requestyModelId: "azure/gpt-6-sol@swedencentral",
+    pricingModelId: "gpt-6-sol",
+    reasoningSelector: "dedicated",
+    sendNoneReasoning: true
   },
   "gpt-5.5": {
     // Azure OpenAI, Sweden Central (EU).
@@ -19492,8 +19541,8 @@ function resolveEffectiveMode() {
 }
 
 function resolveReasoningLevel(variantKey, variantConfig) {
-  // GPT-5 Nano, GPT-5.6, Gemini 3.8 Flash, DeepSeek, and Kimi K3 use the
-  // dedicated Requesty selector.
+  // GPT-5 Nano, GPT-5.6, GPT-6 Luna/Sol, Gemini 3.8 Flash, DeepSeek, and
+  // Kimi K3 use the dedicated Requesty selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
     return normalizeRequestyNanoReasoning(
@@ -19685,7 +19734,7 @@ async function generateNote() {
 // -----------------------------------------------------------------------------
 //
 // All effective providers (requesty-claude / requesty-sonnet /
-// requesty-gpt55 / requesty-nano / requesty-gpt56-* /
+// requesty-gpt6-* / requesty-gpt55 / requesty-nano / requesty-gpt56-* /
 // requesty-gemini38-flash / requesty-deepseek-* / requesty-kimi-k3)
 // bind the same generate function; the active model is read from the
 // #requestyModel select / requesty_model session key at click time. Separate
@@ -19697,6 +19746,14 @@ function initRequestyClaudeOpus5() {
 }
 
 function initRequestyClaudeSonnet5() {
+  bindGenerateNoteButton(generateNote);
+}
+
+function initRequestyGpt6Luna() {
+  bindGenerateNoteButton(generateNote);
+}
+
+function initRequestyGpt6Sol() {
   bindGenerateNoteButton(generateNote);
 }
 
@@ -19740,6 +19797,8 @@ function initRequestyKimiK3() {
 
 return Object.freeze(Object.defineProperties({}, {"initRequestyClaudeOpus5": { enumerable: true, get: () => initRequestyClaudeOpus5 },
 "initRequestyClaudeSonnet5": { enumerable: true, get: () => initRequestyClaudeSonnet5 },
+"initRequestyGpt6Luna": { enumerable: true, get: () => initRequestyGpt6Luna },
+"initRequestyGpt6Sol": { enumerable: true, get: () => initRequestyGpt6Sol },
 "initRequestyGpt55": { enumerable: true, get: () => initRequestyGpt55 },
 "initRequestyGpt5Nano": { enumerable: true, get: () => initRequestyGpt5Nano },
 "initRequestyGpt56Luna": { enumerable: true, get: () => initRequestyGpt56Luna },

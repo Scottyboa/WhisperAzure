@@ -131,6 +131,24 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './requesty.js',
     initExportName: 'initRequestyClaudeSonnet5',
   },
+  'requesty-gpt6-luna': {
+    id: 'requesty-gpt6-luna',
+    label: 'Requesty GPT-6 Luna',
+    uiProvider: 'requesty',
+    requestyModel: 'gpt-6-luna',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyGpt6Luna',
+  },
+  'requesty-gpt6-sol': {
+    id: 'requesty-gpt6-sol',
+    label: 'Requesty GPT-6 Sol',
+    uiProvider: 'requesty',
+    requestyModel: 'gpt-6-sol',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyGpt6Sol',
+  },
   'requesty-gpt55': {
     id: 'requesty-gpt55',
     label: 'Requesty GPT-5.5',
@@ -224,6 +242,8 @@ const NOTE_UI_PROVIDER_OPTIONS = [
 const REQUESTY_MODEL_OPTIONS = [
   { value: 'claude-opus-5', label: 'Claude Opus 5' },
   { value: 'claude-sonnet-5', label: 'Claude Sonnet 5' },
+  { value: 'gpt-6-luna', label: 'GPT-6 Luna' },
+  { value: 'gpt-6-sol', label: 'GPT-6 Sol' },
   { value: 'gpt-5.6-sol', label: 'GPT-5.6 Sol' },
   { value: 'gpt-5.6-terra', label: 'GPT-5.6 Terra' },
   { value: 'gpt-5.6-luna', label: 'GPT-5.6 Luna' },
@@ -244,6 +264,16 @@ const REQUESTY_MODEL_OPTIONS = [
 // defaults to max when omitted, but the app intentionally defaults to low.
 const REQUESTY_NANO_REASONING_OPTIONS = [
   { value: 'minimal', label: 'Minimal' },
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+];
+
+// GPT-6 Luna/Sol support a wider upstream reasoning range, but the Requesty
+// UI intentionally exposes only the four levels requested by the app:
+// none | low | medium | high. Low is the app default for these two models.
+const REQUESTY_GPT6_REASONING_OPTIONS = [
+  { value: 'none', label: 'None' },
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
   { value: 'high', label: 'High' },
@@ -284,6 +314,11 @@ const REQUESTY_DEEPSEEK_REASONING_OPTIONS = [
 const REQUESTY_DEEPSEEK_MODELS = new Set([
   'deepseek-v4-pro-0813',
   'deepseek-v4.1-flash',
+]);
+
+const REQUESTY_GPT6_MODELS = new Set([
+  'gpt-6-luna',
+  'gpt-6-sol',
 ]);
 
 const REQUESTY_GPT56_MODELS = new Set([
@@ -447,16 +482,20 @@ export function listRequestyNanoReasoningOptions(
       ? REQUESTY_KIMI_K3_REASONING_OPTIONS
       : normalizedModel === 'gemini-3.8-flash'
         ? REQUESTY_GEMINI38_REASONING_OPTIONS
-        : REQUESTY_GPT56_MODELS.has(normalizedModel)
-          ? REQUESTY_GPT56_REASONING_OPTIONS
-          : REQUESTY_NANO_REASONING_OPTIONS;
+        : REQUESTY_GPT6_MODELS.has(normalizedModel)
+          ? REQUESTY_GPT6_REASONING_OPTIONS
+          : REQUESTY_GPT56_MODELS.has(normalizedModel)
+            ? REQUESTY_GPT56_REASONING_OPTIONS
+            : REQUESTY_NANO_REASONING_OPTIONS;
   return options.map((item) => ({ ...item }));
 }
 
 export function getDefaultRequestyReasoning(modelId = 'gpt-5-nano') {
   const normalizedModel = normalizeRequestyModel(modelId);
   if (REQUESTY_DEEPSEEK_MODELS.has(normalizedModel)) return 'low';
-  return normalizedModel === 'gemini-3.8-flash' || normalizedModel === 'kimi-k3'
+  return REQUESTY_GPT6_MODELS.has(normalizedModel) ||
+    normalizedModel === 'gemini-3.8-flash' ||
+    normalizedModel === 'kimi-k3'
     ? 'low'
     : DEFAULTS.requestyNanoReasoning;
 }
@@ -734,6 +773,7 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
       reqModel === 'gemini-3.8-flash' ||
       REQUESTY_DEEPSEEK_MODELS.has(reqModel) ||
       reqModel === 'kimi-k3' ||
+      REQUESTY_GPT6_MODELS.has(reqModel) ||
       REQUESTY_GPT56_MODELS.has(reqModel));
 
   // Streaming/non-streaming (#noteProviderMode) is available for all Requesty
@@ -741,7 +781,7 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   // (#gpt5Reasoning, None/Low/Medium/High): the Anthropic models (Opus 5,
   // Sonnet 5) map reasoning_effort to a thinking budget ("None" omits it),
   // and GPT-5.5 uses the native OpenAI effort string. GPT-5 Nano, GPT-5.6,
-  // Gemini 3.8 Flash, DeepSeek V4 Pro/V4.1 Flash and Kimi K3 use the dedicated
+  // GPT-6 Luna/Sol, Gemini 3.8 Flash, DeepSeek V4 Pro/V4.1 Flash and Kimi K3 use the dedicated
   // Requesty selector because their valid option sets differ from the shared
   // selector.
 

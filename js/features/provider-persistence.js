@@ -664,7 +664,7 @@ import {
       await persistAndSwitchNoteProvider();
     });
     // Switching the Requesty model changes the EFFECTIVE provider
-    // (requesty-claude <-> requesty-gpt55 <-> requesty-gpt56-*), so run the full
+    // (requesty-claude <-> requesty-gpt6-* <-> requesty-gpt55 <-> requesty-gpt56-*), so run the full
     // persist-and-switch path — same as the OpenAI model selector.
     requestyModelSelect?.addEventListener('change', async () => {
       const modelId = normalizeRequestyModel(requestyModelSelect.value);
@@ -672,11 +672,21 @@ import {
         requestyNanoReasoningSelect,
         listRequestyNanoReasoningOptions(modelId)
       );
-      if (
-        requestyNanoReasoningSelect &&
-        (modelId === 'gemini-3.8-flash' || modelId.startsWith('deepseek-'))
-      ) {
-        requestyNanoReasoningSelect.value = getDefaultRequestyReasoning(modelId);
+      if (requestyNanoReasoningSelect) {
+        if (modelId.startsWith('gpt-6-')) {
+          const storedReasoning = readSession(STORAGE_KEYS.requestyNanoReasoning, null);
+          requestyNanoReasoningSelect.value = normalizeRequestyNanoReasoning(
+            storedReasoning == null
+              ? getDefaultRequestyReasoning(modelId)
+              : storedReasoning,
+            modelId
+          );
+        } else if (
+          modelId === 'gemini-3.8-flash' ||
+          modelId.startsWith('deepseek-')
+        ) {
+          requestyNanoReasoningSelect.value = getDefaultRequestyReasoning(modelId);
+        }
       }
       await persistAndSwitchNoteProvider();
     });

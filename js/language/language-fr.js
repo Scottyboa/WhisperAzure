@@ -37,7 +37,7 @@ export const indexTranslations = {
   <p><strong>Requesty — recommandé aux nouveaux utilisateurs</strong></p>
   <p>Requesty donne accès aux modèles de plusieurs développeurs avec une seule clé API. L’application limite volontairement les choix à des déploiements prévus pour un traitement dans l’UE, sans réutilisation pour l’entraînement et avec des contrôles de conservation adaptés.</p>
   <ul>
-    <li>Claude Opus 5</li><li>Claude Sonnet 5</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 3.8 Flash</li><li>DeepSeek V4 Pro</li><li>DeepSeek V4.1 Flash</li><li>Kimi K3</li>
+    <li>Claude Opus 5</li><li>Claude Sonnet 5</li><li>GPT-6 Luna</li><li>GPT-6 Sol</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 3.8 Flash</li><li>DeepSeek V4 Pro</li><li>DeepSeek V4.1 Flash</li><li>Kimi K3</li>
   </ul>
   <p><strong>Autres fournisseurs pris en charge</strong></p>
   <ul>
@@ -55,6 +55,7 @@ export const indexTranslations = {
     <li><strong>Résumé/prétraitement au coût minimal :</strong> GPT-5 Nano</li>
     <li><strong>Autre possibilité :</strong> Kimi K3</li>
   </ul>
+  <p>GPT-6 Luna et GPT-6 Sol proposent dans l’application les niveaux de raisonnement None, Low, Medium et High ; si aucun choix antérieur n’est enregistré, Low est utilisé par défaut.</p>
   <p>DeepSeek V4 Pro et DeepSeek V4.1 Flash prennent en charge les niveaux de raisonnement None, Low, High et Max ; l’application utilise Low par défaut.</p>
   <p>Pour un long document, un modèle économique comme GPT-5 Nano peut d’abord produire un résumé destiné aux Informations supplémentaires. Le modèle principal plus puissant crée ensuite la note sans recevoir tout le document, ce qui peut fortement réduire le coût.</p>
 
@@ -181,7 +182,7 @@ Configuration recommandée la plus simple :<br>
 2. <strong>Requesty</strong> pour les notes.<br><br>
 
 <strong>Options STT :</strong> Soniox par lots, par lots avec identification des locuteurs, temps réel, OpenAI gpt-4o-transcribe et Mistral Voxtral Mini.<br><br>
-<strong>Fournisseurs de notes :</strong> Requesty (Claude Opus 5, Claude Sonnet 5, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3), OpenAI (GPT-5.6 Sol/Terra/Luna et GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) et Mistral Large.<br><br>
+<strong>Fournisseurs de notes :</strong> Requesty (Claude Opus 5, Claude Sonnet 5, GPT-6 Luna, GPT-6 Sol, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3), OpenAI (GPT-5.6 Sol/Terra/Luna et GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) et Mistral Large.<br><br>
 
 <hr><br>
 <strong>Soniox — configuration STT recommandée</strong><br>
@@ -234,6 +235,7 @@ Une clé API ne rend pas un service automatiquement conforme au RGPD. Vérifiez 
   <p><strong>2. Génération de note</strong> (USD par million de tokens entrée/sortie)</p>
   <ul>
     <li>Claude Opus 5 : env. 5,50 / 27,50 USD</li><li>Claude Sonnet 5 : env. 2,20 / 11,00 USD</li>
+    <li>GPT-6 Luna : env. 0,12 / 0,60 USD</li><li>GPT-6 Sol : env. 2,40 / 12,00 USD</li>
     <li>GPT-5.6 Sol : env. 5,50 / 33,00 USD</li><li>GPT-5.6 Terra : env. 2,20 / 13,20 USD</li>
     <li>GPT-5.6 Luna : env. 0,22 / 1,32 USD</li><li>GPT-5.5 : env. 5,00 / 30,00 USD</li>
     <li>GPT-5 Nano : env. 0,05 / 0,40 USD</li><li>Gemini 3.8 Flash : env. 0,825 / 4,125 USD (remise actuelle de 50 % sur ce point de terminaison)</li><li>DeepSeek V4 Pro : env. 1,75 / 3,50 USD (entrée en cache : 0,44 USD)</li><li>DeepSeek V4.1 Flash : env. 0,50 / 1,50 USD (entrée en cache : 0,05 USD)</li><li>Kimi K3 : env. 3,00 / 15,00 USD</li>
