@@ -511,6 +511,17 @@
     .top-bar-center button {
       margin: 0;         /* avoid global button margins breaking “equal spacing” */
     }
+    /* Right-side top-bar controls: Prices sits immediately before language. */
+    .top-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .top-bar-right > #btnPrices {
+      margin: 0;         /* match the Guide/Status top-bar buttons */
+    }
+
     /* Language Container in Top Bar (right side) */
     #lang-container-transcribe {
       display: flex;
@@ -1630,6 +1641,133 @@
       vertical-align: middle;
     }
 
+    /* Prices Overlay Styles (same window pattern as Guide) */
+    #pricesView {
+      display: none;
+      position: fixed;
+      top: 10%;
+      left: 10%;
+      width: 80%;
+      height: 80%;
+      box-sizing: border-box;
+      background: white;
+      border: 2px solid #ccc;
+      padding: 20px;
+      overflow-y: auto;
+      z-index: 2004;
+      text-align: left;
+    }
+    #pricesView.active {
+      display: block;
+    }
+    #pricesClose {
+      position: sticky;
+      top: 10px;
+      float: right;
+      background: none;
+      border: none;
+      color: red;
+      font-size: 26px;
+      line-height: 1;
+      cursor: pointer;
+      margin: 0;
+      padding: 0 6px;
+      z-index: 2005;
+    }
+    #pricesHeading {
+      margin: 0 46px 6px 0;
+      font-size: 22px;
+    }
+    #pricesIntro {
+      margin: 0 46px 20px 0;
+      color: #4b5563;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .prices-section {
+      margin-top: 24px;
+    }
+    .prices-section:first-of-type {
+      margin-top: 14px;
+    }
+    .prices-section-title {
+      margin: 0 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #d9dde5;
+      font-size: 19px;
+    }
+    .prices-provider {
+      margin: 18px 0 7px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #263238;
+    }
+    .prices-table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      margin-bottom: 14px;
+    }
+    .prices-table {
+      width: 100%;
+      min-width: 560px;
+      border-collapse: collapse;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    .prices-table th,
+    .prices-table td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: middle;
+    }
+    .prices-table th {
+      background: #f7f9fc;
+      border-top: 1px solid #dde2ea;
+      color: #374151;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .prices-table th:first-child,
+    .prices-table td:first-child {
+      text-align: left;
+    }
+    .prices-table th:not(:first-child),
+    .prices-table td:not(:first-child) {
+      text-align: right;
+      white-space: nowrap;
+    }
+    .prices-model-id {
+      display: block;
+      margin-top: 2px;
+      color: #7a838f;
+      font-size: 11px;
+      font-weight: 400;
+      white-space: normal;
+    }
+    .prices-note {
+      margin: 8px 0 0;
+      color: #626b77;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .prices-footnotes {
+      margin-top: 18px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+    }
+    @media (max-width: 800px) {
+      #pricesView {
+        top: 5%;
+        left: 3%;
+        width: 94%;
+        height: 90%;
+        padding: 16px;
+      }
+      .prices-table {
+        min-width: 520px;
+      }
+    }
+
     /* News Overlay Styles (same UX as Guide) */
     #newsView {
       display: none;
@@ -2154,20 +2292,23 @@
       <button id="medicalCalcOpenBtn" type="button" disabled>Open</button>
     </div>
   </div>
-<!-- Language container remains on the far right -->
-  <div id="lang-container-transcribe">
-    <img src="language-icon.png" alt="Language Icon" id="lang-icon-transcribe" />
-    <select id="lang-select-transcribe">
-      <option value="en">English</option>
-      <option value="no">Norsk</option>
-      <option value="sv">Svenska</option>
-      <option value="de">Deutsch</option>
-      <option value="fr">Français</option>
-      <option value="it">Italiano</option>
-    </select>
+<!-- Keep the existing center controls in place; Prices sits between Clinical Tools and language. -->
+  <div class="top-bar-right">
+    <button id="btnPrices" type="button" aria-controls="pricesView" aria-haspopup="dialog">Prices</button>
+    <div id="lang-container-transcribe">
+      <img src="language-icon.png" alt="Language Icon" id="lang-icon-transcribe" />
+      <select id="lang-select-transcribe">
+        <option value="en">English</option>
+        <option value="no">Norsk</option>
+        <option value="sv">Svenska</option>
+        <option value="de">Deutsch</option>
+        <option value="fr">Français</option>
+        <option value="it">Italiano</option>
+      </select>
+    </div>
   </div>
 
-  
+
 </div>
       <!-- Recording Area -->
       <div class="recording-area">
@@ -3166,6 +3307,14 @@
   </div>
 
   
+  <!-- Prices Overlay -->
+  <div id="pricesView" role="dialog" aria-modal="true" aria-labelledby="pricesHeading" aria-hidden="true">
+    <button id="pricesClose" type="button" aria-label="Close">×</button>
+    <h3 id="pricesHeading">Prices</h3>
+    <p id="pricesIntro"></p>
+    <div id="pricesBody"></div>
+  </div>
+
   <!-- News Overlay (loads Nyheter_*.txt based on language) -->
   <div id="newsView" aria-hidden="true">
     <button id="newsClose" type="button" aria-label="Close">×</button>
@@ -3185,6 +3334,7 @@
   </div>
 
   <script type="module" src="./js/features/overlays.js"></script>
+  <script type="module" src="./js/features/prices-overlay.js"></script>
 
 
   <script type="module" src="./js/features/editor-tools.js"></script>
