@@ -57,8 +57,8 @@ export const indexTranslations = {
   <ul>
     <li>Claude Opus 5</li>
     <li>Claude Sonnet 5</li>
-    <li>GPT-6 Luna</li>
     <li>GPT-6 Sol</li>
+    <li>GPT-6 Luna</li>
     <li>GPT-5.6 Sol</li>
     <li>GPT-5.6 Terra</li>
     <li>GPT-5.6 Luna</li>
@@ -93,7 +93,7 @@ export const indexTranslations = {
     <li><strong>Billigst til sammendrag og forbehandling:</strong> GPT-5 Nano</li>
     <li><strong>Ytterligere alternativ:</strong> Kimi K3</li>
   </ul>
-  <p>GPT-6 Luna og GPT-6 Sol støtter reasoning-nivåene None, Low, Medium og High i appen; når ingen tidligere reasoning-verdi er lagret, er standardvalget Low.</p>
+  <p>GPT-6 Sol og GPT-6 Luna støtter reasoning-nivåene None, Low, Medium og High i appen; når ingen tidligere reasoning-verdi er lagret, er standardvalget Low.</p>
   <p>DeepSeek V4 Pro og DeepSeek V4.1 Flash støtter reasoning-nivåene None, Low, High og Max; appens standardvalg er Low.</p>
   <p>
     Ved svært lange kildedokumenter kan en rimelig modell som GPT-5 Nano først lage et kort sammendrag til Supplerende informasjon.
@@ -249,7 +249,7 @@ Dette gir tilgang til transkripsjon av høy kvalitet og et kuratert utvalg nyere
 - Mistral Voxtral Mini Transcribe<br><br>
 
 <strong>Leverandører for notatgenerering i appen</strong><br>
-- Requesty: Claude Opus 5, Claude Sonnet 5, GPT-6 Luna, GPT-6 Sol, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash og Kimi K3<br>
+- Requesty: Claude Opus 5, Claude Sonnet 5, GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash og Kimi K3<br>
 - OpenAI: GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna og GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 og Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
@@ -355,13 +355,13 @@ En API-nøkkel alene gjør ikke en tjeneste GDPR-kompatibel. Kontroller leverand
   <ul>
     <li>Claude Opus 5: omtrent 5,50 / 27,50 USD</li>
     <li>Claude Sonnet 5: omtrent 2,20 / 11,00 USD</li>
-    <li>GPT-6 Luna: omtrent 0,12 / 0,60 USD</li>
     <li>GPT-6 Sol: omtrent 2,40 / 12,00 USD</li>
-    <li>GPT-5.6 Sol: omtrent 5,50 / 33,00 USD</li>
+    <li>GPT-6 Luna: omtrent 0,12 / 0,60 USD</li>
+    <li>GPT-5.6 Sol: omtrent 4,40 / 22,00 USD</li>
     <li>GPT-5.6 Terra: omtrent 2,20 / 13,20 USD</li>
     <li>GPT-5.6 Luna: omtrent 0,22 / 1,32 USD</li>
     <li>GPT-5.5: omtrent 5,00 / 30,00 USD</li>
-    <li>GPT-5 Nano: omtrent 0,05 / 0,40 USD</li>
+    <li>GPT-5 Nano: omtrent 0,055 / 0,44 USD</li>
     <li>Gemini 3.8 Flash: omtrent 0,825 / 4,125 USD (nåværende endepunktsrabatt på 50 %)</li>
     <li>DeepSeek V4 Pro: omtrent 1,75 / 3,50 USD (bufret input: 0,44 USD)</li>
     <li>DeepSeek V4.1 Flash: omtrent 0,50 / 1,50 USD (bufret input: 0,05 USD)</li>
@@ -407,7 +407,7 @@ En API-nøkkel alene gjør ikke en tjeneste GDPR-kompatibel. Kontroller leverand
     <li><strong>Gemini 3.8 Flash-notat:</strong> omtrent 0,004 USD.</li>
     <li><strong>Claude Sonnet 5-notat:</strong> omtrent 0,010 USD.</li>
     <li><strong>Claude Opus 5-notat:</strong> omtrent 0,025 USD.</li>
-    <li><strong>GPT-5.6 Sol-notat:</strong> omtrent 0,027 USD.</li>
+    <li><strong>GPT-5.6 Sol-notat:</strong> omtrent 0,020 USD.</li>
   </ul>
   <p>
     Ved vanlige korte konsultasjoner kan tale-til-tekst fortsatt utgjøre en stor del av totalprisen. Ved svært lang Supplerende informasjon

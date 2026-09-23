@@ -1,3 +1,13 @@
+## 23. september 2026
+
+### GPT-6 Sol og GPT-6 Luna er lagt til
+
+**GPT-6 Sol** og **GPT-6 Luna** er nå tilgjengelige via Requesty.
+
+Begge modellene rutes gjennom **Azure OpenAI i Sweden Central**. Endepunktene har **zero data retention**, all databehandling skjer kun i **EU**, og forespørsler og svar brukes **ikke til modelltrening**.
+
+---
+
 ## 21. september 2026
 
 ### Bedre ytelse og lavere ressursbruk

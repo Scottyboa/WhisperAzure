@@ -1,3 +1,13 @@
+## 23 September, 2026
+
+### GPT-6 Sol and GPT-6 Luna added
+
+**GPT-6 Sol** and **GPT-6 Luna** are now available through Requesty.
+
+Both models are routed through **Azure OpenAI in Sweden Central**. The endpoints use **zero data retention**, all data processing takes place only in the **EU**, and requests and responses are **not used for model training**.
+
+---
+
 ## 21 September, 2026
 
 ### Better performance and lower resource usage
