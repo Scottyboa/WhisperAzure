@@ -1099,7 +1099,12 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
       'terrasse', 'terrassen'
     ]);
 
-    const redactInText = (text, terms) => {
+    // Terms entered under Specific are intentionally matched as raw
+    // case-insensitive substrings. This means a term such as "Karin" is
+    // redacted both when it stands alone and when it is attached to other
+    // letters/digits/symbols (for example "abc796karin" -> "abc796[REDACTED]").
+    // General terms keep the existing word-boundary behaviour.
+    const redactInText = (text, terms, specificTermKeys = new Set()) => {
       let output = text || '';
       let replacedAny = false;
 
@@ -1177,9 +1182,13 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
 
       for (const term of terms) {
         const escaped = escapeRegex(term);
-        const pattern = isWordOnlyRedactionTerm(term)
-          ? new RegExp(`(?<![\\p{L}\\p{N}_])${escaped}(?![\\p{L}\\p{N}_])`, 'giu')
-          : new RegExp(escaped, 'gi');
+        const normalizedTerm = term.toLocaleLowerCase();
+        const isSpecificTerm = specificTermKeys.has(normalizedTerm);
+        const pattern = isSpecificTerm
+          ? new RegExp(escaped, 'gi')
+          : isWordOnlyRedactionTerm(term)
+            ? new RegExp(`(?<![\\p{L}\\p{N}_])${escaped}(?![\\p{L}\\p{N}_])`, 'giu')
+            : new RegExp(escaped, 'gi');
         const updated = output.replace(pattern, '[REDACTED]');
         if (updated !== output) {
           replacedAny = true;
@@ -1206,6 +1215,10 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
           return true;
         });
     };
+
+    const getSpecificRedactorTermKeys = () => new Set(
+      getLines(redactorTermsEl?.value || '').map((term) => term.toLocaleLowerCase())
+    );
 
     const revokeCurrentImageUrl = () => {
       if (!currentOcrImageObjectUrl) return;
@@ -2062,16 +2075,17 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
     if (applyRedactionButton) {
       applyRedactionButton.addEventListener('click', async () => {
         const terms = getRedactorTerms();
+        const specificTermKeys = getSpecificRedactorTermKeys();
         let replacedAny = false;
 
         if (transcriptionEl) {
-          const result = redactInText(transcriptionEl.value || '', terms);
+          const result = redactInText(transcriptionEl.value || '', terms, specificTermKeys);
           transcriptionEl.value = result.text;
           replacedAny = replacedAny || result.replacedAny;
         }
 
         if (supplementaryInfoEl) {
-          const result = redactInText(supplementaryInfoEl.value || '', terms);
+          const result = redactInText(supplementaryInfoEl.value || '', terms, specificTermKeys);
           supplementaryInfoEl.value = result.text;
           replacedAny = replacedAny || result.replacedAny;
         }
