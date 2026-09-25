@@ -986,6 +986,11 @@ async function generateSecondaryNote() {
   const outputField = el("secondaryGeneratedNote");
   if (!sourceField || !outputField) return;
 
+  // Reset any manual vertical resize so each Generate starts with the
+  // secondary output field at its default CSS height.
+  outputField.style.height = "";
+  outputField.scrollTop = 0;
+
   syncSecondarySourceDate();
   const sourceText = String(sourceField.value || "").trim();
   if (!stripSecondarySourceDateLines(sourceText)) {
