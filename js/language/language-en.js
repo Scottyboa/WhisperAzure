@@ -71,7 +71,7 @@ export const indexTranslations = {
 
   <p><strong>Other supported providers</strong></p>
   <ul>
-    <li><strong>OpenAI</strong> – GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna and GPT-5 Nano</li>
+    <li><strong>OpenAI</strong> – GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna and GPT-5 Nano</li>
     <li><strong>AWS Bedrock</strong> – Claude Haiku 4.5, Claude Sonnet 4.5/4.6 and Claude Opus 4.5/4.6/4.7</li>
     <li><strong>Mistral</strong> – Mistral Large</li>
   </ul>
@@ -251,7 +251,7 @@ This gives access to high-quality transcription and a curated selection of newer
 
 <strong>Note-generation providers in the app</strong><br>
 - Requesty: Claude Opus 5.5, Claude Sonnet 5, GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash and Kimi K3<br>
-- OpenAI: GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna and GPT-5 Nano<br>
+- OpenAI: GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna and GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 and Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
 
@@ -375,7 +375,7 @@ priceModalText: `
 
   <p><strong>Other supported note providers</strong></p>
   <ul>
-    <li><strong>OpenAI:</strong> direct GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna and GPT-5 Nano models.</li>
+    <li><strong>OpenAI direct:</strong> GPT-6 Sol (approximately 2.00 / 10.00 USD through 272K input tokens; 4.00 / 15.00 USD above 272K), GPT-6 Luna (approximately 0.10 / 0.50 USD through 272K; 0.20 / 0.75 USD above 272K), GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna and GPT-5 Nano.</li>
     <li><strong>AWS Bedrock:</strong> Claude Haiku, Sonnet and Opus models. Retained mainly for existing AWS users.</li>
     <li><strong>Mistral:</strong> Mistral Large.</li>
   </ul>
@@ -467,6 +467,7 @@ export const transcribeTranslations = {
     approx: "approx.",
     close: "Close",
     contextNote: "Context is the maximum published context window for the configured model or route.",
+    openAiLongContextNote: "For direct OpenAI GPT-6 models, the lower price applies through 272K input tokens; the higher price applies above 272K.",
     requestyNote: "Requesty prices match the exact routes configured in this app. Any account-level Requesty markup is not included.",
     sttNote: "Speech-to-text prices are current public pay-as-you-go rates. Soniox is token-billed; the per-minute figures shown are approximate equivalents derived from Soniox's published hourly rates.",
   },

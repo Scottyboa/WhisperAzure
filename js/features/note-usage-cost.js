@@ -121,8 +121,19 @@ import {
   const costEl = () => document.getElementById("noteUsageCost");
   const nfInt = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
 
-  // Prices are USD per 1M tokens (Standard pricing; cached-input discounts not applied here).
+  // Prices are USD per 1M tokens (Standard pricing).
+  // GPT-6 uses OpenAI's higher long-context rate when input exceeds 272K tokens.
   const OPENAI_USD_PER_MTOK = {
+    "gpt-6-sol": {
+      short: { input: 2.0, output: 10.0 },
+      long: { input: 4.0, output: 15.0 },
+      longContextThreshold: 272_000,
+    },
+    "gpt-6-luna": {
+      short: { input: 0.1, output: 0.5 },
+      long: { input: 0.2, output: 0.75 },
+      longContextThreshold: 272_000,
+    },
     "gpt-5.6-sol": { input: 4.0, output: 20.0 },
     "gpt-5.6-terra": { input: 2.0, output: 12.0 },
     "gpt-5.6-luna": { input: 0.2, output: 1.2 },
@@ -187,8 +198,9 @@ import {
 
     if (providerKey === "openai") {
       const modelId = normalizeOpenAiModel(openaiModel);
-      const rates = OPENAI_USD_PER_MTOK[modelId];
-      return rates ? { rates } : null;
+      const pricing = OPENAI_USD_PER_MTOK[modelId];
+      if (!pricing) return null;
+      return pricing.short && pricing.long ? pricing : { rates: pricing };
     }
 
     if (providerKey === "mistral") {
@@ -330,6 +342,17 @@ import {
     return inputUsd + outputUsd;
   }
 
+  function resolveOpenAiRates(pricing, inputTokens) {
+    if (!pricing || typeof pricing !== "object") return null;
+    if (!pricing.short || !pricing.long) return pricing;
+
+    const inTok = Number(inputTokens);
+    const threshold = Number(pricing.longContextThreshold);
+    return Number.isFinite(inTok) && Number.isFinite(threshold) && inTok > threshold
+      ? pricing.long
+      : pricing.short;
+  }
+
   function estimateUsd(payload) {
     if (!payload || typeof payload !== "object") return null;
     const pk = resolveUsageProviderKey(payload.providerKey, payload.modelId);
@@ -350,7 +373,8 @@ import {
 
     if (isOpenAiEffectiveNoteProvider(pk)) {
       const modelId = payload.modelId;
-      const rates = modelId ? OPENAI_USD_PER_MTOK[modelId] : null;
+      const pricing = modelId ? OPENAI_USD_PER_MTOK[modelId] : null;
+      const rates = resolveOpenAiRates(pricing, payload.inputTokens);
       if (!rates) return null;
       return estimateUsdFromRates({
         rates,

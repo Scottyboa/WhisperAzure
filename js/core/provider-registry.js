@@ -62,6 +62,24 @@ const TRANSCRIBE_PROVIDER_REGISTRY = {
 };
 
 const NOTE_PROVIDER_REGISTRY = {
+  'openai-gpt6-sol': {
+    id: 'openai-gpt6-sol',
+    label: 'GPT-6 Sol',
+    uiProvider: 'openai',
+    openaiModel: 'gpt-6-sol',
+    mode: DEFAULTS.noteMode,
+    modulePath: './noteGeneration_openai.js',
+    initExportName: 'initOpenAiNoteGeneration',
+  },
+  'openai-gpt6-luna': {
+    id: 'openai-gpt6-luna',
+    label: 'GPT-6 Luna',
+    uiProvider: 'openai',
+    openaiModel: 'gpt-6-luna',
+    mode: DEFAULTS.noteMode,
+    modulePath: './noteGeneration_openai.js',
+    initExportName: 'initOpenAiNoteGeneration',
+  },
   'openai-gpt56-sol': {
     id: 'openai-gpt56-sol',
     label: 'GPT-5.6 Sol',
@@ -337,6 +355,8 @@ const REQUESTY_GPT56_MODELS = new Set([
 ]);
 
 const OPENAI_NOTE_MODEL_OPTIONS = [
+  { value: 'gpt-6-sol', label: 'GPT-6 Sol' },
+  { value: 'gpt-6-luna', label: 'GPT-6 Luna' },
   { value: 'gpt-5.6-sol', label: 'GPT-5.6 Sol' },
   { value: 'gpt-5.6-terra', label: 'GPT-5.6 Terra' },
   { value: 'gpt-5.6-luna', label: 'GPT-5.6 Luna' },
@@ -346,6 +366,13 @@ const OPENAI_NOTE_MODEL_OPTIONS = [
 const NOTE_MODE_OPTIONS = [
   { value: 'streaming', label: 'streaming' },
   { value: 'non-streaming', label: 'non-streaming' },
+];
+
+const OPENAI_GPT6_REASONING_OPTIONS = [
+  { value: 'none', label: 'None' },
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
 ];
 
 const OPENAI_GPT56_REASONING_OPTIONS = [
@@ -370,6 +397,11 @@ const SHARED_REQUESTY_REASONING_OPTIONS = [
   { value: 'medium', label: 'Medium' },
   { value: 'high', label: 'High' },
 ];
+
+const OPENAI_GPT6_MODELS = new Set([
+  'gpt-6-sol',
+  'gpt-6-luna',
+]);
 
 const OPENAI_GPT56_MODELS = new Set([
   'gpt-5.6-sol',
@@ -441,9 +473,11 @@ export function listNoteModeOptions() {
 
 export function listOpenAiReasoningOptions(modelId = DEFAULTS.openaiModel) {
   const model = normalizeOpenAiModel(modelId);
-  const options = OPENAI_GPT56_MODELS.has(model)
-    ? OPENAI_GPT56_REASONING_OPTIONS
-    : OPENAI_GPT5_NANO_REASONING_OPTIONS;
+  const options = OPENAI_GPT6_MODELS.has(model)
+    ? OPENAI_GPT6_REASONING_OPTIONS
+    : OPENAI_GPT56_MODELS.has(model)
+      ? OPENAI_GPT56_REASONING_OPTIONS
+      : OPENAI_GPT5_NANO_REASONING_OPTIONS;
   return options.map((item) => ({ ...item }));
 }
 

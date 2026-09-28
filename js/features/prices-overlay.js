@@ -33,6 +33,8 @@ const TEXT_PRICE_GROUPS = [
   {
     provider: "OpenAI",
     rows: [
+      { model: "GPT-6 Sol", id: "gpt-6-sol", context: "1.05M", input: "$2.00–$4.00", output: "$10.00–$15.00" },
+      { model: "GPT-6 Luna", id: "gpt-6-luna", context: "1.05M", input: "$0.10–$0.20", output: "$0.50–$0.75" },
       { model: "GPT-5.6 Sol", context: "1.05M", input: "$4.00", output: "$20.00" },
       { model: "GPT-5.6 Terra", context: "1.05M", input: "$2.00", output: "$12.00" },
       { model: "GPT-5.6 Luna", context: "1.05M", input: "$0.20", output: "$1.20" },
@@ -88,6 +90,7 @@ const FALLBACK_I18N = {
   approx: "approx.",
   close: "Close",
   contextNote: "Context is the maximum published context window for the configured model or route.",
+  openAiLongContextNote: "For direct OpenAI GPT-6 models, the lower price applies through 272K input tokens; the higher price applies above 272K.",
   requestyNote: "Requesty prices match the exact routes configured in this app. Any account-level Requesty markup is not included.",
   sttNote: "Speech-to-text prices are current public pay-as-you-go rates. Soniox is token-billed; the per-minute figures shown are approximate equivalents derived from Soniox's published hourly rates.",
 };
@@ -214,6 +217,7 @@ async function renderPrices() {
       ${textTables}
       <div class="prices-footnotes">
         <p class="prices-note">${escapeHtml(t.contextNote)}</p>
+        <p class="prices-note">${escapeHtml(t.openAiLongContextNote)}</p>
         <p class="prices-note">${escapeHtml(t.requestyNote)}</p>
       </div>
     </section>
