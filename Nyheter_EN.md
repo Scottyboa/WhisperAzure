@@ -1,3 +1,13 @@
+## 28 September, 2026
+
+### GPT-6 Sol and GPT-6 Luna added for OpenAI
+
+**GPT-6 Sol** and **GPT-6 Luna** can now be selected for note generation when **OpenAI** is chosen as the provider.
+
+The standard OpenAI setup in the app is not configured for GDPR-compliant processing of patient data. These options should therefore **not be used with patient-sensitive information**.
+
+---
+
 ## 23 September, 2026
 
 ### GPT-6 Sol, GPT-6 Luna and Claude Opus 5.5 added
