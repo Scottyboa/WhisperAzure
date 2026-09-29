@@ -3,7 +3,7 @@ import { PromptCloudBackup } from "./prompt-cloud-backup.js";
 import { CloudBackupSession } from "./cloud-backup-session.js";
 import { registerWorkspaceDisposer } from "../core/workspace-disposal.js";
 import { createWorkspaceHistoryStore } from "../core/workspace-history-store.js";
-import { createWorkspaceHistoryBodyStore } from "../core/workspace-history-body-store.js";
+import { clearPreviousHistoryStorage } from "../core/history-privacy.js";
 
 const PRESET_SCHEMA = "whisper.workspace-presets";
 const PRESET_VERSION = 1;
@@ -515,12 +515,12 @@ function initTopLevelManager() {
   if (!nativeRecording || !nativeBottom) return;
 
   const runtimes = new Map();
-  const historyBodyStore = createWorkspaceHistoryBodyStore({ storage: sessionStorage });
+  clearPreviousHistoryStorage();
   const historyStore = createWorkspaceHistoryStore({
     getItem: (key) => sessionStorage.getItem(key),
     setItem: (key, value) => sessionStorage.setItem(key, value),
     removeItem: (key) => sessionStorage.removeItem(key),
-  }, historyBodyStore);
+  });
   const workspaceUi = new Map();
   let definitions = loadDefinitions();
   // Before this version, one Workspace lived directly in the top-level page.
@@ -916,10 +916,7 @@ function initTopLevelManager() {
 
   function getHistoryRecord(workspaceId) {
     const groupId = historyGroupIdFor(workspaceId);
-    const legacyKeys = historyGroupDefinitions(workspaceId).map((definition) =>
-      definition.id === legacyPrimaryPresetId ? "note_history_v1"
-        : `whisper_workspace_runtime::${definition.id}::note_history_v1`);
-    return historyStore.ensure(groupId, legacyKeys);
+    return historyStore.ensure(groupId);
   }
 
   function bindHistoryRuntime(id, historyApi) {
