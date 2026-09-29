@@ -1094,6 +1094,44 @@
     .transcript-secondary-layout.secondary-open {
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
+    .transcript-secondary-toolbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 6px;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+    .transcript-secondary-toolbar.secondary-open {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 12px;
+    }
+    .transcript-toolbar-pane {
+      min-width: 0;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .transcript-toolbar-actions,
+    .secondary-toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .transcript-toolbar-actions {
+      margin-left: auto;
+    }
+    .secondary-toolbar-actions {
+      justify-content: flex-end;
+    }
+    .transcript-toolbar-button {
+      margin: 0;
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+      background-color: #5a9;
+    }
     .transcript-pane,
     .secondary-note-pane {
       min-width: 0;
@@ -1194,8 +1232,12 @@
     }
     @media (max-width: 900px) {
       /* Stack vertically on narrow screens to preserve usability. */
-      .transcript-secondary-layout.secondary-open {
+      .transcript-secondary-layout.secondary-open,
+      .transcript-secondary-toolbar.secondary-open {
         grid-template-columns: minmax(0, 1fr);
+      }
+      .transcript-secondary-toolbar.secondary-open .secondary-toolbar-actions {
+        justify-self: end;
       }
     }
 
@@ -2367,48 +2409,57 @@
         </div>
 
         <div id="recordTimer" class="timer">Recording Timer: 0 sec</div>
-        <!-- Completion timer + Copy/Clear buttons on same row -->
-        <div style="display:flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px;">
-          <div id="transcribeTimer" class="timer" style="margin-bottom: 0;">Completion Timer: 0 sec</div>
-          <div style="display:flex; align-items:center; gap: 6px;">
+        <!-- Completion timer + field-specific controls aligned with the panes below. -->
+        <div id="transcriptSecondaryToolbar" class="transcript-secondary-toolbar">
+          <div class="transcript-toolbar-pane">
+            <div id="transcribeTimer" class="timer" style="margin-bottom: 0;">Completion Timer: 0 sec</div>
+            <div class="transcript-toolbar-actions">
+              <button
+                id="copyTranscriptionButton"
+                class="transcript-toolbar-button"
+                type="button"
+                aria-label="Copy transcript"
+              >
+                Copy
+              </button>
+              <button
+                id="clearTranscriptionButton"
+                class="transcript-toolbar-button"
+                type="button"
+              >
+                Clear
+              </button>
+              <button
+                id="addTranscriptToLogButton"
+                class="transcript-toolbar-button"
+                type="button"
+                aria-describedby="addTranscriptToLogTooltipText"
+                disabled
+              >
+                Add to log
+              </button>
+              <span
+                id="addTranscriptToLogTooltipContainer"
+                class="help-tip help-tip-left"
+                tabindex="0"
+                aria-label="Add to log help"
+              >
+                ?
+                <span id="addTranscriptToLogTooltipText" class="help-tip-content" role="tooltip">
+                  Saves the current Transcript as a new history entry. Supplementary Information and Note are left empty.
+                </span>
+              </span>
+            </div>
+          </div>
+          <div class="secondary-toolbar-actions">
             <button
               id="toggleSecondaryNoteButton"
+              class="transcript-toolbar-button"
               type="button"
               aria-expanded="false"
               aria-controls="secondaryNotePane"
-              style="
-                padding: 4px 10px;
-                font-size: 12px;
-                border-radius: 6px;
-                background-color: #5a9;
-              "
             >
               Show secondary note generator
-            </button>
-            <button
-              id="copyTranscriptionButton"
-              type="button"
-              aria-label="Copy transcript"
-              style="
-                padding: 4px 10px;
-                font-size: 12px;
-                border-radius: 6px;
-                background-color: #5a9;
-              "
-            >
-              Copy
-            </button>
-            <button
-              id="clearTranscriptionButton"
-              type="button"
-              style="
-                padding: 4px 10px;
-                font-size: 12px;
-                border-radius: 6px;
-                background-color: #5a9;
-              "
-            >
-              Clear
             </button>
           </div>
         </div>
@@ -2426,7 +2477,7 @@
           </div>
 
           <!-- Secondary Note Generator (hidden by default; toggled by the
-               button next to the transcript Copy button). Hiding this pane
+               button in the toolbar above). Hiding this pane
                only hides it visually — no text/settings are cleared. -->
           <aside
             id="secondaryNotePane"

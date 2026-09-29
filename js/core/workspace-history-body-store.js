@@ -48,7 +48,7 @@ function bodyFromEntry(entry) {
 }
 
 function hasUsableBody(body) {
-  return Boolean(String(body?.transcript || "").trim() && String(body?.note || "").trim());
+  return Boolean(String(body?.transcript || "").trim());
 }
 
 export function createWorkspaceHistoryBodyStore({

@@ -7145,11 +7145,13 @@ function isSecondaryOpen() {
 
 function setSecondaryOpen(isOpen) {
   const layout = el("transcriptSecondaryLayout");
+  const toolbar = el("transcriptSecondaryToolbar");
   const pane = el("secondaryNotePane");
   const button = el("toggleSecondaryNoteButton");
   if (!layout || !pane || !button) return;
 
   layout.classList.toggle("secondary-open", !!isOpen);
+  toolbar?.classList.toggle("secondary-open", !!isOpen);
   pane.hidden = !isOpen;
   pane.setAttribute("aria-hidden", isOpen ? "false" : "true");
   button.setAttribute("aria-expanded", isOpen ? "true" : "false");
@@ -13094,11 +13096,16 @@ const STRINGS = {
     clear: "Clear",
     helpLabel: "Note history help",
     tooltip:
-      "Shows the 30 most recent generated notes in the active workspace. Select an item to view its transcript, supplementary information and note. Cloned workspaces share history with their clone family; other workspaces have separate history. History remains after refresh and is removed when the tab session ends.",
-    empty: "No generated notes yet.",
+      "Shows the 30 most recent generated notes and manually saved transcripts in the active workspace. Select an item to view its contents. Cloned workspaces share history with their clone family; other workspaces have separate history. History remains after refresh and is removed when the tab session ends.",
+    empty: "No history entries yet.",
     note: "Note",
     transcript: "Transcript",
     supplementary: "Supplementary Information",
+    transcriptOnly: "Transcript only",
+    addToLog: "Add to log",
+    addToLogHelp:
+      "Saves the current Transcript as a new history entry. Supplementary Information and Note are left empty.",
+    addedToLog: "Added",
     prompt: "Prompt",
     withoutPrompt: "No prompt",
     close: "Close",
@@ -13120,11 +13127,16 @@ const STRINGS = {
     clear: "Clear",
     helpLabel: "Hjelp for notathistorikk",
     tooltip:
-      "Viser de 30 siste genererte notatene i aktivt Workspace. Klikk på et element for å vise transkripsjonen, supplerende informasjon og notatet. Klonede Workspaces deler historikk med klonefamilien; andre Workspaces har separat historikk. Historikken beholdes ved oppdatering av siden og slettes når faneøkten avsluttes.",
-    empty: "Ingen genererte notater ennå.",
+      "Viser de 30 siste genererte notatene og manuelt lagrede transkripsjonene i aktivt Workspace. Klikk på et element for å vise innholdet. Klonede Workspaces deler historikk med klonefamilien; andre Workspaces har separat historikk. Historikken beholdes ved oppdatering av siden og slettes når faneøkten avsluttes.",
+    empty: "Ingen historikkinnlegg ennå.",
     note: "Notat",
     transcript: "Transkripsjon",
     supplementary: "Supplerende informasjon",
+    transcriptOnly: "Kun transkripsjon",
+    addToLog: "Legg til i logg",
+    addToLogHelp:
+      "Lagrer innholdet i Transkripsjon som et nytt historikkinnlegg. Supplerende informasjon og Notat forblir tomme.",
+    addedToLog: "Lagt til",
     prompt: "Prompt",
     withoutPrompt: "Uten prompt",
     close: "Lukk",
@@ -13146,11 +13158,16 @@ const STRINGS = {
     clear: "Rensa",
     helpLabel: "Hjälp för anteckningshistorik",
     tooltip:
-      "Visar de 30 senast genererade anteckningarna i den aktiva arbetsytan. Välj ett objekt för att visa transkriptionen, kompletterande information och anteckningen. Klonade arbetsytor delar historik med sin klonfamilj; andra arbetsytor har separat historik. Historiken finns kvar efter uppdatering och tas bort när fliksessionen avslutas.",
-    empty: "Inga genererade anteckningar ännu.",
+      "Visar de 30 senast genererade anteckningarna och manuellt sparade transkriptionerna i den aktiva arbetsytan. Välj ett objekt för att visa innehållet. Klonade arbetsytor delar historik med sin klonfamilj; andra arbetsytor har separat historik. Historiken finns kvar efter uppdatering och tas bort när fliksessionen avslutas.",
+    empty: "Inga historikposter ännu.",
     note: "Anteckning",
     transcript: "Transkription",
     supplementary: "Kompletterande information",
+    transcriptOnly: "Endast transkription",
+    addToLog: "Lägg till i logg",
+    addToLogHelp:
+      "Sparar innehållet i Transkription som en ny historikpost. Kompletterande information och Anteckning lämnas tomma.",
+    addedToLog: "Tillagd",
     prompt: "Prompt",
     withoutPrompt: "Utan prompt",
     close: "Stäng",
@@ -13172,11 +13189,16 @@ const STRINGS = {
     clear: "Leeren",
     helpLabel: "Hilfe zum Notizverlauf",
     tooltip:
-      "Zeigt die 30 zuletzt erstellten Notizen im aktiven Arbeitsbereich. Wählen Sie einen Eintrag, um Transkript, ergänzende Informationen und Notiz anzuzeigen. Geklonte Arbeitsbereiche teilen den Verlauf mit ihrer Klonfamilie; andere Arbeitsbereiche haben einen separaten Verlauf. Der Verlauf bleibt nach dem Aktualisieren erhalten und wird am Ende der Tabsitzung entfernt.",
-    empty: "Noch keine Notizen erstellt.",
+      "Zeigt die 30 zuletzt erstellten Notizen und manuell gespeicherten Transkripte im aktiven Arbeitsbereich. Wählen Sie einen Eintrag, um seinen Inhalt anzuzeigen. Geklonte Arbeitsbereiche teilen den Verlauf mit ihrer Klonfamilie; andere Arbeitsbereiche haben einen separaten Verlauf. Der Verlauf bleibt nach dem Aktualisieren erhalten und wird am Ende der Tabsitzung entfernt.",
+    empty: "Noch keine Verlaufseinträge.",
     note: "Notiz",
     transcript: "Transkript",
     supplementary: "Ergänzende Informationen",
+    transcriptOnly: "Nur Transkript",
+    addToLog: "Zum Verlauf",
+    addToLogHelp:
+      "Speichert den aktuellen Transkriptinhalt als neuen Verlaufseintrag. Ergänzende Informationen und Notiz bleiben leer.",
+    addedToLog: "Hinzugefügt",
     prompt: "Prompt",
     withoutPrompt: "Ohne Prompt",
     close: "Schließen",
@@ -13198,11 +13220,16 @@ const STRINGS = {
     clear: "Effacer",
     helpLabel: "Aide sur l’historique des notes",
     tooltip:
-      "Affiche les 30 dernières notes générées dans l’espace de travail actif. Sélectionnez un élément pour afficher la transcription, les informations complémentaires et la note. Les espaces de travail clonés partagent l’historique de leur famille de clones ; les autres ont un historique distinct. L’historique persiste après actualisation et disparaît à la fin de la session de l’onglet.",
-    empty: "Aucune note générée.",
+      "Affiche les 30 dernières notes générées et transcriptions enregistrées manuellement dans l’espace de travail actif. Sélectionnez un élément pour afficher son contenu. Les espaces de travail clonés partagent l’historique de leur famille de clones ; les autres ont un historique distinct. L’historique persiste après actualisation et disparaît à la fin de la session de l’onglet.",
+    empty: "Aucune entrée dans l’historique.",
     note: "Note",
     transcript: "Transcription",
     supplementary: "Informations complémentaires",
+    transcriptOnly: "Transcription uniquement",
+    addToLog: "Ajouter au journal",
+    addToLogHelp:
+      "Enregistre la transcription actuelle comme une nouvelle entrée d’historique. Les informations complémentaires et la note restent vides.",
+    addedToLog: "Ajouté",
     prompt: "Prompt",
     withoutPrompt: "Sans prompt",
     close: "Fermer",
@@ -13224,11 +13251,16 @@ const STRINGS = {
     clear: "Cancella",
     helpLabel: "Guida alla cronologia delle note",
     tooltip:
-      "Mostra le 30 note generate più di recente nell’area di lavoro attiva. Seleziona un elemento per visualizzare trascrizione, informazioni supplementari e nota. Le aree di lavoro clonate condividono la cronologia della loro famiglia di cloni; le altre hanno una cronologia separata. La cronologia rimane dopo l’aggiornamento e viene rimossa al termine della sessione della scheda.",
-    empty: "Nessuna nota generata.",
+      "Mostra le 30 note generate e trascrizioni salvate manualmente più recenti nell’area di lavoro attiva. Seleziona un elemento per visualizzarne il contenuto. Le aree di lavoro clonate condividono la cronologia della loro famiglia di cloni; le altre hanno una cronologia separata. La cronologia rimane dopo l’aggiornamento e viene rimossa al termine della sessione della scheda.",
+    empty: "Nessuna voce nella cronologia.",
     note: "Nota",
     transcript: "Trascrizione",
     supplementary: "Informazioni supplementari",
+    transcriptOnly: "Solo trascrizione",
+    addToLog: "Aggiungi al registro",
+    addToLogHelp:
+      "Salva la trascrizione corrente come una nuova voce della cronologia. Le informazioni supplementari e la nota restano vuote.",
+    addedToLog: "Aggiunto",
     prompt: "Prompt",
     withoutPrompt: "Senza prompt",
     close: "Chiudi",
@@ -13250,6 +13282,7 @@ const STRINGS = {
 let historyRecord = { entries: [], nextSequence: 1 };
 let persistSharedHistory = null;
 let loadSharedHistoryEntry = null;
+let addToLogFeedbackTimer = 0;
 const state = {
   get entries() { return historyRecord.entries; },
   set entries(value) { historyRecord.entries = value; },
@@ -13301,6 +13334,7 @@ function normalizeStoredEntry(raw) {
     id: String(raw.id || `note-${sequence}-${createdAt}`),
     sequence,
     createdAt,
+    kind: raw.kind === "transcript" ? "transcript" : "note",
     promptSlot: String(raw.promptSlot || ""),
     promptLabel: String(raw.promptLabel || ""),
     usedPrompt: raw.usedPrompt !== false,
@@ -13310,7 +13344,7 @@ function normalizeStoredEntry(raw) {
   // history normally contains metadata only; its body is loaded asynchronously
   // from the separate history body store when the user opens an item.
   if (typeof raw.transcript === "string" && typeof raw.note === "string") {
-    if (!raw.transcript.trim() || !raw.note.trim()) return null;
+    if (!raw.transcript.trim()) return null;
     entry.transcript = raw.transcript;
     entry.supplementary =
       typeof raw.supplementary === "string" ? raw.supplementary : "";
@@ -13500,8 +13534,7 @@ function findVisibleEntry(entryId) {
 function hasEntryBody(entry) {
   return typeof entry?.transcript === "string" &&
     typeof entry?.note === "string" &&
-    Boolean(entry.transcript.trim()) &&
-    Boolean(entry.note.trim());
+    Boolean(entry.transcript.trim());
 }
 
 async function resolveVisibleEntry(entryId) {
@@ -13521,6 +13554,7 @@ async function resolveVisibleEntry(entryId) {
 
 function getEntryPromptLabel(entry) {
   const copy = strings();
+  if (entry.kind === "transcript") return copy.transcriptOnly;
   if (entry.usedPrompt === false) return copy.withoutPrompt;
   if (entry.promptLabel) return entry.promptLabel;
   if (entry.promptSlot) return `${copy.prompt} ${entry.promptSlot}`;
@@ -13553,7 +13587,8 @@ function formatEntryDateTime(createdAt) {
 }
 
 function getEntryTitle(entry) {
-  return `${strings().note} ${entry.sequence}`;
+  const label = entry.kind === "transcript" ? strings().transcript : strings().note;
+  return `${label} ${entry.sequence}`;
 }
 
 function getEntryMeta(entry) {
@@ -13818,6 +13853,7 @@ function addFinishedNote(detail) {
     id: createEntryId(sequence, createdAt),
     sequence,
     createdAt,
+    kind: "note",
     transcript,
     supplementary,
     note,
@@ -13832,6 +13868,55 @@ function addFinishedNote(detail) {
   persistHistory();
   renderHistory();
   notifyLocalHistoryUpdated("entry-added");
+}
+
+function syncAddToLogButton() {
+  const button = byId("addTranscriptToLogButton");
+  if (!button) return;
+  button.disabled = !String(byId("transcription")?.value || "").trim();
+}
+
+function flashAddToLogConfirmation() {
+  const button = byId("addTranscriptToLogButton");
+  if (!button) return;
+  window.clearTimeout(addToLogFeedbackTimer);
+  button.textContent = strings().addedToLog;
+  addToLogFeedbackTimer = window.setTimeout(() => {
+    button.textContent = strings().addToLog;
+    addToLogFeedbackTimer = 0;
+  }, 1200);
+}
+
+function addTranscriptToLog() {
+  const transcript = String(byId("transcription")?.value || "").trim();
+  if (!transcript) {
+    syncAddToLogButton();
+    return false;
+  }
+
+  const createdAt = Date.now();
+  const sequence = state.nextSequence;
+  const entry = {
+    id: createEntryId(sequence, createdAt),
+    sequence,
+    createdAt,
+    kind: "transcript",
+    transcript,
+    supplementary: "",
+    note: "",
+    promptSlot: "",
+    promptLabel: "",
+    usedPrompt: false,
+  };
+
+  state.nextSequence += 1;
+  state.entries.unshift(entry);
+  state.entries = state.entries.slice(0, MAX_ENTRIES);
+  persistHistory();
+  renderHistory();
+  notifyLocalHistoryUpdated("transcript-entry-added");
+  flashAddToLogConfirmation();
+  return true;
 }
 
 function updateLanguage(language) {
@@ -13850,6 +13935,9 @@ function updateLanguage(language) {
   const restoreButton = byId("noteHistoryRestoreButton");
   const restoreCurrent = byId("noteHistoryRestoreCurrent");
   const restoreNew = byId("noteHistoryRestoreNew");
+  const addToLogButton = byId("addTranscriptToLogButton");
+  const addToLogTooltipContainer = byId("addTranscriptToLogTooltipContainer");
+  const addToLogTooltipText = byId("addTranscriptToLogTooltipText");
 
   if (title) title.textContent = copy.history;
   if (clearButton) clearButton.textContent = copy.clear;
@@ -13866,15 +13954,27 @@ function updateLanguage(language) {
   }
   if (restoreCurrent) restoreCurrent.textContent = copy.replaceCurrent;
   if (restoreNew) restoreNew.textContent = copy.openNew;
+  if (addToLogButton) {
+    addToLogButton.textContent = copy.addToLog;
+    addToLogButton.setAttribute("aria-label", copy.addToLog);
+  }
+  if (addToLogTooltipContainer) {
+    addToLogTooltipContainer.setAttribute("aria-label", copy.addToLogHelp);
+  }
+  if (addToLogTooltipText) addToLogTooltipText.textContent = copy.addToLogHelp;
 
   renderHistory();
   syncModalContent();
   syncCollapsedState();
+  syncAddToLogButton();
 }
 
 function bindEvents() {
   byId("noteHistoryCollapseButton")?.addEventListener("click", toggleCollapsedState);
   byId("noteHistoryClearButton")?.addEventListener("click", clearVisibleHistory);
+  byId("addTranscriptToLogButton")?.addEventListener("click", addTranscriptToLog);
+  byId("transcription")?.addEventListener("input", syncAddToLogButton);
+  byId("clearTranscriptionButton")?.addEventListener("click", syncAddToLogButton);
   byId("noteHistoryModalClose")?.addEventListener("click", closeModal);
   byId("noteHistoryRestoreButton")?.addEventListener("click", (event) => {
     event.stopPropagation();
@@ -13925,6 +14025,8 @@ function bindEvents() {
     addFinishedNote(event?.detail || {});
   });
 
+  window.addEventListener("transcription:finished", syncAddToLogButton);
+
   window.addEventListener("transcribe-language-updated", (event) => {
     updateLanguage(event?.detail?.lang || byId("lang-select-transcribe")?.value);
   });
@@ -13971,6 +14073,8 @@ if (window.__workspacePresetFrame) {
   window.parent.__workspacePresets?.bindHistoryRuntime?.(window.__workspacePresetRuntimeId, window.__noteHistory);
 }
 registerWorkspaceDisposer(({ final }) => {
+  window.clearTimeout(addToLogFeedbackTimer);
+  addToLogFeedbackTimer = 0;
   state.pendingRun = null;
   state.activeEntryBody = null;
   state.previousFocus = null;
@@ -13983,6 +14087,7 @@ registerWorkspaceDisposer(({ final }) => {
 
 return Object.freeze(Object.defineProperties({}, {}));
 };
+
 factories["features/field-feedback.js"] = (context, load, loadAsync) => {
 const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame, MutationObserver, ResizeObserver } = context;
 // js/features/field-feedback.js

@@ -15,6 +15,7 @@ function normalizeMetadataEntry(raw) {
     id: String(raw.id || `note-${sequence}-${createdAt}`),
     sequence,
     createdAt,
+    kind: raw.kind === "transcript" ? "transcript" : "note",
     promptSlot: String(raw.promptSlot || ""),
     promptLabel: String(raw.promptLabel || ""),
     usedPrompt: raw.usedPrompt !== false,
@@ -24,8 +25,7 @@ function normalizeMetadataEntry(raw) {
 function hasBody(entry) {
   return typeof entry?.transcript === "string" &&
     typeof entry?.note === "string" &&
-    Boolean(entry.transcript.trim()) &&
-    Boolean(entry.note.trim());
+    Boolean(entry.transcript.trim());
 }
 
 function toMetadataEntry(entry) {

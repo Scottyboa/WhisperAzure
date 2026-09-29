@@ -1165,11 +1165,13 @@ function isSecondaryOpen() {
 
 function setSecondaryOpen(isOpen) {
   const layout = el("transcriptSecondaryLayout");
+  const toolbar = el("transcriptSecondaryToolbar");
   const pane = el("secondaryNotePane");
   const button = el("toggleSecondaryNoteButton");
   if (!layout || !pane || !button) return;
 
   layout.classList.toggle("secondary-open", !!isOpen);
+  toolbar?.classList.toggle("secondary-open", !!isOpen);
   pane.hidden = !isOpen;
   pane.setAttribute("aria-hidden", isOpen ? "false" : "true");
   button.setAttribute("aria-expanded", isOpen ? "true" : "false");
