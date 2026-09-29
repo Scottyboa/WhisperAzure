@@ -1,8 +1,12 @@
 import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
+import { analyzeTextForCounter } from '../core/text-performance.js';
 
 const STORAGE_KEY = "note_history_v1";
 const COLLAPSED_STORAGE_KEY = "note_history_collapsed_v1";
 const MAX_ENTRIES = 30;
+// Norges Bank indicative middle rate for 29 September 2026, rounded for a
+// lightweight display-only estimate. USD remains the stored source amount.
+const USD_TO_NOK_ESTIMATE = 9.58;
 
 const STRINGS = {
   en: {
@@ -15,6 +19,10 @@ const STRINGS = {
     note: "Note",
     transcript: "Transcript",
     supplementary: "Supplementary Information",
+    duration: "Duration",
+    word: "word",
+    words: "words",
+    estimatedCost: "Est. cost",
     transcriptOnly: "Transcript only",
     addToLog: "Add to log",
     addToLogHelp:
@@ -46,6 +54,11 @@ const STRINGS = {
     note: "Notat",
     transcript: "Transkripsjon",
     supplementary: "Supplerende informasjon",
+    duration: "Varighet",
+    word: "ord",
+    words: "ord",
+    estimatedCost: "Est. kostnad",
+    nokEstimateHelp: "NOK-estimat med 1 USD ≈ 9,58 NOK.",
     transcriptOnly: "Kun transkripsjon",
     addToLog: "Legg til i logg",
     addToLogHelp:
@@ -77,6 +90,10 @@ const STRINGS = {
     note: "Anteckning",
     transcript: "Transkription",
     supplementary: "Kompletterande information",
+    duration: "Längd",
+    word: "ord",
+    words: "ord",
+    estimatedCost: "Uppsk. kostnad",
     transcriptOnly: "Endast transkription",
     addToLog: "Lägg till i logg",
     addToLogHelp:
@@ -108,6 +125,10 @@ const STRINGS = {
     note: "Notiz",
     transcript: "Transkript",
     supplementary: "Ergänzende Informationen",
+    duration: "Dauer",
+    word: "Wort",
+    words: "Wörter",
+    estimatedCost: "Geschätzte Kosten",
     transcriptOnly: "Nur Transkript",
     addToLog: "Zum Verlauf",
     addToLogHelp:
@@ -139,6 +160,10 @@ const STRINGS = {
     note: "Note",
     transcript: "Transcription",
     supplementary: "Informations complémentaires",
+    duration: "Durée",
+    word: "mot",
+    words: "mots",
+    estimatedCost: "Coût estimé",
     transcriptOnly: "Transcription uniquement",
     addToLog: "Ajouter au journal",
     addToLogHelp:
@@ -170,6 +195,10 @@ const STRINGS = {
     note: "Nota",
     transcript: "Trascrizione",
     supplementary: "Informazioni supplementari",
+    duration: "Durata",
+    word: "parola",
+    words: "parole",
+    estimatedCost: "Costo stimato",
     transcriptOnly: "Solo trascrizione",
     addToLog: "Aggiungi al registro",
     addToLogHelp:
@@ -205,6 +234,7 @@ const state = {
   pendingRun: null,
   activeEntryId: "",
   activeEntryBody: null,
+  currentRecordingDurationMs: null,
   previousFocus: null,
   language: "en",
   collapsed: false,
@@ -230,6 +260,26 @@ function createEntryId(sequence, createdAt) {
   return `note-${sequence}-${createdAt}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function normalizeRecordingDurationMs(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const duration = Number(value);
+  return Number.isFinite(duration) && duration > 0 ? Math.round(duration) : null;
+}
+
+function normalizeNoteCostUsd(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const cost = Number(value);
+  return Number.isFinite(cost) && cost >= 0 ? cost : null;
+}
+
+function copyEntryMetrics(entry, raw) {
+  const recordingDurationMs = normalizeRecordingDurationMs(raw?.recordingDurationMs);
+  const noteCostUsd = normalizeNoteCostUsd(raw?.noteCostUsd);
+  if (recordingDurationMs != null) entry.recordingDurationMs = recordingDurationMs;
+  if (noteCostUsd != null) entry.noteCostUsd = noteCostUsd;
+  return entry;
+}
+
 function normalizeStoredEntry(raw) {
   if (!raw || typeof raw !== "object") return null;
 
@@ -244,7 +294,7 @@ function normalizeStoredEntry(raw) {
     return null;
   }
 
-  const entry = {
+  const entry = copyEntryMetrics({
     id: String(raw.id || `note-${sequence}-${createdAt}`),
     sequence,
     createdAt,
@@ -252,11 +302,10 @@ function normalizeStoredEntry(raw) {
     promptSlot: String(raw.promptSlot || ""),
     promptLabel: String(raw.promptLabel || ""),
     usedPrompt: raw.usedPrompt !== false,
-  };
+  }, raw);
 
-  // Legacy/local snapshots can still contain their full body. Shared Workspace
-  // history normally contains metadata only; its body is loaded asynchronously
-  // from the separate history body store when the user opens an item.
+  // The current session-only format keeps the complete entry together. Retain
+  // this conditional so older metadata-only snapshots still fail safely.
   if (typeof raw.transcript === "string" && typeof raw.note === "string") {
     if (!raw.transcript.trim()) return null;
     entry.transcript = raw.transcript;
@@ -500,6 +549,93 @@ function formatEntryDateTime(createdAt) {
   }
 }
 
+function getIntlLocale() {
+  return {
+    en: "en-US",
+    no: "nb-NO",
+    sv: "sv-SE",
+    de: "de-DE",
+    fr: "fr-FR",
+    it: "it-IT",
+  }[state.language] || "en-US";
+}
+
+function formatWordCount(value) {
+  const count = analyzeTextForCounter(value).words;
+  const label = count === 1 ? strings().word : strings().words;
+  try {
+    return `${new Intl.NumberFormat(getIntlLocale(), { maximumFractionDigits: 0 }).format(count)} ${label}`;
+  } catch (_) {
+    return `${count} ${label}`;
+  }
+}
+
+function formatRecordingDuration(durationMs) {
+  const normalized = normalizeRecordingDurationMs(durationMs);
+  if (normalized == null) return "";
+  const totalSeconds = Math.floor(normalized / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return hours > 0
+    ? `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+    : `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function formatUsdCost(value) {
+  const amount = normalizeNoteCostUsd(value);
+  if (amount == null) return "";
+  const digits = Math.abs(amount) > 1 ? 2 : Math.abs(amount) > 0.1 ? 3 : 6;
+  return `$${amount.toFixed(digits)}`;
+}
+
+function formatNokEstimate(value) {
+  const amount = normalizeNoteCostUsd(value);
+  if (amount == null) return "";
+  const nok = amount * USD_TO_NOK_ESTIMATE;
+  const abs = Math.abs(nok);
+  const digits = abs > 1 ? 2 : abs > 0.1 ? 3 : abs > 0.01 ? 4 : 6;
+  try {
+    return `${new Intl.NumberFormat("nb-NO", {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    }).format(nok)} NOK`;
+  } catch (_) {
+    return `${nok.toFixed(digits).replace(".", ",")} NOK`;
+  }
+}
+
+function syncModalEntryMetrics(entry) {
+  const transcriptMeta = byId("noteHistoryTranscriptMeta");
+  const supplementaryMeta = byId("noteHistorySupplementaryMeta");
+  const noteMeta = byId("noteHistoryNoteMeta");
+  const copy = strings();
+
+  if (transcriptMeta) {
+    const parts = [];
+    const duration = formatRecordingDuration(entry?.recordingDurationMs);
+    if (duration) parts.push(`${copy.duration}: ${duration}`);
+    parts.push(formatWordCount(entry?.transcript || ""));
+    transcriptMeta.textContent = parts.join(" · ");
+  }
+
+  if (supplementaryMeta) {
+    supplementaryMeta.textContent = formatWordCount(entry?.supplementary || "");
+  }
+
+  if (noteMeta) {
+    const parts = [formatWordCount(entry?.note || "")];
+    const usd = formatUsdCost(entry?.noteCostUsd);
+    if (usd) {
+      let cost = `${copy.estimatedCost}: ${usd}`;
+      if (state.language === "no") cost += ` ≈ ${formatNokEstimate(entry.noteCostUsd)}`;
+      parts.push(cost);
+    }
+    noteMeta.textContent = parts.join(" · ");
+    noteMeta.title = state.language === "no" && usd ? copy.nokEstimateHelp : "";
+  }
+}
+
 function getEntryTitle(entry) {
   const label = entry.kind === "transcript" ? strings().transcript : strings().note;
   return `${label} ${entry.sequence}`;
@@ -583,6 +719,7 @@ function syncModalContent() {
     note.value = entry.note || "";
     note.scrollTop = 0;
   }
+  syncModalEntryMetrics(entry);
 }
 
 function isRestoreMenuOpen() {
@@ -722,6 +859,23 @@ function clearVisibleHistory() {
   return clearLocalHistory();
 }
 
+function getLiveRecordingDurationMs() {
+  const app = window.__app || {};
+  const accumulated = Number(app.miniPanelRecordingAccumulatedMs || 0);
+  const startedAt = Number(app.miniPanelRecordingStartedAt || 0);
+  const running = startedAt > 0 ? Math.max(0, Date.now() - startedAt) : 0;
+  return normalizeRecordingDurationMs(Math.max(0, accumulated) + running);
+}
+
+function getLastNoteCostUsd() {
+  try {
+    const usage = window.__app?.getLastNoteUsageCostSnapshot?.();
+    return normalizeNoteCostUsd(usage?.estimatedUsd);
+  } catch (_) {
+    return null;
+  }
+}
+
 function capturePendingRun() {
   const app = window.__app || {};
   const transcript = String(byId("transcription")?.value || "").trim();
@@ -745,6 +899,7 @@ function capturePendingRun() {
     promptSlot,
     promptLabel,
     usedPrompt,
+    recordingDurationMs: state.currentRecordingDurationMs,
   };
 }
 
@@ -763,7 +918,7 @@ function addFinishedNote(detail) {
 
   const createdAt = Date.now();
   const sequence = state.nextSequence;
-  const entry = {
+  const entry = copyEntryMetrics({
     id: createEntryId(sequence, createdAt),
     sequence,
     createdAt,
@@ -774,7 +929,10 @@ function addFinishedNote(detail) {
     promptSlot: String(state.pendingRun?.promptSlot || ""),
     promptLabel: String(state.pendingRun?.promptLabel || ""),
     usedPrompt: state.pendingRun?.usedPrompt !== false,
-  };
+  }, {
+    recordingDurationMs: state.pendingRun?.recordingDurationMs,
+    noteCostUsd: getLastNoteCostUsd(),
+  });
 
   state.nextSequence += 1;
   state.entries.unshift(entry);
@@ -810,7 +968,7 @@ function addTranscriptToLog() {
 
   const createdAt = Date.now();
   const sequence = state.nextSequence;
-  const entry = {
+  const entry = copyEntryMetrics({
     id: createEntryId(sequence, createdAt),
     sequence,
     createdAt,
@@ -821,7 +979,9 @@ function addTranscriptToLog() {
     promptSlot: "",
     promptLabel: "",
     usedPrompt: false,
-  };
+  }, {
+    recordingDurationMs: state.currentRecordingDurationMs,
+  });
 
   state.nextSequence += 1;
   state.entries.unshift(entry);
@@ -843,9 +1003,9 @@ function updateLanguage(language) {
   const tooltip = byId("noteHistoryTooltip");
   const empty = byId("noteHistoryEmpty");
   const close = byId("noteHistoryModalClose");
-  const transcriptTitle = byId("noteHistoryTranscriptTitle");
-  const supplementaryTitle = byId("noteHistorySupplementaryTitle");
-  const noteTitle = byId("noteHistoryNoteTitle");
+  const transcriptTitle = byId("noteHistoryTranscriptTitleLabel");
+  const supplementaryTitle = byId("noteHistorySupplementaryTitleLabel");
+  const noteTitle = byId("noteHistoryNoteTitleLabel");
   const restoreButton = byId("noteHistoryRestoreButton");
   const restoreCurrent = byId("noteHistoryRestoreCurrent");
   const restoreNew = byId("noteHistoryRestoreNew");
@@ -883,12 +1043,36 @@ function updateLanguage(language) {
   syncAddToLogButton();
 }
 
+function handleRecordingLifecycle(event) {
+  const phase = String(event?.detail?.phase || "");
+  if (phase === "starting") {
+    state.currentRecordingDurationMs = null;
+  } else if (phase === "stopping" || phase === "stopped") {
+    state.currentRecordingDurationMs = getLiveRecordingDurationMs();
+  } else if (phase === "aborted" || phase === "error" || phase === "idle") {
+    state.currentRecordingDurationMs = null;
+  }
+}
+
+function handleTranscriptionFinished(event) {
+  if (event?.detail?.status !== "aborted") {
+    state.currentRecordingDurationMs =
+      getLiveRecordingDurationMs() || state.currentRecordingDurationMs;
+  }
+  syncAddToLogButton();
+}
+
+function handleTranscriptClear() {
+  state.currentRecordingDurationMs = null;
+  syncAddToLogButton();
+}
+
 function bindEvents() {
   byId("noteHistoryCollapseButton")?.addEventListener("click", toggleCollapsedState);
   byId("noteHistoryClearButton")?.addEventListener("click", clearVisibleHistory);
   byId("addTranscriptToLogButton")?.addEventListener("click", addTranscriptToLog);
   byId("transcription")?.addEventListener("input", syncAddToLogButton);
-  byId("clearTranscriptionButton")?.addEventListener("click", syncAddToLogButton);
+  byId("clearTranscriptionButton")?.addEventListener("click", handleTranscriptClear);
   byId("noteHistoryModalClose")?.addEventListener("click", closeModal);
   byId("noteHistoryRestoreButton")?.addEventListener("click", (event) => {
     event.stopPropagation();
@@ -939,7 +1123,8 @@ function bindEvents() {
     addFinishedNote(event?.detail || {});
   });
 
-  window.addEventListener("transcription:finished", syncAddToLogButton);
+  window.addEventListener("recording:lifecycle", handleRecordingLifecycle);
+  window.addEventListener("transcription:finished", handleTranscriptionFinished);
 
   window.addEventListener("transcribe-language-updated", (event) => {
     updateLanguage(event?.detail?.lang || byId("lang-select-transcribe")?.value);

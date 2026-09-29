@@ -2,12 +2,24 @@
 export const HISTORY_PREFIX = "whisper_workspace_history_group_v3::";
 const MAX_ENTRIES = 30;
 
+function normalizeRecordingDurationMs(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const duration = Number(value);
+  return Number.isFinite(duration) && duration > 0 ? Math.round(duration) : null;
+}
+
+function normalizeNoteCostUsd(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const cost = Number(value);
+  return Number.isFinite(cost) && cost >= 0 ? cost : null;
+}
+
 function normalizeEntry(raw) {
   if (!raw || typeof raw !== "object") return null;
   const sequence = Number(raw.sequence);
   const createdAt = Number(raw.createdAt);
   if (!Number.isInteger(sequence) || sequence < 1 || !Number.isFinite(createdAt) || createdAt < 1) return null;
-  return {
+  const entry = {
     id: String(raw.id || `note-${sequence}-${createdAt}`),
     sequence,
     createdAt,
@@ -19,6 +31,11 @@ function normalizeEntry(raw) {
     supplementary: String(raw.supplementary || ""),
     note: String(raw.note || ""),
   };
+  const recordingDurationMs = normalizeRecordingDurationMs(raw.recordingDurationMs);
+  const noteCostUsd = normalizeNoteCostUsd(raw.noteCostUsd);
+  if (recordingDurationMs != null) entry.recordingDurationMs = recordingDurationMs;
+  if (noteCostUsd != null) entry.noteCostUsd = noteCostUsd;
+  return entry;
 }
 
 function normalizeSnapshot(snapshot) {

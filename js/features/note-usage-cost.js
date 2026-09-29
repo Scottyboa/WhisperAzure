@@ -16,6 +16,8 @@ import {
 // Owns note usage normalization, pricing estimation, and cost display wiring.
 
 (function initNoteUsageCostFeature() {
+  let lastPrimaryNoteUsageCost = null;
+
   function getApp() {
     return (window.__app = window.__app || {});
   }
@@ -581,22 +583,32 @@ import {
   };
 
   app.clearNoteUsageAndCost = function clearNoteUsageAndCost() {
+    lastPrimaryNoteUsageCost = null;
     const el = costEl();
     if (el) el.textContent = "";
   };
 
-  // Computes the "Billable input … · Billable output … · Est cost …" line for
-  // a usage payload WITHOUT touching the primary #noteUsageCost element.
-  // Shared by setNoteUsageAndCost (primary generator) and the secondary note
-  // generator, so both use identical normalization, pricing, and formatting.
-  app.formatNoteUsageAndCost = function formatNoteUsageAndCost(payloadOrArgs) {
+  app.getLastNoteUsageCostSnapshot = function getLastNoteUsageCostSnapshot() {
+    return lastPrimaryNoteUsageCost ? { ...lastPrimaryNoteUsageCost } : null;
+  };
+
+  function prepareUsagePayload(payloadOrArgs) {
     let payload = payloadOrArgs;
 
     if (payload && typeof payload === "object" && "usage" in payload && !("inputTokens" in payload)) {
       payload = app.normalizeNoteUsage(payload);
     }
 
-    if (!payload || typeof payload !== "object") return "";
+    return payload && typeof payload === "object" ? payload : null;
+  }
+
+  // Computes the "Billable input … · Billable output … · Est cost …" line for
+  // a usage payload WITHOUT touching the primary #noteUsageCost element.
+  // Shared by setNoteUsageAndCost (primary generator) and the secondary note
+  // generator, so both use identical normalization, pricing, and formatting.
+  app.formatNoteUsageAndCost = function formatNoteUsageAndCost(payloadOrArgs) {
+    const payload = prepareUsagePayload(payloadOrArgs);
+    if (!payload) return "";
 
     try {
       const usd = estimateUsd(payload);
@@ -639,13 +651,25 @@ import {
   };
 
   app.setNoteUsageAndCost = function setNoteUsageAndCost(payloadOrArgs) {
-    const el = costEl();
-    if (!el) return;
+    const payload = prepareUsagePayload(payloadOrArgs);
+    if (!payload) return;
 
-    const text = app.formatNoteUsageAndCost(payloadOrArgs);
+    const text = app.formatNoteUsageAndCost(payload);
     if (!text) return;
 
-    el.textContent = text;
+    lastPrimaryNoteUsageCost = {
+      providerKey: String(payload.providerKey || ""),
+      modelId: String(payload.modelId || ""),
+      inputTokens: toFiniteInt(payload.inputTokens),
+      outputTokens: toFiniteInt(payload.outputTokens),
+      totalTokens: toFiniteInt(payload.totalTokens),
+      estimatedUsd:
+        Number.isFinite(Number(payload.estimatedUsd)) && Number(payload.estimatedUsd) >= 0
+          ? Number(payload.estimatedUsd)
+          : null,
+    };
+    const el = costEl();
+    if (el) el.textContent = text;
   };
 
   function wireAutoClear() {
