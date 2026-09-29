@@ -408,6 +408,8 @@ Sélectionnez de nouveau <strong>Guide</strong> ou utilisez le bouton de fermetu
 `,
 
   // Générateur de notes secondaire
+  redactorAutoAddDatesTooltip: "Ajoute automatiquement tous les formats de date pris en charge aux termes spécifiques lorsque l’assistant de date de naissance contient une date valide.",
+
   secondaryNote: {
     showButton: "Afficher le générateur de notes secondaire",
     hideButton: "Masquer le générateur de notes secondaire",

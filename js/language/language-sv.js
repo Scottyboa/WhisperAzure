@@ -423,6 +423,8 @@ Klicka på <strong>Guide</strong> igen eller använd stängningsknappen för att
 `,
 
   // Sekundär anteckningsgenerator
+  redactorAutoAddDatesTooltip: "Lägg automatiskt till alla datumformat som stöds i Specifika termer när Födelsedatumhjälpen innehåller ett giltigt datum.",
+
   secondaryNote: {
     showButton: "Visa sekundär anteckningsgenerator",
     hideButton: "Dölj sekundär anteckningsgenerator",

@@ -147,6 +147,9 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
     const redactorImagePreview = document.getElementById('redactorImagePreview');
     const redactorImagePlaceholder = document.getElementById('redactorImagePlaceholder');
     const addBirthdateFormatsButton = document.getElementById('addBirthdateFormatsButton');
+    const redactorAutoAddDatesToggle = document.getElementById('redactorAutoAddDatesToggle');
+    const redactorAutoAddDatesTooltipContainer = document.getElementById('redactorAutoAddDatesTooltipContainer');
+    const redactorAutoAddDatesTooltipText = document.getElementById('redactorAutoAddDatesTooltipText');
     const copyRedactorRawOutputButton = document.getElementById('copyRedactorRawOutputButton');
     const clearRedactorRawOutputButton = document.getElementById('clearRedactorRawOutputButton');
     const downloadTranscriptButton = document.getElementById('downloadTranscriptButton');
@@ -228,6 +231,7 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
         birthdateLabel: 'Birthdate helper',
         birthdatePlaceholder: 'DDMMYY, DDMMYYYY, YYYY-MM-DD or national ID number',
         addDates: 'Add dates',
+        autoAddDatesTooltip: 'Automatically add all supported date formats to Specific terms when Birthdate helper contains a valid date.',
         messages: {
           specificTermsNormalized: 'Specific terms cleaned and normalized.',
           imagePastedReady: 'Image pasted and ready for OCR.',
@@ -304,6 +308,7 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
         birthdateLabel: 'Fødselsdatohjelper',
         birthdatePlaceholder: 'DDMMÅÅ, DDMMÅÅÅÅ, ÅÅÅÅ-MM-DD eller identitetsnummer',
         addDates: 'Legg til datoer',
+        autoAddDatesTooltip: 'Legg automatisk til alle støttede datoformater i Spesifikke begreper når Fødselsdatohjelper inneholder en gyldig dato.',
         messages: {
           specificTermsNormalized: 'Spesifikke begreper ble renset og normalisert.',
           imagePastedReady: 'Bildet er limt inn og klart for OCR.',
@@ -461,6 +466,17 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
       }
       if (addBirthdateFormatsButton) {
         addBirthdateFormatsButton.textContent = strings.addDates;
+      }
+      const autoAddDatesTooltip = window.__redactorI18n?.autoAddDatesTooltip
+        || strings.autoAddDatesTooltip;
+      if (redactorAutoAddDatesTooltipText && autoAddDatesTooltip) {
+        redactorAutoAddDatesTooltipText.textContent = autoAddDatesTooltip;
+      }
+      if (redactorAutoAddDatesToggle && autoAddDatesTooltip) {
+        redactorAutoAddDatesToggle.setAttribute('aria-label', autoAddDatesTooltip);
+      }
+      if (redactorAutoAddDatesTooltipContainer && autoAddDatesTooltip) {
+        redactorAutoAddDatesTooltipContainer.setAttribute('aria-label', autoAddDatesTooltip);
       }
 
       if (typeof refreshRedactorStatusText === 'function') {
@@ -671,7 +687,7 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
           continue;
         }
 
-        if (/^(?:år|ar|moss|familie|Vei|Forelder|bostdsadresse|kvinne|mann|telefon|Telefonnummer|Moss|Bam|Barn|foreldre|ektefelle|tlf|ikke|funnet|nærmeste|pårørende)$/iu.test(s)) {
+        if (/^(?:år|ar|moss|familie|Vei|Forelder|bostdsadresse|kvinne|mann|telefon|Telefonnummer|Moss|Bam|Barn|foreldre|ektefelle|tlf|ikke|funnet|nærmeste|pårørende|as|ingen|bosatt|norge)$/iu.test(s)) {
           if (/^(?:år|ar)$/i.test(s) && out.length && /^\d{1,3}$/.test(out[out.length - 1])) {
             out.pop();
           }
@@ -917,6 +933,7 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
           }
           if (detectedBirthdate && birthdateInputEl) {
             birthdateInputEl.value = detectedBirthdate;
+            maybeAutoAddBirthdateFormats();
           }
           persistRedactorTextState();
           return;
@@ -935,6 +952,7 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
           }
           if (detectedBirthdate && birthdateInputEl && birthdateInputEl.value !== detectedBirthdate) {
             birthdateInputEl.value = detectedBirthdate;
+            maybeAutoAddBirthdateFormats();
             changed = true;
           }
           if (changed) {
@@ -1236,6 +1254,7 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
       ocrWorkers.clear();
       clearTimeout(cleanSpecificTimer);
       cleanSpecificTimer = null;
+      window.clearTimeout(autoAddBirthdateTimer);
       revokeCurrentImageUrl();
       currentOcrImageBlob = null;
       if (redactorImagePreview) {
@@ -1875,6 +1894,7 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
         const detectedBirthdate = extractBirthdateFromFnrText(finalText || recognizedText);
         if (detectedBirthdate && birthdateInputEl) {
           birthdateInputEl.value = detectedBirthdate;
+          maybeAutoAddBirthdateFormats();
           persistRedactorTextState();
         }
 
@@ -2117,22 +2137,66 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
       });
     }
 
-    if (addBirthdateFormatsButton) {
-      addBirthdateFormatsButton.addEventListener('click', () => {
-        const variants = expandBirthdateFormats(birthdateInputEl?.value || '');
-        if (!variants.length) {
+    let autoAddBirthdateTimer = 0;
+    let lastAutoAddedBirthdate = '';
+
+    const addBirthdateFormats = ({ automatic = false } = {}) => {
+      const birthdateValue = birthdateInputEl?.value || '';
+      const variants = expandBirthdateFormats(birthdateValue);
+      if (!variants.length) {
+        if (!automatic) {
           setRedactorStatusByKey('invalidBirthdate', {}, true);
           birthdateInputEl?.focus();
-          return;
         }
+        if (automatic) lastAutoAddedBirthdate = '';
+        return false;
+      }
 
-        const addedCount = appendUniqueLines(redactorTermsEl, variants.join('\n'));
-        if (!addedCount) {
-          setRedactorStatusByKey('birthdateAlreadyPresent');
-          return;
-        }
+      const addedCount = appendUniqueLines(redactorTermsEl, variants.join('\n'));
+      if (!addedCount) {
+        if (!automatic) setRedactorStatusByKey('birthdateAlreadyPresent');
+        if (automatic) lastAutoAddedBirthdate = birthdateValue.normalize('NFKC').trim();
+        return false;
+      }
 
-        setRedactorStatusByKey('addedBirthdateFormats', { addedCount });
+      setRedactorStatusByKey('addedBirthdateFormats', { addedCount });
+      if (automatic) lastAutoAddedBirthdate = birthdateValue.normalize('NFKC').trim();
+      return true;
+    };
+
+    const maybeAutoAddBirthdateFormats = () => {
+      if (!redactorAutoAddDatesToggle?.checked) return false;
+      const normalizedValue = String(birthdateInputEl?.value || '').normalize('NFKC').trim();
+      if (!normalizedValue || normalizedValue === lastAutoAddedBirthdate) return false;
+      return addBirthdateFormats({ automatic: true });
+    };
+
+    if (addBirthdateFormatsButton) {
+      addBirthdateFormatsButton.addEventListener('click', () => {
+        addBirthdateFormats();
+      });
+    }
+
+    if (redactorAutoAddDatesToggle) {
+      redactorAutoAddDatesToggle.addEventListener('change', () => {
+        window.clearTimeout(autoAddBirthdateTimer);
+        lastAutoAddedBirthdate = '';
+        if (redactorAutoAddDatesToggle.checked) maybeAutoAddBirthdateFormats();
+      });
+    }
+
+    if (birthdateInputEl) {
+      birthdateInputEl.addEventListener('input', () => {
+        window.clearTimeout(autoAddBirthdateTimer);
+        lastAutoAddedBirthdate = '';
+      });
+      birthdateInputEl.addEventListener('paste', () => {
+        window.clearTimeout(autoAddBirthdateTimer);
+        autoAddBirthdateTimer = window.setTimeout(maybeAutoAddBirthdateFormats, 0);
+      });
+      birthdateInputEl.addEventListener('change', () => {
+        window.clearTimeout(autoAddBirthdateTimer);
+        maybeAutoAddBirthdateFormats();
       });
     }
 

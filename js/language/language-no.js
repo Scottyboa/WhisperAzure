@@ -651,6 +651,8 @@ Klikk på <strong>Guide</strong> igjen eller bruk lukkeknappen for å gå tilbak
 
 
   // Sekundær notatgenerator
+  redactorAutoAddDatesTooltip: "Legg automatisk til alle støttede datoformater i Spesifikke begreper når Fødselsdatohjelper inneholder en gyldig dato.",
+
   secondaryNote: {
     showButton: "Vis sekundær notatgenerator",
     hideButton: "Skjul sekundær notatgenerator",

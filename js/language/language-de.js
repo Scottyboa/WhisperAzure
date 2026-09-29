@@ -408,6 +408,8 @@ Erneut <strong>Anleitung</strong> wählen oder die Schließen-Schaltfläche verw
 `,
 
   // Sekundärer Notizgenerator
+  redactorAutoAddDatesTooltip: "Fügt automatisch alle unterstützten Datumsformate zu den spezifischen Begriffen hinzu, wenn die Geburtsdatum-Hilfe ein gültiges Datum enthält.",
+
   secondaryNote: {
     showButton: "Sekundären Notizgenerator anzeigen",
     hideButton: "Sekundären Notizgenerator ausblenden",

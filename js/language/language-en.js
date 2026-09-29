@@ -622,6 +622,8 @@ Select <strong>Guide</strong> again or use the close button to return to the mai
   redactorStatusOcrLoading: "OCR is loading language data…",
   redactorStatusOcrStarting: "OCR is starting…",
 
+  redactorAutoAddDatesTooltip: "Automatically add all supported date formats to Specific terms when Birthdate helper contains a valid date.",
+
   // Secondary Note Generator
   secondaryNote: {
     showButton: "Show secondary note generator",

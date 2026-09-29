@@ -1373,6 +1373,14 @@
       flex: 1 1 170px;
       min-width: 0;
     }
+    .redactor-birthdate-row .redactor-auto-dates-toggle {
+      flex: 0 0 auto;
+      width: 16px;
+      height: 16px;
+      margin: 0 0 0 2px;
+      accent-color: #5a9;
+      cursor: pointer;
+    }
     .redactor-status {
       min-height: 18px;
       margin-top: 8px;
@@ -2739,6 +2747,24 @@
                     placeholder="DDMMYY, e.g. 180289"
                   />
                   <button id="addBirthdateFormatsButton" type="button" class="redactor-button">Add dates</button>
+                  <input
+                    id="redactorAutoAddDatesToggle"
+                    class="redactor-auto-dates-toggle"
+                    type="checkbox"
+                    aria-label="Automatically add date formats"
+                    aria-describedby="redactorAutoAddDatesTooltipText"
+                  />
+                  <span
+                    id="redactorAutoAddDatesTooltipContainer"
+                    class="help-tip help-tip-left"
+                    tabindex="0"
+                    aria-label="Automatically add date formats help"
+                  >
+                    ?
+                    <span id="redactorAutoAddDatesTooltipText" class="help-tip-content" role="tooltip">
+                      Automatically add all supported date formats to Specific terms when Birthdate helper contains a valid date.
+                    </span>
+                  </span>
                 </div>
               </div>
             </div>

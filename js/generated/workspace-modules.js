@@ -8579,6 +8579,9 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
     const redactorImagePreview = document.getElementById('redactorImagePreview');
     const redactorImagePlaceholder = document.getElementById('redactorImagePlaceholder');
     const addBirthdateFormatsButton = document.getElementById('addBirthdateFormatsButton');
+    const redactorAutoAddDatesToggle = document.getElementById('redactorAutoAddDatesToggle');
+    const redactorAutoAddDatesTooltipContainer = document.getElementById('redactorAutoAddDatesTooltipContainer');
+    const redactorAutoAddDatesTooltipText = document.getElementById('redactorAutoAddDatesTooltipText');
     const copyRedactorRawOutputButton = document.getElementById('copyRedactorRawOutputButton');
     const clearRedactorRawOutputButton = document.getElementById('clearRedactorRawOutputButton');
     const downloadTranscriptButton = document.getElementById('downloadTranscriptButton');
@@ -8660,6 +8663,7 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
         birthdateLabel: 'Birthdate helper',
         birthdatePlaceholder: 'DDMMYY, DDMMYYYY, YYYY-MM-DD or national ID number',
         addDates: 'Add dates',
+        autoAddDatesTooltip: 'Automatically add all supported date formats to Specific terms when Birthdate helper contains a valid date.',
         messages: {
           specificTermsNormalized: 'Specific terms cleaned and normalized.',
           imagePastedReady: 'Image pasted and ready for OCR.',
@@ -8736,6 +8740,7 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
         birthdateLabel: 'Fødselsdatohjelper',
         birthdatePlaceholder: 'DDMMÅÅ, DDMMÅÅÅÅ, ÅÅÅÅ-MM-DD eller identitetsnummer',
         addDates: 'Legg til datoer',
+        autoAddDatesTooltip: 'Legg automatisk til alle støttede datoformater i Spesifikke begreper når Fødselsdatohjelper inneholder en gyldig dato.',
         messages: {
           specificTermsNormalized: 'Spesifikke begreper ble renset og normalisert.',
           imagePastedReady: 'Bildet er limt inn og klart for OCR.',
@@ -8894,6 +8899,17 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
       if (addBirthdateFormatsButton) {
         addBirthdateFormatsButton.textContent = strings.addDates;
       }
+      const autoAddDatesTooltip = window.__redactorI18n?.autoAddDatesTooltip
+        || strings.autoAddDatesTooltip;
+      if (redactorAutoAddDatesTooltipText && autoAddDatesTooltip) {
+        redactorAutoAddDatesTooltipText.textContent = autoAddDatesTooltip;
+      }
+      if (redactorAutoAddDatesToggle && autoAddDatesTooltip) {
+        redactorAutoAddDatesToggle.setAttribute('aria-label', autoAddDatesTooltip);
+      }
+      if (redactorAutoAddDatesTooltipContainer && autoAddDatesTooltip) {
+        redactorAutoAddDatesTooltipContainer.setAttribute('aria-label', autoAddDatesTooltip);
+      }
 
       if (typeof refreshRedactorStatusText === 'function') {
         refreshRedactorStatusText();
@@ -8996,7 +9012,13 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
       ? tok.replace(/\s+/g, '')
       : tok;
 
-    const collapseInternalSpacesInAlphaToken = (tok) => /^(?:[A-Za-zÆØÅæøå\-]+\s+)+[A-Za-zÆØÅæøå\-]+$/.test(tok)
+    // Accept names from every Unicode alphabet, including decomposed accent
+    // marks, apostrophes and typographic hyphens. The previous ASCII/Norwegian
+    // character class caused one accented token to keep an entire pasted name
+    // on a single line instead of splitting it like other names.
+    const isNameLikeToken = (tok) => /^(?=.*\p{L})[\p{L}\p{M}\p{Pd}'’ʼ]+$/u.test(tok);
+
+    const collapseInternalSpacesInAlphaToken = (tok) => /^(?:[\p{L}\p{M}\p{Pd}'’ʼ]+\s+)+[\p{L}\p{M}\p{Pd}'’ʼ]+$/u.test(tok)
       ? tok.replace(/\s+/g, '')
       : tok;
 
@@ -9097,7 +9119,7 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
           continue;
         }
 
-        if (/^(?:år|ar|moss|familie|Vei|Forelder|bostdsadresse|kvinne|mann|telefon|Telefonnummer|Moss|Bam|Barn|foreldre|ektefelle|tlf|ikke|funnet)$/i.test(s)) {
+        if (/^(?:år|ar|moss|familie|Vei|Forelder|bostdsadresse|kvinne|mann|telefon|Telefonnummer|Moss|Bam|Barn|foreldre|ektefelle|tlf|ikke|funnet|nærmeste|pårørende|as|ingen|bosatt|norge)$/iu.test(s)) {
           if (/^(?:år|ar)$/i.test(s) && out.length && /^\d{1,3}$/.test(out[out.length - 1])) {
             out.pop();
           }
@@ -9216,7 +9238,7 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
 
           if (!tokens.length) continue;
 
-          if (tokens.every((token) => /^[A-Za-zÆØÅæøå\-]+$/.test(token) || /^\d+$/.test(token))) {
+          if (tokens.every((token) => isNameLikeToken(token) || /^\d+$/.test(token))) {
             for (const token of tokens) {
               linesOut.push(token);
             }
@@ -9343,6 +9365,7 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
           }
           if (detectedBirthdate && birthdateInputEl) {
             birthdateInputEl.value = detectedBirthdate;
+            maybeAutoAddBirthdateFormats();
           }
           persistRedactorTextState();
           return;
@@ -9361,6 +9384,7 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
           }
           if (detectedBirthdate && birthdateInputEl && birthdateInputEl.value !== detectedBirthdate) {
             birthdateInputEl.value = detectedBirthdate;
+            maybeAutoAddBirthdateFormats();
             changed = true;
           }
           if (changed) {
@@ -9525,7 +9549,12 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
       'terrasse', 'terrassen'
     ]);
 
-    const redactInText = (text, terms) => {
+    // Terms entered under Specific are intentionally matched as raw
+    // case-insensitive substrings. This means a term such as "Karin" is
+    // redacted both when it stands alone and when it is attached to other
+    // letters/digits/symbols (for example "abc796karin" -> "abc796[REDACTED]").
+    // General terms keep the existing word-boundary behaviour.
+    const redactInText = (text, terms, specificTermKeys = new Set()) => {
       let output = text || '';
       let replacedAny = false;
 
@@ -9603,9 +9632,13 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
 
       for (const term of terms) {
         const escaped = escapeRegex(term);
-        const pattern = isWordOnlyRedactionTerm(term)
-          ? new RegExp(`(?<![\\p{L}\\p{N}_])${escaped}(?![\\p{L}\\p{N}_])`, 'giu')
-          : new RegExp(escaped, 'gi');
+        const normalizedTerm = term.toLocaleLowerCase();
+        const isSpecificTerm = specificTermKeys.has(normalizedTerm);
+        const pattern = isSpecificTerm
+          ? new RegExp(escaped, 'gi')
+          : isWordOnlyRedactionTerm(term)
+            ? new RegExp(`(?<![\\p{L}\\p{N}_])${escaped}(?![\\p{L}\\p{N}_])`, 'giu')
+            : new RegExp(escaped, 'gi');
         const updated = output.replace(pattern, '[REDACTED]');
         if (updated !== output) {
           replacedAny = true;
@@ -9633,6 +9666,10 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
         });
     };
 
+    const getSpecificRedactorTermKeys = () => new Set(
+      getLines(redactorTermsEl?.value || '').map((term) => term.toLocaleLowerCase())
+    );
+
     const revokeCurrentImageUrl = () => {
       if (!currentOcrImageObjectUrl) return;
       try {
@@ -9649,6 +9686,7 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
       ocrWorkers.clear();
       clearTimeout(cleanSpecificTimer);
       cleanSpecificTimer = null;
+      window.clearTimeout(autoAddBirthdateTimer);
       revokeCurrentImageUrl();
       currentOcrImageBlob = null;
       if (redactorImagePreview) {
@@ -10288,6 +10326,7 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
         const detectedBirthdate = extractBirthdateFromFnrText(finalText || recognizedText);
         if (detectedBirthdate && birthdateInputEl) {
           birthdateInputEl.value = detectedBirthdate;
+          maybeAutoAddBirthdateFormats();
           persistRedactorTextState();
         }
 
@@ -10488,16 +10527,17 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
     if (applyRedactionButton) {
       applyRedactionButton.addEventListener('click', async () => {
         const terms = getRedactorTerms();
+        const specificTermKeys = getSpecificRedactorTermKeys();
         let replacedAny = false;
 
         if (transcriptionEl) {
-          const result = redactInText(transcriptionEl.value || '', terms);
+          const result = redactInText(transcriptionEl.value || '', terms, specificTermKeys);
           transcriptionEl.value = result.text;
           replacedAny = replacedAny || result.replacedAny;
         }
 
         if (supplementaryInfoEl) {
-          const result = redactInText(supplementaryInfoEl.value || '', terms);
+          const result = redactInText(supplementaryInfoEl.value || '', terms, specificTermKeys);
           supplementaryInfoEl.value = result.text;
           replacedAny = replacedAny || result.replacedAny;
         }
@@ -10529,22 +10569,66 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
       });
     }
 
-    if (addBirthdateFormatsButton) {
-      addBirthdateFormatsButton.addEventListener('click', () => {
-        const variants = expandBirthdateFormats(birthdateInputEl?.value || '');
-        if (!variants.length) {
+    let autoAddBirthdateTimer = 0;
+    let lastAutoAddedBirthdate = '';
+
+    const addBirthdateFormats = ({ automatic = false } = {}) => {
+      const birthdateValue = birthdateInputEl?.value || '';
+      const variants = expandBirthdateFormats(birthdateValue);
+      if (!variants.length) {
+        if (!automatic) {
           setRedactorStatusByKey('invalidBirthdate', {}, true);
           birthdateInputEl?.focus();
-          return;
         }
+        if (automatic) lastAutoAddedBirthdate = '';
+        return false;
+      }
 
-        const addedCount = appendUniqueLines(redactorTermsEl, variants.join('\n'));
-        if (!addedCount) {
-          setRedactorStatusByKey('birthdateAlreadyPresent');
-          return;
-        }
+      const addedCount = appendUniqueLines(redactorTermsEl, variants.join('\n'));
+      if (!addedCount) {
+        if (!automatic) setRedactorStatusByKey('birthdateAlreadyPresent');
+        if (automatic) lastAutoAddedBirthdate = birthdateValue.normalize('NFKC').trim();
+        return false;
+      }
 
-        setRedactorStatusByKey('addedBirthdateFormats', { addedCount });
+      setRedactorStatusByKey('addedBirthdateFormats', { addedCount });
+      if (automatic) lastAutoAddedBirthdate = birthdateValue.normalize('NFKC').trim();
+      return true;
+    };
+
+    const maybeAutoAddBirthdateFormats = () => {
+      if (!redactorAutoAddDatesToggle?.checked) return false;
+      const normalizedValue = String(birthdateInputEl?.value || '').normalize('NFKC').trim();
+      if (!normalizedValue || normalizedValue === lastAutoAddedBirthdate) return false;
+      return addBirthdateFormats({ automatic: true });
+    };
+
+    if (addBirthdateFormatsButton) {
+      addBirthdateFormatsButton.addEventListener('click', () => {
+        addBirthdateFormats();
+      });
+    }
+
+    if (redactorAutoAddDatesToggle) {
+      redactorAutoAddDatesToggle.addEventListener('change', () => {
+        window.clearTimeout(autoAddBirthdateTimer);
+        lastAutoAddedBirthdate = '';
+        if (redactorAutoAddDatesToggle.checked) maybeAutoAddBirthdateFormats();
+      });
+    }
+
+    if (birthdateInputEl) {
+      birthdateInputEl.addEventListener('input', () => {
+        window.clearTimeout(autoAddBirthdateTimer);
+        lastAutoAddedBirthdate = '';
+      });
+      birthdateInputEl.addEventListener('paste', () => {
+        window.clearTimeout(autoAddBirthdateTimer);
+        autoAddBirthdateTimer = window.setTimeout(maybeAutoAddBirthdateFormats, 0);
+      });
+      birthdateInputEl.addEventListener('change', () => {
+        window.clearTimeout(autoAddBirthdateTimer);
+        maybeAutoAddBirthdateFormats();
       });
     }
 
@@ -10758,6 +10842,7 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
     });
   }
   });
+
 
 return Object.freeze(Object.defineProperties({}, {}));
 };

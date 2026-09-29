@@ -31,6 +31,7 @@ const CHECKBOX_IDS = [
   "autoClearNoteToggle", "autoGenerateToggle", "includePromptToggle",
   "secondarySourceDateToggle", "secondaryAutoTransferToggle",
   "secondaryClearOnGenerateToggle", "redactorAutocopyToggle",
+  "redactorAutoAddDatesToggle",
 ];
 
 const DRAFT_FIELD_IDS = [

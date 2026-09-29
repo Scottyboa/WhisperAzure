@@ -278,6 +278,7 @@ function getRedactorI18n(trans) {
         birthdateLabel: "Fødselsdatohjelper",
         birthdatePlaceholder: "DDMMÅÅ, f.eks. 180289",
         addDatesButton: "Legg til datoer",
+        autoAddDatesTooltip: "Legg automatisk til alle støttede datoformater i Spesifikke begreper når Fødselsdatohjelper inneholder en gyldig dato.",
         statusDefault: "",
       }
     : {
@@ -311,13 +312,18 @@ function getRedactorI18n(trans) {
         birthdateLabel: "Birthdate helper",
         birthdatePlaceholder: "DDMMYY, e.g. 180289",
         addDatesButton: "Add dates",
+        autoAddDatesTooltip: "Automatically add all supported date formats to Specific terms when Birthdate helper contains a valid date.",
         statusDefault: "",
       };
 
-  return {
+  const merged = {
     ...fallback,
     ...(trans.redactor || {}),
   };
+  merged.autoAddDatesTooltip = trans.redactorAutoAddDatesTooltip
+    || trans.redactor?.autoAddDatesTooltip
+    || merged.autoAddDatesTooltip;
+  return merged;
 }
 
 function getSecondaryNoteI18n(trans) {
@@ -449,6 +455,9 @@ function updateRedactorUI(trans) {
   setTextIfPresent("redactorBirthdateLabel", redactor.birthdateLabel);
   setPlaceholderIfPresent("redactorBirthdateInput", redactor.birthdatePlaceholder);
   setTextIfPresent("addBirthdateFormatsButton", redactor.addDatesButton);
+  setTextIfPresent("redactorAutoAddDatesTooltipText", redactor.autoAddDatesTooltip);
+  setAttrIfPresent("redactorAutoAddDatesToggle", "aria-label", redactor.autoAddDatesTooltip);
+  setAttrIfPresent("redactorAutoAddDatesTooltipContainer", "aria-label", redactor.autoAddDatesTooltip);
 
   if (toggleButton) {
     toggleButton.textContent = isOpen ? redactor.toggleHide : redactor.toggleShow;
