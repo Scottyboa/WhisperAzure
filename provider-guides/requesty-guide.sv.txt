@@ -16,4 +16,8 @@ Hitta nyckeln under API Keys, öppna inställningarna och sätt Logging till Off
 
 Klistra in nyckeln i fältet Requesty API key på startsidan. Öppna sedan transkriptionsverktyget, välj Requesty som leverantör för anteckningsgenerering och välj önskad modell.
 
-Integritet: Alla Requesty-modeller som är tillgängliga i den här appen är valda för behandling endast inom EU, utan datalagring och utan modellträning; loggning av prompts och svar bör vara avstängd för API-nyckeln.
+5. Aktivera Zero Data Retention (ZDR)
+
+Välj Compliance under Admin i Requestys vänstermeny. Hitta Zero Data Retention, klicka på Edit på samma rad och aktivera inställningen. Detta stänger av innehållsloggning för alla befintliga och framtida API-nycklar. Inställningen är permanent; tidigare innehållsloggar raderas inte automatiskt.
+
+Integritet: Appen använder utvalda EU-modellrutter utan datalagring hos modellleverantören eller användning för modellträning. Aktivera ZDR hos Requesty för att förhindra att Requesty lagrar nya prompts och svar. Användningsstatistik, som antal token och kostnader, är fortfarande tillgänglig.

@@ -16,4 +16,8 @@ Suchen Sie den Schlüssel unter API Keys, öffnen Sie seine Einstellungen und se
 
 Fügen Sie den Schlüssel auf der Startseite in das Feld Requesty API key ein. Öffnen Sie anschließend das Transkriptionswerkzeug, wählen Sie Requesty als Anbieter für die Notizerstellung und wählen Sie das gewünschte Modell.
 
-Datenschutz: Alle in dieser App verfügbaren Requesty-Modelle sind für eine ausschließliche Verarbeitung in der EU ohne Datenspeicherung und ohne Modelltraining ausgewählt; die Protokollierung von Prompts und Antworten sollte für den API-Schlüssel ausgeschaltet sein.
+5. Zero Data Retention (ZDR) aktivieren
+
+Wählen Sie Compliance unter Admin im linken Menü von Requesty. Suchen Sie Zero Data Retention, klicken Sie in derselben Zeile auf Edit und aktivieren Sie die Einstellung. Dadurch wird die Inhaltsprotokollierung für alle bestehenden und zukünftigen API-Schlüssel deaktiviert. Die Einstellung ist dauerhaft; bestehende Inhaltsprotokolle werden nicht automatisch gelöscht.
+
+Datenschutz: Die App verwendet ausgewählte EU-Modellrouten ohne Datenspeicherung beim Modellanbieter und ohne Nutzung für Modelltraining. Aktivieren Sie ZDR bei Requesty, damit Requesty keine neuen Prompts und Antworten speichert. Nutzungsstatistiken wie Tokenanzahl und Kosten bleiben verfügbar.

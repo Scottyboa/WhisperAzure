@@ -16,4 +16,8 @@ Finn nøkkelen under API Keys, åpne innstillingene og sett Logging til Off. Da 
 
 Lim nøkkelen inn i feltet Requesty API key på forsiden. Åpne deretter transkripsjonsverktøyet, velg Requesty som leverandør for notatgenerering og velg ønsket modell.
 
-Personvern: Alle Requesty-modellene som er tilgjengelige i denne appen er valgt for behandling kun i EU, uten datalagring og uten modelltrening; prompt- og svarlogging bør være slått av for API-nøkkelen.
+5. Aktiver Zero Data Retention (ZDR)
+
+Velg Compliance under Admin i venstremenyen hos Requesty. Finn Zero Data Retention, klikk Edit på samme rad og aktiver innstillingen. Dette slår av innholdslogging for alle eksisterende og fremtidige API-nøkler. Innstillingen er permanent; tidligere innholdslogger slettes ikke automatisk.
+
+Personvern: Appen bruker utvalgte EU-modellruter uten datalagring hos modellleverandøren og uten bruk til modelltrening. Aktiver ZDR hos Requesty for å hindre at Requesty lagrer nye prompts og svar. Bruksstatistikk, som tokenantall og kostnader, er fortsatt tilgjengelig.

@@ -16,4 +16,8 @@ Find the key under API Keys, open its settings and set Logging to Off. Requesty 
 
 Paste the key into the Requesty API key field on the front page. Then open the transcription tool, select Requesty as the note-generation provider and choose the desired model.
 
-Privacy: All Requesty models available in this app are selected for EU-only processing, with no data retention and no model training; prompt and response logging should be turned off for the API key.
+5. Enable Zero Data Retention (ZDR)
+
+Select Compliance under Admin in Requesty’s left menu. Find Zero Data Retention, click Edit on that row and enable the setting. This disables content logging for all existing and future API keys. The setting is permanent; existing content logs are not automatically deleted.
+
+Privacy: The app uses selected EU model routes with no provider-side data retention or use for model training. Enable ZDR in Requesty to prevent Requesty from storing new prompts and responses. Usage statistics, such as token counts and costs, remain available.

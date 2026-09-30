@@ -1,3 +1,20 @@
+## 30 September, 2026
+
+### Claude Sonnet 5.5 and GPT-6.1 Sol added through Requesty
+
+**Claude Sonnet 5.5** and **GPT-6.1 Sol** are now available for note generation through **Requesty**. They replace Claude Sonnet 5 and GPT-6 Sol, respectively.
+
+Input and output prices are **unchanged from the previous versions**. Per one million tokens, before any Requesty markup:
+
+- **Claude Sonnet 5.5:** $2.20 for input and $11.00 for output.
+- **GPT-6.1 Sol:** $2.40 for input and $12.00 for output.
+
+Sonnet 5.5 is routed through **Google Vertex AI in the EU**, while GPT-6.1 Sol is routed through **Azure OpenAI in Sweden Central**. The selected model routes have **zero data retention (ZDR)**, all data processing stays within the **EU**, and requests and responses are **not used for model training**.
+
+**Remember to enable ZDR in Requesty:** Sign in at **Requesty.ai** and select **Compliance** under **Admin** in the left menu. Find **Zero Data Retention**, click **Edit** on that row and enable the setting. This prevents Requesty from storing the content of new requests and responses across all your API keys. These instructions have also been added to the setup guide on the front page.
+
+---
+
 ## 28 September, 2026
 
 ### GPT-6 Sol and GPT-6 Luna added for OpenAI

@@ -16,4 +16,8 @@ Trova la chiave sotto API Keys, apri le impostazioni e imposta Logging su Off. R
 
 Incolla la chiave nel campo Requesty API key della pagina iniziale. Apri quindi lo strumento di trascrizione, seleziona Requesty come provider per la generazione delle note e scegli il modello desiderato.
 
-Privacy: tutti i modelli Requesty disponibili in questa app sono selezionati per il trattamento esclusivamente nell’UE, senza conservazione dei dati e senza addestramento dei modelli; la registrazione di prompt e risposte deve essere disattivata per la chiave API.
+5. Attiva Zero Data Retention (ZDR)
+
+Seleziona Compliance sotto Admin nel menu a sinistra di Requesty. Trova Zero Data Retention, fai clic su Edit nella stessa riga e attiva l’impostazione. Questo disabilita la registrazione dei contenuti per tutte le chiavi API esistenti e future. L’impostazione è permanente; i registri dei contenuti già esistenti non vengono eliminati automaticamente.
+
+Privacy: l’app usa percorsi di modelli selezionati nell’UE, senza conservazione dei dati da parte del provider del modello né utilizzo per l’addestramento. Attiva ZDR in Requesty per impedire a Requesty di memorizzare nuovi prompt e risposte. Le statistiche di utilizzo, come il numero di token e i costi, restano disponibili.

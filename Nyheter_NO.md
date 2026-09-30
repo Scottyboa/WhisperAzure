@@ -1,3 +1,20 @@
+## 30. september 2026
+
+### Claude Sonnet 5.5 og GPT-6.1 Sol er lagt til via Requesty
+
+**Claude Sonnet 5.5** og **GPT-6.1 Sol** er nå tilgjengelige for notatgenerering via **Requesty**. De erstatter henholdsvis Claude Sonnet 5 og GPT-6 Sol.
+
+Prisene for input og output er **uendret fra de tidligere versjonene**. Per én million tokens, før eventuelle Requesty-påslag:
+
+- **Claude Sonnet 5.5:** 2,20 USD for input og 11,00 USD for output.
+- **GPT-6.1 Sol:** 2,40 USD for input og 12,00 USD for output.
+
+Sonnet 5.5 rutes gjennom **Google Vertex AI i EU**, mens GPT-6.1 Sol rutes gjennom **Azure OpenAI i Sweden Central**. De valgte modellrutene har **zero data retention (ZDR)**, all databehandling skjer innenfor **EU**, og forespørsler og svar brukes **ikke til modelltrening**.
+
+**Husk å aktivere ZDR hos Requesty:** Logg inn i din bruker på **Requesty.ai** og velg **Compliance** under **Admin** i venstremenyen. Finn **Zero Data Retention**, klikk **Edit** på samme rad og aktiver innstillingen. Dette hindrer Requesty i å lagre innholdet i nye forespørsler og svar for alle API-nøklene dine. Fremgangsmåten er også lagt til i oppsettsguiden på forsiden.
+
+---
+
 ## 28. september 2026
 
 ### GPT-6 Sol og GPT-6 Luna er lagt til for OpenAI

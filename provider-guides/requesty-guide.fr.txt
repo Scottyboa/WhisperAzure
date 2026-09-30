@@ -16,4 +16,8 @@ Trouvez la clé sous API Keys, ouvrez ses paramètres et réglez Logging sur Off
 
 Collez la clé dans le champ Requesty API key de la page d’accueil. Ouvrez ensuite l’outil de transcription, sélectionnez Requesty comme fournisseur de génération de notes et choisissez le modèle souhaité.
 
-Confidentialité : tous les modèles Requesty disponibles dans cette application sont sélectionnés pour un traitement exclusivement dans l’UE, sans conservation des données ni entraînement des modèles ; la journalisation des prompts et des réponses doit être désactivée pour la clé API.
+5. Activer Zero Data Retention (ZDR)
+
+Sélectionnez Compliance sous Admin dans le menu de gauche de Requesty. Repérez Zero Data Retention, cliquez sur Edit sur la même ligne et activez le paramètre. Cela désactive la journalisation du contenu pour toutes les clés API existantes et futures. Le paramètre est permanent ; les journaux de contenu existants ne sont pas supprimés automatiquement.
+
+Confidentialité : l’application utilise des routes de modèles sélectionnées dans l’UE, sans conservation des données par le fournisseur du modèle ni utilisation pour l’entraînement. Activez ZDR chez Requesty pour empêcher Requesty de stocker de nouveaux prompts et réponses. Les statistiques d’utilisation, comme le nombre de tokens et les coûts, restent disponibles.
