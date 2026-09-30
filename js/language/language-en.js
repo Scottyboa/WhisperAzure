@@ -442,6 +442,17 @@ priceModalText: `
 };
 
 export const transcribeTranslations = {
+  conferenceAudio: {
+    "label": "Include conference audio",
+    "tooltip": "Records your microphone together with audio from a conference. Before Start, enable this option. In the browser sharing dialog, preferably select the conference tab and enable Share tab audio. Supported system audio can also be used for a desktop call; it may include sounds from other apps. You still hear the call normally. Recommended: desktop Chrome or Edge. If no shared audio is available, recording continues with the microphone only. Pause pauses both sources; Stop and Abort end sharing.",
+    "waiting": "Choose the conference tab and enable audio sharing.",
+    "active": "Microphone + conference audio",
+    "paused": "Conference audio paused; sharing remains selected.",
+    "noAudio": "No shared audio was provided. Recording uses the microphone only. To include the call, stop and start again, select its tab and enable Share tab audio.",
+    "cancelled": "Audio sharing was cancelled or blocked. Recording uses the microphone only.",
+    "ended": "Conference audio sharing ended. Recording continues with the microphone only.",
+    "unsupported": "Conference audio sharing is unavailable in this browser. Use desktop Chrome or Edge. Microphone recording remains available."
+  },
   pageTitle: "Transcription Tool",
   openaiUsageLinkText: "Cost Usage Overview",
   openaiWalletLinkText: "Wallet Balance",

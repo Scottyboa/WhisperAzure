@@ -271,6 +271,17 @@ Ein API-Schlüssel macht einen Dienst nicht automatisch DSGVO-konform. Prüfen S
 };
 
 export const transcribeTranslations = {
+  conferenceAudio: {
+    "label": "Konferenzton aufnehmen",
+    "tooltip": "Nimmt Ihr Mikrofon zusammen mit dem Ton einer Videokonferenz auf. Aktivieren Sie diese Option vor dem Start. Wählen Sie im Freigabedialog möglichst den Konferenz-Tab und aktivieren Sie Tab-Audio teilen. Unterstütztes Systemaudio kann auch für einen Anruf in einer Desktop-App verwendet werden; dabei können Töne anderer Apps aufgenommen werden. Sie hören das Gespräch weiterhin normal. Empfohlen: Chrome oder Edge auf dem Computer. Ohne freigegebenen Ton wird nur das Mikrofon aufgenommen. Pause pausiert beide Quellen; Stopp und Abbrechen beenden die Freigabe.",
+    "waiting": "Wählen Sie den Konferenz-Tab und aktivieren Sie die Audiofreigabe.",
+    "active": "Mikrofon + Konferenzton",
+    "paused": "Konferenzton pausiert; die Freigabe bleibt ausgewählt.",
+    "noAudio": "Es wurde kein Ton freigegeben. Nur das Mikrofon wird aufgenommen. Um das Gespräch einzubeziehen, stoppen und starten Sie erneut, wählen Sie den Tab und aktivieren Sie Tab-Audio teilen.",
+    "cancelled": "Die Audiofreigabe wurde abgebrochen oder blockiert. Nur das Mikrofon wird aufgenommen.",
+    "ended": "Die Freigabe des Konferenztons wurde beendet. Die Aufnahme läuft mit dem Mikrofon weiter.",
+    "unsupported": "Dieser Browser unterstützt keine Freigabe von Konferenzton. Verwenden Sie Chrome oder Edge auf dem Computer. Mikrofonaufnahmen sind weiterhin möglich."
+  },
   pageTitle: "Transkriptionstool",
   openaiUsageLinkText: "Kostenübersicht",
   openaiWalletLinkText: "Kontostand",

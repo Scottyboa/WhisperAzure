@@ -286,6 +286,17 @@ En API-nyckel gör inte en tjänst automatiskt GDPR-kompatibel. Kontrollera DPA,
 };
 
 export const transcribeTranslations = {
+  conferenceAudio: {
+    "label": "Ta med samtalsljud",
+    "tooltip": "Spelar in din mikrofon tillsammans med ljud från ett videosamtal eller nätmöte. Aktivera detta före Start. Välj helst fliken med samtalet i webbläsarens delningsruta och markera Dela flikljud. Om webbläsaren stöder systemljud kan det även användas för ett samtal i en skrivbordsapp; ljud från andra appar kan då följa med. Du hör fortfarande samtalet som vanligt. Rekommenderas: Chrome eller Edge på dator. Om delat ljud saknas fortsätter inspelningen med enbart mikrofonen. Paus pausar båda ljudkällorna; Stopp och Avbryt avslutar delningen.",
+    "waiting": "Välj fliken med samtalet och aktivera ljuddelning.",
+    "active": "Mikrofon + samtalsljud",
+    "paused": "Samtalsljudet är pausat; delningsvalet behålls.",
+    "noAudio": "Inget delat ljud valdes. Inspelningen använder enbart mikrofonen. För att ta med samtalet: stoppa och starta igen, välj fliken och markera Dela flikljud.",
+    "cancelled": "Ljuddelning avbröts eller blockerades. Inspelningen använder enbart mikrofonen.",
+    "ended": "Delning av samtalsljud avslutades. Inspelningen fortsätter med enbart mikrofonen.",
+    "unsupported": "Den här webbläsaren stöder inte delning av samtalsljud. Använd Chrome eller Edge på dator. Mikrofoninspelning är fortfarande tillgänglig."
+  },
   pageTitle: "Transkriberingsverktyg",
   openaiUsageLinkText: "Kostnadsöversikt",
   openaiWalletLinkText: "Kredit",

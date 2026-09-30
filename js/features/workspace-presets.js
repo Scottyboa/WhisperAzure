@@ -32,6 +32,7 @@ const CHECKBOX_IDS = [
   "secondarySourceDateToggle", "secondaryAutoTransferToggle",
   "secondaryClearOnGenerateToggle", "redactorAutocopyToggle",
   "redactorAutoAddDatesToggle",
+  "conferenceAudioToggle",
 ];
 
 const DRAFT_FIELD_IDS = [
@@ -786,7 +787,7 @@ function initTopLevelManager() {
     const frame = document.createElement("iframe");
     frame.className = "workspace-preset-frame is-parked";
     frame.title = definition.name;
-    frame.allow = "microphone; clipboard-read; clipboard-write";
+    frame.allow = "microphone; display-capture; clipboard-read; clipboard-write";
     const url = new URL(window.location.href);
     url.searchParams.set("workspacePresetFrame", definition.id);
     url.hash = "";

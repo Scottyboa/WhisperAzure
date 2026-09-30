@@ -442,6 +442,17 @@ En API-nøkkel alene gjør ikke en tjeneste GDPR-kompatibel. Kontroller leverand
 };
 
 export const transcribeTranslations = {
+  conferenceAudio: {
+    "label": "Ta med samtalelyd",
+    "tooltip": "Tar opp mikrofonen din sammen med lyd fra en videokonsultasjon eller et nettmøte. Slå på valget før Start. I nettleserens delingsvindu bør du velge fanen med samtalen og krysse av for Del fanelyd. Hvis nettleseren støtter systemlyd, kan den også brukes for en samtale i et skrivebordsprogram; da kan lyd fra andre programmer bli med. Du hører fortsatt samtalen som vanlig. Anbefalt: Chrome eller Edge på datamaskin. Hvis delt lyd mangler, fortsetter opptaket med bare mikrofonen. Pause pauser begge lydkildene; Stopp og Avbryt avslutter delingen.",
+    "waiting": "Velg fanen med samtalen og slå på lyddeling.",
+    "active": "Mikrofon + samtalelyd",
+    "paused": "Samtalelyd er pauset; delingsvalget beholdes.",
+    "noAudio": "Ingen delt lyd ble valgt. Opptaket bruker bare mikrofonen. For å ta med samtalen: stopp og start på nytt, velg fanen og kryss av for Del fanelyd.",
+    "cancelled": "Lyddeling ble avbrutt eller blokkert. Opptaket bruker bare mikrofonen.",
+    "ended": "Deling av samtalelyd ble avsluttet. Opptaket fortsetter med bare mikrofonen.",
+    "unsupported": "Denne nettleseren støtter ikke deling av samtalelyd. Bruk Chrome eller Edge på datamaskin. Mikrofonopptak er fortsatt tilgjengelig."
+  },
   pageTitle: "Transkripsjonsverktøy",
   openaiUsageLinkText: "Kostnadsoversikt",
   openaiWalletLinkText: "Kreditt",

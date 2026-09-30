@@ -1,9 +1,11 @@
 import { registerWorkspaceDisposer } from "../core/workspace-disposal.js";
+import { initConferenceAudioUi } from "../core/conference-audio.js";
 
 (function initRecordingUiFeature() {
   if (window.__recordingUiFeatureInitialized) return;
   window.__recordingUiFeatureInitialized = true;
 
+  initConferenceAudioUi();
   initRecordingTimerUi();
   initProviderLockWhileRecording();
 })();

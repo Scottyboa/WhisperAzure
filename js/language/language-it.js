@@ -271,6 +271,17 @@ Una chiave API non rende automaticamente un servizio conforme al GDPR. Verifica 
 };
 
 export const transcribeTranslations = {
+  conferenceAudio: {
+    "label": "Includi audio della conferenza",
+    "tooltip": "Registra il microfono insieme all’audio di una videoconferenza. Attiva questa opzione prima di avviare. Nella finestra di condivisione del browser, scegli preferibilmente la scheda della conferenza e attiva Condividi audio della scheda. L’audio di sistema, se supportato, può essere usato anche per una chiamata in un’app desktop; può includere suoni di altre app. Continui a sentire la chiamata normalmente. Consigliati: Chrome o Edge su computer. Se manca l’audio condiviso, viene registrato solo il microfono. Pausa mette in pausa entrambe le sorgenti; Interrompi e Annulla terminano la condivisione.",
+    "waiting": "Scegli la scheda della conferenza e attiva la condivisione audio.",
+    "active": "Microfono + audio della conferenza",
+    "paused": "Audio della conferenza in pausa; la condivisione rimane selezionata.",
+    "noAudio": "Non è stato condiviso alcun audio. Viene registrato solo il microfono. Per includere la chiamata, interrompi e riavvia, scegli la scheda e attiva Condividi audio della scheda.",
+    "cancelled": "La condivisione audio è stata annullata o bloccata. Viene registrato solo il microfono.",
+    "ended": "La condivisione dell’audio della conferenza è terminata. La registrazione continua con il solo microfono.",
+    "unsupported": "Questo browser non supporta la condivisione dell’audio della conferenza. Usa Chrome o Edge su computer. La registrazione del microfono resta disponibile."
+  },
   pageTitle: "Strumento di trascrizione",
   openaiUsageLinkText: "Riepilogo dei costi",
   openaiWalletLinkText: "Saldo Portafoglio",

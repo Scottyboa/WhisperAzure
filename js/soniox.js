@@ -1,4 +1,5 @@
 import { bindRecordingAction, startVerifiedVAD, verifyAudioCapture } from './core/recording-lifecycle.js';
+import { acquireRecordingInputStream, releaseRecordingInputStream } from './core/conference-audio.js';
 // soniox.js
 //
 // Unified Soniox speech-to-text recording module — replaces the three
@@ -1511,7 +1512,7 @@ function rtWaitForServerFinalizedOrTimeout(timeoutMs) {
 async function rtStartAudioCapture(operation) {
   // Note: getUserMedia({ sampleRate }) is a hint — many browsers ignore it.
   // The actual resampling happens via AudioContext at SONIOX_RT_SAMPLE_RATE.
-  mediaStream = await operation.wait(navigator.mediaDevices.getUserMedia({
+  mediaStream = await acquireRecordingInputStream({
     audio: {
       channelCount: 1,
       sampleRate: SONIOX_RT_SAMPLE_RATE,
@@ -1520,7 +1521,7 @@ async function rtStartAudioCapture(operation) {
       autoGainControl: true,
     },
     video: false,
-  }), late => late.getTracks().forEach(track => track.stop()));
+  }, operation);
 
   const Ctx = window.AudioContext || window.webkitAudioContext;
   audioContext = new Ctx({ sampleRate: SONIOX_RT_SAMPLE_RATE });
@@ -1566,7 +1567,7 @@ function rtTeardownAudioCapture() {
       audioContext = null;
     }
     if (mediaStream) {
-      mediaStream.getTracks().forEach((t) => { try { t.stop(); } catch (_) {} });
+      releaseRecordingInputStream(mediaStream);
       mediaStream = null;
     }
   } catch (err) {
@@ -1584,7 +1585,7 @@ function rtTeardownAudioCapture() {
 function rtStopMicInputOnly() {
   try {
     if (mediaStream) {
-      mediaStream.getTracks().forEach((t) => { try { t.stop(); } catch (_) {} });
+      releaseRecordingInputStream(mediaStream);
       mediaStream = null;
     }
   } catch (err) {

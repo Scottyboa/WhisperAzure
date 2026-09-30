@@ -1,3 +1,5 @@
+import { acquireRecordingInputStream, disposeConferenceAudio, lockConferenceAudio, pauseConferenceAudio, prepareConferenceAudio, releaseRecordingInputStream, releaseRecordingInputs, stopConferenceSharing } from './conference-audio.js';
+
 // One authority per Workspace. Button clicks request transitions; only the
 // provider handler can confirm them. Nothing is shared with another frame.
 const buttons = { start: 'startButton', pauseResume: 'pauseResumeButton', stop: 'stopButton', abort: 'abortButton' };
@@ -14,6 +16,7 @@ export function resetRecordingLifecycle() {
   lastRequest = null;
   handlers.clear();
   operation?.controller.abort(new Error('Workspace disposed.'));
+  disposeConferenceAudio();
   publish('idle', 'reset');
 }
 
@@ -41,7 +44,10 @@ export function bindRecordingAction(button, action, handler, options = {}) {
   button.addEventListener('click', listener, options);
   options.signal?.addEventListener('abort', () => {
     if (handlers.get(action) === entry) handlers.delete(action);
-    if (current?.entry === entry) current.controller.abort(new Error('Recording provider changed.'));
+    if (current?.entry === entry) {
+      current.controller.abort(new Error('Recording provider changed.'));
+      disposeConferenceAudio();
+    }
   }, { once: true });
 }
 
@@ -83,6 +89,11 @@ async function execute(action, entry, signal) {
     ? setTimeout(() => controller.abort(new Error('Microphone start timed out. Open the main tab, check microphone permission, then try again.')), 60000)
     : null;
   try {
+    if (phase === 'starting') await prepareConferenceAudio(operation);
+    if (phase === 'resuming') pauseConferenceAudio(false);
+    if (action === 'stop') stopConferenceSharing();
+    if (action === 'abort') disposeConferenceAudio();
+    lockConferenceAudio(true);
     const confirmed = await entry.handler(operation);
     operation.check();
     if (current !== operation) return failure('Recording action was superseded.');
@@ -90,10 +101,14 @@ async function execute(action, entry, signal) {
     if (!['recording', 'paused', 'stopped', 'aborted'].includes(next)) {
       throw new Error(document.getElementById('statusMessage')?.textContent || 'Recording action was not confirmed.');
     }
+    if (next === 'paused') { pauseConferenceAudio(true); releaseRecordingInputs(); }
+    if (next === 'stopped' || next === 'aborted') disposeConferenceAudio();
     publish(next, action);
     return { ok: true, state: getRecordingLifecycle() };
   } catch (error) {
     if (current !== operation) return failure('Recording action was superseded.');
+    if (phase === 'starting') disposeConferenceAudio();
+    else if (phase === 'resuming') { pauseConferenceAudio(true); releaseRecordingInputs(); }
     const message = String(error?.message || error || 'Recording action failed.');
     publish('error', action, message);
     const status = document.getElementById('statusMessage');
@@ -123,7 +138,7 @@ async function execute(action, entry, signal) {
 export async function disposeVAD(mic) {
   if (!mic) return;
   // Stop tracks before awaiting any model cleanup, even if AudioContext is suspended.
-  mic.stream?.getTracks().forEach(track => track.stop());
+  releaseRecordingInputStream(mic.stream);
   try { await mic.destroy?.(); } catch (_) {}
 }
 
@@ -147,16 +162,16 @@ export async function startVerifiedVAD(factory, options, operation) {
   try {
     // Own the stream before model loading. The pinned VAD library otherwise
     // leaves its microphone open if its async model initialization fails.
-    stream = await operation.wait(navigator.mediaDevices.getUserMedia({ audio: {
+    stream = await acquireRecordingInputStream({ audio: {
       ...options.additionalAudioConstraints, channelCount: 1,
       echoCancellation: true, autoGainControl: true, noiseSuppression: true,
-    } }), late => late.getTracks().forEach(track => track.stop()));
+    } }, operation);
     guarded.stream = stream;
     mic = await operation.wait(factory(guarded), late => { valid = false; return disposeVAD(late); });
     const destroy = mic.destroy.bind(mic);
     mic.destroy = () => {
       valid = false;
-      stream.getTracks().forEach(track => track.stop());
+      releaseRecordingInputStream(stream);
       return destroy();
     };
     await operation.wait(mic.start());
@@ -164,7 +179,7 @@ export async function startVerifiedVAD(factory, options, operation) {
     return mic;
   } catch (error) {
     valid = false;
-    stream?.getTracks().forEach(track => track.stop());
+    releaseRecordingInputStream(stream);
     await disposeVAD(mic);
     throw error;
   }

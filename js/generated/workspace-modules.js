@@ -1764,11 +1764,13 @@ return Object.freeze(Object.defineProperties({}, {}));
 factories["features/recording-ui.js"] = (context, load, loadAsync) => {
 const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame, MutationObserver, ResizeObserver } = context;
 const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWorkspaceDisposer"];
+const initConferenceAudioUi = load("core/conference-audio.js")["initConferenceAudioUi"];
 
 (function initRecordingUiFeature() {
   if (window.__recordingUiFeatureInitialized) return;
   window.__recordingUiFeatureInitialized = true;
 
+  initConferenceAudioUi();
   initRecordingTimerUi();
   initProviderLockWhileRecording();
 })();
@@ -5121,8 +5123,236 @@ document.addEventListener('DOMContentLoaded', () => {
 return Object.freeze(Object.defineProperties({}, {}));
 };
 
+factories["core/conference-audio.js"] = (context, load, loadAsync) => {
+const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame, MutationObserver, ResizeObserver } = context;
+const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWorkspaceDisposer"];
+
+// One mixer and sharing session per Workspace runtime. Only the mixed audio
+// stream reaches STT; captured video is never rendered, recorded or uploaded.
+const SETTING_KEY = 'conference_audio_enabled';
+const FALLBACK = {
+  label: 'Include conference audio',
+  tooltip: 'Records your microphone together with audio from a conference. Before Start, enable this option. In the browser sharing dialog, preferably select the conference tab and enable Share tab audio. Supported system audio can also be used for a desktop call; it may include sounds from other apps. You still hear the call normally. Recommended: desktop Chrome or Edge. If no shared audio is available, recording continues with the microphone only. Pause pauses both sources; Stop and Abort end sharing.',
+  waiting: 'Choose the conference tab and enable audio sharing.',
+  active: 'Microphone + conference audio',
+  paused: 'Conference audio paused; sharing remains selected.',
+  noAudio: 'No shared audio was provided. Recording uses the microphone only. To include the call, stop and start again, select its tab and enable Share tab audio.',
+  cancelled: 'Audio sharing was cancelled or blocked. Recording uses the microphone only.',
+  ended: 'Conference audio sharing ended. Recording continues with the microphone only.',
+  unsupported: 'Conference audio sharing is unavailable in this browser. Use desktop Chrome or Edge. Microphone recording remains available.',
+};
+let sharing = null;
+let sharingVersion = 0;
+let notice = '';
+let paused = false;
+let locked = false;
+let initialized = false;
+const inputs = new Map();
+
+function parentWindow() {
+  try { return window.parent && window.parent !== window ? window.parent : null; } catch (_) { return null; }
+}
+function strings() {
+  let parentText;
+  try { parentText = parentWindow()?.__conferenceAudioI18n; } catch (_) {}
+  return { ...FALLBACK, ...(parentText || window.__conferenceAudioI18n || {}) };
+}
+function supported() { return typeof window.navigator?.mediaDevices?.getDisplayMedia === 'function'; }
+function stopTracks(stream) { stream?.getTracks().forEach(track => { try { track.stop(); } catch (_) {} }); }
+function render() {
+  const text = strings();
+  const checkbox = document.getElementById('conferenceAudioToggle');
+  if (checkbox) {
+    checkbox.disabled = locked || !supported();
+    checkbox.setAttribute('aria-label', text.label);
+  }
+  const label = document.getElementById('conferenceAudioLabel');
+  if (label) label.textContent = text.label;
+  const help = document.getElementById('conferenceAudioTooltipText');
+  if (help) help.textContent = text.tooltip;
+  document.getElementById('conferenceAudioTooltipContainer')?.setAttribute('aria-label', text.tooltip);
+  const status = document.getElementById('conferenceAudioStatus');
+  if (status) {
+    const key = !supported() ? 'unsupported' : notice;
+    status.textContent = key ? text[key] || '' : '';
+    status.hidden = !status.textContent;
+  }
+}
+
+function initConferenceAudioUi() {
+  if (initialized) return;
+  initialized = true;
+  const checkbox = document.getElementById('conferenceAudioToggle');
+  if (!checkbox) return;
+  try { checkbox.checked = sessionStorage.getItem(SETTING_KEY) === '1'; } catch (_) {}
+  checkbox.addEventListener('change', () => {
+    try { sessionStorage.setItem(SETTING_KEY, checkbox.checked ? '1' : '0'); } catch (_) {}
+    if (!locked) notice = '';
+    render();
+  });
+  window.addEventListener('conference-audio-i18n-changed', render);
+  // The visible language selector belongs to the app shell, while recording
+  // controls live in Workspace frames. Follow shell changes without touching
+  // the active capture or the per-Workspace checkbox setting.
+  try {
+    const parent = parentWindow();
+    if (parent) {
+      parent.addEventListener('conference-audio-i18n-changed', render);
+      registerWorkspaceDisposer(() => parent.removeEventListener('conference-audio-i18n-changed', render), { scope: 'window' });
+    }
+  } catch (_) {}
+  render();
+}
+
+function lockConferenceAudio(shouldLock) { locked = Boolean(shouldLock); render(); }
+
+function releaseRecordingInputStream(stream) {
+  const dispose = inputs.get(stream);
+  if (dispose) dispose();
+  else stopTracks(stream);
+}
+
+function releaseRecordingInputs() {
+  for (const dispose of [...inputs.values()]) dispose();
+}
+
+function stopConferenceSharing() {
+  sharingVersion += 1; // Invalidates an outstanding picker after Abort/close.
+  const previous = sharing;
+  sharing = null;
+  if (previous) {
+    previous.stream.getTracks().forEach(track => track.removeEventListener('ended', previous.onEnded));
+    stopTracks(previous.stream);
+  }
+  paused = false;
+  notice = '';
+  render();
+}
+
+function disposeConferenceAudio() {
+  stopConferenceSharing();
+  releaseRecordingInputs();
+  locked = false;
+  render();
+}
+
+function pauseConferenceAudio(shouldPause) {
+  paused = Boolean(shouldPause);
+  if (sharing) {
+    sharing.audio.enabled = !paused;
+    notice = paused ? 'paused' : 'active';
+  }
+  render();
+}
+
+// Called synchronously from the recording click handler, before any provider
+// connection, model download or microphone permission can consume activation.
+async function prepareConferenceAudio(operation) {
+  disposeConferenceAudio();
+  lockConferenceAudio(true);
+  if (!document.getElementById('conferenceAudioToggle')?.checked) return;
+  if (!supported()) { notice = 'unsupported'; render(); return; }
+  const version = sharingVersion;
+  notice = 'waiting'; render();
+  try {
+    const stream = await operation.wait(window.navigator.mediaDevices.getDisplayMedia({
+      video: { displaySurface: 'browser', frameRate: 1 },
+      audio: { suppressLocalAudioPlayback: false },
+      selfBrowserSurface: 'exclude',
+      systemAudio: 'include',
+      surfaceSwitching: 'exclude',
+    }), stopTracks);
+    operation.check();
+    if (version !== sharingVersion) { stopTracks(stream); throw new Error('Conference sharing was superseded.'); }
+    const audio = stream.getAudioTracks().find(track => track.readyState === 'live');
+    if (!audio) { stopTracks(stream); notice = 'noAudio'; render(); return; }
+    const onEnded = () => {
+      if (sharing?.stream !== stream) return;
+      stopConferenceSharing();
+      notice = 'ended'; render();
+    };
+    sharing = { stream, audio, onEnded };
+    // Keep the display video track alive: stopping it can end tab audio on
+    // some platforms. It stays local and is stopped with the sharing session.
+    stream.getTracks().forEach(track => track.addEventListener('ended', onEnded));
+    notice = 'active'; render();
+  } catch (error) {
+    operation.check(); // Abort/timeout is not a microphone-only fallback.
+    if (version !== sharingVersion) throw error;
+    notice = 'cancelled'; render();
+  }
+}
+
+async function acquireRecordingInputStream(constraints, operation) {
+  let mic, context, output;
+  const nodes = [];
+  let released = false;
+  const dispose = () => {
+    if (released) return;
+    released = true;
+    operation.signal.removeEventListener('abort', dispose);
+    inputs.delete(output);
+    nodes.forEach(node => { try { node.disconnect(); } catch (_) {} });
+    stopTracks(mic);
+    if (output !== mic) stopTracks(output);
+    if (context) { try { void context.close().catch(() => {}); } catch (_) {} }
+  };
+  try {
+    mic = await operation.wait(window.navigator.mediaDevices.getUserMedia(constraints), stopTracks);
+    operation.check();
+    if (!sharing || sharing.audio.readyState !== 'live') {
+      output = mic;
+    } else {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      context = new AudioContextClass();
+      const destination = context.createMediaStreamDestination();
+      destination.channelCount = 1;
+      destination.channelCountMode = 'explicit';
+      output = destination.stream;
+      // Headroom for simultaneous speech. Neither source is connected to
+      // context.destination, avoiding playback, feedback and duplicate audio.
+      for (const stream of [mic, sharing.stream]) {
+        const source = context.createMediaStreamSource(stream);
+        const gain = context.createGain();
+        gain.gain.value = 0.5;
+        source.connect(gain); gain.connect(destination);
+        nodes.push(source, gain);
+      }
+    }
+    inputs.set(output, dispose);
+    operation.signal.addEventListener('abort', dispose, { once: true });
+    operation.check();
+    if (context?.state === 'suspended') await operation.wait(context.resume());
+    operation.check();
+    if (context && context.state !== 'running') throw new Error('Conference audio mixer could not start.');
+    return output;
+  } catch (error) { dispose(); throw error; }
+}
+
+registerWorkspaceDisposer(disposeConferenceAudio);
+
+return Object.freeze(Object.defineProperties({}, {"initConferenceAudioUi": { enumerable: true, get: () => initConferenceAudioUi },
+"lockConferenceAudio": { enumerable: true, get: () => lockConferenceAudio },
+"releaseRecordingInputStream": { enumerable: true, get: () => releaseRecordingInputStream },
+"releaseRecordingInputs": { enumerable: true, get: () => releaseRecordingInputs },
+"stopConferenceSharing": { enumerable: true, get: () => stopConferenceSharing },
+"disposeConferenceAudio": { enumerable: true, get: () => disposeConferenceAudio },
+"pauseConferenceAudio": { enumerable: true, get: () => pauseConferenceAudio },
+"prepareConferenceAudio": { enumerable: true, get: () => prepareConferenceAudio },
+"acquireRecordingInputStream": { enumerable: true, get: () => acquireRecordingInputStream }}));
+};
+
 factories["core/recording-lifecycle.js"] = (context, load, loadAsync) => {
 const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame, MutationObserver, ResizeObserver } = context;
+const acquireRecordingInputStream = load("core/conference-audio.js")["acquireRecordingInputStream"];
+const disposeConferenceAudio = load("core/conference-audio.js")["disposeConferenceAudio"];
+const lockConferenceAudio = load("core/conference-audio.js")["lockConferenceAudio"];
+const pauseConferenceAudio = load("core/conference-audio.js")["pauseConferenceAudio"];
+const prepareConferenceAudio = load("core/conference-audio.js")["prepareConferenceAudio"];
+const releaseRecordingInputStream = load("core/conference-audio.js")["releaseRecordingInputStream"];
+const releaseRecordingInputs = load("core/conference-audio.js")["releaseRecordingInputs"];
+const stopConferenceSharing = load("core/conference-audio.js")["stopConferenceSharing"];
+
 // One authority per Workspace. Button clicks request transitions; only the
 // provider handler can confirm them. Nothing is shared with another frame.
 const buttons = { start: 'startButton', pauseResume: 'pauseResumeButton', stop: 'stopButton', abort: 'abortButton' };
@@ -5139,6 +5369,7 @@ function resetRecordingLifecycle() {
   lastRequest = null;
   handlers.clear();
   operation?.controller.abort(new Error('Workspace disposed.'));
+  disposeConferenceAudio();
   publish('idle', 'reset');
 }
 
@@ -5166,7 +5397,10 @@ function bindRecordingAction(button, action, handler, options = {}) {
   button.addEventListener('click', listener, options);
   options.signal?.addEventListener('abort', () => {
     if (handlers.get(action) === entry) handlers.delete(action);
-    if (current?.entry === entry) current.controller.abort(new Error('Recording provider changed.'));
+    if (current?.entry === entry) {
+      current.controller.abort(new Error('Recording provider changed.'));
+      disposeConferenceAudio();
+    }
   }, { once: true });
 }
 
@@ -5208,6 +5442,11 @@ async function execute(action, entry, signal) {
     ? setTimeout(() => controller.abort(new Error('Microphone start timed out. Open the main tab, check microphone permission, then try again.')), 60000)
     : null;
   try {
+    if (phase === 'starting') await prepareConferenceAudio(operation);
+    if (phase === 'resuming') pauseConferenceAudio(false);
+    if (action === 'stop') stopConferenceSharing();
+    if (action === 'abort') disposeConferenceAudio();
+    lockConferenceAudio(true);
     const confirmed = await entry.handler(operation);
     operation.check();
     if (current !== operation) return failure('Recording action was superseded.');
@@ -5215,10 +5454,14 @@ async function execute(action, entry, signal) {
     if (!['recording', 'paused', 'stopped', 'aborted'].includes(next)) {
       throw new Error(document.getElementById('statusMessage')?.textContent || 'Recording action was not confirmed.');
     }
+    if (next === 'paused') { pauseConferenceAudio(true); releaseRecordingInputs(); }
+    if (next === 'stopped' || next === 'aborted') disposeConferenceAudio();
     publish(next, action);
     return { ok: true, state: getRecordingLifecycle() };
   } catch (error) {
     if (current !== operation) return failure('Recording action was superseded.');
+    if (phase === 'starting') disposeConferenceAudio();
+    else if (phase === 'resuming') { pauseConferenceAudio(true); releaseRecordingInputs(); }
     const message = String(error?.message || error || 'Recording action failed.');
     publish('error', action, message);
     const status = document.getElementById('statusMessage');
@@ -5248,7 +5491,7 @@ async function execute(action, entry, signal) {
 async function disposeVAD(mic) {
   if (!mic) return;
   // Stop tracks before awaiting any model cleanup, even if AudioContext is suspended.
-  mic.stream?.getTracks().forEach(track => track.stop());
+  releaseRecordingInputStream(mic.stream);
   try { await mic.destroy?.(); } catch (_) {}
 }
 
@@ -5272,16 +5515,16 @@ async function startVerifiedVAD(factory, options, operation) {
   try {
     // Own the stream before model loading. The pinned VAD library otherwise
     // leaves its microphone open if its async model initialization fails.
-    stream = await operation.wait(navigator.mediaDevices.getUserMedia({ audio: {
+    stream = await acquireRecordingInputStream({ audio: {
       ...options.additionalAudioConstraints, channelCount: 1,
       echoCancellation: true, autoGainControl: true, noiseSuppression: true,
-    } }), late => late.getTracks().forEach(track => track.stop()));
+    } }, operation);
     guarded.stream = stream;
     mic = await operation.wait(factory(guarded), late => { valid = false; return disposeVAD(late); });
     const destroy = mic.destroy.bind(mic);
     mic.destroy = () => {
       valid = false;
-      stream.getTracks().forEach(track => track.stop());
+      releaseRecordingInputStream(stream);
       return destroy();
     };
     await operation.wait(mic.start());
@@ -5289,7 +5532,7 @@ async function startVerifiedVAD(factory, options, operation) {
     return mic;
   } catch (error) {
     valid = false;
-    stream?.getTracks().forEach(track => track.stop());
+    releaseRecordingInputStream(stream);
     await disposeVAD(mic);
     throw error;
   }
@@ -5586,6 +5829,7 @@ function getRedactorI18n(trans) {
         birthdateLabel: "Fødselsdatohjelper",
         birthdatePlaceholder: "DDMMÅÅ, f.eks. 180289",
         addDatesButton: "Legg til datoer",
+        autoAddDatesTooltip: "Legg automatisk til alle støttede datoformater i Spesifikke begreper når Fødselsdatohjelper inneholder en gyldig dato.",
         statusDefault: "",
       }
     : {
@@ -5619,13 +5863,18 @@ function getRedactorI18n(trans) {
         birthdateLabel: "Birthdate helper",
         birthdatePlaceholder: "DDMMYY, e.g. 180289",
         addDatesButton: "Add dates",
+        autoAddDatesTooltip: "Automatically add all supported date formats to Specific terms when Birthdate helper contains a valid date.",
         statusDefault: "",
       };
 
-  return {
+  const merged = {
     ...fallback,
     ...(trans.redactor || {}),
   };
+  merged.autoAddDatesTooltip = trans.redactorAutoAddDatesTooltip
+    || trans.redactor?.autoAddDatesTooltip
+    || merged.autoAddDatesTooltip;
+  return merged;
 }
 
 function getSecondaryNoteI18n(trans) {
@@ -5757,6 +6006,9 @@ function updateRedactorUI(trans) {
   setTextIfPresent("redactorBirthdateLabel", redactor.birthdateLabel);
   setPlaceholderIfPresent("redactorBirthdateInput", redactor.birthdatePlaceholder);
   setTextIfPresent("addBirthdateFormatsButton", redactor.addDatesButton);
+  setTextIfPresent("redactorAutoAddDatesTooltipText", redactor.autoAddDatesTooltip);
+  setAttrIfPresent("redactorAutoAddDatesToggle", "aria-label", redactor.autoAddDatesTooltip);
+  setAttrIfPresent("redactorAutoAddDatesTooltipContainer", "aria-label", redactor.autoAddDatesTooltip);
 
   if (toggleButton) {
     toggleButton.textContent = isOpen ? redactor.toggleHide : redactor.toggleShow;
@@ -5766,6 +6018,8 @@ function updateRedactorUI(trans) {
 }
 
 function updateTranscribeUI(trans) {
+  window.__conferenceAudioI18n = trans.conferenceAudio || {};
+  window.dispatchEvent(new CustomEvent('conference-audio-i18n-changed'));
   const pageTitle = document.getElementById("page-title-transcribe");
   if (pageTitle) pageTitle.textContent = trans.pageTitle;
   const usageEl = document.getElementById("openaiUsageLink");
@@ -17241,6 +17495,8 @@ const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout
 const bindRecordingAction = load("core/recording-lifecycle.js")["bindRecordingAction"];
 const startVerifiedVAD = load("core/recording-lifecycle.js")["startVerifiedVAD"];
 const verifyAudioCapture = load("core/recording-lifecycle.js")["verifyAudioCapture"];
+const acquireRecordingInputStream = load("core/conference-audio.js")["acquireRecordingInputStream"];
+const releaseRecordingInputStream = load("core/conference-audio.js")["releaseRecordingInputStream"];
 // soniox.js
 //
 // Unified Soniox speech-to-text recording module — replaces the three
@@ -18751,7 +19007,7 @@ function rtWaitForServerFinalizedOrTimeout(timeoutMs) {
 async function rtStartAudioCapture(operation) {
   // Note: getUserMedia({ sampleRate }) is a hint — many browsers ignore it.
   // The actual resampling happens via AudioContext at SONIOX_RT_SAMPLE_RATE.
-  mediaStream = await operation.wait(navigator.mediaDevices.getUserMedia({
+  mediaStream = await acquireRecordingInputStream({
     audio: {
       channelCount: 1,
       sampleRate: SONIOX_RT_SAMPLE_RATE,
@@ -18760,7 +19016,7 @@ async function rtStartAudioCapture(operation) {
       autoGainControl: true,
     },
     video: false,
-  }), late => late.getTracks().forEach(track => track.stop()));
+  }, operation);
 
   const Ctx = window.AudioContext || window.webkitAudioContext;
   audioContext = new Ctx({ sampleRate: SONIOX_RT_SAMPLE_RATE });
@@ -18806,7 +19062,7 @@ function rtTeardownAudioCapture() {
       audioContext = null;
     }
     if (mediaStream) {
-      mediaStream.getTracks().forEach((t) => { try { t.stop(); } catch (_) {} });
+      releaseRecordingInputStream(mediaStream);
       mediaStream = null;
     }
   } catch (err) {
@@ -18824,7 +19080,7 @@ function rtTeardownAudioCapture() {
 function rtStopMicInputOnly() {
   try {
     if (mediaStream) {
-      mediaStream.getTracks().forEach((t) => { try { t.stop(); } catch (_) {} });
+      releaseRecordingInputStream(mediaStream);
       mediaStream = null;
     }
   } catch (err) {

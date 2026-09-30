@@ -271,6 +271,17 @@ Une clé API ne rend pas un service automatiquement conforme au RGPD. Vérifiez 
 };
 
 export const transcribeTranslations = {
+  conferenceAudio: {
+    "label": "Inclure l’audio de la conférence",
+    "tooltip": "Enregistre votre microphone avec l’audio d’une visioconférence. Activez cette option avant de démarrer. Dans la fenêtre de partage du navigateur, sélectionnez de préférence l’onglet de la conférence et cochez Partager l’audio de l’onglet. L’audio système, s’il est pris en charge, peut aussi servir pour un appel dans une application de bureau ; les sons d’autres applications peuvent alors être inclus. Vous entendez toujours l’appel normalement. Recommandé : Chrome ou Edge sur ordinateur. Sans audio partagé, seul le microphone est enregistré. Pause met les deux sources en pause ; Arrêter et Annuler terminent le partage.",
+    "waiting": "Choisissez l’onglet de la conférence et activez le partage audio.",
+    "active": "Microphone + audio de la conférence",
+    "paused": "Audio de la conférence en pause ; le partage reste sélectionné.",
+    "noAudio": "Aucun audio n’a été partagé. Seul le microphone est enregistré. Pour inclure l’appel, arrêtez puis redémarrez, choisissez son onglet et cochez Partager l’audio de l’onglet.",
+    "cancelled": "Le partage audio a été annulé ou bloqué. Seul le microphone est enregistré.",
+    "ended": "Le partage audio de la conférence est terminé. L’enregistrement continue avec le microphone uniquement.",
+    "unsupported": "Le partage de l’audio de la conférence n’est pas disponible dans ce navigateur. Utilisez Chrome ou Edge sur ordinateur. L’enregistrement du microphone reste disponible."
+  },
   pageTitle: "Outil de transcription",
   openaiUsageLinkText: "Aperçu des coûts d'utilisation",
   openaiWalletLinkText: "Solde du portefeuille",

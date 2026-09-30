@@ -2872,7 +2872,18 @@
               Automatically copies the finished generated note.
             </span>
           </span>
+          <div id="conferenceAudioContainer" style="display:inline-flex; align-items:center; gap:6px;">
+            <label for="conferenceAudioToggle" id="conferenceAudioLabel" style="font-size:14px;">Include conference audio</label>
+            <input id="conferenceAudioToggle" type="checkbox" aria-describedby="conferenceAudioTooltipText" />
+            <span id="conferenceAudioTooltipContainer" class="help-tip help-tip-left" tabindex="0" aria-label="Conference audio help" style="margin-left:0;">
+              ?
+              <span id="conferenceAudioTooltipText" class="help-tip-content" role="tooltip">
+                Records your microphone together with conference audio. Select the conference tab and enable Share tab audio when starting. Recommended: desktop Chrome or Edge. If shared audio is unavailable, recording continues with the microphone only.
+              </span>
+            </span>
+          </div>
         </div>
+        <div id="conferenceAudioStatus" role="status" aria-live="polite" style="font-size:12px; color:#666; margin-top:6px;" hidden></div>
         <div id="statusMessage">Welcome! Click "Start Recording" to begin.</div>
       </div>
       <!-- Note Generation & Custom Prompt -->

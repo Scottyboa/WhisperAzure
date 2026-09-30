@@ -467,6 +467,8 @@ function updateRedactorUI(trans) {
 }
 
 function updateTranscribeUI(trans) {
+  window.__conferenceAudioI18n = trans.conferenceAudio || {};
+  window.dispatchEvent(new CustomEvent('conference-audio-i18n-changed'));
   const pageTitle = document.getElementById("page-title-transcribe");
   if (pageTitle) pageTitle.textContent = trans.pageTitle;
   const usageEl = document.getElementById("openaiUsageLink");
