@@ -89,9 +89,9 @@ const REQUESTY_VARIANTS = {
     pricingModelId: "claude-opus-5-5",
     reasoningSelector: "dedicated"
   },
-  "claude-sonnet-5": {
-    requestyModelId: "vertex/claude-sonnet-5@eu",
-    pricingModelId: "claude-sonnet-5"
+  "claude-sonnet-5-5": {
+    requestyModelId: "vertex/claude-sonnet-5-5@eu",
+    pricingModelId: "claude-sonnet-5-5"
   },
   "gpt-6-luna": {
     requestyModelId: "azure/gpt-6-luna@swedencentral",
@@ -99,9 +99,9 @@ const REQUESTY_VARIANTS = {
     reasoningSelector: "dedicated",
     sendNoneReasoning: true
   },
-  "gpt-6-sol": {
-    requestyModelId: "azure/gpt-6-sol@swedencentral",
-    pricingModelId: "gpt-6-sol",
+  "gpt-6.1-sol": {
+    requestyModelId: "azure/gpt-6.1-sol@swedencentral",
+    pricingModelId: "gpt-6.1-sol",
     reasoningSelector: "dedicated",
     sendNoneReasoning: true
   },

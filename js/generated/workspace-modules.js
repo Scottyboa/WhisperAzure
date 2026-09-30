@@ -1198,8 +1198,8 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
 
   // Requesty (EU router) — published endpoint rates, USD per 1M tokens.
   // claude-opus-5-5: bedrock/claude-opus-5-5@eu-north-1 rates
-  // claude-sonnet-5: vertex/claude-sonnet-5@eu rates (EU regional pricing)
-  // gpt-6-luna/sol:  Azure Sweden Central rates from Requesty's model cards
+  // claude-sonnet-5-5: vertex/claude-sonnet-5-5@eu rates (EU regional pricing)
+  // gpt-6-luna / gpt-6.1-sol: Azure Sweden Central rates from Requesty's model cards
   // gpt-5.5:         azure/gpt-5.5@swedencentral rates
   // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
   // gpt-5.6-*:       Azure Sweden Central rates from Requesty's model cards
@@ -1209,8 +1209,8 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
   // kimi-k3:          nebius/kimi-k3 rates
   const REQUESTY_USD_PER_MTOK = {
     "claude-opus-5-5": { input: 4.4, output: 22.0 },
-    "claude-sonnet-5": { input: 2.2, output: 11.0 },
-    "gpt-6-sol": { input: 2.4, output: 12.0 },
+    "claude-sonnet-5-5": { input: 2.2, output: 11.0 },
+    "gpt-6.1-sol": { input: 2.4, output: 12.0 },
     "gpt-6-luna": { input: 0.12, output: 0.6 },
     "gpt-5.5": { input: 5.0, output: 30.0 },
     "gpt-5-nano": { input: 0.055, output: 0.44 },
@@ -6098,9 +6098,9 @@ const REQUESTY_VARIANTS = {
     pricingModelId: "claude-opus-5-5",
     reasoningSelector: "dedicated"
   },
-  "claude-sonnet-5": {
-    requestyModelId: "vertex/claude-sonnet-5@eu",
-    pricingModelId: "claude-sonnet-5"
+  "claude-sonnet-5-5": {
+    requestyModelId: "vertex/claude-sonnet-5-5@eu",
+    pricingModelId: "claude-sonnet-5-5"
   },
   "gpt-6-luna": {
     requestyModelId: "azure/gpt-6-luna@swedencentral",
@@ -6108,9 +6108,9 @@ const REQUESTY_VARIANTS = {
     reasoningSelector: "dedicated",
     sendNoneReasoning: true
   },
-  "gpt-6-sol": {
-    requestyModelId: "azure/gpt-6-sol@swedencentral",
-    pricingModelId: "gpt-6-sol",
+  "gpt-6.1-sol": {
+    requestyModelId: "azure/gpt-6.1-sol@swedencentral",
+    pricingModelId: "gpt-6.1-sol",
     reasoningSelector: "dedicated",
     sendNoneReasoning: true
   },
@@ -19864,7 +19864,7 @@ const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout
 //
 //   - Claude Opus 5.5    -> bedrock/claude-opus-5-5@eu-north-1   (AWS Bedrock, Stockholm)
 //   - GPT-6 Luna       -> azure/gpt-6-luna@swedencentral     (Azure, Sweden Central)
-//   - GPT-6 Sol        -> azure/gpt-6-sol@swedencentral      (Azure, Sweden Central)
+//   - GPT-6.1 Sol      -> azure/gpt-6.1-sol@swedencentral    (Azure, Sweden Central)
 //   - GPT-5.5          -> azure/gpt-5.5@swedencentral        (Azure, Sweden Central)
 //   - GPT-5.6 Luna     -> azure/gpt-5.6-luna@swedencentral   (Azure, Sweden Central)
 //   - GPT-5.6 Terra    -> azure/gpt-5.6-terra@swedencentral  (Azure, Sweden Central)
@@ -19931,11 +19931,11 @@ const VARIANTS = Object.freeze({
     pricingModelId: "claude-opus-5-5",
     reasoningSelector: "dedicated"
   },
-  "claude-sonnet-5": {
+  "claude-sonnet-5-5": {
     // Google Vertex AI, EU-resident deployment (GDPR). Confirmed model id
-    // on Requesty: vertex/claude-sonnet-5@eu.
-    requestyModelId: "vertex/claude-sonnet-5@eu",
-    pricingModelId: "claude-sonnet-5"
+    // on Requesty: vertex/claude-sonnet-5-5@eu.
+    requestyModelId: "vertex/claude-sonnet-5-5@eu",
+    pricingModelId: "claude-sonnet-5-5"
   },
   "gpt-6-luna": {
     // Azure OpenAI, Sweden Central (EU). The app intentionally exposes only
@@ -19945,11 +19945,11 @@ const VARIANTS = Object.freeze({
     reasoningSelector: "dedicated",
     sendNoneReasoning: true
   },
-  "gpt-6-sol": {
+  "gpt-6.1-sol": {
     // Azure OpenAI, Sweden Central (EU). The app intentionally exposes only
     // none | low | medium | high and defaults to low when no choice is stored.
-    requestyModelId: "azure/gpt-6-sol@swedencentral",
-    pricingModelId: "gpt-6-sol",
+    requestyModelId: "azure/gpt-6.1-sol@swedencentral",
+    pricingModelId: "gpt-6.1-sol",
     reasoningSelector: "dedicated",
     sendNoneReasoning: true
   },
@@ -20036,7 +20036,7 @@ function resolveEffectiveMode() {
 }
 
 function resolveReasoningLevel(variantKey, variantConfig) {
-  // Claude Opus 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna/Sol, Gemini 3.8
+  // Claude Opus 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna / GPT-6.1 Sol, Gemini 3.8
   // Flash, DeepSeek, and Kimi K3 use the dedicated Requesty selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
@@ -20046,11 +20046,10 @@ function resolveReasoningLevel(variantKey, variantConfig) {
     );
   }
   // All other Requesty models reuse the shared #gpt5Reasoning selector
-  // (none | low | medium | high). For the Anthropic models (Opus 5,
-  // Sonnet 5) Requesty accepts reasoning_effort on its OpenAI-compatible
-  // endpoint and maps it to a thinking budget; "none" is handled in
-  // buildRequestBody by omitting the parameter (the model then uses its own
-  // adaptive default). For GPT-5.5 it is the native OpenAI effort string.
+  // (none | low | medium | high). For Claude Sonnet 5.5, Requesty accepts
+  // reasoning_effort on its OpenAI-compatible endpoint and maps it to a
+  // thinking budget; "none" is handled in buildRequestBody by omitting the
+  // parameter. For GPT-5.5 it is the native OpenAI effort string.
   return normalizeSharedRequestyReasoning(
     getSelectValue("gpt5Reasoning", "low")
   );
@@ -20240,7 +20239,7 @@ function initRequestyClaudeOpus55() {
   bindGenerateNoteButton(generateNote);
 }
 
-function initRequestyClaudeSonnet5() {
+function initRequestyClaudeSonnet55() {
   bindGenerateNoteButton(generateNote);
 }
 
@@ -20248,7 +20247,7 @@ function initRequestyGpt6Luna() {
   bindGenerateNoteButton(generateNote);
 }
 
-function initRequestyGpt6Sol() {
+function initRequestyGpt61Sol() {
   bindGenerateNoteButton(generateNote);
 }
 
@@ -20291,9 +20290,9 @@ function initRequestyKimiK3() {
 
 
 return Object.freeze(Object.defineProperties({}, {"initRequestyClaudeOpus55": { enumerable: true, get: () => initRequestyClaudeOpus55 },
-"initRequestyClaudeSonnet5": { enumerable: true, get: () => initRequestyClaudeSonnet5 },
+"initRequestyClaudeSonnet55": { enumerable: true, get: () => initRequestyClaudeSonnet55 },
 "initRequestyGpt6Luna": { enumerable: true, get: () => initRequestyGpt6Luna },
-"initRequestyGpt6Sol": { enumerable: true, get: () => initRequestyGpt6Sol },
+"initRequestyGpt61Sol": { enumerable: true, get: () => initRequestyGpt61Sol },
 "initRequestyGpt55": { enumerable: true, get: () => initRequestyGpt55 },
 "initRequestyGpt5Nano": { enumerable: true, get: () => initRequestyGpt5Nano },
 "initRequestyGpt56Luna": { enumerable: true, get: () => initRequestyGpt56Luna },

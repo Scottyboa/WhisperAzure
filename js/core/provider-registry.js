@@ -142,12 +142,12 @@ const NOTE_PROVIDER_REGISTRY = {
   },
   'requesty-sonnet': {
     id: 'requesty-sonnet',
-    label: 'Requesty Claude Sonnet 5',
+    label: 'Requesty Claude Sonnet 5.5',
     uiProvider: 'requesty',
-    requestyModel: 'claude-sonnet-5',
+    requestyModel: 'claude-sonnet-5-5',
     mode: DEFAULTS.noteMode,
     modulePath: './requesty.js',
-    initExportName: 'initRequestyClaudeSonnet5',
+    initExportName: 'initRequestyClaudeSonnet55',
   },
   'requesty-gpt6-luna': {
     id: 'requesty-gpt6-luna',
@@ -158,14 +158,14 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './requesty.js',
     initExportName: 'initRequestyGpt6Luna',
   },
-  'requesty-gpt6-sol': {
-    id: 'requesty-gpt6-sol',
-    label: 'Requesty GPT-6 Sol',
+  'requesty-gpt61-sol': {
+    id: 'requesty-gpt61-sol',
+    label: 'Requesty GPT-6.1 Sol',
     uiProvider: 'requesty',
-    requestyModel: 'gpt-6-sol',
+    requestyModel: 'gpt-6.1-sol',
     mode: DEFAULTS.noteMode,
     modulePath: './requesty.js',
-    initExportName: 'initRequestyGpt6Sol',
+    initExportName: 'initRequestyGpt61Sol',
   },
   'requesty-gpt55': {
     id: 'requesty-gpt55',
@@ -259,8 +259,8 @@ const NOTE_UI_PROVIDER_OPTIONS = [
 
 const REQUESTY_MODEL_OPTIONS = [
   { value: 'claude-opus-5-5', label: 'Claude Opus 5.5' },
-  { value: 'claude-sonnet-5', label: 'Claude Sonnet 5' },
-  { value: 'gpt-6-sol', label: 'GPT-6 Sol' },
+  { value: 'claude-sonnet-5-5', label: 'Claude Sonnet 5.5' },
+  { value: 'gpt-6.1-sol', label: 'GPT-6.1 Sol' },
   { value: 'gpt-6-luna', label: 'GPT-6 Luna' },
   { value: 'gpt-5.6-sol', label: 'GPT-5.6 Sol' },
   { value: 'gpt-5.6-terra', label: 'GPT-5.6 Terra' },
@@ -296,7 +296,7 @@ const REQUESTY_OPUS55_REASONING_OPTIONS = [
   { value: 'high', label: 'High' },
 ];
 
-// GPT-6 Luna/Sol support a wider upstream reasoning range, but the Requesty
+// GPT-6 Luna / GPT-6.1 Sol support a wider upstream reasoning range, but the Requesty
 // UI intentionally exposes only the four levels requested by the app:
 // none | low | medium | high. Low is the app default for these two models.
 const REQUESTY_GPT6_REASONING_OPTIONS = [
@@ -345,7 +345,7 @@ const REQUESTY_DEEPSEEK_MODELS = new Set([
 
 const REQUESTY_GPT6_MODELS = new Set([
   'gpt-6-luna',
-  'gpt-6-sol',
+  'gpt-6.1-sol',
 ]);
 
 const REQUESTY_GPT56_MODELS = new Set([
@@ -508,6 +508,8 @@ export function normalizeRequestyModel(value) {
   const raw = String(value || '').trim().toLowerCase();
   // Backward compatibility: migrate retired model selections.
   if (raw === 'claude-opus-5') return 'claude-opus-5-5';
+  if (raw === 'claude-sonnet-5') return 'claude-sonnet-5-5';
+  if (raw === 'gpt-6-sol') return 'gpt-6.1-sol';
   if (raw === 'gemini-3.7-flash') return 'gemini-3.8-flash';
   return REQUESTY_MODEL_OPTIONS.some((item) => item.value === raw)
     ? raw
@@ -627,6 +629,8 @@ export function normalizeNoteEffectiveProvider(value) {
   const raw = String(value || '').trim().toLowerCase();
   // Migrate effective-provider ids saved before Gemini 3.8 replaced 3.7.
   if (raw === 'requesty-gemini37-flash') return 'requesty-gemini38-flash';
+  // Existing workspaces keep Requesty selected when Sol is upgraded.
+  if (raw === 'requesty-gpt6-sol') return 'requesty-gpt61-sol';
   // Retired direct OpenAI providers remain OpenAI and migrate to GPT-5.6 Sol.
   if (
     raw === 'openai' || raw === 'gpt4' || raw === 'gpt5' ||
@@ -827,10 +831,10 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
 
   // Streaming/non-streaming (#noteProviderMode) is available for all Requesty
   // models. For reasoning, most Requesty models share the OpenAI selector
-  // (#gpt5Reasoning, None/Low/Medium/High). Claude Sonnet 5 maps
+  // (#gpt5Reasoning, None/Low/Medium/High). Claude Sonnet 5.5 maps
   // reasoning_effort to a thinking budget ("None" omits it), while GPT-5.5
   // uses the native OpenAI effort string. Claude Opus 5.5, GPT-5 Nano,
-  // GPT-5.6, GPT-6 Luna/Sol, Gemini 3.8 Flash, DeepSeek V4 Pro/V4.1 Flash
+  // GPT-5.6, GPT-6 Luna / GPT-6.1 Sol, Gemini 3.8 Flash, DeepSeek V4 Pro/V4.1 Flash
   // and Kimi K3 use the dedicated Requesty selector because their valid
   // option sets differ from the shared selector.
 

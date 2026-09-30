@@ -160,8 +160,8 @@ import {
 
   // Requesty (EU router) — published endpoint rates, USD per 1M tokens.
   // claude-opus-5-5: bedrock/claude-opus-5-5@eu-north-1 rates
-  // claude-sonnet-5: vertex/claude-sonnet-5@eu rates (EU regional pricing)
-  // gpt-6-luna/sol:  Azure Sweden Central rates from Requesty's model cards
+  // claude-sonnet-5-5: vertex/claude-sonnet-5-5@eu rates (EU regional pricing)
+  // gpt-6-luna / gpt-6.1-sol: Azure Sweden Central rates from Requesty's model cards
   // gpt-5.5:         azure/gpt-5.5@swedencentral rates
   // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
   // gpt-5.6-*:       Azure Sweden Central rates from Requesty's model cards
@@ -171,8 +171,8 @@ import {
   // kimi-k3:          nebius/kimi-k3 rates
   const REQUESTY_USD_PER_MTOK = {
     "claude-opus-5-5": { input: 4.4, output: 22.0 },
-    "claude-sonnet-5": { input: 2.2, output: 11.0 },
-    "gpt-6-sol": { input: 2.4, output: 12.0 },
+    "claude-sonnet-5-5": { input: 2.2, output: 11.0 },
+    "gpt-6.1-sol": { input: 2.4, output: 12.0 },
     "gpt-6-luna": { input: 0.12, output: 0.6 },
     "gpt-5.5": { input: 5.0, output: 30.0 },
     "gpt-5-nano": { input: 0.055, output: 0.44 },

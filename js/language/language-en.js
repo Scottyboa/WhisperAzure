@@ -55,8 +55,8 @@ export const indexTranslations = {
   </p>
   <ul>
     <li>Claude Opus 5.5</li>
-    <li>Claude Sonnet 5</li>
-    <li>GPT-6 Sol</li>
+    <li>Claude Sonnet 5.5</li>
+    <li>GPT-6.1 Sol</li>
     <li>GPT-6 Luna</li>
     <li>GPT-5.6 Sol</li>
     <li>GPT-5.6 Terra</li>
@@ -87,13 +87,13 @@ export const indexTranslations = {
   <p>This is an opinionated guide for typical note-generation use rather than an objective medical benchmark:</p>
   <ul>
     <li><strong>Maximum quality:</strong> Claude Opus 5.5 and GPT-5.6 Sol</li>
-    <li><strong>Strong general-purpose choices:</strong> Claude Sonnet 5, GPT-5.6 Terra, GPT-5.5 and DeepSeek V4 Pro</li>
+    <li><strong>Strong general-purpose choices:</strong> Claude Sonnet 5.5, GPT-5.6 Terra, GPT-5.5 and DeepSeek V4 Pro</li>
     <li><strong>Faster/value-oriented choices:</strong> GPT-5.6 Luna, Gemini 3.8 Flash and DeepSeek V4.1 Flash</li>
     <li><strong>Lowest-cost summarisation and preprocessing:</strong> GPT-5 Nano</li>
     <li><strong>Additional alternative:</strong> Kimi K3</li>
   </ul>
   <p>Claude Opus 5.5 supports Low, Medium and High reasoning in the app; the default is Low.</p>
-  <p>GPT-6 Sol and GPT-6 Luna support None, Low, Medium and High reasoning in the app; when no reasoning choice is stored, the app defaults to Low.</p>
+  <p>GPT-6.1 Sol and GPT-6 Luna support None, Low, Medium and High reasoning in the app; when no reasoning choice is stored, the app defaults to Low.</p>
   <p>DeepSeek V4 Pro and DeepSeek V4.1 Flash support None, Low, High and Max reasoning; the app defaults to Low.</p>
   <p>
     For long source documents, a less expensive model such as GPT-5 Nano can first create a short summary for Supplementary Information.
@@ -250,7 +250,7 @@ This gives access to high-quality transcription and a curated selection of newer
 - Mistral Voxtral Mini Transcribe<br><br>
 
 <strong>Note-generation providers in the app</strong><br>
-- Requesty: Claude Opus 5.5, Claude Sonnet 5, GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash and Kimi K3<br>
+- Requesty: Claude Opus 5.5, Claude Sonnet 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash and Kimi K3<br>
 - OpenAI: GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna and GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 and Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
@@ -355,8 +355,8 @@ priceModalText: `
   <p><strong>Requesty models currently configured in the app</strong></p>
   <ul>
     <li>Claude Opus 5.5: approximately 4.40 / 22.00 USD</li>
-    <li>Claude Sonnet 5: approximately 2.20 / 11.00 USD</li>
-    <li>GPT-6 Sol: approximately 2.40 / 12.00 USD</li>
+    <li>Claude Sonnet 5.5: approximately 2.20 / 11.00 USD</li>
+    <li>GPT-6.1 Sol: approximately 2.40 / 12.00 USD</li>
     <li>GPT-6 Luna: approximately 0.12 / 0.60 USD</li>
     <li>GPT-5.6 Sol: approximately 4.40 / 22.00 USD</li>
     <li>GPT-5.6 Terra: approximately 2.20 / 13.20 USD</li>
@@ -406,7 +406,7 @@ priceModalText: `
     <li><strong>Soniox transcription:</strong> approximately 0.026 USD.</li>
     <li><strong>GPT-5 Nano note:</strong> approximately 0.0003 USD at the example token count.</li>
     <li><strong>Gemini 3.8 Flash note:</strong> approximately 0.004 USD.</li>
-    <li><strong>Claude Sonnet 5 note:</strong> approximately 0.010 USD.</li>
+    <li><strong>Claude Sonnet 5.5 note:</strong> approximately 0.010 USD.</li>
     <li><strong>Claude Opus 5.5 note:</strong> approximately 0.020 USD.</li>
     <li><strong>GPT-5.6 Sol note:</strong> approximately 0.020 USD.</li>
   </ul>
