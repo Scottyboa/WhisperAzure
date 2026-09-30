@@ -13,6 +13,14 @@ Sonnet 5.5 is routed through **Google Vertex AI in the EU**, while GPT-6.1 Sol i
 
 **Remember to enable ZDR in Requesty:** Sign in at **Requesty.ai** and select **Compliance** under **Admin** in the left menu. Find **Zero Data Retention**, click **Edit** on that row and enable the setting. This prevents Requesty from storing the content of new requests and responses across all your API keys. These instructions have also been added to the setup guide on the front page.
 
+### New feature: Include conference audio
+
+You can now record both your microphone and audio from an online meeting. This is useful with a headset microphone or a conference speakerphone that combines a speaker and microphone in one device. The feature works best in **desktop Chrome or Edge**; Chrome is recommended for the app overall.
+
+Enable **Include conference audio** before starting. In Chrome’s sharing dialog, select a screen under **Entire Screen**, enable **Also share system audio**, and click **Share**. If system audio is unavailable, try **Chrome Tab** with **Also share tab audio**.
+
+Stop and Abort keep sharing ready for your next recording. No new audio is recorded between recordings; uncheck the option to end sharing. Only audio is sent for transcription. System audio can also include notifications and sounds from other apps.
+
 ---
 
 ## 28 September, 2026

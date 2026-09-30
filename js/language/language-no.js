@@ -444,14 +444,15 @@ En API-nøkkel alene gjør ikke en tjeneste GDPR-kompatibel. Kontroller leverand
 export const transcribeTranslations = {
   conferenceAudio: {
     "label": "Ta med samtalelyd",
-    "tooltip": "Tar opp mikrofonen din sammen med lyd fra en videokonsultasjon eller et nettmøte. Slå på valget før Start. I nettleserens delingsvindu bør du velge fanen med samtalen og krysse av for Del fanelyd. Hvis nettleseren støtter systemlyd, kan den også brukes for en samtale i et skrivebordsprogram; da kan lyd fra andre programmer bli med. Du hører fortsatt samtalen som vanlig. Anbefalt: Chrome eller Edge på datamaskin. Hvis delt lyd mangler, fortsetter opptaket med bare mikrofonen. Pause pauser begge lydkildene; Stopp og Avbryt avslutter delingen.",
-    "waiting": "Velg fanen med samtalen og slå på lyddeling.",
+    "tooltip": "Denne funksjonen gjør det mulig å ta opp samtaler og konsultasjoner over internett, for eksempel videomøter. Den tar opp stemmen din fra mikrofonen og stemmen til den du snakker med, som du hører gjennom PC-ens høyttalere eller et headset. Funksjonen fungerer best i Chrome eller Edge på datamaskin; Chrome anbefales også for appen generelt. Huk av «Ta med samtalelyd» før du trykker «Start opptak». I Chromes delingsvindu velger du en skjerm under «Hele skjermen», slår på «Del med systemlyd» og trykker «Del». Systemlyd kan inkludere varsler og lyd fra andre programmer. Bare lyd sendes til transkribering. Uten delt lyd brukes bare mikrofonen. Pause pauser begge lydkildene. Stopp og Avbryt avslutter opptaket, men beholder delingen klar til neste Start, slik at du vanligvis bare trenger å velge lydkilde én gang. Ingen ny lyd tas opp eller sendes mellom opptakene. Fjern avkrysningen for å avslutte delingen. Nettleserens delingsindikator vises til delingen avsluttes.",
+    "waiting": "Velg Hele skjermen og slå på Del med systemlyd. Hvis det ikke er tilgjengelig, prøv Chrome-fane med Del med fanelyd.",
     "active": "Mikrofon + samtalelyd",
     "paused": "Samtalelyd er pauset; delingsvalget beholdes.",
-    "noAudio": "Ingen delt lyd ble valgt. Opptaket bruker bare mikrofonen. For å ta med samtalen: stopp og start på nytt, velg fanen og kryss av for Del fanelyd.",
+    "noAudio": "Ingen lyd ble delt. Opptaket bruker bare mikrofonen. For å få med samtalen må du stoppe, starte på nytt og slå på lyd i delingsvinduet.",
     "cancelled": "Lyddeling ble avbrutt eller blokkert. Opptaket bruker bare mikrofonen.",
     "ended": "Deling av samtalelyd ble avsluttet. Opptaket fortsetter med bare mikrofonen.",
-    "unsupported": "Denne nettleseren støtter ikke deling av samtalelyd. Bruk Chrome eller Edge på datamaskin. Mikrofonopptak er fortsatt tilgjengelig."
+    "unsupported": "Denne nettleseren støtter ikke deling av samtalelyd. Bruk Chrome eller Edge på datamaskin. Mikrofonopptak er fortsatt tilgjengelig.",
+    "ready": "Samtalelyddelingen er klar til neste opptak. Ingen ny lyd tas opp. Fjern avkrysningen for å avslutte delingen."
   },
   pageTitle: "Transkripsjonsverktøy",
   openaiUsageLinkText: "Kostnadsoversikt",
@@ -521,6 +522,17 @@ guideText: `Velkommen til <strong>Transcribe Notes</strong>. Appen kan ta opp og
     <li><strong>Pause</strong> ferdigstiller det aktuelle lydsegmentet og lar deg fortsette senere. <strong>Stopp/Fullfør</strong> avslutter opptaket og venter på resten av transkripsjonen. <strong>Abort</strong> forkaster det aktive opptaket uten normal fullføring.</li>
     <li><strong>Speaker Labels</strong> er bare tilgjengelig med Soniox. Funksjonen forsøker å merke hvem som snakker, for eksempel Speaker 1 og Speaker 2.</li>
   </ul>
+  <p><strong>Ta med samtalelyd fra nettmøter</strong><br>
+  Ta opp både din egen stemme og stemmen til den du snakker med på nett. Dette er nyttig med headset med mikrofon, eller konferansemikrofoner som har høyttaler og mikrofon i samme enhet. Funksjonen fungerer best i <strong>Chrome eller Edge på datamaskin</strong>; <strong>Chrome anbefales også for appen generelt</strong>.</p>
+  <ol>
+    <li>Huk av <strong>Ta med samtalelyd</strong> ved siden av Auto-copy.</li>
+    <li>Trykk <strong>Start opptak</strong>.</li>
+    <li>I Chromes delingsvindu velger du en skjerm under <strong>Hele skjermen</strong>.</li>
+    <li>Slå på <strong>Del med systemlyd</strong>, og trykk <strong>Del</strong>.</li>
+  </ol>
+  <p>Appen ber om Hele skjermen som standardvisning, men nettleseren bestemmer hvordan delingsvinduet åpnes, og du må velge kilde selv. Med systemlyd trenger ikke samtalen å være på skjermen du velger. Du hører fortsatt samtalen som vanlig. Bare lyd sendes til transkribering; skjermbildet sendes ikke.</p>
+  <p>Systemlyd kan også inkludere varsler og lyd fra andre programmer. Tilgjengeligheten avhenger av nettleser og operativsystem. Hvis systemlyd ikke tilbys, kan du prøve <strong>Chrome-fane</strong> og <strong>Del med fanelyd</strong>. Uten delt lyd brukes bare mikrofonen.</p>
+  <p><strong>Pause</strong> pauser begge lydkildene. <strong>Stopp/Fullfør</strong> og <strong>Avbryt</strong> avslutter opptaket, men beholder delingen klar til neste Start, uten nytt delingsvindu så lenge kilden er tilgjengelig. Ingen ny lyd tas opp eller sendes mellom opptakene. Nettleserens delingsindikator vises fortsatt. <strong>Fjern avkrysningen ved Ta med samtalelyd for å avslutte delingen</strong>. Delingen avsluttes også hvis du stopper den i nettleseren, lukker den delte kilden, eller lukker eller laster inn dette Workspace eller appfanen på nytt. Neste opptak krever da et nytt valg.</p>
 </details><br>
 
 <details>

@@ -1,4 +1,4 @@
-import { acquireRecordingInputStream, disposeConferenceAudio, lockConferenceAudio, pauseConferenceAudio, prepareConferenceAudio, releaseRecordingInputStream, releaseRecordingInputs, stopConferenceSharing } from './conference-audio.js';
+import { acquireRecordingInputStream, disposeConferenceAudio, finishConferenceRecording, lockConferenceAudio, pauseConferenceAudio, prepareConferenceAudio, releaseRecordingInputStream, releaseRecordingInputs } from './conference-audio.js';
 
 // One authority per Workspace. Button clicks request transitions; only the
 // provider handler can confirm them. Nothing is shared with another frame.
@@ -91,8 +91,8 @@ async function execute(action, entry, signal) {
   try {
     if (phase === 'starting') await prepareConferenceAudio(operation);
     if (phase === 'resuming') pauseConferenceAudio(false);
-    if (action === 'stop') stopConferenceSharing();
-    if (action === 'abort') disposeConferenceAudio();
+    if (action === 'stop') pauseConferenceAudio(true);
+    if (action === 'abort') finishConferenceRecording();
     lockConferenceAudio(true);
     const confirmed = await entry.handler(operation);
     operation.check();
@@ -102,12 +102,12 @@ async function execute(action, entry, signal) {
       throw new Error(document.getElementById('statusMessage')?.textContent || 'Recording action was not confirmed.');
     }
     if (next === 'paused') { pauseConferenceAudio(true); releaseRecordingInputs(); }
-    if (next === 'stopped' || next === 'aborted') disposeConferenceAudio();
+    if (next === 'stopped' || next === 'aborted') finishConferenceRecording();
     publish(next, action);
     return { ok: true, state: getRecordingLifecycle() };
   } catch (error) {
     if (current !== operation) return failure('Recording action was superseded.');
-    if (phase === 'starting') disposeConferenceAudio();
+    if (phase === 'starting' || phase === 'aborting') finishConferenceRecording();
     else if (phase === 'resuming') { pauseConferenceAudio(true); releaseRecordingInputs(); }
     const message = String(error?.message || error || 'Recording action failed.');
     publish('error', action, message);

@@ -288,14 +288,15 @@ En API-nyckel gör inte en tjänst automatiskt GDPR-kompatibel. Kontrollera DPA,
 export const transcribeTranslations = {
   conferenceAudio: {
     "label": "Ta med samtalsljud",
-    "tooltip": "Spelar in din mikrofon tillsammans med ljud från ett videosamtal eller nätmöte. Aktivera detta före Start. Välj helst fliken med samtalet i webbläsarens delningsruta och markera Dela flikljud. Om webbläsaren stöder systemljud kan det även användas för ett samtal i en skrivbordsapp; ljud från andra appar kan då följa med. Du hör fortfarande samtalet som vanligt. Rekommenderas: Chrome eller Edge på dator. Om delat ljud saknas fortsätter inspelningen med enbart mikrofonen. Paus pausar båda ljudkällorna; Stopp och Avbryt avslutar delningen.",
-    "waiting": "Välj fliken med samtalet och aktivera ljuddelning.",
+    "tooltip": "Med den här funktionen kan du spela in samtal och konsultationer över internet, till exempel videomöten. Den spelar in din röst från mikrofonen och den andra personens röst som du hör i datorns högtalare eller ett headset. Funktionen fungerar bäst i Chrome eller Edge på dator; Chrome rekommenderas även för appen i allmänhet. Markera ”Ta med samtalsljud” före ”Starta inspelning”. I Chromes delningsdialog väljer du en skärm under ”Hela skärmen”, aktiverar delning av systemljud och klickar på ”Dela”. Systemljud kan även innehålla aviseringar och ljud från andra appar. Endast ljud skickas för transkription. Utan delat ljud används bara mikrofonen. Paus pausar båda källorna. Stopp och Avbryt avslutar inspelningen men behåller delningen till nästa Start, så du normalt bara behöver välja källa en gång. Inget nytt ljud spelas in eller skickas mellan inspelningarna. Avmarkera för att avsluta delningen. Webbläsarens delningsindikator visas tills delningen avslutas.",
+    "waiting": "Välj Hela skärmen och aktivera systemljud. Om det inte erbjuds, prova Chrome-flik med flikljud.",
     "active": "Mikrofon + samtalsljud",
     "paused": "Samtalsljudet är pausat; delningsvalet behålls.",
-    "noAudio": "Inget delat ljud valdes. Inspelningen använder enbart mikrofonen. För att ta med samtalet: stoppa och starta igen, välj fliken och markera Dela flikljud.",
+    "noAudio": "Inget ljud delades. Endast mikrofonen spelas in. Stoppa och starta igen och aktivera ljud i delningsdialogen för att ta med samtalet.",
     "cancelled": "Ljuddelning avbröts eller blockerades. Inspelningen använder enbart mikrofonen.",
     "ended": "Delning av samtalsljud avslutades. Inspelningen fortsätter med enbart mikrofonen.",
-    "unsupported": "Den här webbläsaren stöder inte delning av samtalsljud. Använd Chrome eller Edge på dator. Mikrofoninspelning är fortfarande tillgänglig."
+    "unsupported": "Den här webbläsaren stöder inte delning av samtalsljud. Använd Chrome eller Edge på dator. Mikrofoninspelning är fortfarande tillgänglig.",
+    "ready": "Samtalsljudet är klart för nästa inspelning. Inget nytt ljud spelas in. Avmarkera för att avsluta delningen."
   },
   pageTitle: "Transkriberingsverktyg",
   openaiUsageLinkText: "Kostnadsöversikt",
@@ -362,6 +363,17 @@ guideText: `Välkommen till <strong>Transcribe Notes</strong>. Appen kan spela i
     <li><strong>Pausa</strong> slutför det aktuella ljudsegmentet och låter dig fortsätta senare. <strong>Stoppa/Slutför</strong> avslutar inspelningen och inväntar återstående transkription. <strong>Avbryt</strong> kasserar den aktiva inspelningen utan normal slutföring.</li>
     <li><strong>Speaker Labels</strong> är endast tillgängligt med Soniox och försöker markera vem som talar, till exempel Speaker 1 och Speaker 2.</li>
   </ul>
+  <p><strong>Ta med ljud från nätmöten</strong><br>
+  Spela in både din egen röst och den du pratar med på nätet. Funktionen är användbar med headset med mikrofon eller konferensenheter med högtalare och mikrofon i samma enhet. Den fungerar bäst i <strong>Chrome eller Edge på dator</strong>; <strong>Chrome rekommenderas även för appen i allmänhet</strong>.</p>
+  <ol>
+    <li>Markera <strong>Ta med samtalsljud</strong> bredvid Auto-copy.</li>
+    <li>Klicka på <strong>Starta inspelning</strong>.</li>
+    <li>Välj en skärm under <strong>Hela skärmen</strong> i Chromes delningsdialog.</li>
+    <li>Aktivera delning av <strong>systemljud</strong> och klicka på <strong>Dela</strong>.</li>
+  </ol>
+  <p>Appen begär Hela skärmen som standardvy, men webbläsaren bestämmer hur dialogen öppnas och du måste själv välja källa. Med systemljud behöver mötet inte vara på skärmen du väljer. Du hör fortfarande samtalet som vanligt. Endast ljud skickas för transkription; skärmbilden skickas inte.</p>
+  <p>Systemljud kan även innehålla aviseringar och ljud från andra appar. Tillgängligheten beror på webbläsare och operativsystem. Om systemljud inte erbjuds, prova <strong>Chrome-flik</strong> och aktivera <strong>flikljud</strong>. Utan delat ljud används bara mikrofonen.</p>
+  <p><strong>Paus</strong> pausar båda källorna. <strong>Stopp/Slutför</strong> och <strong>Avbryt</strong> avslutar inspelningen men behåller delningen till nästa Start, utan en ny dialog så länge källan är tillgänglig. Inget nytt ljud spelas in eller skickas mellan inspelningarna. Webbläsarens delningsindikator visas fortfarande. <strong>Avmarkera Ta med samtalsljud för att avsluta delningen</strong>. Delningen avslutas även om du stoppar den i webbläsaren, stänger den delade källan eller stänger eller laddar om detta Workspace eller appfliken. Nästa inspelning kräver då ett nytt val.</p>
 </details><br>
 
 <details>

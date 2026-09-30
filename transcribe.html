@@ -1030,6 +1030,20 @@
     .help-tip:focus-within .help-tip-content {
       display: block;
     }
+    #conferenceAudioTooltipText {
+      width: 420px;
+      max-width: min(420px, calc(100vw - 24px));
+      max-height: min(440px, 60vh);
+      overflow-y: auto;
+    }
+    #conferenceAudioTooltipContainer::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 15px;
+      width: 16px;
+      height: 8px;
+    }
     /* Auto-copy tooltip only: hover bridge + keep-open behavior */
 #autoCopyModeTooltipContainer {
   overflow: visible;
@@ -2401,14 +2415,10 @@
               <option value="voxtral">Mistral (Voxtral Mini Transcribe)</option>
             </select>
           </div>
-          <!-- Soniox Speaker Labels selector (shown only for Soniox) -->
+          <!-- Soniox Speaker Labels checkbox (shown only for Soniox batch) -->
           <div id="soniox-speaker-labels-container" style="display:none;">
-            <!-- "Spk" is short + fairly universal in audio UIs; tooltip provides clarity without i18n -->
             <label for="sonioxSpeakerLabels" id="sonioxSpeakerLabelsLabel" title="Speaker labels">Speaker labels:</label>
-            <select id="sonioxSpeakerLabels" aria-label="Speaker labels">
-              <option value="off" selected>Off</option>
-              <option value="on">On</option>
-            </select>
+            <input type="checkbox" id="sonioxSpeakerLabels" value="off" aria-label="Speaker labels">
           </div>
 
 
@@ -2878,7 +2888,7 @@
             <span id="conferenceAudioTooltipContainer" class="help-tip help-tip-left" tabindex="0" aria-label="Conference audio help" style="margin-left:0;">
               ?
               <span id="conferenceAudioTooltipText" class="help-tip-content" role="tooltip">
-                Records your microphone together with conference audio. Select the conference tab and enable Share tab audio when starting. Recommended: desktop Chrome or Edge. If shared audio is unavailable, recording continues with the microphone only.
+                This feature lets you record online conversations and consultations, including video calls. It records your voice through the microphone and the other person’s voice that you hear through your computer speakers or headset. It works best in desktop Chrome or Edge; Chrome is recommended for the app overall. Enable “Include conference audio” before clicking “Start Recording”. In Chrome’s sharing dialog, select a screen under “Entire Screen”, enable “Also share system audio”, and click “Share”. System audio may include notifications and sounds from other apps. Only audio is sent for transcription. Without shared audio, recording uses the microphone only. Pause pauses both sources. Stop and Abort end recording but keep sharing ready for the next Start, so you normally only choose the source once. No new audio is recorded or sent between recordings. Uncheck this option to end sharing. The browser’s sharing indicator stays on until sharing ends.
               </span>
             </span>
           </div>

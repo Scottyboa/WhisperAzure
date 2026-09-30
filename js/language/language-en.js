@@ -444,14 +444,15 @@ priceModalText: `
 export const transcribeTranslations = {
   conferenceAudio: {
     "label": "Include conference audio",
-    "tooltip": "Records your microphone together with audio from a conference. Before Start, enable this option. In the browser sharing dialog, preferably select the conference tab and enable Share tab audio. Supported system audio can also be used for a desktop call; it may include sounds from other apps. You still hear the call normally. Recommended: desktop Chrome or Edge. If no shared audio is available, recording continues with the microphone only. Pause pauses both sources; Stop and Abort end sharing.",
-    "waiting": "Choose the conference tab and enable audio sharing.",
+    "tooltip": "This feature lets you record online conversations and consultations, including video calls. It records your voice through the microphone and the other person’s voice that you hear through your computer speakers or headset. It works best in desktop Chrome or Edge; Chrome is recommended for the app overall. Enable “Include conference audio” before clicking “Start Recording”. In Chrome’s sharing dialog, select a screen under “Entire Screen”, enable “Also share system audio”, and click “Share”. System audio may include notifications and sounds from other apps. Only audio is sent for transcription. Without shared audio, recording uses the microphone only. Pause pauses both sources. Stop and Abort end recording but keep sharing ready for the next Start, so you normally only choose the source once. No new audio is recorded or sent between recordings. Uncheck this option to end sharing. The browser’s sharing indicator stays on until sharing ends.",
+    "waiting": "Select Entire Screen and enable Also share system audio. If unavailable, try Chrome Tab with Also share tab audio.",
     "active": "Microphone + conference audio",
     "paused": "Conference audio paused; sharing remains selected.",
-    "noAudio": "No shared audio was provided. Recording uses the microphone only. To include the call, stop and start again, select its tab and enable Share tab audio.",
+    "noAudio": "No shared audio was provided. Recording uses the microphone only. To include the call, stop and start again and enable audio in the sharing dialog.",
     "cancelled": "Audio sharing was cancelled or blocked. Recording uses the microphone only.",
     "ended": "Conference audio sharing ended. Recording continues with the microphone only.",
-    "unsupported": "Conference audio sharing is unavailable in this browser. Use desktop Chrome or Edge. Microphone recording remains available."
+    "unsupported": "Conference audio sharing is unavailable in this browser. Use desktop Chrome or Edge. Microphone recording remains available.",
+    "ready": "Conference audio sharing is ready for the next recording. No new audio is being recorded. Uncheck to end sharing."
   },
   pageTitle: "Transcription Tool",
   openaiUsageLinkText: "Cost Usage Overview",
@@ -521,6 +522,17 @@ guideText: `Welcome to <strong>Transcribe Notes</strong>. The app can record and
     <li><strong>Pause</strong> completes the current audio segment and lets you resume later. <strong>Stop/Complete</strong> ends the recording and waits for the remaining transcript. <strong>Abort</strong> discards the active recording without normal completion.</li>
     <li><strong>Speaker Labels</strong> is available only with Soniox. It attempts to identify who is speaking, for example Speaker 1 and Speaker 2.</li>
   </ul>
+  <p><strong>Include audio from online meetings</strong><br>
+  Record both your voice and the person you are speaking with online. This is useful with a headset microphone or a conference speakerphone that combines a speaker and microphone in one device. The feature works best in <strong>desktop Chrome or Edge</strong>; <strong>Chrome is recommended for the app overall</strong>.</p>
+  <ol>
+    <li>Enable <strong>Include conference audio</strong> beside Auto-copy.</li>
+    <li>Click <strong>Start Recording</strong>.</li>
+    <li>In Chrome’s sharing dialog, select a screen under <strong>Entire Screen</strong>.</li>
+    <li>Enable <strong>Also share system audio</strong>, then click <strong>Share</strong>.</li>
+  </ol>
+  <p>The app requests Entire Screen as the default view, but the browser decides how the dialog opens and you must select the source yourself. With system audio, the meeting does not need to be on the screen you select. You still hear the call normally. Only audio is sent for transcription; the screen image is not sent.</p>
+  <p>System audio may also include notifications and sounds from other apps. Availability depends on your browser and operating system. If system audio is not offered, try <strong>Chrome Tab</strong> and <strong>Also share tab audio</strong>. Without shared audio, only your microphone is used.</p>
+  <p><strong>Pause</strong> pauses both sources. <strong>Stop/Complete</strong> and <strong>Abort</strong> end recording but keep sharing ready for the next Start, without another picker while the source remains available. No new audio is recorded or sent between recordings. The browser’s sharing indicator remains visible. <strong>Uncheck Include conference audio to end sharing</strong>. Sharing also ends if you stop it in the browser, close the shared source, or close or reload this Workspace or app tab. The next recording then requires a new selection.</p>
 </details><br>
 
 <details>

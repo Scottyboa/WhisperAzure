@@ -13,6 +13,14 @@ Sonnet 5.5 rutes gjennom **Google Vertex AI i EU**, mens GPT-6.1 Sol rutes gjenn
 
 **Husk å aktivere ZDR hos Requesty:** Logg inn i din bruker på **Requesty.ai** og velg **Compliance** under **Admin** i venstremenyen. Finn **Zero Data Retention**, klikk **Edit** på samme rad og aktiver innstillingen. Dette hindrer Requesty i å lagre innholdet i nye forespørsler og svar for alle API-nøklene dine. Fremgangsmåten er også lagt til i oppsettsguiden på forsiden.
 
+### Ny funksjon: Ta med samtalelyd
+
+Du kan nå ta opp både mikrofonen din og lyden fra et nettmøte. Dette er nyttig med headset med mikrofon, eller konferansemikrofoner med høyttaler og mikrofon i samme enhet. Funksjonen fungerer best i **Chrome eller Edge på datamaskin**; Chrome anbefales også for appen generelt.
+
+Huk av **Ta med samtalelyd** før du starter opptaket. Velg en skjerm under **Hele skjermen** i Chromes delingsvindu, slå på **Del med systemlyd** og trykk **Del**. Hvis systemlyd ikke tilbys, kan du prøve **Chrome-fane** med **Del med fanelyd**.
+
+Stopp og Avbryt beholder delingen klar til neste opptak. Ingen ny lyd tas opp mellom opptakene; fjern avkrysningen for å avslutte delingen. Bare lyd sendes til transkribering. Systemlyd kan også inkludere varsler og lyd fra andre programmer.
+
 ---
 
 ## 28. september 2026

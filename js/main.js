@@ -1498,8 +1498,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getSelectedSonioxSpeakerLabels() {
+    const control = document.getElementById('sonioxSpeakerLabels');
+    if (control?.type === 'checkbox') return control.checked ? 'on' : 'off';
     return String(
-      document.getElementById('sonioxSpeakerLabels')?.value ||
+      control?.value ||
         readSession('soniox_speaker_labels', DEFAULTS.sonioxSpeakerLabels)
     ).toLowerCase();
   }
@@ -2795,15 +2797,15 @@ document.addEventListener('DOMContentLoaded', () => {
     return true;
   };
 
-  // Programmatic setter for the Soniox speaker-labels dropdown. Used by
+  // Programmatic setter for the Soniox speaker-labels checkbox. Used by
   // the Mini panel mirror so that the change runs through the exact same
   // code path as a manual click on the main page: dispatch a 'change'
-  // event on the underlying <select>, which the provider-persistence
+  // event on the underlying control, which the provider-persistence
   // bridge already handles (writes session storage and calls
   // switchTranscribeProvider('soniox') to apply the change live).
   //
   // Returns false if the change is suppressed because transcription is
-  // currently busy — same rule as on the main page (the select gets
+  // currently busy — same rule as on the main page (the checkbox gets
   // disabled by initProviderLockWhileRecording while recording).
   app.setSonioxSpeakerLabels = function setSonioxSpeakerLabels(next) {
     const normalizedNext = String(next || '').trim().toLowerCase() === 'on' ? 'on' : 'off';
@@ -2814,8 +2816,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const el = document.getElementById('sonioxSpeakerLabels');
-    if (el && el.value !== normalizedNext) {
+    const currentValue = el?.type === 'checkbox' ? (el.checked ? 'on' : 'off') : el?.value;
+    if (el && currentValue !== normalizedNext) {
       el.value = normalizedNext;
+      if (el.type === 'checkbox') el.checked = normalizedNext === 'on';
       el.dispatchEvent(new Event('change', { bubbles: true }));
       return true;
     }

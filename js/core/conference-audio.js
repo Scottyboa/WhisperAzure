@@ -5,11 +5,12 @@ import { registerWorkspaceDisposer } from './workspace-disposal.js';
 const SETTING_KEY = 'conference_audio_enabled';
 const FALLBACK = {
   label: 'Include conference audio',
-  tooltip: 'Records your microphone together with audio from a conference. Before Start, enable this option. In the browser sharing dialog, preferably select the conference tab and enable Share tab audio. Supported system audio can also be used for a desktop call; it may include sounds from other apps. You still hear the call normally. Recommended: desktop Chrome or Edge. If no shared audio is available, recording continues with the microphone only. Pause pauses both sources; Stop and Abort end sharing.',
-  waiting: 'Choose the conference tab and enable audio sharing.',
+  tooltip: "This feature lets you record online conversations and consultations, including video calls. It records your voice through the microphone and the other person’s voice that you hear through your computer speakers or headset. It works best in desktop Chrome or Edge; Chrome is recommended for the app overall. Enable “Include conference audio” before clicking “Start Recording”. In Chrome’s sharing dialog, select a screen under “Entire Screen”, enable “Also share system audio”, and click “Share”. System audio may include notifications and sounds from other apps. Only audio is sent for transcription. Without shared audio, recording uses the microphone only. Pause pauses both sources. Stop and Abort end recording but keep sharing ready for the next Start, so you normally only choose the source once. No new audio is recorded or sent between recordings. Uncheck this option to end sharing. The browser’s sharing indicator stays on until sharing ends.",
+  waiting: "Select Entire Screen and enable Also share system audio. If unavailable, try Chrome Tab with Also share tab audio.",
   active: 'Microphone + conference audio',
+  ready: "Conference audio sharing is ready for the next recording. No new audio is being recorded. Uncheck to end sharing.",
   paused: 'Conference audio paused; sharing remains selected.',
-  noAudio: 'No shared audio was provided. Recording uses the microphone only. To include the call, stop and start again, select its tab and enable Share tab audio.',
+  noAudio: "No shared audio was provided. Recording uses the microphone only. To include the call, stop and start again and enable audio in the sharing dialog.",
   cancelled: 'Audio sharing was cancelled or blocked. Recording uses the microphone only.',
   ended: 'Conference audio sharing ended. Recording continues with the microphone only.',
   unsupported: 'Conference audio sharing is unavailable in this browser. Use desktop Chrome or Edge. Microphone recording remains available.',
@@ -36,7 +37,9 @@ function render() {
   const text = strings();
   const checkbox = document.getElementById('conferenceAudioToggle');
   if (checkbox) {
-    checkbox.disabled = locked || !supported();
+    // Ending an existing share is always available. Starting a new share
+    // still requires the next Start click and its browser permission dialog.
+    checkbox.disabled = !supported() || (locked && !checkbox.checked);
     checkbox.setAttribute('aria-label', text.label);
   }
   const label = document.getElementById('conferenceAudioLabel');
@@ -60,6 +63,7 @@ export function initConferenceAudioUi() {
   try { checkbox.checked = sessionStorage.getItem(SETTING_KEY) === '1'; } catch (_) {}
   checkbox.addEventListener('change', () => {
     try { sessionStorage.setItem(SETTING_KEY, checkbox.checked ? '1' : '0'); } catch (_) {}
+    if (!checkbox.checked) stopConferenceSharing();
     if (!locked) notice = '';
     render();
   });
@@ -109,6 +113,18 @@ export function disposeConferenceAudio() {
   render();
 }
 
+export function finishConferenceRecording() {
+  sharingVersion += 1; // Reject a picker that resolves after Stop/Abort.
+  releaseRecordingInputs();
+  paused = true;
+  if (sharing) {
+    sharing.audio.enabled = false;
+    notice = 'ready';
+  }
+  locked = false;
+  render();
+}
+
 export function pauseConferenceAudio(shouldPause) {
   paused = Boolean(shouldPause);
   if (sharing) {
@@ -121,15 +137,23 @@ export function pauseConferenceAudio(shouldPause) {
 // Called synchronously from the recording click handler, before any provider
 // connection, model download or microphone permission can consume activation.
 export async function prepareConferenceAudio(operation) {
-  disposeConferenceAudio();
+  releaseRecordingInputs();
   lockConferenceAudio(true);
-  if (!document.getElementById('conferenceAudioToggle')?.checked) return;
+  if (!document.getElementById('conferenceAudioToggle')?.checked) {
+    stopConferenceSharing();
+    return;
+  }
   if (!supported()) { notice = 'unsupported'; render(); return; }
+  if (sharing?.audio.readyState === 'live') {
+    pauseConferenceAudio(false);
+    return;
+  }
+  stopConferenceSharing();
   const version = sharingVersion;
   notice = 'waiting'; render();
   try {
     const stream = await operation.wait(window.navigator.mediaDevices.getDisplayMedia({
-      video: { displaySurface: 'browser', frameRate: 1 },
+      video: { displaySurface: 'monitor', frameRate: 1 },
       audio: { suppressLocalAudioPlayback: false },
       selfBrowserSurface: 'exclude',
       systemAudio: 'include',

@@ -273,14 +273,15 @@ Une clé API ne rend pas un service automatiquement conforme au RGPD. Vérifiez 
 export const transcribeTranslations = {
   conferenceAudio: {
     "label": "Inclure l’audio de la conférence",
-    "tooltip": "Enregistre votre microphone avec l’audio d’une visioconférence. Activez cette option avant de démarrer. Dans la fenêtre de partage du navigateur, sélectionnez de préférence l’onglet de la conférence et cochez Partager l’audio de l’onglet. L’audio système, s’il est pris en charge, peut aussi servir pour un appel dans une application de bureau ; les sons d’autres applications peuvent alors être inclus. Vous entendez toujours l’appel normalement. Recommandé : Chrome ou Edge sur ordinateur. Sans audio partagé, seul le microphone est enregistré. Pause met les deux sources en pause ; Arrêter et Annuler terminent le partage.",
-    "waiting": "Choisissez l’onglet de la conférence et activez le partage audio.",
+    "tooltip": "Cette fonction permet d’enregistrer des conversations et consultations en ligne, notamment des appels vidéo. Elle enregistre votre voix par le microphone et celle de votre interlocuteur que vous entendez dans les haut-parleurs de l’ordinateur ou un casque. Elle fonctionne au mieux avec Chrome ou Edge sur ordinateur ; Chrome est aussi recommandé pour l’application en général. Cochez « Inclure l’audio de la conférence » avant « Démarrer l’enregistrement ». Dans la fenêtre de partage de Chrome, choisissez un écran sous « Écran entier », activez le partage de l’audio système et cliquez sur « Partager ». L’audio système peut inclure des notifications et les sons d’autres applications. Seul l’audio est envoyé pour transcription. Sans audio partagé, seul le microphone est utilisé. Pause met les deux sources en pause. Arrêter et Annuler terminent l’enregistrement mais conservent le partage pour le prochain démarrage : vous choisissez normalement la source une seule fois. Aucun nouvel audio n’est enregistré ni envoyé entre les enregistrements. Décochez l’option pour arrêter le partage. L’indicateur de partage du navigateur reste visible jusque-là.",
+    "waiting": "Choisissez Écran entier et activez l’audio système. Sinon, essayez Onglet Chrome avec l’audio de l’onglet.",
     "active": "Microphone + audio de la conférence",
     "paused": "Audio de la conférence en pause ; le partage reste sélectionné.",
-    "noAudio": "Aucun audio n’a été partagé. Seul le microphone est enregistré. Pour inclure l’appel, arrêtez puis redémarrez, choisissez son onglet et cochez Partager l’audio de l’onglet.",
+    "noAudio": "Aucun audio n’a été partagé. Seul le microphone est enregistré. Arrêtez puis redémarrez et activez l’audio dans la fenêtre de partage pour inclure la conversation.",
     "cancelled": "Le partage audio a été annulé ou bloqué. Seul le microphone est enregistré.",
     "ended": "Le partage audio de la conférence est terminé. L’enregistrement continue avec le microphone uniquement.",
-    "unsupported": "Le partage de l’audio de la conférence n’est pas disponible dans ce navigateur. Utilisez Chrome ou Edge sur ordinateur. L’enregistrement du microphone reste disponible."
+    "unsupported": "Le partage de l’audio de la conférence n’est pas disponible dans ce navigateur. Utilisez Chrome ou Edge sur ordinateur. L’enregistrement du microphone reste disponible.",
+    "ready": "Le partage audio est prêt pour le prochain enregistrement. Aucun nouvel audio n’est enregistré. Décochez pour arrêter le partage."
   },
   pageTitle: "Outil de transcription",
   openaiUsageLinkText: "Aperçu des coûts d'utilisation",
@@ -347,6 +348,17 @@ guideText: `Bienvenue dans <strong>Transcribe Notes</strong>. L'application peut
     <li><strong>Pause</strong> termine le segment audio en cours et permet de reprendre plus tard. <strong>Arrêter/Terminer</strong> met fin à l'enregistrement et attend la transcription restante. <strong>Abandonner</strong> supprime l'enregistrement actif sans finalisation normale.</li>
     <li><strong>Speaker Labels</strong> est disponible uniquement avec Soniox et tente d'indiquer qui parle, par exemple Speaker 1 et Speaker 2.</li>
   </ul>
+  <p><strong>Inclure l’audio des réunions en ligne</strong><br>
+  Enregistrez votre voix et celle de votre interlocuteur en ligne. Cette fonction est utile avec un micro-casque ou un appareil de conférence qui combine haut-parleur et microphone. Elle fonctionne au mieux avec <strong>Chrome ou Edge sur ordinateur</strong> ; <strong>Chrome est aussi recommandé pour l’application en général</strong>.</p>
+  <ol>
+    <li>Cochez <strong>Inclure l’audio de la conférence</strong> à côté d’Auto-copy.</li>
+    <li>Cliquez sur <strong>Démarrer l’enregistrement</strong>.</li>
+    <li>Dans la fenêtre de partage de Chrome, choisissez un écran sous <strong>Écran entier</strong>.</li>
+    <li>Activez le partage de <strong>l’audio système</strong>, puis cliquez sur <strong>Partager</strong>.</li>
+  </ol>
+  <p>L’application demande Écran entier comme vue par défaut, mais le navigateur décide comment la fenêtre s’ouvre et vous devez sélectionner la source. Avec l’audio système, la réunion peut se trouver sur un autre écran. Vous entendez toujours l’appel normalement. Seul l’audio est envoyé pour transcription ; l’image de l’écran n’est pas envoyée.</p>
+  <p>L’audio système peut inclure des notifications et les sons d’autres applications. Sa disponibilité dépend du navigateur et du système d’exploitation. S’il n’est pas proposé, essayez <strong>Onglet Chrome</strong> avec <strong>l’audio de l’onglet</strong>. Sans audio partagé, seul le microphone est utilisé.</p>
+  <p><strong>Pause</strong> met les deux sources en pause. <strong>Arrêter/Terminer</strong> et <strong>Annuler</strong> terminent l’enregistrement mais conservent le partage pour le prochain démarrage, sans nouvelle sélection tant que la source reste disponible. Aucun nouvel audio n’est enregistré ni envoyé entre les enregistrements. L’indicateur de partage du navigateur reste visible. <strong>Décochez Inclure l’audio de la conférence pour arrêter le partage</strong>. Le partage s’arrête aussi si vous l’arrêtez dans le navigateur, fermez la source partagée ou fermez ou rechargez ce Workspace ou l’onglet de l’application. Le prochain enregistrement nécessite alors une nouvelle sélection.</p>
 </details><br>
 
 <details>

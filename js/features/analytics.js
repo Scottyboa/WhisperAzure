@@ -63,9 +63,11 @@ function getTranscribeProviderSnapshot() {
   return {
     transcribeProvider,
     sonioxSpeakerLabels:
-      document.getElementById('sonioxSpeakerLabels')?.value ||
-      safeSessionStorageGet('soniox_speaker_labels') ||
-      DEFAULTS.sonioxSpeakerLabels,
+      document.getElementById('sonioxSpeakerLabels')?.type === 'checkbox'
+        ? (document.getElementById('sonioxSpeakerLabels').checked ? 'on' : 'off')
+        : document.getElementById('sonioxSpeakerLabels')?.value ||
+          safeSessionStorageGet('soniox_speaker_labels') ||
+          DEFAULTS.sonioxSpeakerLabels,
     sonioxRegion:
       document.getElementById('sonioxRegion')?.value ||
       safeSessionStorageGet('soniox_region') ||

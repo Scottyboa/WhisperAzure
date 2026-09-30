@@ -33,6 +33,7 @@ const CHECKBOX_IDS = [
   "secondaryClearOnGenerateToggle", "redactorAutocopyToggle",
   "redactorAutoAddDatesToggle",
   "conferenceAudioToggle",
+  "sonioxSpeakerLabels",
 ];
 
 const DRAFT_FIELD_IDS = [
@@ -188,6 +189,8 @@ function captureConfig(doc) {
     if (!el || !("value" in el)) return;
     values[id] = id === "autoCopyModeSelect"
       ? String(el.dataset.workspaceConfiguredMode || el.value || "off")
+      : id === "sonioxSpeakerLabels" && el.type === "checkbox"
+        ? (el.checked ? "on" : "off")
       : String(el.value || "");
   });
   CHECKBOX_IDS.forEach((id) => {
@@ -244,6 +247,14 @@ async function applyConfig(win, doc, config = {}) {
     const el = doc.getElementById(id);
     if (!el || !("value" in el)) return;
     const next = String(values[id] ?? "");
+    // Retain the on/off value in exports for older app versions, and accept
+    // existing exports made while Speaker Labels was a dropdown.
+    if (id === "sonioxSpeakerLabels" && el.type === "checkbox") {
+      el.checked = next === "on";
+      el.value = el.checked ? "on" : "off";
+      dispatchChange(win, el);
+      return;
+    }
     if ([...el.options || []].some((option) => option.value === next)) {
       el.value = next;
       dispatchChange(win, el);
@@ -252,6 +263,10 @@ async function applyConfig(win, doc, config = {}) {
   Object.entries(checks).forEach(([id, checked]) => {
     const el = doc.getElementById(id);
     if (el?.type !== "checkbox") return;
+    if (id === "sonioxSpeakerLabels") {
+      if (el.checked === Boolean(checked)) return;
+      el.value = checked ? "on" : "off";
+    }
     el.checked = Boolean(checked);
     dispatchChange(win, el);
   });

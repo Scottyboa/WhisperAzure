@@ -273,14 +273,15 @@ Una chiave API non rende automaticamente un servizio conforme al GDPR. Verifica 
 export const transcribeTranslations = {
   conferenceAudio: {
     "label": "Includi audio della conferenza",
-    "tooltip": "Registra il microfono insieme all’audio di una videoconferenza. Attiva questa opzione prima di avviare. Nella finestra di condivisione del browser, scegli preferibilmente la scheda della conferenza e attiva Condividi audio della scheda. L’audio di sistema, se supportato, può essere usato anche per una chiamata in un’app desktop; può includere suoni di altre app. Continui a sentire la chiamata normalmente. Consigliati: Chrome o Edge su computer. Se manca l’audio condiviso, viene registrato solo il microfono. Pausa mette in pausa entrambe le sorgenti; Interrompi e Annulla terminano la condivisione.",
-    "waiting": "Scegli la scheda della conferenza e attiva la condivisione audio.",
+    "tooltip": "Questa funzione permette di registrare conversazioni e consultazioni online, incluse le videochiamate. Registra la tua voce dal microfono e quella dell’altra persona che senti dagli altoparlanti del computer o dalle cuffie. Funziona al meglio con Chrome o Edge su computer; Chrome è consigliato anche per l’app in generale. Seleziona “Includi audio della conferenza” prima di “Avvia registrazione”. Nella finestra di condivisione di Chrome, scegli uno schermo in “Schermo intero”, attiva la condivisione dell’audio di sistema e fai clic su “Condividi”. L’audio di sistema può includere notifiche e suoni di altre app. Solo l’audio viene inviato per la trascrizione. Senza audio condiviso viene usato solo il microfono. Pausa mette in pausa entrambe le sorgenti. Stop e Annulla terminano la registrazione ma mantengono la condivisione per il prossimo avvio, così normalmente basta scegliere la sorgente una volta. Nessun nuovo audio viene registrato o inviato tra le registrazioni. Deseleziona l’opzione per terminare la condivisione. L’indicatore del browser resta visibile fino alla fine della condivisione.",
+    "waiting": "Scegli Schermo intero e attiva l’audio di sistema. Se non è disponibile, prova Scheda Chrome con l’audio della scheda.",
     "active": "Microfono + audio della conferenza",
     "paused": "Audio della conferenza in pausa; la condivisione rimane selezionata.",
-    "noAudio": "Non è stato condiviso alcun audio. Viene registrato solo il microfono. Per includere la chiamata, interrompi e riavvia, scegli la scheda e attiva Condividi audio della scheda.",
+    "noAudio": "Non è stato condiviso alcun audio. Viene registrato solo il microfono. Interrompi e riavvia, quindi attiva l’audio nella finestra di condivisione per includere la conversazione.",
     "cancelled": "La condivisione audio è stata annullata o bloccata. Viene registrato solo il microfono.",
     "ended": "La condivisione dell’audio della conferenza è terminata. La registrazione continua con il solo microfono.",
-    "unsupported": "Questo browser non supporta la condivisione dell’audio della conferenza. Usa Chrome o Edge su computer. La registrazione del microfono resta disponibile."
+    "unsupported": "Questo browser non supporta la condivisione dell’audio della conferenza. Usa Chrome o Edge su computer. La registrazione del microfono resta disponibile.",
+    "ready": "La condivisione audio è pronta per la prossima registrazione. Nessun nuovo audio viene registrato. Deseleziona per terminare la condivisione."
   },
   pageTitle: "Strumento di trascrizione",
   openaiUsageLinkText: "Riepilogo dei costi",
@@ -347,6 +348,17 @@ guideText: `Benvenuto in <strong>Transcribe Notes</strong>. L'app può registrar
     <li><strong>Pausa</strong> completa il segmento audio corrente e permette di riprendere in seguito. <strong>Stop/Completa</strong> termina la registrazione e attende la trascrizione restante. <strong>Interrompi</strong> scarta la registrazione attiva senza il normale completamento.</li>
     <li><strong>Speaker Labels</strong> è disponibile solo con Soniox e prova a indicare chi sta parlando, ad esempio Speaker 1 e Speaker 2.</li>
   </ul>
+  <p><strong>Includere l’audio delle riunioni online</strong><br>
+  Registra la tua voce e quella della persona con cui parli online. Questa funzione è utile con cuffie con microfono o dispositivi da conferenza che integrano altoparlante e microfono. Funziona al meglio con <strong>Chrome o Edge su computer</strong>; <strong>Chrome è consigliato anche per l’app in generale</strong>.</p>
+  <ol>
+    <li>Seleziona <strong>Includi audio della conferenza</strong> accanto ad Auto-copy.</li>
+    <li>Fai clic su <strong>Avvia registrazione</strong>.</li>
+    <li>Nella finestra di condivisione di Chrome, scegli uno schermo in <strong>Schermo intero</strong>.</li>
+    <li>Attiva la condivisione dell’<strong>audio di sistema</strong>, poi fai clic su <strong>Condividi</strong>.</li>
+  </ol>
+  <p>L’app richiede Schermo intero come vista predefinita, ma il browser decide come aprire la finestra e devi scegliere la sorgente. Con l’audio di sistema, la riunione può trovarsi su un altro schermo. Continui a sentire la chiamata normalmente. Solo l’audio viene inviato per la trascrizione; l’immagine dello schermo non viene inviata.</p>
+  <p>L’audio di sistema può includere notifiche e suoni di altre app. La disponibilità dipende dal browser e dal sistema operativo. Se non è disponibile, prova <strong>Scheda Chrome</strong> con <strong>l’audio della scheda</strong>. Senza audio condiviso viene usato solo il microfono.</p>
+  <p><strong>Pausa</strong> mette in pausa entrambe le sorgenti. <strong>Stop/Completa</strong> e <strong>Annulla</strong> terminano la registrazione ma mantengono la condivisione per il prossimo avvio, senza una nuova selezione finché la sorgente resta disponibile. Nessun nuovo audio viene registrato o inviato tra le registrazioni. L’indicatore del browser resta visibile. <strong>Deseleziona Includi audio della conferenza per terminare la condivisione</strong>. La condivisione termina anche se la interrompi nel browser, chiudi la sorgente condivisa o chiudi o ricarichi questo Workspace o la scheda dell’app. La registrazione successiva richiede una nuova selezione.</p>
 </details><br>
 
 <details>

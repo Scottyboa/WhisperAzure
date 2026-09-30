@@ -273,14 +273,15 @@ Ein API-Schlüssel macht einen Dienst nicht automatisch DSGVO-konform. Prüfen S
 export const transcribeTranslations = {
   conferenceAudio: {
     "label": "Konferenzton aufnehmen",
-    "tooltip": "Nimmt Ihr Mikrofon zusammen mit dem Ton einer Videokonferenz auf. Aktivieren Sie diese Option vor dem Start. Wählen Sie im Freigabedialog möglichst den Konferenz-Tab und aktivieren Sie Tab-Audio teilen. Unterstütztes Systemaudio kann auch für einen Anruf in einer Desktop-App verwendet werden; dabei können Töne anderer Apps aufgenommen werden. Sie hören das Gespräch weiterhin normal. Empfohlen: Chrome oder Edge auf dem Computer. Ohne freigegebenen Ton wird nur das Mikrofon aufgenommen. Pause pausiert beide Quellen; Stopp und Abbrechen beenden die Freigabe.",
-    "waiting": "Wählen Sie den Konferenz-Tab und aktivieren Sie die Audiofreigabe.",
+    "tooltip": "Mit dieser Funktion können Sie Gespräche und Konsultationen über das Internet aufnehmen, etwa Videoanrufe. Sie erfasst Ihre Stimme über das Mikrofon und die Stimme der anderen Person, die Sie über Computerlautsprecher oder ein Headset hören. Sie funktioniert am besten mit Chrome oder Edge auf dem Computer; Chrome wird auch für die App insgesamt empfohlen. Aktivieren Sie „Konferenzton aufnehmen“ vor „Aufnahme starten“. Wählen Sie im Chrome-Freigabedialog unter „Gesamter Bildschirm“ einen Bildschirm, aktivieren Sie die Freigabe von Systemaudio und klicken Sie auf „Teilen“. Systemaudio kann Benachrichtigungen und Töne anderer Apps enthalten. Nur Audio wird zur Transkription gesendet. Ohne freigegebenes Audio wird nur das Mikrofon verwendet. Pause pausiert beide Quellen. Stopp und Abbrechen beenden die Aufnahme, lassen die Freigabe aber für den nächsten Start bestehen. So müssen Sie die Quelle normalerweise nur einmal wählen. Zwischen Aufnahmen wird kein neues Audio aufgenommen oder gesendet. Deaktivieren Sie die Option, um die Freigabe zu beenden. Der Freigabeindikator des Browsers bleibt bis dahin sichtbar.",
+    "waiting": "Wählen Sie Gesamter Bildschirm und aktivieren Sie Systemaudio. Falls nicht verfügbar, versuchen Sie Chrome-Tab mit Tab-Audio.",
     "active": "Mikrofon + Konferenzton",
     "paused": "Konferenzton pausiert; die Freigabe bleibt ausgewählt.",
-    "noAudio": "Es wurde kein Ton freigegeben. Nur das Mikrofon wird aufgenommen. Um das Gespräch einzubeziehen, stoppen und starten Sie erneut, wählen Sie den Tab und aktivieren Sie Tab-Audio teilen.",
+    "noAudio": "Es wurde kein Audio freigegeben. Nur das Mikrofon wird aufgenommen. Stoppen und starten Sie erneut und aktivieren Sie Audio im Freigabedialog, um das Gespräch einzubeziehen.",
     "cancelled": "Die Audiofreigabe wurde abgebrochen oder blockiert. Nur das Mikrofon wird aufgenommen.",
     "ended": "Die Freigabe des Konferenztons wurde beendet. Die Aufnahme läuft mit dem Mikrofon weiter.",
-    "unsupported": "Dieser Browser unterstützt keine Freigabe von Konferenzton. Verwenden Sie Chrome oder Edge auf dem Computer. Mikrofonaufnahmen sind weiterhin möglich."
+    "unsupported": "Dieser Browser unterstützt keine Freigabe von Konferenzton. Verwenden Sie Chrome oder Edge auf dem Computer. Mikrofonaufnahmen sind weiterhin möglich.",
+    "ready": "Die Konferenzton-Freigabe ist für die nächste Aufnahme bereit. Es wird kein neues Audio aufgenommen. Deaktivieren Sie die Option, um die Freigabe zu beenden."
   },
   pageTitle: "Transkriptionstool",
   openaiUsageLinkText: "Kostenübersicht",
@@ -347,6 +348,17 @@ guideText: `Willkommen bei <strong>Transcribe Notes</strong>. Die App kann Gespr
     <li><strong>Pause</strong> schließt das aktuelle Audiosegment ab und ermöglicht eine spätere Fortsetzung. <strong>Stopp/Abschließen</strong> beendet die Aufnahme und wartet auf das restliche Transkript. <strong>Abbrechen</strong> verwirft die aktive Aufnahme ohne normalen Abschluss.</li>
     <li><strong>Speaker Labels</strong> ist nur mit Soniox verfügbar und versucht, Sprecher zu kennzeichnen, zum Beispiel Speaker 1 und Speaker 2.</li>
   </ul>
+  <p><strong>Audio aus Onlinegesprächen aufnehmen</strong><br>
+  Nehmen Sie Ihre Stimme und die Stimme der Person auf, mit der Sie online sprechen. Dies ist nützlich mit einem Headset-Mikrofon oder einem Konferenzgerät mit Lautsprecher und Mikrofon in einem Gerät. Die Funktion arbeitet am besten mit <strong>Chrome oder Edge auf dem Computer</strong>; <strong>Chrome wird auch für die App insgesamt empfohlen</strong>.</p>
+  <ol>
+    <li>Aktivieren Sie <strong>Konferenzton aufnehmen</strong> neben Auto-copy.</li>
+    <li>Klicken Sie auf <strong>Aufnahme starten</strong>.</li>
+    <li>Wählen Sie im Chrome-Freigabedialog unter <strong>Gesamter Bildschirm</strong> einen Bildschirm.</li>
+    <li>Aktivieren Sie die Freigabe von <strong>Systemaudio</strong> und klicken Sie auf <strong>Teilen</strong>.</li>
+  </ol>
+  <p>Die App fordert Gesamter Bildschirm als Standardansicht an. Der Browser entscheidet jedoch, wie der Dialog geöffnet wird, und Sie müssen die Quelle selbst auswählen. Mit Systemaudio muss sich das Gespräch nicht auf dem ausgewählten Bildschirm befinden. Sie hören es weiterhin normal. Nur Audio wird zur Transkription gesendet; das Bildschirmbild wird nicht gesendet.</p>
+  <p>Systemaudio kann Benachrichtigungen und Töne anderer Apps enthalten. Die Verfügbarkeit hängt von Browser und Betriebssystem ab. Falls Systemaudio nicht angeboten wird, versuchen Sie <strong>Chrome-Tab</strong> und aktivieren Sie <strong>Tab-Audio</strong>. Ohne freigegebenes Audio wird nur das Mikrofon verwendet.</p>
+  <p><strong>Pause</strong> pausiert beide Quellen. <strong>Stopp/Abschließen</strong> und <strong>Abbrechen</strong> beenden die Aufnahme, lassen die Freigabe aber für den nächsten Start bestehen. Solange die Quelle verfügbar bleibt, ist keine erneute Auswahl erforderlich. Zwischen Aufnahmen wird kein neues Audio aufgenommen oder gesendet. Der Freigabeindikator des Browsers bleibt sichtbar. <strong>Deaktivieren Sie Konferenzton aufnehmen, um die Freigabe zu beenden</strong>. Die Freigabe endet auch beim Stoppen im Browser, beim Schließen der geteilten Quelle oder beim Schließen oder Neuladen dieses Workspace oder App-Tabs. Danach ist eine neue Auswahl erforderlich.</p>
 </details><br>
 
 <details>

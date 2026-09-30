@@ -25,7 +25,6 @@ import {
   listRequestyModelOptions,
   listRequestyNanoReasoningOptions,
   listSonioxRegionOptions,
-  listSonioxSpeakerLabelOptions,
   listTranscribeProviderOptions,
   normalizeNoteMode,
   normalizeOpenAiModel,
@@ -196,6 +195,7 @@ import {
       if (speakerSelect.value !== speakerLabels) {
         speakerSelect.value = speakerLabels;
       }
+      speakerSelect.checked = speakerLabels === 'on';
     }
 
     if (regionSelect) {
@@ -444,7 +444,6 @@ import {
 
     ensureSelectOptions(providerSelect, listTranscribeProviderOptions());
     ensureSelectOptions(regionSelect, listSonioxRegionOptions());
-    ensureSelectOptions(speakerSelect, listSonioxSpeakerLabelOptions());
 
     const storedProvider = persistSelectedTranscribeProvider(readSelectedTranscribeProvider());
 
@@ -475,8 +474,10 @@ import {
         DEFAULTS.sonioxSpeakerLabels
       );
       speakerSelect.value = storedSpeaker;
+      speakerSelect.checked = storedSpeaker === 'on';
       speakerSelect.addEventListener('change', async () => {
-        const nextSpeaker = normalizeLower(speakerSelect.value, DEFAULTS.sonioxSpeakerLabels);
+        const nextSpeaker = speakerSelect.checked ? 'on' : 'off';
+        speakerSelect.value = nextSpeaker;
         writeSession(STORAGE_KEYS.sonioxSpeakerLabels, nextSpeaker);
 
         applyTranscribeProviderUI({

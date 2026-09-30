@@ -33,7 +33,6 @@ const listSharedRequestyReasoningOptions = shared0["listSharedRequestyReasoningO
 const listRequestyModelOptions = shared0["listRequestyModelOptions"];
 const listRequestyNanoReasoningOptions = shared0["listRequestyNanoReasoningOptions"];
 const listSonioxRegionOptions = shared0["listSonioxRegionOptions"];
-const listSonioxSpeakerLabelOptions = shared0["listSonioxSpeakerLabelOptions"];
 const listTranscribeProviderOptions = shared0["listTranscribeProviderOptions"];
 const normalizeNoteMode = shared0["normalizeNoteMode"];
 const normalizeOpenAiModel = shared0["normalizeOpenAiModel"];
@@ -203,6 +202,7 @@ const resolveEffectiveNoteProvider = shared0["resolveEffectiveNoteProvider"];
       if (speakerSelect.value !== speakerLabels) {
         speakerSelect.value = speakerLabels;
       }
+      speakerSelect.checked = speakerLabels === 'on';
     }
 
     if (regionSelect) {
@@ -451,7 +451,6 @@ const resolveEffectiveNoteProvider = shared0["resolveEffectiveNoteProvider"];
 
     ensureSelectOptions(providerSelect, listTranscribeProviderOptions());
     ensureSelectOptions(regionSelect, listSonioxRegionOptions());
-    ensureSelectOptions(speakerSelect, listSonioxSpeakerLabelOptions());
 
     const storedProvider = persistSelectedTranscribeProvider(readSelectedTranscribeProvider());
 
@@ -482,8 +481,10 @@ const resolveEffectiveNoteProvider = shared0["resolveEffectiveNoteProvider"];
         DEFAULTS.sonioxSpeakerLabels
       );
       speakerSelect.value = storedSpeaker;
+      speakerSelect.checked = storedSpeaker === 'on';
       speakerSelect.addEventListener('change', async () => {
-        const nextSpeaker = normalizeLower(speakerSelect.value, DEFAULTS.sonioxSpeakerLabels);
+        const nextSpeaker = speakerSelect.checked ? 'on' : 'off';
+        speakerSelect.value = nextSpeaker;
         writeSession(STORAGE_KEYS.sonioxSpeakerLabels, nextSpeaker);
 
         applyTranscribeProviderUI({
@@ -3080,7 +3081,7 @@ document.addEventListener('DOMContentLoaded', () => {
     app.__autoCopyExtensionCopyBridgeBound = true;
     let useFirefoxEventBridge = false;
     const forward = (event, copyKind) => {
-      if (!useFirefoxEventBridge && !window.__workspaceSharedRuntime) return;
+      if (!useFirefoxEventBridge) return;
       const detail = event.detail || {};
       if (detail.aborted || detail.failed || ['aborted', 'error', 'failed'].includes(detail.status)) return;
       const redactor = event.type === 'redactor:autocopy';
@@ -3088,13 +3089,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const field = copyKind === 'note' ? 'generatedNote' : 'transcription';
       const text = typeof detail.text === 'string' ? detail.text : String(document.getElementById(field)?.value || '');
       if (!text.trim()) return;
-      window.postMessage({
-        type: 'AUTO_COPY_APP_EVENT',
-        copyKind,
-        text,
-        sourceEvent: event.type,
-        workspaceId: String(window.__workspacePresetRuntimeId || ''),
-      }, location.origin);
+      window.postMessage({ type: 'AUTO_COPY_APP_EVENT', copyKind, text, sourceEvent: event.type }, location.origin);
     };
     for (const name of ['note:finished', 'note-generation-finished']) {
       window.addEventListener(name, event => forward(event, 'note'));
@@ -3103,13 +3098,7 @@ document.addEventListener('DOMContentLoaded', () => {
       window.addEventListener(name, event => forward(event, 'transcript'));
     }
     const resetBridge = () => {
-      if (useFirefoxEventBridge || window.__workspaceSharedRuntime) {
-        window.postMessage({
-          type: 'AUTO_COPY_APP_EVENT',
-          reset: true,
-          workspaceId: String(window.__workspacePresetRuntimeId || ''),
-        }, location.origin);
-      }
+      if (useFirefoxEventBridge) window.postMessage({ type: 'AUTO_COPY_APP_EVENT', reset: true }, location.origin);
     };
     window.addEventListener('recording:lifecycle', event => {
       if (event.detail?.phase === 'starting') resetBridge();
@@ -3143,9 +3132,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = event?.data || {};
       if (data.type !== AUTO_COPY_EXTENSION_COPY_RESULT) return;
-      const resultWorkspaceId = String(data.workspaceId || '');
-      const currentWorkspaceId = String(window.__workspacePresetRuntimeId || '');
-      if (resultWorkspaceId !== currentWorkspaceId) return;
 
       const copyKind = String(data.copyKind || '').trim().toLowerCase();
       const ok = !!data.ok;
@@ -3498,8 +3484,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getSelectedSonioxSpeakerLabels() {
+    const control = document.getElementById('sonioxSpeakerLabels');
+    if (control?.type === 'checkbox') return control.checked ? 'on' : 'off';
     return String(
-      document.getElementById('sonioxSpeakerLabels')?.value ||
+      control?.value ||
         readSession('soniox_speaker_labels', DEFAULTS.sonioxSpeakerLabels)
     ).toLowerCase();
   }
@@ -4795,15 +4783,15 @@ document.addEventListener('DOMContentLoaded', () => {
     return true;
   };
 
-  // Programmatic setter for the Soniox speaker-labels dropdown. Used by
+  // Programmatic setter for the Soniox speaker-labels checkbox. Used by
   // the Mini panel mirror so that the change runs through the exact same
   // code path as a manual click on the main page: dispatch a 'change'
-  // event on the underlying <select>, which the provider-persistence
+  // event on the underlying control, which the provider-persistence
   // bridge already handles (writes session storage and calls
   // switchTranscribeProvider('soniox') to apply the change live).
   //
   // Returns false if the change is suppressed because transcription is
-  // currently busy — same rule as on the main page (the select gets
+  // currently busy — same rule as on the main page (the checkbox gets
   // disabled by initProviderLockWhileRecording while recording).
   app.setSonioxSpeakerLabels = function setSonioxSpeakerLabels(next) {
     const normalizedNext = String(next || '').trim().toLowerCase() === 'on' ? 'on' : 'off';
@@ -4814,8 +4802,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const el = document.getElementById('sonioxSpeakerLabels');
-    if (el && el.value !== normalizedNext) {
+    const currentValue = el?.type === 'checkbox' ? (el.checked ? 'on' : 'off') : el?.value;
+    if (el && currentValue !== normalizedNext) {
       el.value = normalizedNext;
+      if (el.type === 'checkbox') el.checked = normalizedNext === 'on';
       el.dispatchEvent(new Event('change', { bubbles: true }));
       return true;
     }
@@ -5132,11 +5122,12 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
 const SETTING_KEY = 'conference_audio_enabled';
 const FALLBACK = {
   label: 'Include conference audio',
-  tooltip: 'Records your microphone together with audio from a conference. Before Start, enable this option. In the browser sharing dialog, preferably select the conference tab and enable Share tab audio. Supported system audio can also be used for a desktop call; it may include sounds from other apps. You still hear the call normally. Recommended: desktop Chrome or Edge. If no shared audio is available, recording continues with the microphone only. Pause pauses both sources; Stop and Abort end sharing.',
-  waiting: 'Choose the conference tab and enable audio sharing.',
+  tooltip: "This feature lets you record online conversations and consultations, including video calls. It records your voice through the microphone and the other person’s voice that you hear through your computer speakers or headset. It works best in desktop Chrome or Edge; Chrome is recommended for the app overall. Enable “Include conference audio” before clicking “Start Recording”. In Chrome’s sharing dialog, select a screen under “Entire Screen”, enable “Also share system audio”, and click “Share”. System audio may include notifications and sounds from other apps. Only audio is sent for transcription. Without shared audio, recording uses the microphone only. Pause pauses both sources. Stop and Abort end recording but keep sharing ready for the next Start, so you normally only choose the source once. No new audio is recorded or sent between recordings. Uncheck this option to end sharing. The browser’s sharing indicator stays on until sharing ends.",
+  waiting: "Select Entire Screen and enable Also share system audio. If unavailable, try Chrome Tab with Also share tab audio.",
   active: 'Microphone + conference audio',
+  ready: "Conference audio sharing is ready for the next recording. No new audio is being recorded. Uncheck to end sharing.",
   paused: 'Conference audio paused; sharing remains selected.',
-  noAudio: 'No shared audio was provided. Recording uses the microphone only. To include the call, stop and start again, select its tab and enable Share tab audio.',
+  noAudio: "No shared audio was provided. Recording uses the microphone only. To include the call, stop and start again and enable audio in the sharing dialog.",
   cancelled: 'Audio sharing was cancelled or blocked. Recording uses the microphone only.',
   ended: 'Conference audio sharing ended. Recording continues with the microphone only.',
   unsupported: 'Conference audio sharing is unavailable in this browser. Use desktop Chrome or Edge. Microphone recording remains available.',
@@ -5163,7 +5154,9 @@ function render() {
   const text = strings();
   const checkbox = document.getElementById('conferenceAudioToggle');
   if (checkbox) {
-    checkbox.disabled = locked || !supported();
+    // Ending an existing share is always available. Starting a new share
+    // still requires the next Start click and its browser permission dialog.
+    checkbox.disabled = !supported() || (locked && !checkbox.checked);
     checkbox.setAttribute('aria-label', text.label);
   }
   const label = document.getElementById('conferenceAudioLabel');
@@ -5187,6 +5180,7 @@ function initConferenceAudioUi() {
   try { checkbox.checked = sessionStorage.getItem(SETTING_KEY) === '1'; } catch (_) {}
   checkbox.addEventListener('change', () => {
     try { sessionStorage.setItem(SETTING_KEY, checkbox.checked ? '1' : '0'); } catch (_) {}
+    if (!checkbox.checked) stopConferenceSharing();
     if (!locked) notice = '';
     render();
   });
@@ -5236,6 +5230,18 @@ function disposeConferenceAudio() {
   render();
 }
 
+function finishConferenceRecording() {
+  sharingVersion += 1; // Reject a picker that resolves after Stop/Abort.
+  releaseRecordingInputs();
+  paused = true;
+  if (sharing) {
+    sharing.audio.enabled = false;
+    notice = 'ready';
+  }
+  locked = false;
+  render();
+}
+
 function pauseConferenceAudio(shouldPause) {
   paused = Boolean(shouldPause);
   if (sharing) {
@@ -5248,15 +5254,23 @@ function pauseConferenceAudio(shouldPause) {
 // Called synchronously from the recording click handler, before any provider
 // connection, model download or microphone permission can consume activation.
 async function prepareConferenceAudio(operation) {
-  disposeConferenceAudio();
+  releaseRecordingInputs();
   lockConferenceAudio(true);
-  if (!document.getElementById('conferenceAudioToggle')?.checked) return;
+  if (!document.getElementById('conferenceAudioToggle')?.checked) {
+    stopConferenceSharing();
+    return;
+  }
   if (!supported()) { notice = 'unsupported'; render(); return; }
+  if (sharing?.audio.readyState === 'live') {
+    pauseConferenceAudio(false);
+    return;
+  }
+  stopConferenceSharing();
   const version = sharingVersion;
   notice = 'waiting'; render();
   try {
     const stream = await operation.wait(window.navigator.mediaDevices.getDisplayMedia({
-      video: { displaySurface: 'browser', frameRate: 1 },
+      video: { displaySurface: 'monitor', frameRate: 1 },
       audio: { suppressLocalAudioPlayback: false },
       selfBrowserSurface: 'exclude',
       systemAudio: 'include',
@@ -5337,6 +5351,7 @@ return Object.freeze(Object.defineProperties({}, {"initConferenceAudioUi": { enu
 "releaseRecordingInputs": { enumerable: true, get: () => releaseRecordingInputs },
 "stopConferenceSharing": { enumerable: true, get: () => stopConferenceSharing },
 "disposeConferenceAudio": { enumerable: true, get: () => disposeConferenceAudio },
+"finishConferenceRecording": { enumerable: true, get: () => finishConferenceRecording },
 "pauseConferenceAudio": { enumerable: true, get: () => pauseConferenceAudio },
 "prepareConferenceAudio": { enumerable: true, get: () => prepareConferenceAudio },
 "acquireRecordingInputStream": { enumerable: true, get: () => acquireRecordingInputStream }}));
@@ -5346,12 +5361,12 @@ factories["core/recording-lifecycle.js"] = (context, load, loadAsync) => {
 const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame, MutationObserver, ResizeObserver } = context;
 const acquireRecordingInputStream = load("core/conference-audio.js")["acquireRecordingInputStream"];
 const disposeConferenceAudio = load("core/conference-audio.js")["disposeConferenceAudio"];
+const finishConferenceRecording = load("core/conference-audio.js")["finishConferenceRecording"];
 const lockConferenceAudio = load("core/conference-audio.js")["lockConferenceAudio"];
 const pauseConferenceAudio = load("core/conference-audio.js")["pauseConferenceAudio"];
 const prepareConferenceAudio = load("core/conference-audio.js")["prepareConferenceAudio"];
 const releaseRecordingInputStream = load("core/conference-audio.js")["releaseRecordingInputStream"];
 const releaseRecordingInputs = load("core/conference-audio.js")["releaseRecordingInputs"];
-const stopConferenceSharing = load("core/conference-audio.js")["stopConferenceSharing"];
 
 // One authority per Workspace. Button clicks request transitions; only the
 // provider handler can confirm them. Nothing is shared with another frame.
@@ -5444,8 +5459,8 @@ async function execute(action, entry, signal) {
   try {
     if (phase === 'starting') await prepareConferenceAudio(operation);
     if (phase === 'resuming') pauseConferenceAudio(false);
-    if (action === 'stop') stopConferenceSharing();
-    if (action === 'abort') disposeConferenceAudio();
+    if (action === 'stop') pauseConferenceAudio(true);
+    if (action === 'abort') finishConferenceRecording();
     lockConferenceAudio(true);
     const confirmed = await entry.handler(operation);
     operation.check();
@@ -5455,12 +5470,12 @@ async function execute(action, entry, signal) {
       throw new Error(document.getElementById('statusMessage')?.textContent || 'Recording action was not confirmed.');
     }
     if (next === 'paused') { pauseConferenceAudio(true); releaseRecordingInputs(); }
-    if (next === 'stopped' || next === 'aborted') disposeConferenceAudio();
+    if (next === 'stopped' || next === 'aborted') finishConferenceRecording();
     publish(next, action);
     return { ok: true, state: getRecordingLifecycle() };
   } catch (error) {
     if (current !== operation) return failure('Recording action was superseded.');
-    if (phase === 'starting') disposeConferenceAudio();
+    if (phase === 'starting' || phase === 'aborting') finishConferenceRecording();
     else if (phase === 'resuming') { pauseConferenceAudio(true); releaseRecordingInputs(); }
     const message = String(error?.message || error || 'Recording action failed.');
     publish('error', action, message);
