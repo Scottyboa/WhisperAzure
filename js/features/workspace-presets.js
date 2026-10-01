@@ -4,6 +4,7 @@ import { CloudBackupSession } from "./cloud-backup-session.js";
 import { registerWorkspaceDisposer } from "../core/workspace-disposal.js";
 import { createWorkspaceHistoryStore } from "../core/workspace-history-store.js";
 import { clearPreviousHistoryStorage } from "../core/history-privacy.js";
+import { captureModelReasoningSettings, restoreModelReasoningSettings, sanitizeModelReasoningPreferences } from "../core/model-reasoning-memory.js";
 
 const PRESET_SCHEMA = "whisper.workspace-presets";
 const PRESET_VERSION = 1;
@@ -200,6 +201,7 @@ function captureConfig(doc) {
   return {
     values,
     checks,
+    modelReasoning: captureModelReasoningSettings(doc.defaultView.sessionStorage),
     panes: {
       redactorOpen: !Boolean(doc.getElementById("redactorPane")?.hidden),
       secondaryNoteOpen: !Boolean(doc.getElementById("secondaryNotePane")?.hidden),
@@ -236,6 +238,8 @@ async function applyConfiguredAutoCopyMode(win, doc, values) {
 async function applyConfig(win, doc, config = {}) {
   const values = config?.values && typeof config.values === "object" ? config.values : {};
   const checks = config?.checks && typeof config.checks === "object" ? config.checks : {};
+  const hasModelReasoning = Object.prototype.hasOwnProperty.call(config, "modelReasoning");
+  if (hasModelReasoning) restoreModelReasoningSettings(config.modelReasoning, win.sessionStorage);
   const orderedValues = [
     "transcribeProvider", "noteProvider", "secondaryProvider",
     ...VALUE_IDS.filter((id) => ![
@@ -270,6 +274,13 @@ async function applyConfig(win, doc, config = {}) {
     el.checked = Boolean(checked);
     dispatchChange(win, el);
   });
+
+  // New backups carry the full per-model map. Older backups still restore
+  // their selected model through the existing scalar controls above.
+  if (hasModelReasoning) {
+    restoreModelReasoningSettings(config.modelReasoning, win.sessionStorage);
+    win.dispatchEvent(new win.Event("note-reasoning-preferences-restored"));
+  }
 
   await applyConfiguredAutoCopyMode(win, doc, values);
 
@@ -1461,6 +1472,12 @@ function initTopLevelManager() {
 
   function sanitizeConfig(config) {
     const safe = { values: {}, checks: {}, panes: {} };
+    if (Object.prototype.hasOwnProperty.call(config || {}, "modelReasoning")) {
+      safe.modelReasoning = {
+        primary: sanitizeModelReasoningPreferences(config.modelReasoning?.primary),
+        secondary: sanitizeModelReasoningPreferences(config.modelReasoning?.secondary),
+      };
+    }
     VALUE_IDS.forEach((id) => {
       if (Object.prototype.hasOwnProperty.call(config?.values || {}, id)) safe.values[id] = String(config.values[id] ?? "").slice(0, 300);
     });
@@ -1771,6 +1788,12 @@ function initTopLevelManager() {
 
 function sanitizeConfig(config) {
   const safe = { values: {}, checks: {}, panes: {} };
+  if (Object.prototype.hasOwnProperty.call(config || {}, "modelReasoning")) {
+    safe.modelReasoning = {
+      primary: sanitizeModelReasoningPreferences(config.modelReasoning?.primary),
+      secondary: sanitizeModelReasoningPreferences(config.modelReasoning?.secondary),
+    };
+  }
   VALUE_IDS.forEach((id) => {
     if (Object.prototype.hasOwnProperty.call(config?.values || {}, id)) safe.values[id] = String(config.values[id] ?? "").slice(0, 300);
   });

@@ -36,7 +36,10 @@ import {
   resolveEffectiveNoteProvider,
 } from '../core/provider-registry.js';
 
+import { createModelReasoningMemory, MODEL_REASONING_STORAGE_KEYS } from '../core/model-reasoning-memory.js';
+
 (function initProviderPersistenceModule() {
+  const reasoningMemory = createModelReasoningMemory(MODEL_REASONING_STORAGE_KEYS.primary);
   const STORAGE_KEYS = {
     activeApiKey: 'user_api_key',
 
@@ -221,7 +224,6 @@ import {
     const requestyModel = normalizeRequestyModel(
       readSession(STORAGE_KEYS.requestyModel, ui.requestyModel || DEFAULTS.requestyModel)
     );
-    const storedRequestyReasoning = readSession(STORAGE_KEYS.requestyNanoReasoning, null);
     // The effective provider is authoritative while direct OpenAI is selected.
     // Otherwise retain the last direct OpenAI choice for a later switch back.
     const openaiModel = normalizeOpenAiModel(
@@ -230,19 +232,20 @@ import {
         : readSession(STORAGE_KEYS.openaiModel, DEFAULTS.openaiModel)
     );
 
+    const visibility = getNoteUiVisibility({ provider: ui.provider, openaiModel, requestyModel });
+    reasoningMemory.seed(ui.provider, ui.provider === 'openai' ? openaiModel : requestyModel,
+      readSession(visibility.showRequestyNanoReasoning
+        ? STORAGE_KEYS.requestyNanoReasoning : STORAGE_KEYS.openaiReasoning, null));
+
     return {
       effectiveProvider: ui.effectiveProvider,
       provider: ui.provider,
       openaiModel,
-      openaiReasoning:
-        ui.provider === 'openai'
-          ? normalizeOpenAiReasoning(
-              readSession(STORAGE_KEYS.openaiReasoning, getDefaultOpenAiReasoning()),
-              openaiModel
-            )
-          : normalizeSharedRequestyReasoning(
-              readSession(STORAGE_KEYS.openaiReasoning, 'low')
-            ),
+      openaiReasoning: ui.provider === 'openai'
+        ? reasoningMemory.get('openai', openaiModel)
+        : ui.provider === 'requesty' && !visibility.showRequestyNanoReasoning
+          ? reasoningMemory.get('requesty', requestyModel)
+          : reasoningMemory.get('openai', openaiModel),
       mode: ui.mode,
       bedrockModel: normalizeLower(
         readSession(STORAGE_KEYS.bedrockModel, DEFAULTS.bedrockModel),
@@ -250,10 +253,7 @@ import {
       ),
       requestyModel,
       requestyNanoReasoning: normalizeRequestyNanoReasoning(
-        storedRequestyReasoning == null
-          ? getDefaultRequestyReasoning(requestyModel)
-          : storedRequestyReasoning,
-        requestyModel
+        reasoningMemory.get('requesty', requestyModel), requestyModel
       ),
     };
   }
@@ -290,6 +290,11 @@ import {
       STORAGE_KEYS.requestyNanoReasoning,
       normalizeRequestyNanoReasoning(requestyNanoReasoning, requestyModel)
     );
+
+    const visibility = getNoteUiVisibility({ provider, openaiModel, requestyModel });
+    if (provider === 'openai') reasoningMemory.remember('openai', normalizedOpenAiModel, openaiReasoning);
+    if (provider === 'requesty') reasoningMemory.remember('requesty', normalizeRequestyModel(requestyModel),
+      visibility.showRequestyNanoReasoning ? requestyNanoReasoning : openaiReasoning);
 
     return effectiveProvider;
   }
@@ -587,7 +592,8 @@ import {
 
     providerSelect.value = stored.provider;
     if (openaiModelSelect) openaiModelSelect.value = stored.openaiModel;
-    if (openaiReasoningSelect) openaiReasoningSelect.value = stored.openaiReasoning;
+    if (openaiReasoningSelect) openaiReasoningSelect.value = stored.provider === 'openai'
+      ? stored.openaiReasoning : normalizeSharedRequestyReasoning(stored.openaiReasoning);
     if (noteModeSelect) noteModeSelect.value = stored.mode;
     if (bedrockModelSelect) bedrockModelSelect.value = stored.bedrockModel;
     if (requestyNanoReasoningSelect) requestyNanoReasoningSelect.value = stored.requestyNanoReasoning;
@@ -653,67 +659,56 @@ import {
       }
     };
 
-    providerSelect.addEventListener('change', persistAndSwitchNoteProvider);
+    function restoreReasoningSelections() {
+      const provider = providerSelect.value;
+      const openaiModel = normalizeOpenAiModel(openaiModelSelect?.value);
+      const requestyModel = normalizeRequestyModel(requestyModelSelect?.value);
+      ensureSelectOptions(openaiReasoningSelect, provider === 'openai'
+        ? listOpenAiReasoningOptions(openaiModel) : listSharedRequestyReasoningOptions());
+      ensureSelectOptions(requestyNanoReasoningSelect, listRequestyNanoReasoningOptions(requestyModel));
+      const shared = provider === 'openai'
+        ? reasoningMemory.get('openai', openaiModel)
+        : normalizeSharedRequestyReasoning(reasoningMemory.get('requesty', requestyModel));
+      const dedicated = normalizeRequestyNanoReasoning(reasoningMemory.get('requesty', requestyModel), requestyModel);
+      if (openaiReasoningSelect) openaiReasoningSelect.value = shared;
+      if (requestyNanoReasoningSelect) requestyNanoReasoningSelect.value = dedicated;
+      writeSession(STORAGE_KEYS.openaiReasoning, shared);
+      writeSession(STORAGE_KEYS.requestyNanoReasoning, dedicated);
+    }
+
+    providerSelect.addEventListener('change', async () => {
+      restoreReasoningSelections();
+      await persistAndSwitchNoteProvider();
+    });
     openaiModelSelect?.addEventListener('change', async () => {
-      const modelId = normalizeOpenAiModel(openaiModelSelect.value);
-      if (openaiModelSelect.value !== modelId) openaiModelSelect.value = modelId;
-      const previousReasoning = String(openaiReasoningSelect?.value || '');
-      ensureSelectOptions(openaiReasoningSelect, listOpenAiReasoningOptions(modelId));
-      const normalizedReasoning = normalizeOpenAiReasoning(previousReasoning, modelId);
-      if (openaiReasoningSelect) openaiReasoningSelect.value = normalizedReasoning;
-      writeSession(STORAGE_KEYS.openaiReasoning, normalizedReasoning);
+      openaiModelSelect.value = normalizeOpenAiModel(openaiModelSelect.value);
+      restoreReasoningSelections();
       await persistAndSwitchNoteProvider();
     });
-    // Switching the Requesty model changes the EFFECTIVE provider
-    // (requesty-claude <-> requesty-gpt6-* <-> requesty-gpt55 <-> requesty-gpt56-*), so run the full
-    // persist-and-switch path — same as the OpenAI model selector.
     requestyModelSelect?.addEventListener('change', async () => {
-      const modelId = normalizeRequestyModel(requestyModelSelect.value);
-      ensureSelectOptions(
-        requestyNanoReasoningSelect,
-        listRequestyNanoReasoningOptions(modelId)
-      );
-      if (requestyNanoReasoningSelect) {
-        if (modelId.startsWith('gpt-6-')) {
-          const storedReasoning = readSession(STORAGE_KEYS.requestyNanoReasoning, null);
-          requestyNanoReasoningSelect.value = normalizeRequestyNanoReasoning(
-            storedReasoning == null
-              ? getDefaultRequestyReasoning(modelId)
-              : storedReasoning,
-            modelId
-          );
-        } else if (
-          modelId === 'claude-opus-5-5' ||
-          modelId === 'gemini-3.8-flash' ||
-          modelId.startsWith('deepseek-')
-        ) {
-          requestyNanoReasoningSelect.value = getDefaultRequestyReasoning(modelId);
-        }
-      }
+      requestyModelSelect.value = normalizeRequestyModel(requestyModelSelect.value);
+      restoreReasoningSelections();
       await persistAndSwitchNoteProvider();
     });
-    // Changing the dedicated Requesty reasoning effort does not change the
-    // effective provider, so just persist it.
     requestyNanoReasoningSelect?.addEventListener('change', () => {
-      writeSession(
-        STORAGE_KEYS.requestyNanoReasoning,
-        normalizeRequestyNanoReasoning(
-          requestyNanoReasoningSelect.value,
-          requestyModelSelect?.value || DEFAULTS.requestyModel
-        )
-      );
+      const model = normalizeRequestyModel(requestyModelSelect?.value);
+      if (providerSelect.value !== 'requesty' || !getNoteUiVisibility({
+        provider: 'requesty', requestyModel: model,
+      }).showRequestyNanoReasoning) return;
+      const value = reasoningMemory.remember('requesty', model, requestyNanoReasoningSelect.value);
+      requestyNanoReasoningSelect.value = value;
+      writeSession(STORAGE_KEYS.requestyNanoReasoning, value);
     });
     openaiReasoningSelect?.addEventListener('change', () => {
-      writeSession(
-        STORAGE_KEYS.openaiReasoning,
-        providerSelect.value === 'openai'
-          ? normalizeOpenAiReasoning(
-              openaiReasoningSelect.value,
-              openaiModelSelect?.value || DEFAULTS.openaiModel
-            )
-          : normalizeSharedRequestyReasoning(openaiReasoningSelect.value)
-      );
+      const provider = providerSelect.value;
+      const model = provider === 'openai'
+        ? normalizeOpenAiModel(openaiModelSelect?.value) : normalizeRequestyModel(requestyModelSelect?.value);
+      if (!getNoteUiVisibility({ provider, openaiModel: model, requestyModel: model }).showOpenAiReasoning) return;
+      const value = reasoningMemory.remember(provider, model, openaiReasoningSelect.value);
+      openaiReasoningSelect.value = value;
+      writeSession(STORAGE_KEYS.openaiReasoning, value);
     });
+    window.addEventListener('note-reasoning-preferences-restored', restoreReasoningSelections);
     noteModeSelect?.addEventListener('change', persistAndSwitchNoteProvider);
 
     bedrockModelSelect?.addEventListener('change', () => {

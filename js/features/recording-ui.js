@@ -1,5 +1,6 @@
 import { registerWorkspaceDisposer } from "../core/workspace-disposal.js";
 import { initConferenceAudioUi } from "../core/conference-audio.js";
+import { adjustTranscriptHeight } from "../core/transcript-layout.js";
 
 (function initRecordingUiFeature() {
   if (window.__recordingUiFeatureInitialized) return;
@@ -49,7 +50,7 @@ function initRecordingTimerUi() {
   window.addEventListener("recording:lifecycle", ({ detail }) => {
     if (detail.phase === "starting" || detail.phase === "aborted" || detail.phase === "idle") {
       elapsed = 0; started = 0;
-      if (detail.phase === "starting") document.getElementById("transcription")?.style.removeProperty("height");
+      if (detail.phase === "starting") adjustTranscriptHeight();
     }
     else if (detail.phase === "recording") { if (!started) started = Date.now(); }
     else if (["paused", "stopping", "stopped", "error"].includes(detail.phase)) freeze();
