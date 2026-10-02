@@ -9404,6 +9404,13 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
     // on a single line instead of splitting it like other names.
     const isNameLikeToken = (tok) => /^(?=.*\p{L})[\p{L}\p{M}\p{Pd}'’ʼ]+$/u.test(tok);
 
+    const expandHyphenatedNameToken = (token) => {
+      const parts = token.split(/\p{Pd}+/u);
+      return isNameLikeToken(token) && parts.length > 1 && parts.every(isNameLikeToken)
+        ? [token, ...parts]
+        : [token];
+    };
+
     const collapseInternalSpacesInAlphaToken = (tok) => /^(?:[\p{L}\p{M}\p{Pd}'’ʼ]+\s+)+[\p{L}\p{M}\p{Pd}'’ʼ]+$/u.test(tok)
       ? tok.replace(/\s+/g, '')
       : tok;
@@ -9626,7 +9633,7 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
 
           if (tokens.every((token) => isNameLikeToken(token) || /^\d+$/.test(token))) {
             for (const token of tokens) {
-              linesOut.push(token);
+              linesOut.push(...expandHyphenatedNameToken(token));
             }
             continue;
           }
