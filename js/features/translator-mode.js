@@ -327,7 +327,14 @@ function initTranslatorMode() {
   },true);
   window.addEventListener('recording:lifecycle', event => {
     phase = event.detail.phase;
-    if (phase === 'starting') { elapsed = 0; started = 0; runtimeError = ''; }
+    if (phase === 'starting') {
+      elapsed = 0; started = 0; runtimeError = '';
+      if (settings.enabled) {
+        // Clear before connecting or asking for conference audio. Resume
+        // publishes 'resuming', so it retains the current conversation.
+        rows = []; interim = []; currentSegments.clear(); render(); draftChanged();
+      }
+    }
     if (phase === 'recording' && !started) started = Date.now();
     if (['paused','stopping','stopped','aborted','error'].includes(phase)) {
       if (started) elapsed += Date.now()-started; started = 0;
