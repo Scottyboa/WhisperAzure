@@ -2283,6 +2283,7 @@
 
 </style>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <link rel="stylesheet" href="./css/translator.css" />
 </head>
 <body>
   <div class="grid-container">
@@ -2399,12 +2400,16 @@
       <div class="recording-area">
 <div class="recording-header">
   <h3 id="recordingAreaTitle">Recording Area</h3>
+  <div class="recording-header-actions">
+  <button id="translatorModeButton" class="translator-mode-button" type="button" aria-controls="translatorView" aria-pressed="false">Translator</button>
   <a id="openaiUsageLink" href="#" role="button" aria-controls="billingLinksView">
     Cost usage overview
   </a>
+  </div>
  </div>
         <!-- Provider row moved here (between header and timer) -->
         <div class="transcribe-provider-row">
+          <span class="translator-engine">Soniox realtime</span>
           <!-- Transcription Provider selector -->
           <div id="provider-container">
             <label for="transcribeProvider" id="providerLabel">Provider:</label>
@@ -2440,6 +2445,40 @@
         </div>
 
         <div id="recordTimer" class="timer">Recording Timer: 0 sec</div>
+        <section id="translatorView" class="translator-view" hidden>
+          <p id="translatorHint" class="translator-hint"></p>
+          <div class="translator-panels">
+            <section class="translator-panel" id="translatorYourPanel">
+              <div class="translator-panel-header">
+                <div class="translator-language-field">
+                  <label id="translatorLanguageALabel" for="translatorLanguageA">Your language</label>
+                  <input id="translatorLanguageA" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="translatorLanguagesA" autocomplete="off" spellcheck="false" />
+                  <ul id="translatorLanguagesA" class="translator-language-list" role="listbox" hidden></ul>
+                </div>
+              </div>
+              <div id="translatorLogA" class="translator-log" role="log" aria-live="off" aria-labelledby="translatorLanguageALabel"></div>
+            </section>
+            <section class="translator-panel" id="translatorPatientPanel">
+              <div class="translator-panel-header">
+                <div class="translator-language-field">
+                  <label id="translatorLanguageBLabel" for="translatorLanguageB">Patient’s language</label>
+                  <input id="translatorLanguageB" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="translatorLanguagesB" autocomplete="off" spellcheck="false" />
+                  <ul id="translatorLanguagesB" class="translator-language-list" role="listbox" hidden></ul>
+                </div>
+                <button id="translatorRotateButton" type="button" aria-pressed="false">Rotate</button>
+              </div>
+              <div id="translatorLogB" class="translator-log" role="log" aria-live="off" aria-labelledby="translatorLanguageBLabel"></div>
+            </section>
+          </div>
+          <div class="translator-footer">
+            <details class="translator-context">
+              <summary id="translatorContextSummary">Terminology / context</summary>
+              <p id="translatorContextHint"></p>
+              <textarea id="translatorContext" maxlength="8000" aria-labelledby="translatorContextSummary" aria-describedby="translatorContextHint"></textarea>
+            </details>
+            <button id="translatorClearButton" type="button">Clear conversation</button>
+          </div>
+        </section>
         <!-- Completion timer + field-specific controls aligned with the panes below. -->
         <div id="transcriptSecondaryToolbar" class="transcript-secondary-toolbar">
           <div class="transcript-toolbar-pane">
@@ -2855,7 +2894,7 @@
           </aside>
         </div>
 
-        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <div id="recordingControls" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
           <button id="startButton">Start</button>
           <button id="stopButton" disabled>Stop</button>
           <button id="pauseResumeButton" disabled>Pause Recording</button>
@@ -3480,6 +3519,7 @@
 
 
   <!-- Concurrent preset workspaces, preset backup, and preset toolbar. -->
+  <script type="module" src="./js/features/translator-mode.js"></script>
   <script type="module" src="./js/features/workspace-presets.js"></script>
 
 

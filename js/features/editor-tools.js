@@ -2449,7 +2449,7 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
     // while preserving the sticky date if that toggle is enabled.
     document.addEventListener('click', (e) => {
       const id = e.target && e.target.id;
-      if (id !== 'startButton') return;
+      if (id !== 'startButton' || window.__translator?.isEnabled?.()) return;
       if (!autoClearToggle || autoClearToggle.checked !== true) return;
       if (supplementaryInfoEl) resetSupplementaryTextareaSticky({ focus: false });
     }, true);
@@ -2469,7 +2469,7 @@ import { registerWorkspaceDisposer } from '../core/workspace-disposal.js';
     // When enabled: starting a new recording clears + resets Generated note.
     document.addEventListener('click', (e) => {
       const id = e.target && e.target.id;
-      if (id !== 'startButton') return;
+      if (id !== 'startButton' || window.__translator?.isEnabled?.()) return;
       if (!autoClearNoteToggle || autoClearNoteToggle.checked !== true) return;
       if (generatedNoteFieldEl) resetTextareaToDefault(generatedNoteFieldEl);
     }, true);

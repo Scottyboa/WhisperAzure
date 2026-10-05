@@ -1478,6 +1478,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getSelectedTranscribeProvider() {
+    if (window.__translator?.isEnabled?.()) return 'soniox_rt';
     const fromUi = document.getElementById('transcribeProvider')?.value;
     const normalized = normalizeTranscribeProvider(
       fromUi || readSession('transcribe_provider', DEFAULTS.transcribeProvider)
@@ -2514,6 +2515,12 @@ document.addEventListener('DOMContentLoaded', () => {
       emitAppStateChanged('recording-lifecycle-confirmed');
     });
 
+    window.addEventListener('translation:finished', () => {
+      finishMiniPanelTranscriptTimer();
+      setMiniPanelStatusPhase('transcript-completed');
+      emitAppStateChanged('translation-finished');
+    });
+
     window.addEventListener('transcription:finished', (event) => {
       const detail = event?.detail || {};
       if (detail?.status === 'aborted') {
@@ -2781,11 +2788,23 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   app.switchTranscribeProvider = async function switchTranscribeProvider(next) {
-    const normalizedNext = normalizeTranscribeProvider(next);
+    const normalizedNext = window.__translator?.isEnabled?.() ? 'soniox_rt' : normalizeTranscribeProvider(next);
     const transcribeProviderSelect = document.getElementById('transcribeProvider');
     if (transcribeProviderSelect && transcribeProviderSelect.value !== normalizedNext) {
       transcribeProviderSelect.value = normalizedNext;
+      // Keep selector persistence synchronous, but await the engine so mode
+      // changes cannot enable Start while a previous provider is still bound.
+      const initialized = new Promise((resolve) => {
+        let timer;
+        const finish = () => { clearTimeout(timer); window.removeEventListener('app:state-changed', listener); resolve(); };
+        const listener = (event) => {
+          if (event.detail?.reason === 'recording-provider-initialized' && event.detail?.provider === normalizedNext) finish();
+        };
+        window.addEventListener('app:state-changed', listener);
+        timer = setTimeout(finish, 5000);
+      });
       transcribeProviderSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      await initialized;
       return true;
     }
 

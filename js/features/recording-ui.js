@@ -43,6 +43,7 @@ function initRecordingTimerUi() {
   if (!timerEl) return;
   let elapsed = 0, started = 0;
   function render() {
+    if (window.__translator?.isEnabled?.()) return;
     const sec = Math.floor((elapsed + (started ? Date.now() - started : 0)) / 1000);
     timerEl.textContent = "Recording Timer: " + (sec < 60 ? sec + " sec" : Math.floor(sec / 60) + " min " + (sec % 60) + " sec");
   }

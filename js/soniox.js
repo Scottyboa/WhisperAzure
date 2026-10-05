@@ -342,6 +342,7 @@ function resetCompletionTimerDisplay() {
 // to .textContent for other element types so the merge stays robust if the
 // markup ever changes.
 function writeTranscriptionElement(text) {
+  if (window.__translator?.isEnabled?.()) return;
   const el = document.getElementById('transcription');
   if (!el) return;
   if ('value' in el) el.value = text;
@@ -1212,6 +1213,7 @@ function buildRealtimeSessionConfig(apiKey) {
     // Soniox decide when an utterance ends and finalize tokens promptly.
     enable_endpoint_detection: true,
     context: SONIOX_CONTEXT_TEXT,
+    ...(window.__translator?.getSessionConfig?.() || {}),
   };
 }
 
@@ -1245,7 +1247,7 @@ function rtAppendFinalTokens(tokens) {
       continue;
     }
 
-    appended += t.text;
+    if (!window.__translator?.isEnabled?.()) appended += t.text;
   }
   if (appended) {
     finalTranscriptRT += appended;
@@ -1287,6 +1289,7 @@ function rtHandleSocketMessage(event) {
 
   if (res.error_code) {
     logError(`Soniox WS error ${res.error_code}: ${res.error_message}`);
+    if (window.__translator?.isEnabled?.() && recordingActive) window.__translator.reportError(`Soniox error ${res.error_code}: ${res.error_message || 'unknown'}`);
     transcriptionError = true;
     updateStatusMessage(
       `Soniox error ${res.error_code}: ${res.error_message || 'unknown'}`,
@@ -1295,6 +1298,7 @@ function rtHandleSocketMessage(event) {
     return;
   }
 
+  window.__translator?.receive?.(res);
   if (Array.isArray(res.tokens) && res.tokens.length) rtAppendFinalTokens(res.tokens);
 
   if (res.finished === true) {
@@ -1314,10 +1318,14 @@ function rtHandleSocketClose(closeEvent) {
   // Only finalize the UI on a manual stop. Pause-triggered closes are
   // expected; provider-switch closes are handled by the teardown hook.
   if (manualStop) finalizeRealtimeTranscriptionUI();
+  else if (window.__translator?.isEnabled?.() && recordingActive && !recordingPaused && !serverFinished) {
+    window.__translator.reportError('Soniox connection closed unexpectedly. Start again to continue.');
+  }
 }
 
 function rtHandleSocketError(err) {
   logError('Soniox WS error event', err);
+  if (window.__translator?.isEnabled?.() && recordingActive) window.__translator.reportError('Soniox connection failed. Check your connection, key and credits, then start again.');
   if (!transcriptionError) {
     updateStatusMessage(
       'WebSocket error with Soniox real-time. Check key/credits or try again.',
@@ -1598,7 +1606,10 @@ function finalizeRealtimeTranscriptionUI() {
   freezeCompletionTimer();
   if (!transcriptionError) {
     updateStatusMessage('Transcription finished!', 'green');
-    window.__app?.emitTranscriptionFinished?.({ provider: 'soniox_rt', reason: 'wsClosed' });
+    if (window.__translator?.isEnabled?.()) {
+      window.__translator.sessionEnded();
+      window.dispatchEvent(new window.CustomEvent('translation:finished'));
+    } else window.__app?.emitTranscriptionFinished?.({ provider: 'soniox_rt', reason: 'wsClosed' });
     logInfo('Realtime transcription complete.');
   } else {
     logInfo('Realtime transcription complete with errors; keeping error message visible.');
@@ -1804,6 +1815,7 @@ function bindRealtimeHandlers({ startButton, stopButton, pauseResumeButton, abor
     startButton.disabled = true;
 
     beginFreshSession();
+    window.__translator?.beginSession?.();
     resetCompletionTimerDisplay();
     writeTranscriptionElement('');
 

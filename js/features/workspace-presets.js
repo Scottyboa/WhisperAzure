@@ -1,3 +1,4 @@
+import { sanitizeTranslatorConfig } from './translator-mode.js';
 import { PromptManager } from "../promptManager.js";
 import { PromptCloudBackup } from "./prompt-cloud-backup.js";
 import { CloudBackupSession } from "./cloud-backup-session.js";
@@ -199,8 +200,9 @@ function captureConfig(doc) {
     if (el?.type === "checkbox") checks[id] = Boolean(el.checked);
   });
   return {
-    values,
+    values: { ...values, ...(doc.defaultView.__translator?.isEnabled?.() ? { transcribeProvider: doc.defaultView.__translator.captureConfig().regularProvider } : {}) },
     checks,
+    translator: doc.defaultView.__translator?.captureConfig?.() || sanitizeTranslatorConfig(),
     modelReasoning: captureModelReasoningSettings(doc.defaultView.sessionStorage),
     panes: {
       redactorOpen: !Boolean(doc.getElementById("redactorPane")?.hidden),
@@ -236,6 +238,7 @@ async function applyConfiguredAutoCopyMode(win, doc, values) {
 }
 
 async function applyConfig(win, doc, config = {}) {
+  if (win.__translator?.isEnabled?.()) await win.__translator.setMode(false, { restoring:true, switchProvider:false });
   const values = config?.values && typeof config.values === "object" ? config.values : {};
   const checks = config?.checks && typeof config.checks === "object" ? config.checks : {};
   const hasModelReasoning = Object.prototype.hasOwnProperty.call(config, "modelReasoning");
@@ -296,6 +299,7 @@ async function applyConfig(win, doc, config = {}) {
     const current = pane ? !pane.hidden : false;
     if (pane && current !== desired) doc.getElementById(buttonId)?.click();
   });
+  await win.__translator?.restoreConfig?.(config.translator || { regularProvider: values.transcribeProvider });
 }
 
 function captureDraft(doc) {
@@ -307,6 +311,7 @@ function captureDraft(doc) {
   return {
     version: 1,
     fields,
+    translator: doc.defaultView.__translator?.captureDraft?.(),
     preserveSupplementaryDate:
       doc.getElementById("supplementaryInfo")?.dataset.preserveHistoricalDate === "1",
     savedAt: new Date().toISOString(),
@@ -314,6 +319,7 @@ function captureDraft(doc) {
 }
 
 function applyDraft(win, doc, draft) {
+  win.__translator?.restoreDraft?.(draft?.translator);
   const fields = draft?.fields && typeof draft.fields === "object" ? draft.fields : {};
   const supplementary = doc.getElementById("supplementaryInfo");
   if (supplementary) {
@@ -333,7 +339,7 @@ function applyDraft(win, doc, draft) {
 }
 
 function hasDraftText(draft) {
-  return Object.values(draft?.fields || {}).some((value) => String(value || "").trim());
+  return Boolean(draft?.translator?.rows?.length || draft?.translator?.context?.trim()) || Object.values(draft?.fields || {}).some((value) => String(value || "").trim());
 }
 
 function getRuntimeSnapshot(win, doc, getStateOverride = null) {
@@ -407,6 +413,7 @@ function initFrameRuntime() {
     document.getElementById(fieldId)?.addEventListener("input", scheduleDraftSave);
   });
   window.addEventListener("pagehide", saveDraftNow);
+  window.addEventListener("translator:draft-changed", scheduleDraftSave);
 
   const notifyParent = (reason = "state", detail = {}) => {
     if (disposed) return;
@@ -1471,7 +1478,7 @@ function initTopLevelManager() {
   }
 
   function sanitizeConfig(config) {
-    const safe = { values: {}, checks: {}, panes: {} };
+    const safe = { values: {}, checks: {}, panes: {}, translator: sanitizeTranslatorConfig(config?.translator || { regularProvider:config?.values?.transcribeProvider }) };
     if (Object.prototype.hasOwnProperty.call(config || {}, "modelReasoning")) {
       safe.modelReasoning = {
         primary: sanitizeModelReasoningPreferences(config.modelReasoning?.primary),
@@ -1787,7 +1794,7 @@ function initTopLevelManager() {
 }
 
 function sanitizeConfig(config) {
-  const safe = { values: {}, checks: {}, panes: {} };
+  const safe = { values: {}, checks: {}, panes: {}, translator: sanitizeTranslatorConfig(config?.translator || { regularProvider:config?.values?.transcribeProvider }) };
   if (Object.prototype.hasOwnProperty.call(config || {}, "modelReasoning")) {
     safe.modelReasoning = {
       primary: sanitizeModelReasoningPreferences(config.modelReasoning?.primary),
