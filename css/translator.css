@@ -33,7 +33,6 @@
 .translator-entry-text { font-size:19px; line-height:1.5; white-space:pre-wrap; }
 .translator-entry.is-provisional { color:#8793a0; }
 .translator-empty { color:#8793a0; font-size:16px; }
-.translator-panel.is-rotated { transform:rotate(180deg); }
 .translator-footer { display:flex; justify-content:space-between; align-items:start; gap:16px; margin-top:16px; }
 .translator-context { flex:1; max-width:650px; }
 .translator-context summary { cursor:pointer; font-size:13px; }

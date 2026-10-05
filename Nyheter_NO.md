@@ -4,7 +4,7 @@
 
 Appen har nå en **oversettermodus** for samtaler der du og pasienten snakker forskjellige språk.
 
-Klikk **Oversetter** [øverst til høyre i opptaksområdet], velg ditt språk og pasientens språk, og trykk **Start** én gang. Snakk deretter etter tur. To felt viser det som blir sagt og oversettelsen, slik at begge kan følge samtalen på sitt eget språk. Pasientens felt kan roteres hvis dere sitter overfor hverandre.
+Klikk **Oversetter** [øverst til høyre i opptaksområdet], velg ditt språk og pasientens språk, og trykk **Start** én gang. Snakk deretter etter tur. To felt viser det som blir sagt og oversettelsen, slik at begge kan følge samtalen på sitt eget språk.
 
 Oversetteren bruker **Soniox realtime**, som velges automatisk. Du trenger en gyldig Soniox API-nøkkel og tilgjengelige kreditter.
 

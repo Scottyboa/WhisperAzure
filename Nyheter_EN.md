@@ -4,7 +4,7 @@
 
 The app now has a **translator mode** for conversations where you and the patient speak different languages.
 
-Click **Translator** [at the top-right of the recording area], choose your language and the patient’s language, and press **Start** once. Then take turns speaking. Two panels display the original speech and translations, so both people can follow the conversation in their own language. The patient’s panel can be rotated when you sit opposite each other.
+Click **Translator** [at the top-right of the recording area], choose your language and the patient’s language, and press **Start** once. Then take turns speaking. Two panels display the original speech and translations, so both people can follow the conversation in their own language.
 
 The translator uses **Soniox realtime**, which is selected automatically. You need a valid Soniox API key and available credits.
 

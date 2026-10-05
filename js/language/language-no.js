@@ -543,9 +543,9 @@ guideText: `Velkommen til <strong>Transcribe Notes</strong>. Appen kan ta opp og
     <li>Trykk <strong>Start</strong> én gang og snakk etter tur. Hvert felt viser original tale og oversettelser på sitt valgte språk.</li>
   </ol>
   <p><strong>Soniox realtime</strong> velges automatisk og er eneste tilbyder i denne modusen. Du trenger en gyldig Soniox API-nøkkel og tilgjengelige kreditter.</p>
-  <p>Bruk <strong>Roter</strong> for å snu pasientens felt hvis dere sitter overfor hverandre. Valgfri terminologi eller bakgrunn kan legges inn under <strong>Terminologi / kontekst</strong> før Start.</p>
+  <p>Valgfri terminologi eller bakgrunn kan legges inn under <strong>Terminologi / kontekst</strong> før Start.</p>
   <p>Et nytt <strong>Start</strong> tømmer begge feltene umiddelbart. <strong>Pause/Fortsett</strong> beholder samtalen. <strong>Stopp</strong> avslutter den og lar teksten stå til neste Start eller til du tømmer den.</p>
-  <p>Hvert Workspace husker sin egen modus, språkvalg og rotasjon. Når du bytter Workspace, åpnes visningen som hører til det Workspace-et. Stopp opptaket og klikk <strong>Tilbake til notater</strong> for å gå tilbake til vanlig notatgenerering.</p>
+  <p>Hvert Workspace husker sin egen modus og sine språkvalg. Når du bytter Workspace, åpnes visningen som hører til det Workspace-et. Stopp opptaket og klikk <strong>Tilbake til notater</strong> for å gå tilbake til vanlig notatgenerering.</p>
 </details><br>
 
 <details>

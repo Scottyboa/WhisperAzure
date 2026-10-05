@@ -369,9 +369,9 @@ guideText: `Bienvenue dans <strong>Transcribe Notes</strong>. L'application peut
     <li>Appuyez une fois sur <strong>Démarrer</strong>, puis parlez à tour de rôle. Chaque panneau affiche les paroles originales et les traductions dans sa langue sélectionnée.</li>
   </ol>
   <p><strong>Soniox realtime</strong> est sélectionné automatiquement et est le seul fournisseur pour ce mode. Vous avez besoin d’une clé API Soniox valide et de crédits disponibles.</p>
-  <p>Utilisez <strong>Pivoter</strong> pour tourner le panneau du patient lorsque vous êtes assis face à face. Vous pouvez saisir des termes ou du contexte facultatifs sous <strong>Terminologie / contexte</strong> avant de démarrer.</p>
+  <p>Vous pouvez saisir des termes ou du contexte facultatifs sous <strong>Terminologie / contexte</strong> avant de démarrer.</p>
   <p>Un nouveau <strong>Démarrer</strong> vide immédiatement les deux panneaux. <strong>Pause/Reprendre</strong> conserve la conversation. <strong>Arrêter</strong> la termine et laisse le texte visible jusqu’au prochain démarrage ou effacement.</p>
-  <p>Chaque Workspace mémorise son mode, ses langues et la rotation. Changer de Workspace ouvre sa propre vue. Arrêtez l’enregistrement et cliquez sur <strong>Retour aux notes</strong> pour revenir à la génération de notes habituelle.</p>
+  <p>Chaque Workspace mémorise son mode et ses langues. Changer de Workspace ouvre sa propre vue. Arrêtez l’enregistrement et cliquez sur <strong>Retour aux notes</strong> pour revenir à la génération de notes habituelle.</p>
 </details><br>
 
 <details>

@@ -384,9 +384,9 @@ guideText: `Välkommen till <strong>Transcribe Notes</strong>. Appen kan spela i
     <li>Tryck <strong>Start</strong> en gång och turas om att tala. Varje panel visar original och översättningar på sitt valda språk.</li>
   </ol>
   <p><strong>Soniox realtime</strong> väljs automatiskt och är den enda leverantören i detta läge. Du behöver en giltig Soniox API-nyckel och tillgängliga krediter.</p>
-  <p>Använd <strong>Rotera</strong> för att vända patientens panel om ni sitter mitt emot varandra. Valfri terminologi eller bakgrund kan anges under <strong>Terminologi / kontext</strong> före Start.</p>
+  <p>Valfri terminologi eller bakgrund kan anges under <strong>Terminologi / kontext</strong> före Start.</p>
   <p>En ny <strong>Start</strong> tömmer båda panelerna direkt. <strong>Paus/Fortsätt</strong> behåller samtalet. <strong>Stopp</strong> avslutar det och lämnar texten synlig till nästa Start eller tills du rensar den.</p>
-  <p>Varje Workspace kommer ihåg sitt läge, språkval och rotation. När du byter Workspace öppnas dess egen vy. Stoppa inspelningen och klicka på <strong>Tillbaka till anteckningar</strong> för att återgå till vanlig anteckningsgenerering.</p>
+  <p>Varje Workspace kommer ihåg sitt läge och sina språkval. När du byter Workspace öppnas dess egen vy. Stoppa inspelningen och klicka på <strong>Tillbaka till anteckningar</strong> för att återgå till vanlig anteckningsgenerering.</p>
 </details><br>
 
 <details>

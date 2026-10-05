@@ -369,9 +369,9 @@ guideText: `Willkommen bei <strong>Transcribe Notes</strong>. Die App kann Gespr
     <li>Drücken Sie einmal <strong>Start</strong> und sprechen Sie abwechselnd. Jedes Feld zeigt Originaltext und Übersetzungen in seiner ausgewählten Sprache.</li>
   </ol>
   <p><strong>Soniox realtime</strong> wird automatisch ausgewählt und ist der einzige Anbieter in diesem Modus. Sie benötigen einen gültigen Soniox API-Schlüssel und verfügbares Guthaben.</p>
-  <p>Mit <strong>Drehen</strong> können Sie das Patientenfeld drehen, wenn Sie einander gegenüber sitzen. Optionale Begriffe oder Hintergrundinformationen können Sie vor Start unter <strong>Terminologie / Kontext</strong> eingeben.</p>
+  <p>Optionale Begriffe oder Hintergrundinformationen können Sie vor Start unter <strong>Terminologie / Kontext</strong> eingeben.</p>
   <p>Ein neuer <strong>Start</strong> leert beide Felder sofort. <strong>Pause/Fortsetzen</strong> behält das Gespräch. <strong>Stopp</strong> beendet es und lässt den Text bis zum nächsten Start oder Leeren sichtbar.</p>
-  <p>Jeder Workspace merkt sich seinen Modus, seine Sprachen und die Drehung. Beim Wechsel öffnet sich die Ansicht des jeweiligen Workspace. Stoppen Sie die Aufnahme und klicken Sie auf <strong>Zurück zu Notizen</strong>, um zur normalen Notizgenerierung zurückzukehren.</p>
+  <p>Jeder Workspace merkt sich seinen Modus und seine Sprachen. Beim Wechsel öffnet sich die Ansicht des jeweiligen Workspace. Stoppen Sie die Aufnahme und klicken Sie auf <strong>Zurück zu Notizen</strong>, um zur normalen Notizgenerierung zurückzukehren.</p>
 </details><br>
 
 <details>

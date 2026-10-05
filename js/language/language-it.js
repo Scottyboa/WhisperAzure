@@ -369,9 +369,9 @@ guideText: `Benvenuto in <strong>Transcribe Notes</strong>. L'app può registrar
     <li>Premi <strong>Avvia</strong> una volta, poi parlate a turno. Ogni pannello mostra il parlato originale e le traduzioni nella lingua selezionata.</li>
   </ol>
   <p><strong>Soniox realtime</strong> viene selezionato automaticamente ed è l’unico provider per questa modalità. Servono una chiave API Soniox valida e crediti disponibili.</p>
-  <p>Usa <strong>Ruota</strong> per girare il pannello del paziente quando siete seduti uno di fronte all’altro. Prima di avviare puoi inserire termini o informazioni facoltative in <strong>Terminologia / contesto</strong>.</p>
+  <p>Prima di avviare puoi inserire termini o informazioni facoltative in <strong>Terminologia / contesto</strong>.</p>
   <p>Un nuovo <strong>Avvia</strong> svuota subito entrambi i pannelli. <strong>Pausa/Riprendi</strong> conserva la conversazione. <strong>Interrompi</strong> la termina e lascia il testo visibile fino all’avvio successivo o alla cancellazione.</p>
-  <p>Ogni Workspace ricorda la propria modalità, le lingue e la rotazione. Cambiando Workspace si apre la sua vista. Interrompi la registrazione e fai clic su <strong>Torna alle note</strong> per tornare alla normale generazione di note.</p>
+  <p>Ogni Workspace ricorda la propria modalità e le lingue. Cambiando Workspace si apre la sua vista. Interrompi la registrazione e fai clic su <strong>Torna alle note</strong> per tornare alla normale generazione di note.</p>
 </details><br>
 
 <details>

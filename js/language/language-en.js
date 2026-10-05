@@ -543,9 +543,9 @@ guideText: `Welcome to <strong>Transcribe Notes</strong>. The app can record and
     <li>Press <strong>Start</strong> once, then take turns speaking. Each panel shows original speech and translations in its selected language.</li>
   </ol>
   <p><strong>Soniox realtime</strong> is selected automatically and is the only provider for this mode. You need a valid Soniox API key and available credits.</p>
-  <p>Use <strong>Rotate</strong> to turn the patient’s panel when you sit opposite each other. Optional terminology or background can be entered under <strong>Terminology / context</strong> before starting.</p>
+  <p>Optional terminology or background can be entered under <strong>Terminology / context</strong> before starting.</p>
   <p>A new <strong>Start</strong> clears both panels immediately. <strong>Pause/Resume</strong> preserves the conversation. <strong>Stop</strong> finishes it and leaves the text visible until the next Start or until you clear it.</p>
-  <p>Each Workspace remembers its own mode, languages and panel rotation. Switching Workspaces opens that Workspace’s view. Stop recording and click <strong>Back to notes</strong> to return to regular note generation.</p>
+  <p>Each Workspace remembers its own mode and languages. Switching Workspaces opens that Workspace’s view. Stop recording and click <strong>Back to notes</strong> to return to regular note generation.</p>
 </details><br>
 
 <details>
