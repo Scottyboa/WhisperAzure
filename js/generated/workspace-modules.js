@@ -9014,6 +9014,95 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
     const redactorAutocopyLabelEl = redactorAutocopyUi.labelText;
     const redactorAutocopyContainer = redactorAutocopyUi.container;
 
+    const redactorAutoLogUi = (() => {
+      let toggle = document.getElementById('redactorAutoLogToggle');
+      let labelText = document.getElementById('redactorAutoLogLabel');
+      let tooltip = document.getElementById('redactorAutoLogTooltipContainer');
+      let tooltipText = document.getElementById('redactorAutoLogTooltipText');
+
+      if (!toggle && applyRedactionButton) {
+        const container = document.createElement('span');
+        container.className = 'redactor-auto-log-control';
+        container.style.cssText = 'display:inline-flex;align-items:center;gap:5px;';
+
+        const label = document.createElement('label');
+        label.htmlFor = 'redactorAutoLogToggle';
+        label.style.cssText = 'display:inline-flex;align-items:center;gap:5px;margin:0;font-size:12px;color:#444;white-space:nowrap;cursor:pointer;';
+
+        toggle = document.createElement('input');
+        toggle.id = 'redactorAutoLogToggle';
+        toggle.type = 'checkbox';
+        toggle.checked = true;
+        toggle.style.cssText = 'margin:0;accent-color:#5a9;';
+        toggle.setAttribute('aria-describedby', 'redactorAutoLogTooltipText');
+
+        labelText = document.createElement('span');
+        labelText.id = 'redactorAutoLogLabel';
+        labelText.textContent = 'Auto-log';
+        label.append(toggle, labelText);
+
+        tooltip = document.createElement('span');
+        tooltip.id = 'redactorAutoLogTooltipContainer';
+        tooltip.className = 'help-tip help-tip-left';
+        tooltip.tabIndex = 0;
+        tooltip.style.marginLeft = '0';
+        tooltip.append('?');
+        tooltipText = document.createElement('span');
+        tooltipText.id = 'redactorAutoLogTooltipText';
+        tooltipText.className = 'help-tip-content';
+        tooltipText.setAttribute('role', 'tooltip');
+        tooltip.append(tooltipText);
+        container.append(label, tooltip);
+
+        (redactorAutocopyContainer || applyRedactionButton).insertAdjacentElement('afterend', container);
+      }
+
+      return { toggle, labelText, tooltip, tooltipText };
+    })();
+    const redactorAutoLogToggle = redactorAutoLogUi.toggle;
+    const REDACTOR_AUTOLOG_STRINGS = {
+      en: {
+        label: 'Auto-log',
+        help: 'Automatically adds the transcript to history after redaction. Only the transcript is saved; Supplementary information and Note are not included.',
+      },
+      no: {
+        label: 'Auto-logg',
+        help: 'Legger automatisk transkripsjonen til i historikken etter sladding. Bare transkripsjonen lagres; tilleggsinformasjon og notat tas ikke med.',
+      },
+      sv: {
+        label: 'Auto-logg',
+        help: 'Lägger automatiskt till transkriptionen i historiken efter maskering. Endast transkriptionen sparas; kompletterande information och anteckning ingår inte.',
+      },
+      de: {
+        label: 'Auto-Protokoll',
+        help: 'Fügt das Transkript nach der Schwärzung automatisch zum Verlauf hinzu. Nur das Transkript wird gespeichert; Zusatzinformationen und Notiz werden nicht übernommen.',
+      },
+      fr: {
+        label: 'Journal auto',
+        help: 'Ajoute automatiquement la transcription à l’historique après masquage. Seule la transcription est enregistrée ; les informations complémentaires et la note ne sont pas incluses.',
+      },
+      it: {
+        label: 'Log automatico',
+        help: 'Aggiunge automaticamente la trascrizione alla cronologia dopo l’oscuramento. Viene salvata solo la trascrizione; le informazioni supplementari e la nota non sono incluse.',
+      },
+    };
+
+    const applyRedactorAutoLogTranslations = () => {
+      // Workspace frames have a hidden language selector; the visible shell
+      // selector updates the shared language preference instead.
+      const selectedLanguage = localStorage.getItem('siteLanguage')
+        || document.getElementById('lang-select-transcribe')?.value || 'en';
+      const strings = REDACTOR_AUTOLOG_STRINGS[selectedLanguage] || REDACTOR_AUTOLOG_STRINGS.en;
+      if (redactorAutoLogUi.labelText) redactorAutoLogUi.labelText.textContent = strings.label;
+      if (redactorAutoLogToggle) redactorAutoLogToggle.setAttribute('aria-label', strings.label);
+      if (redactorAutoLogUi.tooltip) redactorAutoLogUi.tooltip.setAttribute('aria-label', strings.help);
+      if (redactorAutoLogUi.tooltipText) redactorAutoLogUi.tooltipText.textContent = strings.help;
+    };
+    window.addEventListener('transcribe-language-updated', applyRedactorAutoLogTranslations);
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'siteLanguage') applyRedactorAutoLogTranslations();
+    });
+
     const REDACTOR_STRINGS = {
       en: {
         showRedactor: 'Show redactor',
@@ -9264,6 +9353,7 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
       if (redactorAutocopyContainer) {
         redactorAutocopyContainer.title = strings.autocopyTitle;
       }
+      applyRedactorAutoLogTranslations();
       if (document.getElementById('redactorOcrRawOutputLabel')) {
         document.getElementById('redactorOcrRawOutputLabel').textContent = strings.rawOutputLabel;
       }
@@ -10949,6 +11039,12 @@ const registerWorkspaceDisposer = load("core/workspace-disposal.js")["registerWo
             replacedAny ? 'redactedTerms' : 'noMatchingText',
             replacedAny ? { termCount: terms.length } : {}
           );
+        }
+
+        // Save the completed output before clipboard work can yield. Reuse the
+        // transcript-only history action and skip an invalid no-terms attempt.
+        if (redactorAutoLogToggle?.checked && (replacedAny || terms.length)) {
+          window.__noteHistory?.addTranscriptToLog?.();
         }
 
         if (redactorAutocopyToggle?.checked && (transcriptionEl?.value || '').trim()) {
@@ -14632,6 +14728,7 @@ function init() {
 }
 
 window.__noteHistory = Object.freeze({
+  addTranscriptToLog,
   getSnapshot: getLocalHistorySnapshot,
   clearLocal: clearLocalHistory,
   replaceLocal: replaceLocalHistorySnapshot,

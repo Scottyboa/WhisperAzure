@@ -32,7 +32,7 @@ const CHECKBOX_IDS = [
   "autoClearNoteToggle", "autoGenerateToggle", "includePromptToggle",
   "secondarySourceDateToggle", "secondaryAutoTransferToggle",
   "secondaryClearOnGenerateToggle", "redactorAutocopyToggle",
-  "redactorAutoAddDatesToggle",
+  "redactorAutoAddDatesToggle", "redactorAutoLogToggle",
   "conferenceAudioToggle",
   "sonioxSpeakerLabels",
 ];

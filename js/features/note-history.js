@@ -1153,6 +1153,7 @@ function init() {
 }
 
 window.__noteHistory = Object.freeze({
+  addTranscriptToLog,
   getSnapshot: getLocalHistorySnapshot,
   clearLocal: clearLocalHistory,
   replaceLocal: replaceLocalHistorySnapshot,
