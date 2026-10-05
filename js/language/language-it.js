@@ -362,6 +362,19 @@ guideText: `Benvenuto in <strong>Transcribe Notes</strong>. L'app può registrar
 </details><br>
 
 <details>
+  <summary><strong>Traduttore — conversazioni in due lingue</strong></summary>
+  <ol>
+    <li>Fai clic su <strong>Traduttore</strong> in alto a destra nell’area di registrazione.</li>
+    <li>Scegli la tua lingua e quella del paziente. Inizia a digitare il nome di una lingua e selezionala dai suggerimenti. Scegli due lingue diverse.</li>
+    <li>Premi <strong>Avvia</strong> una volta, poi parlate a turno. Ogni pannello mostra il parlato originale e le traduzioni nella lingua selezionata.</li>
+  </ol>
+  <p><strong>Soniox realtime</strong> viene selezionato automaticamente ed è l’unico provider per questa modalità. Servono una chiave API Soniox valida e crediti disponibili.</p>
+  <p>Usa <strong>Ruota</strong> per girare il pannello del paziente quando siete seduti uno di fronte all’altro. Prima di avviare puoi inserire termini o informazioni facoltative in <strong>Terminologia / contesto</strong>.</p>
+  <p>Un nuovo <strong>Avvia</strong> svuota subito entrambi i pannelli. <strong>Pausa/Riprendi</strong> conserva la conversazione. <strong>Interrompi</strong> la termina e lascia il testo visibile fino all’avvio successivo o alla cancellazione.</p>
+  <p>Ogni Workspace ricorda la propria modalità, le lingue e la rotazione. Cambiando Workspace si apre la sua vista. Interrompi la registrazione e fai clic su <strong>Torna alle note</strong> per tornare alla normale generazione di note.</p>
+</details><br>
+
+<details>
   <summary><strong>Workspaces e Workspace Sets</strong></summary>
   <ul>
     <li>Un <strong>Workspace</strong> è un'area di lavoro separata nella scheda del browser. Ogni Workspace ha testi, prompt selezionati, fornitori, modelli, impostazioni e processi attivi propri. I Workspace clonati condividono la cronologia della loro famiglia di cloni; quelli aggiunti con + hanno una cronologia separata. Cambiare Workspace non interrompe registrazioni o generazioni.</li>

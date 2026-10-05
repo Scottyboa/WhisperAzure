@@ -1,3 +1,19 @@
+## 5 October, 2026
+
+### New translator mode for bilingual conversations
+
+The app now has a **translator mode** for conversations where you and the patient speak different languages.
+
+Click **Translator** [at the top-right of the recording area], choose your language and the patient’s language, and press **Start** once. Then take turns speaking. Two panels display the original speech and translations, so both people can follow the conversation in their own language. The patient’s panel can be rotated when you sit opposite each other.
+
+The translator uses **Soniox realtime**, which is selected automatically. You need a valid Soniox API key and available credits.
+
+**Each workspace remembers its own mode and language choices.** You can keep one workspace for translation and others for regular note generation. Stop recording and click **Back to notes** to switch back.
+
+A new **Start** clears the translator panels. **Pause/Resume** preserves the current conversation.
+
+---
+
 ## 30 September, 2026
 
 ### Claude Sonnet 5.5 and GPT-6.1 Sol added through Requesty

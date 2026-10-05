@@ -377,6 +377,19 @@ guideText: `Välkommen till <strong>Transcribe Notes</strong>. Appen kan spela i
 </details><br>
 
 <details>
+  <summary><strong>Översättare — samtal på två språk</strong></summary>
+  <ol>
+    <li>Klicka på <strong>Översättare</strong> uppe till höger i inspelningsområdet.</li>
+    <li>Välj ditt språk och patientens språk. Börja skriva ett språknamn och välj det bland förslagen. Välj två olika språk.</li>
+    <li>Tryck <strong>Start</strong> en gång och turas om att tala. Varje panel visar original och översättningar på sitt valda språk.</li>
+  </ol>
+  <p><strong>Soniox realtime</strong> väljs automatiskt och är den enda leverantören i detta läge. Du behöver en giltig Soniox API-nyckel och tillgängliga krediter.</p>
+  <p>Använd <strong>Rotera</strong> för att vända patientens panel om ni sitter mitt emot varandra. Valfri terminologi eller bakgrund kan anges under <strong>Terminologi / kontext</strong> före Start.</p>
+  <p>En ny <strong>Start</strong> tömmer båda panelerna direkt. <strong>Paus/Fortsätt</strong> behåller samtalet. <strong>Stopp</strong> avslutar det och lämnar texten synlig till nästa Start eller tills du rensar den.</p>
+  <p>Varje Workspace kommer ihåg sitt läge, språkval och rotation. När du byter Workspace öppnas dess egen vy. Stoppa inspelningen och klicka på <strong>Tillbaka till anteckningar</strong> för att återgå till vanlig anteckningsgenerering.</p>
+</details><br>
+
+<details>
   <summary><strong>Workspaces och Workspace Sets</strong></summary>
   <ul>
     <li>Ett <strong>Workspace</strong> är en separat arbetsyta i webbläsarfliken. Varje Workspace har egna texter, valda prompts, leverantörer, modeller, inställningar och aktiva processer. Klonade Workspaces delar historik med sin klonfamilj, medan Workspaces som läggs till med + har separat historik. Byte mellan Workspaces stoppar inte inspelning eller generering.</li>

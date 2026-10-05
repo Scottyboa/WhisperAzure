@@ -2401,7 +2401,12 @@
 <div class="recording-header">
   <h3 id="recordingAreaTitle">Recording Area</h3>
   <div class="recording-header-actions">
-  <button id="translatorModeButton" class="translator-mode-button" type="button" aria-controls="translatorView" aria-pressed="false">Translator</button>
+  <div class="translator-mode-control">
+    <button id="translatorModeButton" class="translator-mode-button" type="button" aria-controls="translatorView" aria-pressed="false" aria-describedby="translatorModeTooltipText">Translator</button>
+    <span id="translatorModeTooltipContainer" class="help-tip help-tip-left" tabindex="0" aria-label="Switch this workspace to translator mode for conversations in two languages. Choose your languages and press Start once. Soniox realtime displays speech and translations in two panels. The workspace remembers its mode and language choices. Stop recording and click “Back to notes” to switch back.">?
+      <span id="translatorModeTooltipText" class="help-tip-content" role="tooltip">Switch this workspace to translator mode for conversations in two languages. Choose your languages and press Start once. Soniox realtime displays speech and translations in two panels. The workspace remembers its mode and language choices. Stop recording and click “Back to notes” to switch back.</span>
+    </span>
+  </div>
   <a id="openaiUsageLink" href="#" role="button" aria-controls="billingLinksView">
     Cost usage overview
   </a>

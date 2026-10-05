@@ -1,3 +1,19 @@
+## 5. oktober 2026
+
+### Ny oversettermodus for samtaler på to språk
+
+Appen har nå en **oversettermodus** for samtaler der du og pasienten snakker forskjellige språk.
+
+Klikk **Oversetter** [øverst til høyre i opptaksområdet], velg ditt språk og pasientens språk, og trykk **Start** én gang. Snakk deretter etter tur. To felt viser det som blir sagt og oversettelsen, slik at begge kan følge samtalen på sitt eget språk. Pasientens felt kan roteres hvis dere sitter overfor hverandre.
+
+Oversetteren bruker **Soniox realtime**, som velges automatisk. Du trenger en gyldig Soniox API-nøkkel og tilgjengelige kreditter.
+
+**Hvert Workspace husker sin egen modus og sine språkvalg.** Du kan derfor ha ett Workspace for oversettelse og andre for vanlig notatgenerering. Stopp opptaket og klikk **Tilbake til notater** for å bytte tilbake.
+
+Et nytt **Start** tømmer oversetterfeltene. **Pause/Fortsett** beholder den pågående samtalen.
+
+---
+
 ## 30. september 2026
 
 ### Claude Sonnet 5.5 og GPT-6.1 Sol er lagt til via Requesty

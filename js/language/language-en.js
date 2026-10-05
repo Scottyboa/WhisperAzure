@@ -536,6 +536,19 @@ guideText: `Welcome to <strong>Transcribe Notes</strong>. The app can record and
 </details><br>
 
 <details>
+  <summary><strong>Translator — conversations in two languages</strong></summary>
+  <ol>
+    <li>Click <strong>Translator</strong> at the top-right of the recording area.</li>
+    <li>Choose your language and the patient’s language. Start typing a language name and select it from the suggestions. Choose two different languages.</li>
+    <li>Press <strong>Start</strong> once, then take turns speaking. Each panel shows original speech and translations in its selected language.</li>
+  </ol>
+  <p><strong>Soniox realtime</strong> is selected automatically and is the only provider for this mode. You need a valid Soniox API key and available credits.</p>
+  <p>Use <strong>Rotate</strong> to turn the patient’s panel when you sit opposite each other. Optional terminology or background can be entered under <strong>Terminology / context</strong> before starting.</p>
+  <p>A new <strong>Start</strong> clears both panels immediately. <strong>Pause/Resume</strong> preserves the conversation. <strong>Stop</strong> finishes it and leaves the text visible until the next Start or until you clear it.</p>
+  <p>Each Workspace remembers its own mode, languages and panel rotation. Switching Workspaces opens that Workspace’s view. Stop recording and click <strong>Back to notes</strong> to return to regular note generation.</p>
+</details><br>
+
+<details>
   <summary><strong>Workspaces and Workspace Sets</strong></summary>
   <ul>
     <li>A <strong>Workspace</strong> is a separate work area within the browser tab. Each Workspace has its own text, selected prompts, providers, models, settings and active processes. Cloned Workspaces share history with their clone family; Workspaces added with + have separate history. Switching Workspaces does not stop recording or generation.</li>

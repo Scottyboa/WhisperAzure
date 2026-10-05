@@ -362,6 +362,19 @@ guideText: `Willkommen bei <strong>Transcribe Notes</strong>. Die App kann Gespr
 </details><br>
 
 <details>
+  <summary><strong>Übersetzer — Gespräche in zwei Sprachen</strong></summary>
+  <ol>
+    <li>Klicken Sie oben rechts im Aufnahmebereich auf <strong>Übersetzer</strong>.</li>
+    <li>Wählen Sie Ihre Sprache und die Sprache des Patienten. Geben Sie den Anfang eines Sprachnamens ein und wählen Sie einen Vorschlag. Wählen Sie zwei verschiedene Sprachen.</li>
+    <li>Drücken Sie einmal <strong>Start</strong> und sprechen Sie abwechselnd. Jedes Feld zeigt Originaltext und Übersetzungen in seiner ausgewählten Sprache.</li>
+  </ol>
+  <p><strong>Soniox realtime</strong> wird automatisch ausgewählt und ist der einzige Anbieter in diesem Modus. Sie benötigen einen gültigen Soniox API-Schlüssel und verfügbares Guthaben.</p>
+  <p>Mit <strong>Drehen</strong> können Sie das Patientenfeld drehen, wenn Sie einander gegenüber sitzen. Optionale Begriffe oder Hintergrundinformationen können Sie vor Start unter <strong>Terminologie / Kontext</strong> eingeben.</p>
+  <p>Ein neuer <strong>Start</strong> leert beide Felder sofort. <strong>Pause/Fortsetzen</strong> behält das Gespräch. <strong>Stopp</strong> beendet es und lässt den Text bis zum nächsten Start oder Leeren sichtbar.</p>
+  <p>Jeder Workspace merkt sich seinen Modus, seine Sprachen und die Drehung. Beim Wechsel öffnet sich die Ansicht des jeweiligen Workspace. Stoppen Sie die Aufnahme und klicken Sie auf <strong>Zurück zu Notizen</strong>, um zur normalen Notizgenerierung zurückzukehren.</p>
+</details><br>
+
+<details>
   <summary><strong>Workspaces und Workspace Sets</strong></summary>
   <ul>
     <li>Ein <strong>Workspace</strong> ist ein eigener Arbeitsbereich im Browser-Tab. Jeder Workspace hat eigene Texte, ausgewählte Prompts, Anbieter, Modelle, Einstellungen und aktive Prozesse. Geklonte Workspaces teilen den Verlauf mit ihrer Klonfamilie; mit + hinzugefügte Workspaces haben einen separaten Verlauf. Ein Wechsel stoppt weder Aufnahme noch Generierung.</li>
