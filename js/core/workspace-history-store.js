@@ -9,7 +9,7 @@ function normalizeRecordingDurationMs(value) {
 }
 
 function normalizeNoteCostUsd(value) {
-  if (value === null || value === undefined || value === "") return null;
+  if (!["number", "string"].includes(typeof value) || (typeof value === "string" && !value.trim())) return null;
   const cost = Number(value);
   return Number.isFinite(cost) && cost >= 0 ? cost : null;
 }
@@ -35,6 +35,14 @@ function normalizeEntry(raw) {
   const noteCostUsd = normalizeNoteCostUsd(raw.noteCostUsd);
   if (recordingDurationMs != null) entry.recordingDurationMs = recordingDurationMs;
   if (noteCostUsd != null) entry.noteCostUsd = noteCostUsd;
+  const transcriptionCostUsd = normalizeNoteCostUsd(raw?.transcriptionCostUsd);
+  if (transcriptionCostUsd != null && ["reported", "estimated"].includes(raw?.transcriptionCostSource)) {
+    entry.transcriptionCostUsd = transcriptionCostUsd;
+    entry.transcriptionCostSource = raw.transcriptionCostSource;
+  }
+  if (typeof raw?.recordingCostSessionId === "string" && /^[0-9a-f-]{36}$/i.test(raw.recordingCostSessionId)) {
+    entry.recordingCostSessionId = raw.recordingCostSessionId;
+  }
   return entry;
 }
 

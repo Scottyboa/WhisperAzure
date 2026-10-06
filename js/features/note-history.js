@@ -23,6 +23,9 @@ const STRINGS = {
     word: "word",
     words: "words",
     estimatedCost: "Est. cost",
+    transcriptionCost: "Transcription cost",
+    estimatedTranscriptionCost: "Est. transcription cost",
+    totalCost: "Total cost transcription + note",
     transcriptOnly: "Transcript only",
     addToLog: "Add to log",
     addToLogHelp:
@@ -58,6 +61,9 @@ const STRINGS = {
     word: "ord",
     words: "ord",
     estimatedCost: "Est. kostnad",
+    transcriptionCost: "Transkripsjonskostnad",
+    estimatedTranscriptionCost: "Estimert transkripsjonskostnad",
+    totalCost: "Total kostnad transkripsjon + notat",
     nokEstimateHelp: "NOK-estimat med 1 USD ≈ 9,58 NOK.",
     transcriptOnly: "Kun transkripsjon",
     addToLog: "Legg til i logg",
@@ -94,6 +100,9 @@ const STRINGS = {
     word: "ord",
     words: "ord",
     estimatedCost: "Uppsk. kostnad",
+    transcriptionCost: "Transkriptionskostnad",
+    estimatedTranscriptionCost: "Uppskattad transkriptionskostnad",
+    totalCost: "Total kostnad transkription + anteckning",
     transcriptOnly: "Endast transkription",
     addToLog: "Lägg till i logg",
     addToLogHelp:
@@ -129,6 +138,9 @@ const STRINGS = {
     word: "Wort",
     words: "Wörter",
     estimatedCost: "Geschätzte Kosten",
+    transcriptionCost: "Transkriptionskosten",
+    estimatedTranscriptionCost: "Geschätzte Transkriptionskosten",
+    totalCost: "Gesamtkosten Transkription + Notiz",
     transcriptOnly: "Nur Transkript",
     addToLog: "Zum Verlauf",
     addToLogHelp:
@@ -164,6 +176,9 @@ const STRINGS = {
     word: "mot",
     words: "mots",
     estimatedCost: "Coût estimé",
+    transcriptionCost: "Coût de transcription",
+    estimatedTranscriptionCost: "Coût estimé de transcription",
+    totalCost: "Coût total transcription + note",
     transcriptOnly: "Transcription uniquement",
     addToLog: "Ajouter au journal",
     addToLogHelp:
@@ -199,6 +214,9 @@ const STRINGS = {
     word: "parola",
     words: "parole",
     estimatedCost: "Costo stimato",
+    transcriptionCost: "Costo trascrizione",
+    estimatedTranscriptionCost: "Costo stimato trascrizione",
+    totalCost: "Costo totale trascrizione + nota",
     transcriptOnly: "Solo trascrizione",
     addToLog: "Aggiungi al registro",
     addToLogHelp:
@@ -267,7 +285,7 @@ function normalizeRecordingDurationMs(value) {
 }
 
 function normalizeNoteCostUsd(value) {
-  if (value === null || value === undefined || value === "") return null;
+  if (!["number", "string"].includes(typeof value) || (typeof value === "string" && !value.trim())) return null;
   const cost = Number(value);
   return Number.isFinite(cost) && cost >= 0 ? cost : null;
 }
@@ -277,6 +295,14 @@ function copyEntryMetrics(entry, raw) {
   const noteCostUsd = normalizeNoteCostUsd(raw?.noteCostUsd);
   if (recordingDurationMs != null) entry.recordingDurationMs = recordingDurationMs;
   if (noteCostUsd != null) entry.noteCostUsd = noteCostUsd;
+  const transcriptionCostUsd = normalizeNoteCostUsd(raw?.transcriptionCostUsd);
+  if (transcriptionCostUsd != null && ["reported", "estimated"].includes(raw?.transcriptionCostSource)) {
+    entry.transcriptionCostUsd = transcriptionCostUsd;
+    entry.transcriptionCostSource = raw.transcriptionCostSource;
+  }
+  if (typeof raw?.recordingCostSessionId === "string" && /^[0-9a-f-]{36}$/i.test(raw.recordingCostSessionId)) {
+    entry.recordingCostSessionId = raw.recordingCostSessionId;
+  }
   return entry;
 }
 
@@ -605,6 +631,12 @@ function formatNokEstimate(value) {
   }
 }
 
+function formatHistoryCost(value) {
+  let text = `${formatUsdCost(value)} USD`;
+  if (state.language === "no") text += ` ≈ ${formatNokEstimate(value)}`;
+  return text;
+}
+
 function syncModalEntryMetrics(entry) {
   const transcriptMeta = byId("noteHistoryTranscriptMeta");
   const supplementaryMeta = byId("noteHistorySupplementaryMeta");
@@ -616,6 +648,13 @@ function syncModalEntryMetrics(entry) {
     const duration = formatRecordingDuration(entry?.recordingDurationMs);
     if (duration) parts.push(`${copy.duration}: ${duration}`);
     parts.push(formatWordCount(entry?.transcript || ""));
+    const cost = normalizeNoteCostUsd(entry?.transcriptionCostUsd);
+    if (cost != null) {
+      const label = entry.transcriptionCostSource === "reported" ? copy.transcriptionCost : copy.estimatedTranscriptionCost;
+      parts.push(`${label}: ${formatHistoryCost(cost)}`);
+    }
+    transcriptMeta.classList.toggle("has-transcription-cost", cost != null);
+    transcriptMeta.title = state.language === "no" && cost != null ? copy.nokEstimateHelp : "";
     transcriptMeta.textContent = parts.join(" · ");
   }
 
@@ -633,6 +672,16 @@ function syncModalEntryMetrics(entry) {
     }
     noteMeta.textContent = parts.join(" · ");
     noteMeta.title = state.language === "no" && usd ? copy.nokEstimateHelp : "";
+  }
+  const totalMeta = byId("noteHistoryTotalCost");
+  if (totalMeta) {
+    const transcriptionUsd = normalizeNoteCostUsd(entry?.transcriptionCostUsd);
+    const noteUsd = normalizeNoteCostUsd(entry?.noteCostUsd);
+    const known = entry?.kind !== "transcript" && transcriptionUsd != null && noteUsd != null;
+    totalMeta.textContent = known
+      ? `${copy.totalCost}: $${transcriptionUsd.toFixed(6)} + $${noteUsd.toFixed(6)} = $${(transcriptionUsd + noteUsd).toFixed(6)} USD${state.language === "no" ? ` ≈ ${formatNokEstimate(transcriptionUsd + noteUsd)}` : ""}`
+      : "";
+    totalMeta.title = known && state.language === "no" ? copy.nokEstimateHelp : "";
   }
 }
 
@@ -900,6 +949,7 @@ function capturePendingRun() {
     promptLabel,
     usedPrompt,
     recordingDurationMs: state.currentRecordingDurationMs,
+    ...window.__recordingCost?.getSnapshot?.(),
   };
 }
 
@@ -930,7 +980,7 @@ function addFinishedNote(detail) {
     promptLabel: String(state.pendingRun?.promptLabel || ""),
     usedPrompt: state.pendingRun?.usedPrompt !== false,
   }, {
-    recordingDurationMs: state.pendingRun?.recordingDurationMs,
+    ...state.pendingRun,
     noteCostUsd: getLastNoteCostUsd(),
   });
 
@@ -981,6 +1031,7 @@ function addTranscriptToLog() {
     usedPrompt: false,
   }, {
     recordingDurationMs: state.currentRecordingDurationMs,
+    ...window.__recordingCost?.getSnapshot?.(),
   });
 
   state.nextSequence += 1;
@@ -1067,7 +1118,29 @@ function handleTranscriptClear() {
   syncAddToLogButton();
 }
 
+function updateRecordingCostInHistory(snapshot) {
+  const cost = normalizeNoteCostUsd(snapshot?.transcriptionCostUsd);
+  if (!snapshot?.recordingCostSessionId || cost == null ||
+      !["reported", "estimated"].includes(snapshot.transcriptionCostSource)) return;
+  if (state.pendingRun?.recordingCostSessionId === snapshot.recordingCostSessionId) {
+    copyEntryMetrics(state.pendingRun, snapshot);
+  }
+  let changed = false;
+  for (const entry of state.entries) {
+    if (entry.recordingCostSessionId !== snapshot.recordingCostSessionId) continue;
+    if (entry.transcriptionCostUsd === cost && entry.transcriptionCostSource === snapshot.transcriptionCostSource) continue;
+    copyEntryMetrics(entry, snapshot);
+    changed = true;
+  }
+  if (changed) {
+    persistHistory();
+    syncModalContent();
+    notifyLocalHistoryUpdated("recording-cost-updated");
+  }
+}
+
 function bindEvents() {
+  window.addEventListener("recording-cost:changed", event => updateRecordingCostInHistory(event.detail));
   byId("noteHistoryCollapseButton")?.addEventListener("click", toggleCollapsedState);
   byId("noteHistoryClearButton")?.addEventListener("click", clearVisibleHistory);
   byId("addTranscriptToLogButton")?.addEventListener("click", addTranscriptToLog);

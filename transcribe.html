@@ -434,6 +434,21 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    .note-history-modal-section-meta.has-transcription-cost {
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .note-history-modal-total-cost {
+      flex: 0 0 auto;
+      margin: 0 0 5px;
+      color: #747b7f;
+      font-size: 11px;
+      font-weight: 400;
+      line-height: 1.25;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+    .note-history-modal-total-cost:empty { display: none; }
     .note-history-modal-text {
       flex: 1 1 auto;
       min-width: 0;
@@ -3437,6 +3452,7 @@
             </h3>
             <span id="noteHistoryNoteMeta" class="note-history-modal-section-meta"></span>
           </div>
+          <div id="noteHistoryTotalCost" class="note-history-modal-total-cost"></div>
           <textarea
             id="noteHistoryNote"
             class="note-history-modal-text"

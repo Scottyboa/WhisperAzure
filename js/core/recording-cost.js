@@ -52,9 +52,18 @@ export function initRecordingCost() {
     }
   }
 
+  function getSnapshot() {
+    if (!recording || recording.translator) return null;
+    const known = recording.complete && ['reported', 'estimated'].includes(recording.status);
+    // Only local association and accounting data; never keys or API references.
+    return { recordingCostSessionId: recording.id,
+      transcriptionCostUsd: known ? amount(recording.usd) : null,
+      transcriptionCostSource: known ? recording.status : null };
+  }
+
   function changed() {
     render();
-    window.dispatchEvent(new window.CustomEvent('recording-cost:changed'));
+    window.dispatchEvent(new window.CustomEvent('recording-cost:changed', { detail: getSnapshot() }));
   }
   function cancelLookup() { lookup?.abort(); lookup = null; }
   function clear() {
@@ -223,7 +232,7 @@ export function initRecordingCost() {
     }
     changed();
   }
-  const api = { getSessionId: () => recording?.id, register, update, finish, noteStarted, captureDraft, restoreDraft, clear };
+  const api = { getSnapshot, getSessionId: () => recording?.id, register, update, finish, noteStarted, captureDraft, restoreDraft, clear };
   window.__recordingCost = api;
   window.addEventListener('recording:lifecycle', ({ detail }) => {
     if (detail.phase === 'starting') start();
