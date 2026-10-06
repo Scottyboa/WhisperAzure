@@ -649,6 +649,9 @@
       white-space: nowrap;
     }
     .note-usage-cost:empty { display: none; }
+    #totalRecordingNoteCost { white-space: normal; overflow-wrap: anywhere; }
+    #transcriptionCounterWrap:has(#transcriptionCost:not(:empty)) { padding-top: 24px; }
+    #transcriptionCounterWrap:has(#transcriptionCost:not(:empty)) .field-live-counter { max-width: 100%; white-space: normal; text-align: right; line-height: 1.15; }
     .model-price-label {
       font-size: 12px;
       font-weight: normal;
@@ -2540,7 +2543,7 @@
         <div id="transcriptSecondaryLayout" class="transcript-secondary-layout">
           <div class="transcript-pane">
             <div id="transcriptionCounterWrap" class="field-counter-wrap field-counter-gap">
-              <div id="transcriptionLiveCounter" class="field-live-counter" aria-live="polite">0 words · 0 tokens</div>
+              <div class="field-live-counter" aria-live="polite"><span id="transcriptionLiveCounter">0 words · 0 tokens</span><span id="transcriptionCost"></span></div>
               <textarea
                 id="transcription"
                 placeholder="Transcription result will appear here."
@@ -3132,6 +3135,7 @@
         <div id="noteTimerStatusBelow" class="timer-status-below"></div>
         <!-- Separate (non-timer) UI line for tokens/cost so it never gets overwritten by #noteTimer.innerText -->
         <div id="noteUsageCost" class="note-usage-cost"></div>
+        <div id="totalRecordingNoteCost" class="note-usage-cost" aria-live="polite"></div>
           <div id="generatedNoteCounterWrap" class="field-counter-wrap field-counter-gap">
             <div id="generatedNoteLiveCounter" class="field-live-counter" aria-live="polite">0 words · 0 tokens</div>
             <textarea id="generatedNote" placeholder="Generated note will appear here..." autocomplete="off"></textarea>

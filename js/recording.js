@@ -6,6 +6,8 @@ import {
   installSafeRecordingLoadStop,
 } from './core/recording-runner.js';
 
+import { getRecordingCostSessionId, registerRecordingCostRequest, recordOpenAiTranscriptionCost } from './core/recording-cost.js';
+
 // recording.js
 // Updated recording module without encryption/HMAC mechanisms,
 // processing audio chunks using OfflineAudioContext,
@@ -130,9 +132,11 @@ let isProcessingQueue = false;
 // Each time Start is clicked, we create a fresh session + abort controller.
 // Anything still running from the previous session gets aborted and/or ignored.
 let transcriptionSessionAbortController = new AbortController();
+let recordingCostSessionId = null;
 let processingQueueSessionId = null; // tracks which session currently owns the queue worker
 
 function beginFreshTranscriptionSession() {
+  recordingCostSessionId = getRecordingCostSessionId();
   // Abort any in-flight network requests for the previous session.
   try { transcriptionSessionAbortController.abort("new session started"); } catch (_) {}
   transcriptionSessionAbortController = new AbortController();
@@ -342,13 +346,16 @@ gainNode.gain.linearRampToValueAtTime(0, duration);
 
 // --- New: Transcribe Chunk Directly ---
 // Sends the WAV blob directly to OpenAI's Whisper API and returns the transcript.
-async function transcribeChunkDirectly(wavBlob, chunkNum, { signal, sessionId } = {}) {
+async function transcribeChunkDirectly(wavBlob, chunkNum, { signal, sessionId, costSessionId } = {}) {
   const apiKey = getAPIKey();
   if (!apiKey) throw new Error("API key not available for transcription");
   
+  const model = "gpt-transcribe";
+  const costReference = registerRecordingCostRequest({ sessionId: costSessionId, provider: "openai", model });
   const formData = new FormData();
   formData.append("file", wavBlob, `chunk_${chunkNum}.wav`);
-  formData.append("model", "gpt-transcribe");
+  formData.append("model", model);
+  formData.append("response_format", "json");
   formData.append("temperature", "0.1");
   formData.append(
   "prompt",
@@ -376,6 +383,7 @@ async function transcribeChunkDirectly(wavBlob, chunkNum, { signal, sessionId } 
       throw new Error(`OpenAI API error: ${msg}`);
     }
     const result = await response.json();
+    recordOpenAiTranscriptionCost(costSessionId, costReference, model, result, Math.max(0, wavBlob.size - 44) / 32000);
     return result.text || "";
   } catch (error) {
     // If user started a new session, treat this as a silent cancel.
@@ -398,7 +406,7 @@ async function transcribeChunkDirectly(wavBlob, chunkNum, { signal, sessionId } 
 // --- Transcription Queue Processing ---
 // Adds a processed chunk to the queue and processes chunks sequentially.
 function enqueueTranscription(wavBlob, chunkNum) {
-  transcriptionQueue.push({ sessionId: groupId, signal: transcriptionSessionAbortController.signal, chunkNum, wavBlob });
+  transcriptionQueue.push({ costSessionId: recordingCostSessionId, sessionId: groupId, signal: transcriptionSessionAbortController.signal, chunkNum, wavBlob });
   // Always schedule a kick; the worker will no-op if already running.
   // Using a microtask avoids races where isProcessingQueue flips after we check it.
   queueMicrotask(() => {
@@ -433,6 +441,7 @@ async function processTranscriptionQueue() {
       const transcript = await transcribeChunkDirectly(wavBlob, chunkNum, {
         signal: item.signal || mySignal,
         sessionId: mySessionId,
+        costSessionId: item.costSessionId,
       });
 
       // If a new session started while we were transcribing, ignore the result.
@@ -563,6 +572,7 @@ function updateTranscriptionOutput() {
       window.__app?.emitTranscriptionFinished?.({ provider: "openai-whisper", reason: "expectedChunks" });
       logInfo("Transcription complete.");
     } else {
+      window.__recordingCost?.finish?.();
       logInfo("Transcription complete with errors; keeping error message visible.");
     }
     transcriptChunks = {};

@@ -664,6 +664,8 @@ import {
       outputTokens: toFiniteInt(payload.outputTokens),
       totalTokens: toFiniteInt(payload.totalTokens),
       estimatedUsd:
+        (typeof payload.estimatedUsd === "number" || typeof payload.estimatedUsd === "string") &&
+        String(payload.estimatedUsd).trim() !== "" &&
         Number.isFinite(Number(payload.estimatedUsd)) && Number(payload.estimatedUsd) >= 0
           ? Number(payload.estimatedUsd)
           : null,

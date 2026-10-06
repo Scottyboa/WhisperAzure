@@ -1,5 +1,8 @@
 import { bindRecordingAction, startVerifiedVAD, verifyAudioCapture } from './core/recording-lifecycle.js';
 import { acquireRecordingInputStream, releaseRecordingInputStream } from './core/conference-audio.js';
+import { getRecordingCostSessionId, registerRecordingCostRequest, updateRecordingCostRequest } from './core/recording-cost.js';
+let recordingCostSessionId = null;
+
 // soniox.js
 //
 // Unified Soniox speech-to-text recording module — replaces the three
@@ -571,11 +574,12 @@ async function uploadToSonioxFile(wavBlob, filename, { signal } = {}, retries = 
   }
 }
 
-async function createSonioxTranscription(fileId, context, { signal, diarized } = {}, retries = 5, backoff = 2000) {
+async function createSonioxTranscription(fileId, context, { signal, diarized, costReference } = {}, retries = 5, backoff = 2000) {
   const apiKey = getAPIKey();
   if (!apiKey) throw new Error('API key not available');
   const body = {
     model: SONIOX_ASYNC_MODEL,
+    ...(costReference ? { client_reference_id: costReference } : {}),
     file_id: fileId,
     language_hints: DEFAULT_LANGUAGE_HINTS,
     enable_speaker_diarization: !!diarized,
@@ -600,7 +604,7 @@ async function createSonioxTranscription(fileId, context, { signal, diarized } =
     if (retries > 0) {
       console.warn(`Create failed, retrying in ${backoff}ms… (${retries} left)`);
       await new Promise(r => setTimeout(r, backoff));
-      return createSonioxTranscription(fileId, context, { signal, diarized }, retries - 1, Math.floor(backoff * 1.5));
+      return createSonioxTranscription(fileId, context, { signal, diarized, costReference }, retries - 1, Math.floor(backoff * 1.5));
     }
     throw err;
   }
@@ -899,9 +903,10 @@ function flushPendingVADOnce(reason, extraAudioFloat32 = null) {
 }
 
 // ── Async transcription queue ───────────────────────────────────────────────
-async function transcribeChunkDirectly(wavBlob, chunkNum, { signal, sessionId } = {}) {
+async function transcribeChunkDirectly(wavBlob, chunkNum, { signal, sessionId, costSessionId } = {}) {
   const diarized = activeMode === 'async-diarized';
   const apiKey = getAPIKey();
+  const costReference = registerRecordingCostRequest({ sessionId: costSessionId, provider: 'soniox', model: SONIOX_ASYNC_MODEL, baseUrl: getSonioxRestBase(), apiKey });
   const cleanupJobToken = beginSonioxBatchCleanupJob(chunkNum, sessionId);
   const cleanupResource = {
     apiKey,
@@ -915,12 +920,13 @@ async function transcribeChunkDirectly(wavBlob, chunkNum, { signal, sessionId } 
     const filename = `chunk_${chunkNum}.wav`;
     fileId = await uploadToSonioxFile(wavBlob, filename, { signal });
     cleanupResource.fileId = fileId;
-    txId = await createSonioxTranscription(fileId, SONIOX_CONTEXT_TEXT, { signal, diarized });
+    txId = await createSonioxTranscription(fileId, SONIOX_CONTEXT_TEXT, { signal, diarized, costReference });
     cleanupResource.transcriptionId = txId;
     const secs = estimateWavSeconds(wavBlob);
     const timeoutMs = Math.max(300000, Math.ceil(secs * 4000));
     await pollSonioxTranscription(txId, timeoutMs, 1500, { signal });
     const text = await fetchSonioxTranscriptText(txId, { signal, diarized });
+    updateRecordingCostRequest(costSessionId, costReference, { succeeded: true });
     return { text: text || '', cleanupJobToken, cleanupResource };
   } catch (error) {
     if (signal?.aborted || (sessionId && sessionId !== groupId)) {
@@ -966,6 +972,7 @@ function updateFailedChunkRetryButton() {
 
 function enqueueAsyncTranscription(wavBlob, chunkNum) {
   transcriptionQueue.push({
+    costSessionId: recordingCostSessionId,
     sessionId: groupId,
     signal: sessionAbortController.signal,
     chunkNum,
@@ -1009,6 +1016,7 @@ async function processTranscriptionQueue() {
       const chunkResult = await transcribeChunkDirectly(wavBlob, chunkNum, {
         signal: item.signal || mySignal,
         sessionId: mySessionId,
+        costSessionId: item.costSessionId,
       });
       try {
         if (groupId !== mySessionId || mySignal.aborted) break;
@@ -1140,6 +1148,7 @@ function updateAsyncTranscriptionOutput() {
       window.__app?.emitTranscriptionFinished?.({ provider: 'soniox', reason: 'queueDrained' });
       logInfo('Transcription complete.');
     } else {
+      window.__recordingCost?.finish?.();
       logInfo('Transcription complete with errors; keeping error message visible.');
     }
     transcriptFrozen = true;
@@ -1199,10 +1208,11 @@ function getRtAudioWorkletBlobUrl() {
   return rtAudioWorkletBlobUrl;
 }
 
-function buildRealtimeSessionConfig(apiKey) {
+function buildRealtimeSessionConfig(apiKey, costReference) {
   return {
     api_key: apiKey,
     model: SONIOX_RT_MODEL,
+    ...(costReference ? { client_reference_id: costReference } : {}),
     audio_format: 'pcm_s16le',
     sample_rate: SONIOX_RT_SAMPLE_RATE,
     num_channels: SONIOX_RT_NUM_CHANNELS,
@@ -1279,7 +1289,7 @@ function rtSendAudioChunk(int16Buffer) {
   }
 }
 
-function rtHandleSocketMessage(event) {
+function rtHandleSocketMessage(event, costSessionId, costReference) {
   let res;
   try { res = JSON.parse(event.data); }
   catch (err) {
@@ -1302,6 +1312,7 @@ function rtHandleSocketMessage(event) {
   if (Array.isArray(res.tokens) && res.tokens.length) rtAppendFinalTokens(res.tokens);
 
   if (res.finished === true) {
+    updateRecordingCostRequest(costSessionId, costReference, { succeeded: !transcriptionError });
     serverFinished = true;
     logInfo('Soniox WS session finished (server flushed all finals).');
     // Server will close the socket after this; the close handler finalizes.
@@ -1339,6 +1350,8 @@ async function rtOpenWebSocketSession() {
   const apiKey = getAPIKey();
   if (!apiKey) throw new Error('Missing Soniox API key');
 
+  const costSessionId = recordingCostSessionId;
+  const costReference = registerRecordingCostRequest({ sessionId: costSessionId, provider: 'soniox', model: SONIOX_RT_MODEL, baseUrl: getSonioxRestBase(), apiKey });
   const url = getSonioxRealtimeUrl();
   logInfo('Opening Soniox WS session →', url);
 
@@ -1374,7 +1387,7 @@ async function rtOpenWebSocketSession() {
 
     socket.addEventListener('open', () => {
       try {
-        const cfg = buildRealtimeSessionConfig(apiKey);
+        const cfg = buildRealtimeSessionConfig(apiKey, costReference);
         socket.send(JSON.stringify(cfg));
         configSent = true;
         ws = socket;
@@ -1385,7 +1398,7 @@ async function rtOpenWebSocketSession() {
       }
     }, { signal: events.signal });
 
-    socket.addEventListener('message', rtHandleSocketMessage, { signal: events.signal });
+    socket.addEventListener('message', event => rtHandleSocketMessage(event, costSessionId, costReference), { signal: events.signal });
     socket.addEventListener('close', (ev) => {
       detach();
       rtHandleSocketClose(ev);
@@ -1612,6 +1625,7 @@ function finalizeRealtimeTranscriptionUI() {
     } else window.__app?.emitTranscriptionFinished?.({ provider: 'soniox_rt', reason: 'wsClosed' });
     logInfo('Realtime transcription complete.');
   } else {
+    window.__recordingCost?.finish?.();
     logInfo('Realtime transcription complete with errors; keeping error message visible.');
   }
   transcriptFrozen = true;
@@ -1624,6 +1638,7 @@ function finalizeRealtimeTranscriptionUI() {
 // ════════════════════════════════════════════════════════════════════════════
 
 function beginFreshSession() {
+  recordingCostSessionId = getRecordingCostSessionId();
   try { sessionAbortController.abort('new session started'); } catch (_) {}
   sessionAbortController = new AbortController();
 

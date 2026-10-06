@@ -312,6 +312,7 @@ function captureDraft(doc) {
     version: 1,
     fields,
     translator: doc.defaultView.__translator?.captureDraft?.(),
+    recordingCost: doc.defaultView.__recordingCost?.captureDraft?.(),
     preserveSupplementaryDate:
       doc.getElementById("supplementaryInfo")?.dataset.preserveHistoricalDate === "1",
     savedAt: new Date().toISOString(),
@@ -336,6 +337,7 @@ function applyDraft(win, doc, draft) {
     el.value = String(fields[id] ?? "");
     dispatchInput(win, el);
   });
+  win.__recordingCost?.restoreDraft?.(draft?.recordingCost);
 }
 
 function hasDraftText(draft) {
@@ -414,6 +416,7 @@ function initFrameRuntime() {
   });
   window.addEventListener("pagehide", saveDraftNow);
   window.addEventListener("translator:draft-changed", scheduleDraftSave);
+  window.addEventListener("recording-cost:changed", scheduleDraftSave);
 
   const notifyParent = (reason = "state", detail = {}) => {
     if (disposed) return;

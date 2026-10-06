@@ -95,6 +95,7 @@ function beginNoteRun(runMeta) {
 
   const app = getNoteCoordinator();
   const controller = app.beginNoteGeneration?.(runMeta);
+  if (controller) window.__recordingCost?.noteStarted?.();
   return { app, controller };
 }
 
