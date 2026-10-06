@@ -1,5 +1,6 @@
 import {
   getDefaultOpenAiReasoning,
+  normalizeOpenAiModel,
   getDefaultRequestyReasoning,
   getNoteUiVisibility,
   listOpenAiModelOptions,
@@ -37,8 +38,13 @@ export function sanitizeModelReasoningPreferences(preferences) {
   if (!preferences || typeof preferences !== 'object' || Array.isArray(preferences)) return safe;
   for (const [key, value] of Object.entries(preferences)) {
     const [provider, model, extra] = key.split(':');
-    const spec = extra === undefined ? modelSpec(provider, model) : null;
-    if (spec && spec.options.some((option) => option.value === value)) safe[spec.key] = value;
+    const upgradingSol = provider === 'openai' && model === 'gpt-6-sol';
+    const spec = extra === undefined ? modelSpec(provider, upgradingSol ? normalizeOpenAiModel(model) : model) : null;
+    if (!spec) continue;
+    // A saved choice for the new model takes precedence over its predecessor.
+    if (upgradingSol && Object.prototype.hasOwnProperty.call(preferences, spec.key)) continue;
+    if (spec.options.some((option) => option.value === value)) safe[spec.key] = value;
+    else if (upgradingSol && value === 'none') safe[spec.key] = spec.fallback;
   }
   return safe;
 }

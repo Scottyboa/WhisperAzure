@@ -33,7 +33,7 @@ const TEXT_PRICE_GROUPS = [
   {
     provider: "OpenAI",
     rows: [
-      { model: "GPT-6 Sol", id: "gpt-6-sol", context: "1.05M", input: "$2.00–$4.00", output: "$10.00–$15.00" },
+      { model: "GPT-6.1 Sol", id: "gpt-6.1-sol", context: "1.05M", input: "$2.00–$4.00", output: "$10.00–$15.00" },
       { model: "GPT-6 Luna", id: "gpt-6-luna", context: "1.05M", input: "$0.10–$0.20", output: "$0.50–$0.75" },
       { model: "GPT-5.6 Sol", context: "1.05M", input: "$4.00", output: "$20.00" },
       { model: "GPT-5.6 Terra", context: "1.05M", input: "$2.00", output: "$12.00" },

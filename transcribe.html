@@ -218,11 +218,12 @@
       flex-direction: column;
       gap: 7px;
     }
+    .note-history-card-wrapper { position: relative; min-width: 0; }
     .note-history-card {
       width: 100%;
       min-width: 0;
       margin: 0;
-      padding: 8px 9px;
+      padding: 8px 31px 8px 9px;
       border: 1px solid #cfd6d8;
       border-radius: 8px;
       background: #fff;
@@ -238,6 +239,59 @@
       box-shadow: 0 2px 7px rgba(37, 113, 83, 0.16);
       outline: none;
     }
+    .note-history-card-delete {
+      position: absolute;
+      top: 3px;
+      right: 4px;
+      width: 24px;
+      height: 24px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: #d11f1f;
+      font: 22px/1 'Roboto', sans-serif;
+      cursor: pointer;
+    }
+    .note-history-card-delete:hover,
+    .note-history-card-delete:focus-visible {
+      background: #fff0f0;
+      color: #a60000;
+      outline: 2px solid rgba(209, 31, 31, 0.25);
+    }
+    .note-history-delete-button,
+    .note-history-delete-confirm button {
+      margin: 0;
+      padding: 7px 12px;
+      border: 1px solid #c99b9b;
+      border-radius: 7px;
+      background: #fff;
+      color: #a52222;
+      font: 600 13px/1.25 'Roboto', sans-serif;
+      cursor: pointer;
+    }
+    .note-history-delete-button:hover,
+    .note-history-delete-button:focus-visible,
+    .note-history-delete-confirm button:hover,
+    .note-history-delete-confirm button:focus-visible {
+      background: #fff0f0;
+      outline: 2px solid rgba(209, 31, 31, 0.25);
+    }
+    .note-history-delete-confirm {
+      box-sizing: border-box;
+      max-width: min(420px, calc(100vw - 40px));
+      padding: 22px;
+      border: 1px solid #c7cccf;
+      border-radius: 10px;
+      box-shadow: 0 18px 55px rgba(0, 0, 0, 0.28);
+      color: #333;
+      font: 14px/1.5 'Roboto', sans-serif;
+    }
+    .note-history-delete-confirm::backdrop { background: rgba(20, 25, 28, 0.58); }
+    .note-history-delete-confirm p { margin: 0 0 18px; }
+    .note-history-delete-confirm-actions { display: flex; justify-content: flex-end; gap: 10px; }
+    #noteHistoryDeleteNo { border-color: #c7cccf; color: #333; }
     .note-history-card-title,
     .note-history-card-meta {
       display: block;
@@ -479,7 +533,8 @@
       .note-history-modal-header {
         gap: 8px;
       }
-      .note-history-restore-button {
+      .note-history-restore-button,
+      .note-history-delete-button {
         padding: 6px 9px;
         font-size: 12px;
       }
@@ -494,6 +549,12 @@
       .note-history-modal-section {
         min-height: 230px;
       }
+    }
+    @media (max-width: 600px) {
+      .note-history-modal-header { flex-wrap: wrap; }
+      .note-history-modal-title { flex-basis: 100%; }
+      .note-history-modal-actions { max-width: 100%; min-width: 0; gap: 6px; }
+      .note-history-restore-button { white-space: normal; }
     }
     .note-history-sidebar.is-collapsed .note-history-header {
       padding: 8px 0;
@@ -2986,7 +3047,7 @@
                  style="display:none; align-items:center; gap:6px; margin-left:8px;">
               <label for="openaiModel" id="openaiModelLabel">Model:</label>
               <select id="openaiModel">
-                <option value="gpt-6-sol">GPT-6 Sol</option>
+                <option value="gpt-6.1-sol">GPT-6.1 Sol</option>
                 <option value="gpt-6-luna">GPT-6 Luna</option>
                 <option value="gpt-5.6-sol" selected>GPT-5.6 Sol</option>
                 <option value="gpt-5.6-terra">GPT-5.6 Terra</option>
@@ -3373,6 +3434,7 @@
       <div class="note-history-modal-header">
         <h2 id="noteHistoryModalTitle" class="note-history-modal-title">Note</h2>
         <div class="note-history-modal-actions">
+          <button id="noteHistoryDeleteButton" class="note-history-delete-button" type="button">Delete</button>
           <button
             id="noteHistoryRestoreButton"
             class="note-history-restore-button"
@@ -3463,6 +3525,13 @@
       </div>
     </div>
   </div>
+  <dialog id="noteHistoryDeleteConfirm" class="note-history-delete-confirm" role="alertdialog" aria-labelledby="noteHistoryDeleteQuestion">
+    <p id="noteHistoryDeleteQuestion">Are you sure you want to delete this log?</p>
+    <div class="note-history-delete-confirm-actions">
+      <button id="noteHistoryDeleteNo" type="button" autofocus>No</button>
+      <button id="noteHistoryDeleteYes" type="button">Yes</button>
+    </div>
+  </dialog>
   <!-- Preset runtime storage isolation must run before provider modules. -->
   <script src="./js/features/workspace-preset-bootstrap.js"></script>
 

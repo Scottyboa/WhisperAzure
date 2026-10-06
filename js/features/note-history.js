@@ -11,6 +11,10 @@ const USD_TO_NOK_ESTIMATE = 9.58;
 const STRINGS = {
   en: {
     history: "History",
+    deleteEntry: "Delete",
+    confirmDelete: "Are you sure you want to delete this log?",
+    yes: "Yes",
+    no: "No",
     clear: "Clear",
     helpLabel: "Note history help",
     tooltip:
@@ -49,6 +53,10 @@ const STRINGS = {
   },
   no: {
     history: "Historikk",
+    deleteEntry: "Slett",
+    confirmDelete: "Er du sikker på at du vil slette dette logginnlegget?",
+    yes: "Ja",
+    no: "Nei",
     clear: "Clear",
     helpLabel: "Hjelp for notathistorikk",
     tooltip:
@@ -88,6 +96,10 @@ const STRINGS = {
   },
   sv: {
     history: "Historik",
+    deleteEntry: "Radera",
+    confirmDelete: "Är du säker på att du vill radera den här historikposten?",
+    yes: "Ja",
+    no: "Nej",
     clear: "Rensa",
     helpLabel: "Hjälp för anteckningshistorik",
     tooltip:
@@ -126,6 +138,10 @@ const STRINGS = {
   },
   de: {
     history: "Verlauf",
+    deleteEntry: "Löschen",
+    confirmDelete: "Möchten Sie diesen Verlaufseintrag wirklich löschen?",
+    yes: "Ja",
+    no: "Nein",
     clear: "Leeren",
     helpLabel: "Hilfe zum Notizverlauf",
     tooltip:
@@ -164,6 +180,10 @@ const STRINGS = {
   },
   fr: {
     history: "Historique",
+    deleteEntry: "Supprimer",
+    confirmDelete: "Voulez-vous vraiment supprimer cette entrée de l’historique ?",
+    yes: "Oui",
+    no: "Non",
     clear: "Effacer",
     helpLabel: "Aide sur l’historique des notes",
     tooltip:
@@ -202,6 +222,10 @@ const STRINGS = {
   },
   it: {
     history: "Cronologia",
+    deleteEntry: "Elimina",
+    confirmDelete: "Vuoi davvero eliminare questa voce della cronologia?",
+    yes: "Sì",
+    no: "No",
     clear: "Cancella",
     helpLabel: "Guida alla cronologia delle note",
     tooltip:
@@ -252,6 +276,7 @@ const state = {
   pendingRun: null,
   activeEntryId: "",
   activeEntryBody: null,
+  pendingDelete: null,
   currentRecordingDurationMs: null,
   previousFocus: null,
   language: "en",
@@ -727,7 +752,22 @@ function renderHistory() {
 
     card.append(title, meta);
     card.addEventListener("click", () => { void openEntry(entry.id); });
-    list.appendChild(card);
+    const wrapper = document.createElement("div");
+    wrapper.className = "note-history-card-wrapper";
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "note-history-card-delete";
+    remove.textContent = "×";
+    const deleteLabel = `${strings().deleteEntry} ${getEntryTitle(entry)}`;
+    remove.setAttribute("aria-label", deleteLabel);
+    remove.title = deleteLabel;
+    remove.addEventListener("click", event => {
+      event.stopPropagation();
+      requestDeleteEntry(entry.id);
+    });
+    // Sibling buttons avoid nesting an interactive delete control in the open button.
+    wrapper.append(card, remove);
+    list.appendChild(wrapper);
   });
 }
 
@@ -893,6 +933,70 @@ function closeModal() {
   if (previousFocus && typeof previousFocus.focus === "function" && previousFocus.isConnected) {
     previousFocus.focus();
   }
+}
+
+function focusAfterDeleteConfirmation(pending) {
+  if (pending?.previousFocus?.isConnected) {
+    pending.previousFocus.focus();
+    return;
+  }
+  const cards = [...document.querySelectorAll(".note-history-card")];
+  (cards.find(card => card.dataset.entryId === pending?.entryId) || cards[0] ||
+    byId("noteHistoryCollapseButton"))?.focus();
+}
+
+function cancelPendingDelete({ focus = true } = {}) {
+  const pending = state.pendingDelete;
+  state.pendingDelete = null;
+  const dialog = byId("noteHistoryDeleteConfirm");
+  if (dialog?.open) dialog.close();
+  if (focus && pending) focusAfterDeleteConfirmation(pending);
+}
+
+function requestDeleteEntry(entryId) {
+  if (state.pendingDelete || !findVisibleEntry(entryId)) return;
+  const dialog = byId("noteHistoryDeleteConfirm");
+  if (!dialog) return;
+  const manager = window.__workspacePresetFrame
+    ? window.parent?.__workspacePresets : window.__workspacePresets;
+  const workspaceId = window.__workspacePresetFrame
+    ? window.__workspacePresetRuntimeId : manager?.activeId;
+  state.pendingDelete = { entryId, manager, workspaceId, record: historyRecord,
+    previousFocus: document.activeElement };
+  setRestoreMenuOpen(false);
+  dialog.showModal();
+  byId("noteHistoryDeleteNo")?.focus();
+}
+
+function confirmDeleteEntry() {
+  const pending = state.pendingDelete;
+  if (!pending) return;
+  const wasOpen = state.activeEntryId === pending.entryId;
+  cancelPendingDelete({ focus: false });
+  let deleted = false;
+  if (typeof pending.manager?.deleteHistoryEntry === "function") {
+    deleted = pending.manager.deleteHistoryEntry(pending.entryId, pending.workspaceId);
+  } else if (historyRecord === pending.record) {
+    const index = state.entries.findIndex(entry => entry.id === pending.entryId);
+    if (index >= 0) {
+      state.entries.splice(index, 1);
+      persistHistory();
+      notifyLocalHistoryUpdated("entry-deleted");
+      deleted = true;
+    }
+  }
+  if (deleted && wasOpen) {
+    closeModal();
+    // Remove the deleted entry's display copies as well as its stored history.
+    for (const id of ["noteHistoryTranscript", "noteHistorySupplementary", "noteHistoryNote"]) {
+      const field = byId(id);
+      if (field) field.value = "";
+    }
+    if (byId("noteHistoryModalTitle")) byId("noteHistoryModalTitle").textContent = strings().note;
+    syncModalEntryMetrics(null);
+  }
+  renderHistory();
+  focusAfterDeleteConfirmation(pending);
 }
 
 function clearVisibleHistory() {
@@ -1077,6 +1181,10 @@ function updateLanguage(language) {
     restoreButton.textContent = copy.restore;
     restoreButton.title = copy.restore;
   }
+  if (byId("noteHistoryDeleteButton")) byId("noteHistoryDeleteButton").textContent = copy.deleteEntry;
+  if (byId("noteHistoryDeleteQuestion")) byId("noteHistoryDeleteQuestion").textContent = copy.confirmDelete;
+  if (byId("noteHistoryDeleteYes")) byId("noteHistoryDeleteYes").textContent = copy.yes;
+  if (byId("noteHistoryDeleteNo")) byId("noteHistoryDeleteNo").textContent = copy.no;
   if (restoreCurrent) restoreCurrent.textContent = copy.replaceCurrent;
   if (restoreNew) restoreNew.textContent = copy.openNew;
   if (addToLogButton) {
@@ -1140,6 +1248,16 @@ function updateRecordingCostInHistory(snapshot) {
 }
 
 function bindEvents() {
+  byId("noteHistoryDeleteButton")?.addEventListener("click", () => requestDeleteEntry(state.activeEntryId));
+  byId("noteHistoryDeleteYes")?.addEventListener("click", confirmDeleteEntry);
+  byId("noteHistoryDeleteNo")?.addEventListener("click", () => cancelPendingDelete());
+  byId("noteHistoryDeleteConfirm")?.addEventListener("cancel", event => {
+    event.preventDefault();
+    cancelPendingDelete();
+  });
+  byId("noteHistoryDeleteConfirm")?.addEventListener("click", event => {
+    if (event.target === event.currentTarget) cancelPendingDelete();
+  });
   window.addEventListener("recording-cost:changed", event => updateRecordingCostInHistory(event.detail));
   byId("noteHistoryCollapseButton")?.addEventListener("click", toggleCollapsedState);
   byId("noteHistoryClearButton")?.addEventListener("click", clearVisibleHistory);
@@ -1171,6 +1289,10 @@ function bindEvents() {
   });
 
   document.addEventListener("keydown", (event) => {
+    if (state.pendingDelete) {
+      if (event.key === "Escape") { event.preventDefault(); cancelPendingDelete(); }
+      return;
+    }
     if (event.key === "Escape" && isRestoreMenuOpen()) {
       event.preventDefault();
       setRestoreMenuOpen(false);
@@ -1204,11 +1326,13 @@ function bindEvents() {
   });
 
   window.addEventListener("workspace-history-view-changed", () => {
+    cancelPendingDelete({ focus: false });
     closeModal();
     renderHistory();
   });
 
   window.addEventListener("workspace-history-updated", () => {
+    if (state.pendingDelete && !findVisibleEntry(state.pendingDelete.entryId)) cancelPendingDelete();
     renderHistory();
     syncModalContent();
   });
@@ -1246,6 +1370,7 @@ if (window.__workspacePresetFrame) {
   window.parent.__workspacePresets?.bindHistoryRuntime?.(window.__workspacePresetRuntimeId, window.__noteHistory);
 }
 registerWorkspaceDisposer(({ final }) => {
+  cancelPendingDelete({ focus: false });
   window.clearTimeout(addToLogFeedbackTimer);
   addToLogFeedbackTimer = 0;
   state.pendingRun = null;

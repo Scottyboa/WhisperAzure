@@ -41,7 +41,7 @@ export const indexTranslations = {
   </ul>
   <p><strong>Autres fournisseurs pris en charge</strong></p>
   <ul>
-    <li><strong>OpenAI</strong> – GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna et GPT-5 Nano</li>
+    <li><strong>OpenAI</strong> – GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna et GPT-5 Nano</li>
     <li><strong>AWS Bedrock</strong> – Claude Haiku 4.5, Claude Sonnet 4.5/4.6 et Claude Opus 4.5/4.6/4.7</li>
     <li><strong>Mistral</strong> – Mistral Large</li>
   </ul>
@@ -183,7 +183,7 @@ Configuration recommandée la plus simple :<br>
 2. <strong>Requesty</strong> pour les notes.<br><br>
 
 <strong>Options STT :</strong> Soniox par lots, par lots avec identification des locuteurs, temps réel, OpenAI gpt-4o-transcribe et Mistral Voxtral Mini.<br><br>
-<strong>Fournisseurs de notes :</strong> Requesty (Claude Opus 5.5, Claude Sonnet 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3), OpenAI (GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna et GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) et Mistral Large.<br><br>
+<strong>Fournisseurs de notes :</strong> Requesty (Claude Opus 5.5, Claude Sonnet 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3), OpenAI (GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna et GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) et Mistral Large.<br><br>
 
 <hr><br>
 <strong>Soniox — configuration STT recommandée</strong><br>
@@ -242,7 +242,7 @@ Une clé API ne rend pas un service automatiquement conforme au RGPD. Vérifiez 
     <li>GPT-5 Nano : env. 0,055 / 0,44 USD</li><li>Gemini 3.8 Flash : env. 0,825 / 4,125 USD (remise actuelle de 50 % sur ce point de terminaison)</li><li>DeepSeek V4 Pro : env. 1,75 / 3,50 USD (entrée en cache : 0,44 USD)</li><li>DeepSeek V4.1 Flash : env. 0,50 / 1,50 USD (entrée en cache : 0,05 USD)</li><li>Kimi K3 : env. 3,00 / 15,00 USD</li>
   </ul>
   <p>Ces valeurs reflètent les estimations de l’application et peuvent changer avec Requesty ou le déploiement amont. Consultez le prix près du modèle et le rapport d’utilisation Requesty.</p>
-  <p>Autres fournisseurs : OpenAI direct (GPT-6 Sol : env. 2,00 / 10,00 USD jusqu’à 272K tokens d’entrée inclus et 4,00 / 15,00 USD au-delà ; GPT-6 Luna : env. 0,10 / 0,50 USD jusqu’à 272K inclus et 0,20 / 0,75 USD au-delà ; ainsi que GPT-5.6 Sol/Terra/Luna et GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus, surtout pour utilisateurs AWS existants) et Mistral Large. Les prix actuels apparaissent dans l’application.</p>
+  <p>Autres fournisseurs : OpenAI direct (GPT-6.1 Sol : env. 2,00 / 10,00 USD jusqu’à 272K tokens d’entrée inclus et 4,00 / 15,00 USD au-delà ; GPT-6 Luna : env. 0,10 / 0,50 USD jusqu’à 272K inclus et 0,20 / 0,75 USD au-delà ; ainsi que GPT-5.6 Sol/Terra/Luna et GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus, surtout pour utilisateurs AWS existants) et Mistral Large. Les prix actuels apparaissent dans l’application.</p>
 
   <hr><br>
   <p><strong>3. Que sont les tokens ?</strong></p>

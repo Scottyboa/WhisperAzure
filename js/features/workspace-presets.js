@@ -1,3 +1,4 @@
+import { normalizeOpenAiModel } from '../core/provider-registry.js';
 import { sanitizeTranslatorConfig } from './translator-mode.js';
 import { PromptManager } from "../promptManager.js";
 import { PromptCloudBackup } from "./prompt-cloud-backup.js";
@@ -253,7 +254,8 @@ async function applyConfig(win, doc, config = {}) {
     if (!Object.prototype.hasOwnProperty.call(values, id)) return;
     const el = doc.getElementById(id);
     if (!el || !("value" in el)) return;
-    const next = String(values[id] ?? "");
+    const next = ["openaiModel", "secondaryOpenaiModel"].includes(id)
+      ? normalizeOpenAiModel(values[id]) : String(values[id] ?? "");
     // Retain the on/off value in exports for older app versions, and accept
     // existing exports made while Speaker Labels was a dropdown.
     if (id === "sonioxSpeakerLabels" && el.type === "checkbox") {
@@ -724,6 +726,18 @@ function initTopLevelManager() {
     getHistorySnapshot(presetId = activeId) {
       const requestedId = String(presetId || activeId);
       return mergedHistoryForGroup(requestedId);
+    },
+    deleteHistoryEntry(entryId, presetId = activeId) {
+      const requestedId = String(presetId || activeId);
+      if (!findDefinition(requestedId)) return false;
+      const record = getHistoryRecord(requestedId);
+      const index = record.entries.findIndex(entry => entry.id === String(entryId || ""));
+      if (index < 0) return false;
+      // Mutate the shared record, never replace it with a pre-confirmation snapshot.
+      record.entries.splice(index, 1);
+      historyStore.persist(historyGroupIdFor(requestedId));
+      notifyHistoryGroup(requestedId, "entry-deleted");
+      return true;
     },
     clearHistory(presetId = activeId) {
       const requestedId = String(presetId || activeId);

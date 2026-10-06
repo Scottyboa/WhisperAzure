@@ -126,7 +126,7 @@ import {
   // Prices are USD per 1M tokens (Standard pricing).
   // GPT-6 uses OpenAI's higher long-context rate when input exceeds 272K tokens.
   const OPENAI_USD_PER_MTOK = {
-    "gpt-6-sol": {
+    "gpt-6.1-sol": {
       short: { input: 2.0, output: 10.0 },
       long: { input: 4.0, output: 15.0 },
       longContextThreshold: 272_000,

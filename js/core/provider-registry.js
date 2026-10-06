@@ -62,11 +62,11 @@ const TRANSCRIBE_PROVIDER_REGISTRY = {
 };
 
 const NOTE_PROVIDER_REGISTRY = {
-  'openai-gpt6-sol': {
-    id: 'openai-gpt6-sol',
-    label: 'GPT-6 Sol',
+  'openai-gpt61-sol': {
+    id: 'openai-gpt61-sol',
+    label: 'GPT-6.1 Sol',
     uiProvider: 'openai',
-    openaiModel: 'gpt-6-sol',
+    openaiModel: 'gpt-6.1-sol',
     mode: DEFAULTS.noteMode,
     modulePath: './noteGeneration_openai.js',
     initExportName: 'initOpenAiNoteGeneration',
@@ -355,7 +355,7 @@ const REQUESTY_GPT56_MODELS = new Set([
 ]);
 
 const OPENAI_NOTE_MODEL_OPTIONS = [
-  { value: 'gpt-6-sol', label: 'GPT-6 Sol' },
+  { value: 'gpt-6.1-sol', label: 'GPT-6.1 Sol' },
   { value: 'gpt-6-luna', label: 'GPT-6 Luna' },
   { value: 'gpt-5.6-sol', label: 'GPT-5.6 Sol' },
   { value: 'gpt-5.6-terra', label: 'GPT-5.6 Terra' },
@@ -399,7 +399,7 @@ const SHARED_REQUESTY_REASONING_OPTIONS = [
 ];
 
 const OPENAI_GPT6_MODELS = new Set([
-  'gpt-6-sol',
+  'gpt-6.1-sol',
   'gpt-6-luna',
 ]);
 
@@ -453,6 +453,7 @@ export function listOpenAiModelOptions() {
 
 export function normalizeOpenAiModel(value) {
   const raw = String(value || '').trim().toLowerCase();
+  if (raw === 'gpt-6-sol') return 'gpt-6.1-sol';
   if (OPENAI_NOTE_MODEL_OPTIONS.some((item) => item.value === raw)) return raw;
 
   // Backward compatibility: retired direct OpenAI selections migrate to Sol.
@@ -478,7 +479,10 @@ export function listOpenAiReasoningOptions(modelId = DEFAULTS.openaiModel) {
     : OPENAI_GPT56_MODELS.has(model)
       ? OPENAI_GPT56_REASONING_OPTIONS
       : OPENAI_GPT5_NANO_REASONING_OPTIONS;
-  return options.map((item) => ({ ...item }));
+  // GPT-6.1 Sol cannot disable reasoning. Keep the app's three supported
+  // effort levels; Luna retains its existing None option.
+  return options.filter((item) => model !== 'gpt-6.1-sol' || item.value !== 'none')
+    .map((item) => ({ ...item }));
 }
 
 export function getDefaultOpenAiReasoning() {
@@ -627,6 +631,8 @@ export function getTranscribeProviderShortLabel(provider) {
 
 export function normalizeNoteEffectiveProvider(value) {
   const raw = String(value || '').trim().toLowerCase();
+  // Preserve direct OpenAI routing for older sessions and Workspace sets.
+  if (raw === 'openai-gpt6-sol' || raw === 'gpt-6-sol') return 'openai-gpt61-sol';
   // Migrate effective-provider ids saved before Gemini 3.8 replaced 3.7.
   if (raw === 'requesty-gemini37-flash') return 'requesty-gemini38-flash';
   // Existing workspaces keep Requesty selected when Sol is upgraded.
