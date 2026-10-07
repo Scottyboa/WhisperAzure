@@ -120,7 +120,6 @@
       grid-template-columns: var(--history-rail-width) minmax(0, 1fr);
       grid-template-rows: auto; /* Allow rows to size based on content */
       min-height: 1200px;       /* Ensure the grid is always at least 1200px tall */
-      transition: grid-template-columns 160ms ease;
     }
     .grid-container.history-collapsed {
       --history-rail-width: 42px;
@@ -210,8 +209,8 @@
       min-height: 0;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 8px;
-      scrollbar-gutter: stable;
+      padding: 8px 4px;
+      scrollbar-gutter: auto;
     }
     .note-history-list {
       display: flex;
@@ -568,11 +567,6 @@
     .note-history-sidebar.is-collapsed .note-history-clear,
     .note-history-sidebar.is-collapsed .note-history-scroll {
       display: none;
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .grid-container {
-        transition: none;
-      }
     }
     /* Main Content */
     .main-content {
