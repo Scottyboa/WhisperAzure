@@ -425,7 +425,7 @@ guideText: `Benvenuto in <strong>Transcribe Notes</strong>. L'app può registrar
   <summary><strong>Slot prompt, cronologia, Redactor e OCR</strong></summary>
   <ul>
     <li>Sono disponibili 20 slot prompt. Vengono memorizzati in questo browser e possono essere importati o esportati in formato JSON o come backup crittografati tramite OneDrive e Google Drive.</li>
-    <li>La colonna della cronologia mostra le 30 generazioni primarie completate più recenti del Workspace attivo. Seleziona un elemento per vedere trascrizione, informazioni supplementari e nota generata. I Workspace clonati condividono la cronologia della loro famiglia di cloni; gli altri hanno una cronologia separata.</li>
+    <li>La colonna della cronologia mostra le 50 generazioni primarie completate più recenti del Workspace attivo. Seleziona un elemento per vedere trascrizione, informazioni supplementari e nota generata. I Workspace clonati condividono la cronologia della loro famiglia di cloni; gli altri hanno una cronologia separata.</li>
     <li><strong>Redactor</strong> può rimuovere termini generali e specifici selezionati dalla trascrizione e dalle informazioni supplementari. Controlla sempre il risultato prima dell'invio.</li>
     <li><strong>OCR</strong> può estrarre testo da uno screenshot incollato o da un file immagine e inviarlo all'elenco dei termini specifici o al campo di testo grezzo.</li>
   </ul>

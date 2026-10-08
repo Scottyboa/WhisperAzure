@@ -599,7 +599,7 @@ guideText: `Velkommen til <strong>Transcribe Notes</strong>. Appen kan ta opp og
   <summary><strong>Promptplasser, historikk, Redactor og OCR</strong></summary>
   <ul>
     <li>Du har 20 promptplasser. De huskes i denne nettleseren og kan importeres eller eksporteres som JSON eller som krypterte kopier via OneDrive og Google Drive.</li>
-    <li>Historikkolonnen viser de 30 siste fullførte primære notatgenereringene i det aktive Workspace-et. Klikk på et element for å se transkripsjon, supplerende informasjon og generert notat. Klonede Workspaces deler historikk med klonefamilien, mens andre Workspaces har separat historikk.</li>
+    <li>Historikkolonnen viser de 50 siste fullførte primære notatgenereringene i det aktive Workspace-et. Klikk på et element for å se transkripsjon, supplerende informasjon og generert notat. Klonede Workspaces deler historikk med klonefamilien, mens andre Workspaces har separat historikk.</li>
     <li><strong>Redactor</strong> kan fjerne valgte generelle og spesifikke begreper fra transkripsjonen og supplerende informasjon. Kontroller alltid resultatet før teksten sendes videre.</li>
     <li><strong>OCR</strong> kan hente tekst fra et innlimt skjermbilde eller en bildefil og sende teksten til listen over spesifikke begreper eller til råtekstfeltet.</li>
   </ul>

@@ -1,6 +1,6 @@
 // History survives refresh in this tab's sessionStorage, never in persistent storage.
 export const HISTORY_PREFIX = "whisper_workspace_history_group_v3::";
-const MAX_ENTRIES = 30;
+const MAX_ENTRIES = 50;
 
 function normalizeRecordingDurationMs(value) {
   if (value === null || value === undefined || value === "") return null;
