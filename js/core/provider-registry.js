@@ -149,6 +149,15 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './requesty.js',
     initExportName: 'initRequestyClaudeSonnet55',
   },
+  'requesty-haiku': {
+    id: 'requesty-haiku',
+    label: 'Requesty Claude Haiku 5.5',
+    uiProvider: 'requesty',
+    requestyModel: 'claude-haiku-5-5',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyClaudeHaiku55',
+  },
   'requesty-gpt6-luna': {
     id: 'requesty-gpt6-luna',
     label: 'Requesty GPT-6 Luna',
@@ -260,6 +269,7 @@ const NOTE_UI_PROVIDER_OPTIONS = [
 const REQUESTY_MODEL_OPTIONS = [
   { value: 'claude-opus-5-5', label: 'Claude Opus 5.5' },
   { value: 'claude-sonnet-5-5', label: 'Claude Sonnet 5.5' },
+  { value: 'claude-haiku-5-5', label: 'Claude Haiku 5.5' },
   { value: 'gpt-6.1-sol', label: 'GPT-6.1 Sol' },
   { value: 'gpt-6-luna', label: 'GPT-6 Luna' },
   { value: 'gpt-5.6-sol', label: 'GPT-5.6 Sol' },
@@ -291,6 +301,15 @@ const REQUESTY_NANO_REASONING_OPTIONS = [
 // supports additional effort levels, but the app intentionally exposes only
 // low | medium | high and defaults to low.
 const REQUESTY_OPUS55_REASONING_OPTIONS = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+];
+
+// Haiku uses Requesty's native Claude Messages endpoint. Off explicitly
+// disables thinking; the remaining choices use adaptive thinking + effort.
+const REQUESTY_HAIKU55_REASONING_OPTIONS = [
+  { value: 'off', label: 'Off' },
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
   { value: 'high', label: 'High' },
@@ -527,22 +546,25 @@ export function listRequestyNanoReasoningOptions(
   const options =
     normalizedModel === 'claude-opus-5-5'
       ? REQUESTY_OPUS55_REASONING_OPTIONS
-      : REQUESTY_DEEPSEEK_MODELS.has(normalizedModel)
-        ? REQUESTY_DEEPSEEK_REASONING_OPTIONS
-        : normalizedModel === 'kimi-k3'
-          ? REQUESTY_KIMI_K3_REASONING_OPTIONS
-          : normalizedModel === 'gemini-3.8-flash'
-            ? REQUESTY_GEMINI38_REASONING_OPTIONS
-            : REQUESTY_GPT6_MODELS.has(normalizedModel)
-              ? REQUESTY_GPT6_REASONING_OPTIONS
-              : REQUESTY_GPT56_MODELS.has(normalizedModel)
-                ? REQUESTY_GPT56_REASONING_OPTIONS
-                : REQUESTY_NANO_REASONING_OPTIONS;
+      : normalizedModel === 'claude-haiku-5-5'
+        ? REQUESTY_HAIKU55_REASONING_OPTIONS
+        : REQUESTY_DEEPSEEK_MODELS.has(normalizedModel)
+          ? REQUESTY_DEEPSEEK_REASONING_OPTIONS
+          : normalizedModel === 'kimi-k3'
+            ? REQUESTY_KIMI_K3_REASONING_OPTIONS
+            : normalizedModel === 'gemini-3.8-flash'
+              ? REQUESTY_GEMINI38_REASONING_OPTIONS
+              : REQUESTY_GPT6_MODELS.has(normalizedModel)
+                ? REQUESTY_GPT6_REASONING_OPTIONS
+                : REQUESTY_GPT56_MODELS.has(normalizedModel)
+                  ? REQUESTY_GPT56_REASONING_OPTIONS
+                  : REQUESTY_NANO_REASONING_OPTIONS;
   return options.map((item) => ({ ...item }));
 }
 
 export function getDefaultRequestyReasoning(modelId = 'gpt-5-nano') {
   const normalizedModel = normalizeRequestyModel(modelId);
+  if (normalizedModel === 'claude-haiku-5-5') return 'medium';
   if (
     normalizedModel === 'claude-opus-5-5' ||
     REQUESTY_DEEPSEEK_MODELS.has(normalizedModel)
@@ -828,6 +850,7 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   const usesDedicatedRequestyReasoning =
     isRequesty &&
     (reqModel === 'claude-opus-5-5' ||
+      reqModel === 'claude-haiku-5-5' ||
       reqModel === 'gpt-5-nano' ||
       reqModel === 'gemini-3.8-flash' ||
       REQUESTY_DEEPSEEK_MODELS.has(reqModel) ||
@@ -839,7 +862,7 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   // models. For reasoning, most Requesty models share the OpenAI selector
   // (#gpt5Reasoning, None/Low/Medium/High). Claude Sonnet 5.5 maps
   // reasoning_effort to a thinking budget ("None" omits it), while GPT-5.5
-  // uses the native OpenAI effort string. Claude Opus 5.5, GPT-5 Nano,
+  // uses the native OpenAI effort string. Claude Opus / Haiku 5.5, GPT-5 Nano,
   // GPT-5.6, GPT-6 Luna / GPT-6.1 Sol, Gemini 3.8 Flash, DeepSeek V4 Pro/V4.1 Flash
   // and Kimi K3 use the dedicated Requesty selector because their valid
   // option sets differ from the shared selector.

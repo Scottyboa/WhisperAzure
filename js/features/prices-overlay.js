@@ -6,6 +6,7 @@ const TEXT_PRICE_GROUPS = [
     rows: [
       { model: "Claude Opus 5.5", id: "bedrock/claude-opus-5-5@eu-north-1", context: "1M", input: "$4.40", output: "$22.00" },
       { model: "Claude Sonnet 5.5", id: "vertex/claude-sonnet-5-5@eu", context: "1M", input: "$2.20", output: "$11.00" },
+      { model: "Claude Haiku 5.5", id: "bedrock/claude-haiku-5-5@eu-north-1", context: "1M", input: "$0.11–$0.55", output: "$0.55–$2.75" },
       { model: "GPT-6.1 Sol", id: "azure/gpt-6.1-sol@swedencentral", context: "1.1M", input: "$2.40", output: "$12.00" },
       { model: "GPT-6 Luna", id: "azure/gpt-6-luna@swedencentral", context: "1.1M", input: "$0.12", output: "$0.60" },
       { model: "GPT-5.6 Sol", id: "azure/gpt-5.6-sol@swedencentral", context: "1.1M", input: "$4.40", output: "$22.00" },
@@ -92,6 +93,7 @@ const FALLBACK_I18N = {
   contextNote: "Context is the maximum published context window for the configured model or route.",
   openAiLongContextNote: "For direct OpenAI GPT-6 models, the lower price applies through 272K input tokens; the higher price applies above 272K.",
   requestyNote: "Requesty prices match the exact routes configured in this app. Any account-level Requesty markup is not included.",
+  haikuLongContextNote: "For Claude Haiku 5.5 through Requesty, the lower prices apply through 100K input tokens. Above 100K, the higher input and output prices apply to the entire request. Reasoning is included in billable output tokens.",
   sttNote: "Speech-to-text prices are current public pay-as-you-go rates. Soniox is token-billed; the per-minute figures shown are approximate equivalents derived from Soniox's published hourly rates.",
 };
 
@@ -219,6 +221,7 @@ async function renderPrices() {
         <p class="prices-note">${escapeHtml(t.contextNote)}</p>
         <p class="prices-note">${escapeHtml(t.openAiLongContextNote)}</p>
         <p class="prices-note">${escapeHtml(t.requestyNote)}</p>
+        <p class="prices-note">${escapeHtml(t.haikuLongContextNote)}</p>
       </div>
     </section>
     <section class="prices-section">

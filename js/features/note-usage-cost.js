@@ -161,6 +161,7 @@ import {
   // Requesty (EU router) — published endpoint rates, USD per 1M tokens.
   // claude-opus-5-5: bedrock/claude-opus-5-5@eu-north-1 rates
   // claude-sonnet-5-5: vertex/claude-sonnet-5-5@eu rates (EU regional pricing)
+  // claude-haiku-5-5: bedrock/claude-haiku-5-5@eu-north-1; higher tier above 100K input
   // gpt-6-luna / gpt-6.1-sol: Azure Sweden Central rates from Requesty's model cards
   // gpt-5.5:         azure/gpt-5.5@swedencentral rates
   // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
@@ -172,6 +173,11 @@ import {
   const REQUESTY_USD_PER_MTOK = {
     "claude-opus-5-5": { input: 4.4, output: 22.0 },
     "claude-sonnet-5-5": { input: 2.2, output: 11.0 },
+    "claude-haiku-5-5": {
+      short: { input: 0.11, output: 0.55 },
+      long: { input: 0.55, output: 2.75 },
+      longContextThreshold: 100_000,
+    },
     "gpt-6.1-sol": { input: 2.4, output: 12.0 },
     "gpt-6-luna": { input: 0.12, output: 0.6 },
     "gpt-5.5": { input: 5.0, output: 30.0 },
@@ -217,8 +223,9 @@ import {
 
     if (providerKey === "requesty") {
       const modelId = String(requestyModel || DEFAULTS.requestyModel).trim().toLowerCase();
-      const rates = REQUESTY_USD_PER_MTOK[modelId];
-      return rates ? { rates } : null;
+      const pricing = REQUESTY_USD_PER_MTOK[modelId];
+      if (!pricing) return null;
+      return pricing.short && pricing.long ? pricing : { rates: pricing };
     }
 
     return null;
@@ -344,7 +351,7 @@ import {
     return inputUsd + outputUsd;
   }
 
-  function resolveOpenAiRates(pricing, inputTokens) {
+  function resolveTokenRates(pricing, inputTokens) {
     if (!pricing || typeof pricing !== "object") return null;
     if (!pricing.short || !pricing.long) return pricing;
 
@@ -376,7 +383,7 @@ import {
     if (isOpenAiEffectiveNoteProvider(pk)) {
       const modelId = payload.modelId;
       const pricing = modelId ? OPENAI_USD_PER_MTOK[modelId] : null;
-      const rates = resolveOpenAiRates(pricing, payload.inputTokens);
+      const rates = resolveTokenRates(pricing, payload.inputTokens);
       if (!rates) return null;
       return estimateUsdFromRates({
         rates,
@@ -387,7 +394,7 @@ import {
 
     if (isRequestyEffectiveNoteProvider(pk)) {
       const modelId = String(payload.modelId || "").trim().toLowerCase();
-      const rates = REQUESTY_USD_PER_MTOK[modelId];
+      const rates = resolveTokenRates(REQUESTY_USD_PER_MTOK[modelId], payload.inputTokens);
       if (!rates) return null;
 
       const baseUsd = estimateUsdFromRates({

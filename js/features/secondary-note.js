@@ -28,6 +28,7 @@ import {
 } from "../core/note-runner.js";
 import { adjustTranscriptHeight } from '../core/transcript-layout.js';
 import { createModelReasoningMemory, MODEL_REASONING_STORAGE_KEYS } from '../core/model-reasoning-memory.js';
+import { generateRequestyClaudeMessage } from '../core/requesty-claude.js';
 
 import {
   DEFAULTS,
@@ -92,6 +93,12 @@ const REQUESTY_VARIANTS = {
   "claude-sonnet-5-5": {
     requestyModelId: "vertex/claude-sonnet-5-5@eu",
     pricingModelId: "claude-sonnet-5-5"
+  },
+  "claude-haiku-5-5": {
+    requestyModelId: "bedrock/claude-haiku-5-5@eu-north-1",
+    pricingModelId: "claude-haiku-5-5",
+    reasoningSelector: "dedicated",
+    messagesApi: true
   },
   "gpt-6-luna": {
     requestyModelId: "azure/gpt-6-luna@swedencentral",
@@ -939,6 +946,18 @@ async function generateRequesty({ selections, sourceText, promptText, outputFiel
       }
     });
   };
+
+  if (variantConfig.messagesApi) {
+    const result = await generateRequestyClaudeMessage({
+      apiKey, model: variantConfig.requestyModelId,
+      system: buildStandardNotePrompt(promptText), userText: sourceText,
+      reasoningLevel, streaming, signal,
+      onDelta: (textChunk) => { outputField.value += textChunk; }
+    });
+    if (!streaming) outputField.value = result.text;
+    pushUsage(result.usage);
+    return { ok: true };
+  }
 
   const resp = await fetch(REQUESTY_EU_CHAT_COMPLETIONS_URL, {
     method: "POST",

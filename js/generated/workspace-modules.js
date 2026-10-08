@@ -1196,6 +1196,7 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
   // Requesty (EU router) — published endpoint rates, USD per 1M tokens.
   // claude-opus-5-5: bedrock/claude-opus-5-5@eu-north-1 rates
   // claude-sonnet-5-5: vertex/claude-sonnet-5-5@eu rates (EU regional pricing)
+  // claude-haiku-5-5: bedrock/claude-haiku-5-5@eu-north-1; higher tier above 100K input
   // gpt-6-luna / gpt-6.1-sol: Azure Sweden Central rates from Requesty's model cards
   // gpt-5.5:         azure/gpt-5.5@swedencentral rates
   // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
@@ -1207,6 +1208,11 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
   const REQUESTY_USD_PER_MTOK = {
     "claude-opus-5-5": { input: 4.4, output: 22.0 },
     "claude-sonnet-5-5": { input: 2.2, output: 11.0 },
+    "claude-haiku-5-5": {
+      short: { input: 0.11, output: 0.55 },
+      long: { input: 0.55, output: 2.75 },
+      longContextThreshold: 100_000,
+    },
     "gpt-6.1-sol": { input: 2.4, output: 12.0 },
     "gpt-6-luna": { input: 0.12, output: 0.6 },
     "gpt-5.5": { input: 5.0, output: 30.0 },
@@ -1252,8 +1258,9 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
 
     if (providerKey === "requesty") {
       const modelId = String(requestyModel || DEFAULTS.requestyModel).trim().toLowerCase();
-      const rates = REQUESTY_USD_PER_MTOK[modelId];
-      return rates ? { rates } : null;
+      const pricing = REQUESTY_USD_PER_MTOK[modelId];
+      if (!pricing) return null;
+      return pricing.short && pricing.long ? pricing : { rates: pricing };
     }
 
     return null;
@@ -1379,7 +1386,7 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
     return inputUsd + outputUsd;
   }
 
-  function resolveOpenAiRates(pricing, inputTokens) {
+  function resolveTokenRates(pricing, inputTokens) {
     if (!pricing || typeof pricing !== "object") return null;
     if (!pricing.short || !pricing.long) return pricing;
 
@@ -1411,7 +1418,7 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
     if (isOpenAiEffectiveNoteProvider(pk)) {
       const modelId = payload.modelId;
       const pricing = modelId ? OPENAI_USD_PER_MTOK[modelId] : null;
-      const rates = resolveOpenAiRates(pricing, payload.inputTokens);
+      const rates = resolveTokenRates(pricing, payload.inputTokens);
       if (!rates) return null;
       return estimateUsdFromRates({
         rates,
@@ -1422,7 +1429,7 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
 
     if (isRequestyEffectiveNoteProvider(pk)) {
       const modelId = String(payload.modelId || "").trim().toLowerCase();
-      const rates = REQUESTY_USD_PER_MTOK[modelId];
+      const rates = resolveTokenRates(REQUESTY_USD_PER_MTOK[modelId], payload.inputTokens);
       if (!rates) return null;
 
       const baseUsd = estimateUsdFromRates({
@@ -6167,6 +6174,136 @@ return Object.freeze(Object.defineProperties({}, {"initRecordingCost": { enumera
 "recordOpenAiTranscriptionCost": { enumerable: true, get: () => recordOpenAiTranscriptionCost }}));
 };
 
+factories["core/requesty-claude.js"] = (context, load, loadAsync) => {
+const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame, MutationObserver, ResizeObserver } = context;
+// Native Claude Messages through Requesty EU. This preserves Haiku 5.5's
+// adaptive thinking / effort controls instead of the legacy budget mapping
+// used by Requesty's OpenAI-compatible Chat Completions endpoint.
+// https://docs.requesty.ai/api-reference/endpoint/messages-create
+// https://platform.claude.com/docs/en/models/haiku-5-5/whats-new-haiku-5-5
+const REQUESTY_EU_MESSAGES_URL = 'https://router.eu.requesty.ai/v1/messages';
+
+function throwIfAborted(signal) {
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+}
+
+function extractText(content) {
+  return (Array.isArray(content) ? content : [])
+    .filter((block) => block?.type === 'text')
+    .map((block) => block.text || '').join('');
+}
+
+function mergeUsage(previous, next) {
+  if (!next || typeof next !== 'object') return previous;
+  // message_delta counters are cumulative, not increments. Keep the input
+  // count from message_start when the final event contains only output/cost.
+  const merged = { ...previous, ...next };
+  for (const field of ['input_tokens_details', 'output_tokens_details', 'completion_tokens_details']) {
+    if (previous?.[field] || next[field]) {
+      merged[field] = { ...previous?.[field], ...next[field] };
+    }
+  }
+  return merged;
+}
+
+async function readMessageStream(response, { signal, onDelta }) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '', text = '', usage = null, stopped = false;
+  const cancelReader = () => { void reader.cancel().catch(() => {}); };
+  signal?.addEventListener('abort', cancelReader, { once: true });
+
+  const consumeFrame = (frame) => {
+    throwIfAborted(signal);
+    const data = frame.split(/\r?\n/)
+      .filter((line) => line.startsWith('data:'))
+      .map((line) => line.slice(5).trimStart()).join('\n');
+    if (!data) return;
+    const event = JSON.parse(data);
+    if (event.type === 'error') {
+      throw new Error(`Requesty: ${event.error?.message || 'Claude streaming error'}`);
+    }
+    if (event.type === 'message_start') usage = mergeUsage(usage, event.message?.usage);
+    else if (event.type === 'message_delta') usage = mergeUsage(usage, event.usage);
+    else if (event.type === 'message_stop') {
+      usage = mergeUsage(usage, event.usage);
+      stopped = true;
+    }
+    const delta = event.type === 'content_block_delta' && event.delta?.type === 'text_delta'
+      ? event.delta.text
+      : event.type === 'content_block_start' && event.content_block?.type === 'text'
+        ? event.content_block.text : '';
+    // Thinking/signature blocks must never become part of the clinical note.
+    if (delta) { text += delta; onDelta(delta); }
+  };
+
+  try {
+    throwIfAborted(signal);
+    while (!stopped) {
+      throwIfAborted(signal);
+      const { value, done } = await reader.read();
+      throwIfAborted(signal);
+      buffer += done ? decoder.decode() : decoder.decode(value, { stream: true });
+      let separator;
+      while (!stopped && (separator = /\r?\n\r?\n/.exec(buffer))) {
+        const frame = buffer.slice(0, separator.index);
+        buffer = buffer.slice(separator.index + separator[0].length);
+        consumeFrame(frame);
+      }
+      if (done) {
+        if (!stopped && buffer.trim()) consumeFrame(buffer);
+        break;
+      }
+    }
+    if (!stopped) throw new Error('Requesty: Claude stream ended before completion. Please retry.');
+    return { text, usage };
+  } finally {
+    signal?.removeEventListener('abort', cancelReader);
+    await reader.cancel().catch(() => {});
+    reader.releaseLock();
+  }
+}
+
+async function generateRequestyClaudeMessage({
+  apiKey, model, system, userText, reasoningLevel = 'medium',
+  streaming = true, signal, onDelta = () => {}
+}) {
+  const effort = ['low', 'medium', 'high'].includes(reasoningLevel) ? reasoningLevel : 'medium';
+  const body = {
+    model,
+    system,
+    messages: [{ role: 'user', content: userText }],
+    // Haiku's published output limit includes thinking; no small fixed budget
+    // that could consume the entire response before the note is produced.
+    max_tokens: 128_000,
+    stream: streaming,
+    thinking: { type: reasoningLevel === 'off' ? 'disabled' : 'adaptive' },
+    output_config: { effort }
+  };
+  throwIfAborted(signal);
+  const response = await fetch(REQUESTY_EU_MESSAGES_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify(body), signal
+  });
+  if (!response.ok || (streaming && !response.body)) {
+    const errorText = await response.text().catch(() => '');
+    throw new Error(`Requesty error ${response.status}: ${errorText}`);
+  }
+  if (streaming) return readMessageStream(response, { signal, onDelta });
+  const result = await response.json();
+  throwIfAborted(signal);
+  if (result.error) throw new Error(`Requesty: ${result.error.message || 'Claude response error'}`);
+  return { text: extractText(result.content), usage: result.usage ?? null };
+}
+
+return Object.freeze(Object.defineProperties({}, {"generateRequestyClaudeMessage": { enumerable: true, get: () => generateRequestyClaudeMessage }}));
+};
+
 factories["core/recording-lifecycle.js"] = (context, load, loadAsync) => {
 const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout, setInterval, clearInterval, requestAnimationFrame, cancelAnimationFrame, MutationObserver, ResizeObserver } = context;
 const acquireRecordingInputStream = load("core/conference-audio.js")["acquireRecordingInputStream"];
@@ -7119,6 +7256,7 @@ const streamResponsesSse = load("core/note-runner.js")["streamResponsesSse"];
 const adjustTranscriptHeight = load("core/transcript-layout.js")["adjustTranscriptHeight"];
 const createModelReasoningMemory = load("core/model-reasoning-memory.js")["createModelReasoningMemory"];
 const MODEL_REASONING_STORAGE_KEYS = load("core/model-reasoning-memory.js")["MODEL_REASONING_STORAGE_KEYS"];
+const generateRequestyClaudeMessage = load("core/requesty-claude.js")["generateRequestyClaudeMessage"];
 
 const DEFAULTS = shared0["DEFAULTS"];
 const getNoteUiVisibility = shared0["getNoteUiVisibility"];
@@ -7181,6 +7319,12 @@ const REQUESTY_VARIANTS = {
   "claude-sonnet-5-5": {
     requestyModelId: "vertex/claude-sonnet-5-5@eu",
     pricingModelId: "claude-sonnet-5-5"
+  },
+  "claude-haiku-5-5": {
+    requestyModelId: "bedrock/claude-haiku-5-5@eu-north-1",
+    pricingModelId: "claude-haiku-5-5",
+    reasoningSelector: "dedicated",
+    messagesApi: true
   },
   "gpt-6-luna": {
     requestyModelId: "azure/gpt-6-luna@swedencentral",
@@ -8028,6 +8172,18 @@ async function generateRequesty({ selections, sourceText, promptText, outputFiel
       }
     });
   };
+
+  if (variantConfig.messagesApi) {
+    const result = await generateRequestyClaudeMessage({
+      apiKey, model: variantConfig.requestyModelId,
+      system: buildStandardNotePrompt(promptText), userText: sourceText,
+      reasoningLevel, streaming, signal,
+      onDelta: (textChunk) => { outputField.value += textChunk; }
+    });
+    if (!streaming) outputField.value = result.text;
+    pushUsage(result.usage);
+    return { ok: true };
+  }
 
   const resp = await fetch(REQUESTY_EU_CHAT_COMPLETIONS_URL, {
     method: "POST",
@@ -21252,7 +21408,8 @@ const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout
 // models, so both Requesty's processing AND the model inference stay in
 // the EU (GDPR compliant):
 //
-//   - Claude Opus 5.5    -> bedrock/claude-opus-5-5@eu-north-1   (AWS Bedrock, Stockholm)
+//   - Claude Haiku 5.5 -> bedrock/claude-haiku-5-5@eu-north-1 (AWS Bedrock, EU)
+//   - Claude Opus 5.5  -> bedrock/claude-opus-5-5@eu-north-1 (AWS Bedrock, Stockholm)
 //   - GPT-6 Luna       -> azure/gpt-6-luna@swedencentral     (Azure, Sweden Central)
 //   - GPT-6.1 Sol      -> azure/gpt-6.1-sol@swedencentral    (Azure, Sweden Central)
 //   - GPT-5.5          -> azure/gpt-5.5@swedencentral        (Azure, Sweden Central)
@@ -21275,7 +21432,10 @@ const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout
 //   - Format:     OpenAI Chat Completions (messages / stream / usage)
 //   - Streaming:  SSE; usage arrives in a final chunk when
 //                 stream_options.include_usage is set
-//   - Reasoning:  `reasoning_effort` works for both OpenAI models and
+//   - Haiku 5.5:  Native Claude /v1/messages on the same EU router, with
+//                 x-api-key auth, adaptive thinking and output_config.effort.
+//                 Off explicitly sets thinking.type to disabled.
+//   - Reasoning:  For the other variants, `reasoning_effort` works for both OpenAI models and
 //                 Anthropic models. Requesty forwards the standard OpenAI
 //                 efforts, including model-supported "xhigh", and converts
 //                 Anthropic efforts to a thinking-token budget.
@@ -21297,6 +21457,7 @@ const getDefaultRequestyReasoning = shared0["getDefaultRequestyReasoning"];
 const normalizeRequestyModel = shared0["normalizeRequestyModel"];
 const normalizeRequestyNanoReasoning = shared0["normalizeRequestyNanoReasoning"];
 const normalizeSharedRequestyReasoning = shared0["normalizeSharedRequestyReasoning"];
+const generateRequestyClaudeMessage = load("core/requesty-claude.js")["generateRequestyClaudeMessage"];
 
 // EU router: Requesty processing/storage stays in Frankfurt. Combined with
 // the EU-region model ids below, no request data leaves the EU.
@@ -21326,6 +21487,13 @@ const VARIANTS = Object.freeze({
     // on Requesty: vertex/claude-sonnet-5-5@eu.
     requestyModelId: "vertex/claude-sonnet-5-5@eu",
     pricingModelId: "claude-sonnet-5-5"
+  },
+  "claude-haiku-5-5": {
+    // Stockholm Bedrock entry point; EU inference may use other EU regions.
+    requestyModelId: "bedrock/claude-haiku-5-5@eu-north-1",
+    pricingModelId: "claude-haiku-5-5",
+    reasoningSelector: "dedicated",
+    messagesApi: true
   },
   "gpt-6-luna": {
     // Azure OpenAI, Sweden Central (EU). The app intentionally exposes only
@@ -21426,7 +21594,7 @@ function resolveEffectiveMode() {
 }
 
 function resolveReasoningLevel(variantKey, variantConfig) {
-  // Claude Opus 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna / GPT-6.1 Sol, Gemini 3.8
+  // Claude Opus / Haiku 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna / GPT-6.1 Sol, Gemini 3.8
   // Flash, DeepSeek, and Kimi K3 use the dedicated Requesty selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
@@ -21559,40 +21727,52 @@ async function generateNote() {
   });
 
   try {
-    const resp = await fetch(REQUESTY_EU_CHAT_COMPLETIONS_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify(requestBody),
-      signal: controller.signal
-    });
-
-    if (!streaming) {
-      if (!resp.ok) {
-        const errText = await resp.text().catch(() => "");
-        throw new Error(`Requesty error ${resp.status}: ${errText}`);
-      }
-
-      const json = await resp.json();
-      pushRequestyUsage(variantConfig, json?.usage ?? null);
-      generatedNoteField.value = json?.choices?.[0]?.message?.content || "";
-    } else {
-      await streamChatCompletionsSse(resp, {
-        signal: controller.signal,
-        errorLabel: "Requesty",
-        captureUsage: true,
-        onDelta: (textChunk) => {
-          generatedNoteField.value += textChunk;
-        },
-        onDone: (finalEvent) => {
-          pushRequestyUsage(variantConfig, finalEvent?.usage ?? null);
-        },
-        onError: (error) => {
-          throw error;
-        }
+    if (variantConfig.messagesApi) {
+      const result = await generateRequestyClaudeMessage({
+        apiKey, model: variantConfig.requestyModelId,
+        system: finalPromptText,
+        userText: `${supplementaryWrapped}${transcriptionText}`,
+        reasoningLevel, streaming, signal: controller.signal,
+        onDelta: (textChunk) => { generatedNoteField.value += textChunk; }
       });
+      if (!streaming) generatedNoteField.value = result.text;
+      pushRequestyUsage(variantConfig, result.usage);
+    } else {
+      const resp = await fetch(REQUESTY_EU_CHAT_COMPLETIONS_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal
+      });
+
+      if (!streaming) {
+        if (!resp.ok) {
+          const errText = await resp.text().catch(() => "");
+          throw new Error(`Requesty error ${resp.status}: ${errText}`);
+        }
+
+        const json = await resp.json();
+        pushRequestyUsage(variantConfig, json?.usage ?? null);
+        generatedNoteField.value = json?.choices?.[0]?.message?.content || "";
+      } else {
+        await streamChatCompletionsSse(resp, {
+          signal: controller.signal,
+          errorLabel: "Requesty",
+          captureUsage: true,
+          onDelta: (textChunk) => {
+            generatedNoteField.value += textChunk;
+          },
+          onDone: (finalEvent) => {
+            pushRequestyUsage(variantConfig, finalEvent?.usage ?? null);
+          },
+          onError: (error) => {
+            throw error;
+          }
+        });
+      }
     }
 
     noteTimer.stop("Text generation completed!");
@@ -21617,7 +21797,7 @@ async function generateNote() {
 // Public init functions
 // -----------------------------------------------------------------------------
 //
-// All effective providers (requesty-claude / requesty-sonnet /
+// All effective providers (requesty-claude / requesty-sonnet / requesty-haiku /
 // requesty-gpt6-* / requesty-gpt55 / requesty-nano / requesty-gpt56-* /
 // requesty-gemini38-flash / requesty-deepseek-* / requesty-kimi-k3)
 // bind the same generate function; the active model is read from the
@@ -21630,6 +21810,10 @@ function initRequestyClaudeOpus55() {
 }
 
 function initRequestyClaudeSonnet55() {
+  bindGenerateNoteButton(generateNote);
+}
+
+function initRequestyClaudeHaiku55() {
   bindGenerateNoteButton(generateNote);
 }
 
@@ -21677,10 +21861,9 @@ function initRequestyKimiK3() {
   bindGenerateNoteButton(generateNote);
 }
 
-
-
 return Object.freeze(Object.defineProperties({}, {"initRequestyClaudeOpus55": { enumerable: true, get: () => initRequestyClaudeOpus55 },
 "initRequestyClaudeSonnet55": { enumerable: true, get: () => initRequestyClaudeSonnet55 },
+"initRequestyClaudeHaiku55": { enumerable: true, get: () => initRequestyClaudeHaiku55 },
 "initRequestyGpt6Luna": { enumerable: true, get: () => initRequestyGpt6Luna },
 "initRequestyGpt61Sol": { enumerable: true, get: () => initRequestyGpt61Sol },
 "initRequestyGpt55": { enumerable: true, get: () => initRequestyGpt55 },

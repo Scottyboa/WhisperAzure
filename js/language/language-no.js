@@ -57,6 +57,7 @@ export const indexTranslations = {
   <ul>
     <li>Claude Opus 5.5</li>
     <li>Claude Sonnet 5.5</li>
+    <li>Claude Haiku 5.5</li>
     <li>GPT-6.1 Sol</li>
     <li>GPT-6 Luna</li>
     <li>GPT-5.6 Sol</li>
@@ -89,11 +90,13 @@ export const indexTranslations = {
   <ul>
     <li><strong>Maksimal kvalitet:</strong> Claude Opus 5.5 og GPT-5.6 Sol</li>
     <li><strong>Sterke allroundvalg:</strong> Claude Sonnet 5.5, GPT-5.6 Terra, GPT-5.5 og DeepSeek V4 Pro</li>
-    <li><strong>Raskere og rimeligere valg:</strong> GPT-5.6 Luna, Gemini 3.8 Flash og DeepSeek V4.1 Flash</li>
+    <li><strong>Raskere og rimeligere valg:</strong> Claude Haiku 5.5, GPT-5.6 Luna, Gemini 3.8 Flash og DeepSeek V4.1 Flash</li>
     <li><strong>Billigst til sammendrag og forbehandling:</strong> GPT-5 Nano</li>
     <li><strong>Ytterligere alternativ:</strong> Kimi K3</li>
   </ul>
   <p>Claude Opus 5.5 støtter reasoning-nivåene Low, Medium og High i appen; standardvalget er Low.</p>
+  <p>Claude Haiku 5.5 har reasoning-valgene Off, Low, Medium og High; standardvalget er Medium. Off slår av tenking.</p>
+  <p>Haiku 5.5 bruker AWS Bedrock via Requestys EU-ruter, med Stockholm som inngangsregion. Modellbehandlingen kan skje i andre EU-regioner. Modellruten har zero data retention og bruker ikke dataene dine til trening. Aktiver Zero Data Retention hos Requesty som beskrevet i oppsettsguiden.</p>
   <p>GPT-6.1 Sol og GPT-6 Luna støtter reasoning-nivåene None, Low, Medium og High i appen; når ingen tidligere reasoning-verdi er lagret, er standardvalget Low.</p>
   <p>DeepSeek V4 Pro og DeepSeek V4.1 Flash støtter reasoning-nivåene None, Low, High og Max; appens standardvalg er Low.</p>
   <p>
@@ -250,7 +253,7 @@ Dette gir tilgang til transkripsjon av høy kvalitet og et kuratert utvalg nyere
 - Mistral Voxtral Mini Transcribe<br><br>
 
 <strong>Leverandører for notatgenerering i appen</strong><br>
-- Requesty: Claude Opus 5.5, Claude Sonnet 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash og Kimi K3<br>
+- Requesty: Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash og Kimi K3<br>
 - OpenAI: GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna og GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 og Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
@@ -356,6 +359,7 @@ En API-nøkkel alene gjør ikke en tjeneste GDPR-kompatibel. Kontroller leverand
   <ul>
     <li>Claude Opus 5.5: omtrent 4,40 / 22,00 USD</li>
     <li>Claude Sonnet 5.5: omtrent 2,20 / 11,00 USD</li>
+    <li>Claude Haiku 5.5: omtrent 0,11 / 0,55 USD til og med 100K input-tokens; 0,55 / 2,75 USD over 100K</li>
     <li>GPT-6.1 Sol: omtrent 2,40 / 12,00 USD</li>
     <li>GPT-6 Luna: omtrent 0,12 / 0,60 USD</li>
     <li>GPT-5.6 Sol: omtrent 4,40 / 22,00 USD</li>
@@ -407,6 +411,7 @@ En API-nøkkel alene gjør ikke en tjeneste GDPR-kompatibel. Kontroller leverand
     <li><strong>GPT-5 Nano-notat:</strong> omtrent 0,0003 USD med eksempelets tokenmengde.</li>
     <li><strong>Gemini 3.8 Flash-notat:</strong> omtrent 0,004 USD.</li>
     <li><strong>Claude Sonnet 5.5-notat:</strong> omtrent 0,010 USD.</li>
+    <li><strong>Claude Haiku 5.5-notat:</strong> omtrent 0,0005 USD.</li>
     <li><strong>Claude Opus 5.5-notat:</strong> omtrent 0,020 USD.</li>
     <li><strong>GPT-5.6 Sol-notat:</strong> omtrent 0,020 USD.</li>
   </ul>
@@ -481,6 +486,7 @@ export const transcribeTranslations = {
     contextNote: "Kontekst er det maksimale publiserte kontekstvinduet for den konfigurerte modellen eller ruten.",
     openAiLongContextNote: "For direkte OpenAI GPT-6-modeller gjelder den laveste prisen til og med 272K input-tokens; den høyeste gjelder over 272K.",
     requestyNote: "Requesty-prisene gjelder de eksakte rutene som er konfigurert i appen. Eventuelt kontopåslag hos Requesty er ikke inkludert.",
+    haikuLongContextNote: "For Claude Haiku 5.5 via Requesty gjelder de laveste prisene til og med 100K input-tokens. Over 100K gjelder de høyere input- og output-prisene for hele forespørselen. Tenking er inkludert i fakturerbare output-tokens.",
     sttNote: "Tale-til-tekst-prisene er gjeldende offentlige pay-as-you-go-priser. Soniox faktureres etter tokens; minuttprisene som vises er omtrentlige ekvivalenter beregnet fra Soniox sine publiserte timepriser.",
   },
   backToHome: "Tilbake til forsiden",

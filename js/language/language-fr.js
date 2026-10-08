@@ -37,7 +37,8 @@ export const indexTranslations = {
   <p><strong>Requesty — recommandé aux nouveaux utilisateurs</strong></p>
   <p>Requesty donne accès aux modèles de plusieurs développeurs avec une seule clé API. L’application limite volontairement les choix à des déploiements prévus pour un traitement dans l’UE, sans réutilisation pour l’entraînement et avec des contrôles de conservation adaptés.</p>
   <ul>
-    <li>Claude Opus 5.5</li><li>Claude Sonnet 5.5</li><li>GPT-6.1 Sol</li><li>GPT-6 Luna</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 3.8 Flash</li><li>DeepSeek V4 Pro</li><li>DeepSeek V4.1 Flash</li><li>Kimi K3</li>
+    <li>Claude Opus 5.5</li><li>Claude Sonnet 5.5</li>
+    <li>Claude Haiku 5.5</li><li>GPT-6.1 Sol</li><li>GPT-6 Luna</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 3.8 Flash</li><li>DeepSeek V4 Pro</li><li>DeepSeek V4.1 Flash</li><li>Kimi K3</li>
   </ul>
   <p><strong>Autres fournisseurs pris en charge</strong></p>
   <ul>
@@ -51,11 +52,13 @@ export const indexTranslations = {
   <ul>
     <li><strong>Qualité maximale :</strong> Claude Opus 5.5 et GPT-5.6 Sol</li>
     <li><strong>Excellents choix polyvalents :</strong> Claude Sonnet 5.5, GPT-5.6 Terra, GPT-5.5 et DeepSeek V4 Pro</li>
-    <li><strong>Rapidité et rapport qualité-prix :</strong> GPT-5.6 Luna, Gemini 3.8 Flash et DeepSeek V4.1 Flash</li>
+    <li><strong>Rapidité et rapport qualité-prix :</strong> Claude Haiku 5.5, GPT-5.6 Luna, Gemini 3.8 Flash et DeepSeek V4.1 Flash</li>
     <li><strong>Résumé/prétraitement au coût minimal :</strong> GPT-5 Nano</li>
     <li><strong>Autre possibilité :</strong> Kimi K3</li>
   </ul>
   <p>Claude Opus 5.5 propose dans l’application les niveaux de raisonnement Low, Medium et High ; Low est utilisé par défaut.</p>
+  <p>Claude Haiku 5.5 propose les niveaux de raisonnement Off, Low, Medium et High ; Medium est le choix par défaut. Off désactive la réflexion.</p>
+  <p>Haiku 5.5 utilise AWS Bedrock via le routeur UE de Requesty, avec Stockholm comme région d’entrée. Le traitement peut avoir lieu dans d’autres régions de l’UE. Cette route applique la rétention zéro et n’utilise pas vos données pour l’entraînement. Activez Zero Data Retention dans Requesty comme indiqué dans le guide de configuration.</p>
   <p>GPT-6.1 Sol et GPT-6 Luna proposent dans l’application les niveaux de raisonnement None, Low, Medium et High ; si aucun choix antérieur n’est enregistré, Low est utilisé par défaut.</p>
   <p>DeepSeek V4 Pro et DeepSeek V4.1 Flash prennent en charge les niveaux de raisonnement None, Low, High et Max ; l’application utilise Low par défaut.</p>
   <p>Pour un long document, un modèle économique comme GPT-5 Nano peut d’abord produire un résumé destiné aux Informations supplémentaires. Le modèle principal plus puissant crée ensuite la note sans recevoir tout le document, ce qui peut fortement réduire le coût.</p>
@@ -183,7 +186,7 @@ Configuration recommandée la plus simple :<br>
 2. <strong>Requesty</strong> pour les notes.<br><br>
 
 <strong>Options STT :</strong> Soniox par lots, par lots avec identification des locuteurs, temps réel, OpenAI gpt-4o-transcribe et Mistral Voxtral Mini.<br><br>
-<strong>Fournisseurs de notes :</strong> Requesty (Claude Opus 5.5, Claude Sonnet 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3), OpenAI (GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna et GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) et Mistral Large.<br><br>
+<strong>Fournisseurs de notes :</strong> Requesty (Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3), OpenAI (GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna et GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) et Mistral Large.<br><br>
 
 <hr><br>
 <strong>Soniox — configuration STT recommandée</strong><br>
@@ -236,6 +239,7 @@ Une clé API ne rend pas un service automatiquement conforme au RGPD. Vérifiez 
   <p><strong>2. Génération de note</strong> (USD par million de tokens entrée/sortie)</p>
   <ul>
     <li>Claude Opus 5.5 : env. 4,40 / 22,00 USD</li><li>Claude Sonnet 5.5 : env. 2,20 / 11,00 USD</li>
+    <li>Claude Haiku 5.5: env. 0,11 / 0,55 USD jusqu’à 100K tokens d’entrée inclus ; 0,55 / 2,75 USD au-delà de 100K</li>
     <li>GPT-6.1 Sol : env. 2,40 / 12,00 USD</li><li>GPT-6 Luna : env. 0,12 / 0,60 USD</li>
     <li>GPT-5.6 Sol : env. 4,40 / 22,00 USD</li><li>GPT-5.6 Terra : env. 2,20 / 13,20 USD</li>
     <li>GPT-5.6 Luna : env. 0,22 / 1,32 USD</li><li>GPT-5.5 : env. 5,00 / 30,00 USD</li>
@@ -254,6 +258,7 @@ Une clé API ne rend pas un service automatiquement conforme au RGPD. Vérifiez 
   <ul>
     <li>Transcription Soniox : env. 0,026 USD</li><li>GPT-5 Nano : env. 0,0003 USD</li>
     <li>Gemini 3.8 Flash : env. 0,004 USD</li><li>Claude Sonnet 5.5 : env. 0,010 USD</li>
+    <li>Claude Haiku 5.5 : env. 0,0005 USD</li>
     <li>Claude Opus 5.5 : env. 0,020 USD</li><li>GPT-5.6 Sol : env. 0,020 USD</li>
   </ul>
   <p>Le coût réel dépend de la longueur, du prompt, des Informations supplémentaires et du niveau de raisonnement.</p>
@@ -310,6 +315,7 @@ export const transcribeTranslations = {
     contextNote: "Le contexte correspond à la fenêtre de contexte maximale publiée pour le modèle ou la route configurée.",
     openAiLongContextNote: "Pour les modèles GPT-6 OpenAI directs, le tarif inférieur s’applique jusqu’à 272K tokens d’entrée inclus ; le tarif supérieur s’applique au-delà.",
     requestyNote: "Les tarifs Requesty correspondent aux routes exactes configurées dans l’application. Toute majoration éventuelle liée au compte Requesty n’est pas incluse.",
+    haikuLongContextNote: "Pour Claude Haiku 5.5 via Requesty, les tarifs les plus bas s’appliquent jusqu’à 100K tokens d’entrée inclus. Au-delà de 100K, les tarifs d’entrée et de sortie plus élevés s’appliquent à toute la requête. La réflexion est comprise dans les tokens de sortie facturables.",
     sttNote: "Les tarifs de reconnaissance vocale sont les tarifs publics actuels à l’usage. Soniox est facturé en tokens ; les montants par minute affichés sont des équivalents approximatifs calculés à partir des tarifs horaires publiés par Soniox.",
   },
   backToHome: "Retour à la page d'accueil",

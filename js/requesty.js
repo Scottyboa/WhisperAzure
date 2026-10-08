@@ -6,6 +6,7 @@
 // models, so both Requesty's processing AND the model inference stay in
 // the EU (GDPR compliant):
 //
+//   - Claude Haiku 5.5 -> bedrock/claude-haiku-5-5@eu-north-1 (AWS Bedrock, EU)
 //   - Claude Opus 5.5  -> bedrock/claude-opus-5-5@eu-north-1 (AWS Bedrock, Stockholm)
 //   - GPT-6 Luna       -> azure/gpt-6-luna@swedencentral     (Azure, Sweden Central)
 //   - GPT-6.1 Sol      -> azure/gpt-6.1-sol@swedencentral    (Azure, Sweden Central)
@@ -29,7 +30,10 @@
 //   - Format:     OpenAI Chat Completions (messages / stream / usage)
 //   - Streaming:  SSE; usage arrives in a final chunk when
 //                 stream_options.include_usage is set
-//   - Reasoning:  `reasoning_effort` works for both OpenAI models and
+//   - Haiku 5.5:  Native Claude /v1/messages on the same EU router, with
+//                 x-api-key auth, adaptive thinking and output_config.effort.
+//                 Off explicitly sets thinking.type to disabled.
+//   - Reasoning:  For the other variants, `reasoning_effort` works for both OpenAI models and
 //                 Anthropic models. Requesty forwards the standard OpenAI
 //                 efforts, including model-supported "xhigh", and converts
 //                 Anthropic efforts to a thinking-token budget.
@@ -55,6 +59,7 @@ import {
   normalizeRequestyNanoReasoning,
   normalizeSharedRequestyReasoning
 } from "./core/provider-registry.js";
+import { generateRequestyClaudeMessage } from "./core/requesty-claude.js";
 
 // EU router: Requesty processing/storage stays in Frankfurt. Combined with
 // the EU-region model ids below, no request data leaves the EU.
@@ -84,6 +89,13 @@ const VARIANTS = Object.freeze({
     // on Requesty: vertex/claude-sonnet-5-5@eu.
     requestyModelId: "vertex/claude-sonnet-5-5@eu",
     pricingModelId: "claude-sonnet-5-5"
+  },
+  "claude-haiku-5-5": {
+    // Stockholm Bedrock entry point; EU inference may use other EU regions.
+    requestyModelId: "bedrock/claude-haiku-5-5@eu-north-1",
+    pricingModelId: "claude-haiku-5-5",
+    reasoningSelector: "dedicated",
+    messagesApi: true
   },
   "gpt-6-luna": {
     // Azure OpenAI, Sweden Central (EU). The app intentionally exposes only
@@ -184,7 +196,7 @@ function resolveEffectiveMode() {
 }
 
 function resolveReasoningLevel(variantKey, variantConfig) {
-  // Claude Opus 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna / GPT-6.1 Sol, Gemini 3.8
+  // Claude Opus / Haiku 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna / GPT-6.1 Sol, Gemini 3.8
   // Flash, DeepSeek, and Kimi K3 use the dedicated Requesty selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
@@ -317,40 +329,52 @@ async function generateNote() {
   });
 
   try {
-    const resp = await fetch(REQUESTY_EU_CHAT_COMPLETIONS_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify(requestBody),
-      signal: controller.signal
-    });
-
-    if (!streaming) {
-      if (!resp.ok) {
-        const errText = await resp.text().catch(() => "");
-        throw new Error(`Requesty error ${resp.status}: ${errText}`);
-      }
-
-      const json = await resp.json();
-      pushRequestyUsage(variantConfig, json?.usage ?? null);
-      generatedNoteField.value = json?.choices?.[0]?.message?.content || "";
-    } else {
-      await streamChatCompletionsSse(resp, {
-        signal: controller.signal,
-        errorLabel: "Requesty",
-        captureUsage: true,
-        onDelta: (textChunk) => {
-          generatedNoteField.value += textChunk;
-        },
-        onDone: (finalEvent) => {
-          pushRequestyUsage(variantConfig, finalEvent?.usage ?? null);
-        },
-        onError: (error) => {
-          throw error;
-        }
+    if (variantConfig.messagesApi) {
+      const result = await generateRequestyClaudeMessage({
+        apiKey, model: variantConfig.requestyModelId,
+        system: finalPromptText,
+        userText: `${supplementaryWrapped}${transcriptionText}`,
+        reasoningLevel, streaming, signal: controller.signal,
+        onDelta: (textChunk) => { generatedNoteField.value += textChunk; }
       });
+      if (!streaming) generatedNoteField.value = result.text;
+      pushRequestyUsage(variantConfig, result.usage);
+    } else {
+      const resp = await fetch(REQUESTY_EU_CHAT_COMPLETIONS_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal
+      });
+
+      if (!streaming) {
+        if (!resp.ok) {
+          const errText = await resp.text().catch(() => "");
+          throw new Error(`Requesty error ${resp.status}: ${errText}`);
+        }
+
+        const json = await resp.json();
+        pushRequestyUsage(variantConfig, json?.usage ?? null);
+        generatedNoteField.value = json?.choices?.[0]?.message?.content || "";
+      } else {
+        await streamChatCompletionsSse(resp, {
+          signal: controller.signal,
+          errorLabel: "Requesty",
+          captureUsage: true,
+          onDelta: (textChunk) => {
+            generatedNoteField.value += textChunk;
+          },
+          onDone: (finalEvent) => {
+            pushRequestyUsage(variantConfig, finalEvent?.usage ?? null);
+          },
+          onError: (error) => {
+            throw error;
+          }
+        });
+      }
     }
 
     noteTimer.stop("Text generation completed!");
@@ -375,7 +399,7 @@ async function generateNote() {
 // Public init functions
 // -----------------------------------------------------------------------------
 //
-// All effective providers (requesty-claude / requesty-sonnet /
+// All effective providers (requesty-claude / requesty-sonnet / requesty-haiku /
 // requesty-gpt6-* / requesty-gpt55 / requesty-nano / requesty-gpt56-* /
 // requesty-gemini38-flash / requesty-deepseek-* / requesty-kimi-k3)
 // bind the same generate function; the active model is read from the
@@ -388,6 +412,10 @@ function initRequestyClaudeOpus55() {
 }
 
 function initRequestyClaudeSonnet55() {
+  bindGenerateNoteButton(generateNote);
+}
+
+function initRequestyClaudeHaiku55() {
   bindGenerateNoteButton(generateNote);
 }
 
@@ -438,6 +466,7 @@ function initRequestyKimiK3() {
 export {
   initRequestyClaudeOpus55,
   initRequestyClaudeSonnet55,
+  initRequestyClaudeHaiku55,
   initRequestyGpt6Luna,
   initRequestyGpt61Sol,
   initRequestyGpt55,
