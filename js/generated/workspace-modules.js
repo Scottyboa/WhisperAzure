@@ -19966,9 +19966,8 @@ function getRtAudioWorkletBlobUrl() {
   return rtAudioWorkletBlobUrl;
 }
 
-function buildRealtimeSessionConfig(apiKey, costReference) {
+function buildRealtimeSessionConfig(costReference) {
   return {
-    api_key: apiKey,
     model: SONIOX_RT_MODEL,
     ...(costReference ? { client_reference_id: costReference } : {}),
     audio_format: 'pcm_s16le',
@@ -20116,7 +20115,11 @@ async function rtOpenWebSocketSession() {
   return new Promise((resolve, reject) => {
     let settled = false;
     let socket;
-    try { socket = new WebSocket(url); }
+    // Soniox authenticates browser WebSockets during the opening handshake.
+    // Keep using the user's existing session-only API key, but pass it as the
+    // protocol following Soniox's required `soniox-api-key` marker. The key
+    // must not also be included in the first configuration message.
+    try { socket = new WebSocket(url, ['soniox-api-key', apiKey]); }
     catch (err) { reject(err); return; }
 
     socket.binaryType = 'arraybuffer';
@@ -20145,7 +20148,7 @@ async function rtOpenWebSocketSession() {
 
     socket.addEventListener('open', () => {
       try {
-        const cfg = buildRealtimeSessionConfig(apiKey, costReference);
+        const cfg = buildRealtimeSessionConfig(costReference);
         socket.send(JSON.stringify(cfg));
         configSent = true;
         ws = socket;
