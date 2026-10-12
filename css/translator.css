@@ -38,6 +38,7 @@
 .translator-context summary { cursor:pointer; font-size:13px; }
 .translator-context p { font-size:12px; color:#666; }
 .translator-context textarea { width:100%; box-sizing:border-box; min-height:80px; resize:vertical; padding:8px; }
+.translator-footer-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
 @media (max-width:800px) { .translator-panels { grid-template-columns:1fr; } .translator-log { height:300px; } .translator-panel { padding:12px; } .translator-footer { flex-wrap:wrap; } }
 @media (max-width:800px) {
   .recording-header { flex-wrap:wrap; gap:8px; }
