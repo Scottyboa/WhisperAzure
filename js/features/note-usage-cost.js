@@ -161,23 +161,19 @@ import {
   // Requesty (EU router) — published endpoint rates, USD per 1M tokens.
   // claude-opus-5-5: bedrock/claude-opus-5-5@eu-north-1 rates
   // claude-sonnet-5-5: vertex/claude-sonnet-5-5@eu rates (EU regional pricing)
-  // claude-haiku-5-5: bedrock/claude-haiku-5-5@eu-north-1; higher tier above 100K input
+  // claude-haiku-5-5: bedrock/claude-haiku-5-5@eu-north-1 rates
   // gpt-6-luna / gpt-6.1-sol: Azure Sweden Central rates from Requesty's model cards
   // gpt-5.5:         azure/gpt-5.5@swedencentral rates
   // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
   // gpt-5.6-*:       Azure Sweden Central rates from Requesty's model cards
-  // gemini-3.8-flash: vertex/gemini-3.8-flash@eu discounted endpoint rates
+  // gemini-4-argon / gemini-3.8-flash: discounted Vertex EU endpoint rates
   // deepseek-v4-pro-0813: tensorx/deepseek-v4-pro-0813 rates
   // deepseek-v4.1-flash: sference/deepseek-v4.1-flash rates
   // kimi-k3:          nebius/kimi-k3 rates
   const REQUESTY_USD_PER_MTOK = {
     "claude-opus-5-5": { input: 4.4, output: 22.0 },
     "claude-sonnet-5-5": { input: 2.2, output: 11.0 },
-    "claude-haiku-5-5": {
-      short: { input: 0.11, output: 0.55 },
-      long: { input: 0.55, output: 2.75 },
-      longContextThreshold: 100_000,
-    },
+    "claude-haiku-5-5": { input: 0.11, output: 0.55 },
     "gpt-6.1-sol": { input: 2.4, output: 12.0 },
     "gpt-6-luna": { input: 0.12, output: 0.6 },
     "gpt-5.5": { input: 5.0, output: 30.0 },
@@ -185,6 +181,7 @@ import {
     "gpt-5.6-luna": { input: 0.22, output: 1.32 },
     "gpt-5.6-terra": { input: 2.2, output: 13.2 },
     "gpt-5.6-sol": { input: 4.4, output: 22.0 },
+    "gemini-4-argon": { input: 2.2, output: 11.0 },
     "gemini-3.8-flash": { input: 0.825, output: 4.125 },
     "deepseek-v4-pro-0813": { input: 1.75, output: 3.5 },
     "deepseek-v4.1-flash": { input: 0.5, output: 1.5 },

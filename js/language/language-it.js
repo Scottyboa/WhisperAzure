@@ -38,7 +38,7 @@ export const indexTranslations = {
   <p>Requesty offre, con una sola chiave API, modelli di più sviluppatori. L’app limita intenzionalmente la scelta a deployment selezionati, destinati all’elaborazione nell’UE, senza riutilizzo per l’addestramento e con controlli di conservazione appropriati.</p>
   <ul>
     <li>Claude Opus 5.5</li><li>Claude Sonnet 5.5</li>
-    <li>Claude Haiku 5.5</li><li>GPT-6.1 Sol</li><li>GPT-6 Luna</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 3.8 Flash</li><li>DeepSeek V4 Pro</li><li>DeepSeek V4.1 Flash</li><li>Kimi K3</li>
+    <li>Claude Haiku 5.5</li><li>GPT-6.1 Sol</li><li>GPT-6 Luna</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 4 Argon</li><li>Gemini 3.8 Flash</li><li>DeepSeek V4 Pro</li><li>DeepSeek V4.1 Flash</li><li>Kimi K3</li>
   </ul>
   <p><strong>Altri provider supportati</strong></p>
   <ul>
@@ -50,7 +50,7 @@ export const indexTranslations = {
 
   <p><strong>Guida pratica ai modelli Requesty</strong></p>
   <ul>
-    <li><strong>Qualità massima:</strong> Claude Opus 5.5 e GPT-5.6 Sol</li>
+    <li><strong>Qualità massima:</strong> Gemini 4 Argon, Claude Opus 5.5 e GPT-5.6 Sol</li>
     <li><strong>Ottime scelte generali:</strong> Claude Sonnet 5.5, GPT-5.6 Terra, GPT-5.5 e DeepSeek V4 Pro</li>
     <li><strong>Velocità e convenienza:</strong> Claude Haiku 5.5, GPT-5.6 Luna, Gemini 3.8 Flash e DeepSeek V4.1 Flash</li>
     <li><strong>Riepilogo/pre-elaborazione al minor costo:</strong> GPT-5 Nano</li>
@@ -59,6 +59,7 @@ export const indexTranslations = {
   <p>Claude Opus 5.5 supporta nell’app i livelli di reasoning Low, Medium e High; il valore predefinito è Low.</p>
   <p>Claude Haiku 5.5 offre i livelli di reasoning Off, Low, Medium e High; il valore predefinito è Medium. Off disattiva il ragionamento.</p>
   <p>Haiku 5.5 usa AWS Bedrock tramite il router UE di Requesty, con Stoccolma come regione di ingresso. L’elaborazione può avvenire in altre regioni dell’UE. La route del modello ha conservazione zero e non usa i tuoi dati per l’addestramento. Attiva Zero Data Retention in Requesty come descritto nella guida di configurazione.</p>
+  <p>Gemini 4 Argon è fornito tramite Google Vertex AI nell’UE. Supporta i livelli di reasoning Low, Medium e High, con Low come valore predefinito. La route ha conservazione zero, non viene usata per l’addestramento e attualmente beneficia di uno sconto del 50% sull’endpoint.</p>
   <p>GPT-6.1 Sol e GPT-6 Luna supportano nell’app i livelli di reasoning None, Low, Medium e High; se non è salvata una scelta precedente, il valore predefinito è Low.</p>
   <p>DeepSeek V4 Pro e DeepSeek V4.1 Flash supportano i livelli di reasoning None, Low, High e Max; l’app usa Low come valore predefinito.</p>
   <p>Per documenti lunghi, un modello economico come GPT-5 Nano può creare prima un breve riepilogo per le Informazioni supplementari. Il modello principale più potente genera poi la nota senza ricevere l’intero documento, riducendo sensibilmente il costo.</p>
@@ -186,7 +187,7 @@ La configurazione più semplice consigliata ai nuovi utenti è:<br>
 2. <strong>Requesty</strong> per la generazione delle note.<br><br>
 
 <strong>Opzioni STT:</strong> Soniox batch, batch con etichette dei parlanti, tempo reale, OpenAI gpt-4o-transcribe e Mistral Voxtral Mini.<br><br>
-<strong>Provider di note:</strong> Requesty (Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3), OpenAI (GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna e GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) e Mistral Large.<br><br>
+<strong>Provider di note:</strong> Requesty (Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Argon, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3), OpenAI (GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna e GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) e Mistral Large.<br><br>
 
 <hr><br>
 <strong>Soniox — configurazione STT consigliata</strong><br>
@@ -239,11 +240,11 @@ Una chiave API non rende automaticamente un servizio conforme al GDPR. Verifica 
   <p><strong>2. Generazione delle note</strong> (USD per un milione di token input/output)</p>
   <ul>
     <li>Claude Opus 5.5: circa 4,40 / 22,00 USD</li><li>Claude Sonnet 5.5: circa 2,20 / 11,00 USD</li>
-    <li>Claude Haiku 5.5: circa 0,11 / 0,55 USD fino a 100K token di input inclusi; 0,55 / 2,75 USD oltre 100K</li>
+    <li>Claude Haiku 5.5: circa 0,11 / 0,55 USD</li>
     <li>GPT-6.1 Sol: circa 2,40 / 12,00 USD</li><li>GPT-6 Luna: circa 0,12 / 0,60 USD</li>
     <li>GPT-5.6 Sol: circa 4,40 / 22,00 USD</li><li>GPT-5.6 Terra: circa 2,20 / 13,20 USD</li>
     <li>GPT-5.6 Luna: circa 0,22 / 1,32 USD</li><li>GPT-5.5: circa 5,00 / 30,00 USD</li>
-    <li>GPT-5 Nano: circa 0,055 / 0,44 USD</li><li>Gemini 3.8 Flash: circa 0,825 / 4,125 USD (sconto attuale del 50% sull'endpoint)</li><li>DeepSeek V4 Pro: circa 1,75 / 3,50 USD (input in cache: 0,44 USD)</li><li>DeepSeek V4.1 Flash: circa 0,50 / 1,50 USD (input in cache: 0,05 USD)</li><li>Kimi K3: circa 3,00 / 15,00 USD</li>
+    <li>GPT-5 Nano: circa 0,055 / 0,44 USD</li><li>Gemini 4 Argon: circa 2,20 / 11,00 USD (sconto attuale del 50% sull'endpoint; prezzo di listino 4,40 / 22,00 USD)</li><li>Gemini 3.8 Flash: circa 0,825 / 4,125 USD (sconto attuale del 50% sull'endpoint)</li><li>DeepSeek V4 Pro: circa 1,75 / 3,50 USD (input in cache: 0,44 USD)</li><li>DeepSeek V4.1 Flash: circa 0,50 / 1,50 USD (input in cache: 0,05 USD)</li><li>Kimi K3: circa 3,00 / 15,00 USD</li>
   </ul>
   <p>I valori rispecchiano le stime attuali dell’app e possono cambiare con Requesty o il deployment upstream. Controlla il prezzo vicino al modello e il rapporto d’uso Requesty.</p>
   <p>Altri provider: OpenAI diretto (GPT-6.1 Sol: circa 2,00 / 10,00 USD fino a 272K token di input inclusi e 4,00 / 15,00 USD oltre 272K; GPT-6 Luna: circa 0,10 / 0,50 USD fino a 272K inclusi e 0,20 / 0,75 USD oltre 272K; inoltre GPT-5.6 Sol/Terra/Luna e GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus, soprattutto per utenti AWS esistenti) e Mistral Large. I prezzi attuali sono mostrati nell’app.</p>
@@ -257,7 +258,7 @@ Una chiave API non rende automaticamente un servizio conforme al GDPR. Verifica 
   <p>Con circa 2.200 token input e 450 output:</p>
   <ul>
     <li>Trascrizione Soniox: circa 0,026 USD</li><li>GPT-5 Nano: circa 0,0003 USD</li>
-    <li>Gemini 3.8 Flash: circa 0,004 USD</li><li>Claude Sonnet 5.5: circa 0,010 USD</li>
+    <li>Gemini 4 Argon: circa 0,010 USD</li><li>Gemini 3.8 Flash: circa 0,004 USD</li><li>Claude Sonnet 5.5: circa 0,010 USD</li>
     <li>Claude Haiku 5.5: circa 0,0005 USD</li>
     <li>Claude Opus 5.5: circa 0,020 USD</li><li>GPT-5.6 Sol: circa 0,020 USD</li>
   </ul>
@@ -315,7 +316,7 @@ export const transcribeTranslations = {
     contextNote: "Il contesto è la finestra di contesto massima pubblicata per il modello o il routing configurato.",
     openAiLongContextNote: "Per i modelli OpenAI GPT-6 diretti, il prezzo più basso si applica fino a 272K token di input inclusi; quello più alto si applica oltre 272K.",
     requestyNote: "I prezzi Requesty corrispondono ai routing esatti configurati nell’app. Eventuali maggiorazioni a livello di account Requesty non sono incluse.",
-    haikuLongContextNote: "Per Claude Haiku 5.5 tramite Requesty, i prezzi più bassi si applicano fino a 100K token di input inclusi. Oltre 100K, i prezzi di input e output più alti si applicano all’intera richiesta. Il ragionamento è incluso nei token di output fatturabili.",
+    requestyDiscountNote: "Gemini 4 Argon è mostrato alla tariffa attuale dell’endpoint UE Requesty, scontata del 50% (prezzo di listino 4,40/22,00 USD).",
     sttNote: "I prezzi speech-to-text sono le tariffe pubbliche pay-as-you-go attuali. Soniox viene fatturato a token; gli importi al minuto mostrati sono equivalenti approssimativi calcolati dalle tariffe orarie pubblicate da Soniox.",
   },
   backToHome: "Torna alla pagina iniziale",

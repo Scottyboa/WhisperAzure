@@ -194,6 +194,15 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './requesty.js',
     initExportName: 'initRequestyGpt5Nano',
   },
+  'requesty-gemini4-argon': {
+    id: 'requesty-gemini4-argon',
+    label: 'Requesty Gemini 4 Argon',
+    uiProvider: 'requesty',
+    requestyModel: 'gemini-4-argon',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyGemini4Argon',
+  },
   'requesty-gpt56-luna': {
     id: 'requesty-gpt56-luna',
     label: 'Requesty GPT-5.6 Luna',
@@ -277,6 +286,7 @@ const REQUESTY_MODEL_OPTIONS = [
   { value: 'gpt-5.6-luna', label: 'GPT-5.6 Luna' },
   { value: 'gpt-5.5', label: 'GPT-5.5' },
   { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
+  { value: 'gemini-4-argon', label: 'Gemini 4 Argon' },
   { value: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash' },
   { value: 'deepseek-v4-pro-0813', label: 'DeepSeek V4 Pro' },
   { value: 'deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash' },
@@ -332,9 +342,9 @@ const REQUESTY_GPT56_REASONING_OPTIONS = [
   { value: 'xhigh', label: 'X-high' },
 ];
 
-// Gemini 3.8 Flash supports exactly low | medium | high. The upstream model
-// defaults to medium, but the app intentionally defaults it to low.
-const REQUESTY_GEMINI38_REASONING_OPTIONS = [
+// Gemini 4 Argon and Gemini 3.8 Flash support low | medium | high. The app
+// intentionally defaults both models to low.
+const REQUESTY_GEMINI_REASONING_OPTIONS = [
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
   { value: 'high', label: 'High' },
@@ -552,8 +562,8 @@ export function listRequestyNanoReasoningOptions(
           ? REQUESTY_DEEPSEEK_REASONING_OPTIONS
           : normalizedModel === 'kimi-k3'
             ? REQUESTY_KIMI_K3_REASONING_OPTIONS
-            : normalizedModel === 'gemini-3.8-flash'
-              ? REQUESTY_GEMINI38_REASONING_OPTIONS
+            : normalizedModel === 'gemini-4-argon' || normalizedModel === 'gemini-3.8-flash'
+              ? REQUESTY_GEMINI_REASONING_OPTIONS
               : REQUESTY_GPT6_MODELS.has(normalizedModel)
                 ? REQUESTY_GPT6_REASONING_OPTIONS
                 : REQUESTY_GPT56_MODELS.has(normalizedModel)
@@ -570,6 +580,7 @@ export function getDefaultRequestyReasoning(modelId = 'gpt-5-nano') {
     REQUESTY_DEEPSEEK_MODELS.has(normalizedModel)
   ) return 'low';
   return REQUESTY_GPT6_MODELS.has(normalizedModel) ||
+    normalizedModel === 'gemini-4-argon' ||
     normalizedModel === 'gemini-3.8-flash' ||
     normalizedModel === 'kimi-k3'
     ? 'low'
@@ -852,6 +863,7 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
     (reqModel === 'claude-opus-5-5' ||
       reqModel === 'claude-haiku-5-5' ||
       reqModel === 'gpt-5-nano' ||
+      reqModel === 'gemini-4-argon' ||
       reqModel === 'gemini-3.8-flash' ||
       REQUESTY_DEEPSEEK_MODELS.has(reqModel) ||
       reqModel === 'kimi-k3' ||
@@ -863,7 +875,7 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   // (#gpt5Reasoning, None/Low/Medium/High). Claude Sonnet 5.5 maps
   // reasoning_effort to a thinking budget ("None" omits it), while GPT-5.5
   // uses the native OpenAI effort string. Claude Opus / Haiku 5.5, GPT-5 Nano,
-  // GPT-5.6, GPT-6 Luna / GPT-6.1 Sol, Gemini 3.8 Flash, DeepSeek V4 Pro/V4.1 Flash
+  // GPT-5.6, GPT-6 Luna / GPT-6.1 Sol, Gemini 4 Argon / 3.8 Flash, DeepSeek V4 Pro/V4.1 Flash
   // and Kimi K3 use the dedicated Requesty selector because their valid
   // option sets differ from the shared selector.
 

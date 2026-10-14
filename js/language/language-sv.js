@@ -36,7 +36,7 @@ export const indexTranslations = {
   <p>Requesty ger tillgång till modeller från flera utvecklare genom en enda API-nyckel. Valen i appen är avsiktligt begränsade till utvalda driftsättningar som är avsedda för behandling inom EU, utan återanvändning för modellträning och med lämpliga inställningar för lagring.</p>
   <ul>
     <li>Claude Opus 5.5</li><li>Claude Sonnet 5.5</li>
-    <li>Claude Haiku 5.5</li><li>GPT-6.1 Sol</li><li>GPT-6 Luna</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 3.8 Flash</li><li>DeepSeek V4 Pro</li><li>DeepSeek V4.1 Flash</li><li>Kimi K3</li>
+    <li>Claude Haiku 5.5</li><li>GPT-6.1 Sol</li><li>GPT-6 Luna</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 4 Argon</li><li>Gemini 3.8 Flash</li><li>DeepSeek V4 Pro</li><li>DeepSeek V4.1 Flash</li><li>Kimi K3</li>
   </ul>
   <p><strong>Andra leverantörer som stöds</strong></p>
   <ul>
@@ -48,7 +48,7 @@ export const indexTranslations = {
 
   <p><strong>Praktisk vägledning för Requesty-modeller</strong></p>
   <ul>
-    <li><strong>Högsta kvalitet:</strong> Claude Opus 5.5 och GPT-5.6 Sol</li>
+    <li><strong>Högsta kvalitet:</strong> Gemini 4 Argon, Claude Opus 5.5 och GPT-5.6 Sol</li>
     <li><strong>Starka allroundval:</strong> Claude Sonnet 5.5, GPT-5.6 Terra, GPT-5.5 och DeepSeek V4 Pro</li>
     <li><strong>Snabbhet och värde:</strong> Claude Haiku 5.5, GPT-5.6 Luna, Gemini 3.8 Flash och DeepSeek V4.1 Flash</li>
     <li><strong>Billigast för sammanfattning och förbehandling:</strong> GPT-5 Nano</li>
@@ -57,6 +57,7 @@ export const indexTranslations = {
   <p>Claude Opus 5.5 stöder reasoning-nivåerna Low, Medium och High i appen; standardvalet är Low.</p>
   <p>Claude Haiku 5.5 har reasoning-valen Off, Low, Medium och High; standardvalet är Medium. Off stänger av tänkandet.</p>
   <p>Haiku 5.5 använder AWS Bedrock via Requestys EU-router, med Stockholm som ingångsregion. Modellbearbetningen kan ske i andra EU-regioner. Modellrutten har zero data retention och använder inte dina data för träning. Aktivera Zero Data Retention hos Requesty enligt installationsguiden.</p>
+  <p>Gemini 4 Argon levereras via Google Vertex AI i EU. Modellen stöder reasoning-nivåerna Low, Medium och High, med Low som standardval. Rutten har zero data retention, används inte för modellträning och har för närvarande 50 % rabatt på slutpunkten.</p>
   <p>GPT-6.1 Sol och GPT-6 Luna stöder reasoning-nivåerna None, Low, Medium och High i appen; om inget tidigare reasoning-val finns sparat är standardvalet Low.</p>
   <p>DeepSeek V4 Pro och DeepSeek V4.1 Flash stöder reasoning-nivåerna None, Low, High och Max; appens standardval är Low.</p>
   <p>För långa dokument kan en billigare modell, till exempel GPT-5 Nano, först skapa en kort sammanfattning för Kompletterande information. En starkare huvudmodell kan sedan skapa slutanteckningen utan att ta emot hela dokumentet, vilket kan sänka kostnaden avsevärt.</p>
@@ -186,7 +187,7 @@ Den enklaste rekommenderade konfigurationen för nya användare är:<br>
 2. <strong>Requesty</strong> för anteckningsgenerering.<br><br>
 
 <strong>STT-alternativ:</strong> Soniox batch, Soniox batch med talaretiketter, Soniox realtid, OpenAI gpt-4o-transcribe och Mistral Voxtral Mini Transcribe.<br><br>
-<strong>Anteckningsleverantörer:</strong> Requesty (Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash och Kimi K3), OpenAI (GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna och GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) och Mistral Large.<br><br>
+<strong>Anteckningsleverantörer:</strong> Requesty (Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Argon, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash och Kimi K3), OpenAI (GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna och GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) och Mistral Large.<br><br>
 
 <hr><br>
 <strong>Soniox — rekommenderad STT-konfiguration</strong><br>
@@ -244,7 +245,7 @@ En API-nyckel gör inte en tjänst automatiskt GDPR-kompatibel. Kontrollera DPA,
   <ul>
     <li>Claude Opus 5.5: cirka 4,40 / 22,00 USD</li>
     <li>Claude Sonnet 5.5: cirka 2,20 / 11,00 USD</li>
-    <li>Claude Haiku 5.5: cirka 0,11 / 0,55 USD till och med 100K input-token; 0,55 / 2,75 USD över 100K</li>
+    <li>Claude Haiku 5.5: cirka 0,11 / 0,55 USD</li>
     <li>GPT-6.1 Sol: cirka 2,40 / 12,00 USD</li>
     <li>GPT-6 Luna: cirka 0,12 / 0,60 USD</li>
     <li>GPT-5.6 Sol: cirka 4,40 / 22,00 USD</li>
@@ -252,6 +253,7 @@ En API-nyckel gör inte en tjänst automatiskt GDPR-kompatibel. Kontrollera DPA,
     <li>GPT-5.6 Luna: cirka 0,22 / 1,32 USD</li>
     <li>GPT-5.5: cirka 5,00 / 30,00 USD</li>
     <li>GPT-5 Nano: cirka 0,055 / 0,44 USD</li>
+    <li>Gemini 4 Argon: cirka 2,20 / 11,00 USD (nuvarande 50 % rabatt på slutpunkten; listpris 4,40 / 22,00 USD)</li>
     <li>Gemini 3.8 Flash: cirka 0,825 / 4,125 USD (nuvarande 50 % rabatt på slutpunkten)</li>
     <li>DeepSeek V4 Pro: cirka 1,75 / 3,50 USD (cachad input: 0,44 USD)</li>
     <li>DeepSeek V4.1 Flash: cirka 0,50 / 1,50 USD (cachad input: 0,05 USD)</li>
@@ -270,7 +272,7 @@ En API-nyckel gör inte en tjänst automatiskt GDPR-kompatibel. Kontrollera DPA,
   <ul>
     <li>Soniox-transkription: cirka 0,026 USD</li>
     <li>GPT-5 Nano-anteckning: cirka 0,0003 USD</li>
-    <li>Gemini 3.8 Flash: cirka 0,004 USD</li>
+    <li>Gemini 4 Argon: cirka 0,010 USD</li><li>Gemini 3.8 Flash: cirka 0,004 USD</li>
     <li>Claude Sonnet 5.5: cirka 0,010 USD</li>
     <li>Claude Haiku 5.5: cirka 0,0005 USD</li>
     <li>Claude Opus 5.5: cirka 0,020 USD</li>
@@ -330,7 +332,7 @@ export const transcribeTranslations = {
     contextNote: "Kontext är det maximala publicerade kontextfönstret för den konfigurerade modellen eller routen.",
     openAiLongContextNote: "För direkta OpenAI GPT-6-modeller gäller det lägre priset till och med 272K input-token; det högre gäller över 272K.",
     requestyNote: "Requesty-priserna gäller de exakta router som är konfigurerade i appen. Eventuellt kontopåslag hos Requesty ingår inte.",
-    haikuLongContextNote: "För Claude Haiku 5.5 via Requesty gäller de lägre priserna till och med 100K input-token. Över 100K gäller de högre input- och output-priserna för hela anropet. Tänkande ingår i fakturerbara output-token.",
+    requestyDiscountNote: "Gemini 4 Argon visas med Requestys nuvarande 50 % rabatterade EU-slutpunktspris (listpris 4,40/22,00 USD).",
     sttNote: "Tal-till-text-priserna är aktuella offentliga pay-as-you-go-priser. Soniox debiteras per token; minutpriserna som visas är ungefärliga motsvarigheter beräknade från Soniox publicerade timpriser.",
   },
   backToHome: "Tillbaka till startsidan",

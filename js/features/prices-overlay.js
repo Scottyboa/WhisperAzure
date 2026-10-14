@@ -6,7 +6,7 @@ const TEXT_PRICE_GROUPS = [
     rows: [
       { model: "Claude Opus 5.5", id: "bedrock/claude-opus-5-5@eu-north-1", context: "1M", input: "$4.40", output: "$22.00" },
       { model: "Claude Sonnet 5.5", id: "vertex/claude-sonnet-5-5@eu", context: "1M", input: "$2.20", output: "$11.00" },
-      { model: "Claude Haiku 5.5", id: "bedrock/claude-haiku-5-5@eu-north-1", context: "1M", input: "$0.11–$0.55", output: "$0.55–$2.75" },
+      { model: "Claude Haiku 5.5", id: "bedrock/claude-haiku-5-5@eu-north-1", context: "1M", input: "$0.11", output: "$0.55" },
       { model: "GPT-6.1 Sol", id: "azure/gpt-6.1-sol@swedencentral", context: "1.1M", input: "$2.40", output: "$12.00" },
       { model: "GPT-6 Luna", id: "azure/gpt-6-luna@swedencentral", context: "1.1M", input: "$0.12", output: "$0.60" },
       { model: "GPT-5.6 Sol", id: "azure/gpt-5.6-sol@swedencentral", context: "1.1M", input: "$4.40", output: "$22.00" },
@@ -14,6 +14,7 @@ const TEXT_PRICE_GROUPS = [
       { model: "GPT-5.6 Luna", id: "azure/gpt-5.6-luna@swedencentral", context: "1.1M", input: "$0.22", output: "$1.32" },
       { model: "GPT-5.5", id: "azure/gpt-5.5@swedencentral", context: "1.1M", input: "$5.00", output: "$30.00" },
       { model: "GPT-5 Nano", id: "azure/gpt-5-nano@swedencentral", context: "200K", input: "$0.055", output: "$0.44" },
+      { model: "Gemini 4 Argon (50% off)", id: "vertex/gemini-4-argon@eu", context: "1M", input: "$2.20", output: "$11.00" },
       { model: "Gemini 3.8 Flash", id: "vertex/gemini-3.8-flash@eu", context: "1M", input: "$0.825", output: "$4.125" },
       { model: "DeepSeek V4 Pro", id: "tensorx/deepseek-v4-pro-0813", context: "1M", input: "$1.75", output: "$3.50" },
       { model: "DeepSeek V4.1 Flash", id: "sference/deepseek-v4.1-flash", context: "1M", input: "$0.50", output: "$1.50" },
@@ -93,7 +94,7 @@ const FALLBACK_I18N = {
   contextNote: "Context is the maximum published context window for the configured model or route.",
   openAiLongContextNote: "For direct OpenAI GPT-6 models, the lower price applies through 272K input tokens; the higher price applies above 272K.",
   requestyNote: "Requesty prices match the exact routes configured in this app. Any account-level Requesty markup is not included.",
-  haikuLongContextNote: "For Claude Haiku 5.5 through Requesty, the lower prices apply through 100K input tokens. Above 100K, the higher input and output prices apply to the entire request. Reasoning is included in billable output tokens.",
+  requestyDiscountNote: "Gemini 4 Argon is shown at Requesty's current 50% discounted EU endpoint rate ($4.40/$22.00 list price).",
   sttNote: "Speech-to-text prices are current public pay-as-you-go rates. Soniox is token-billed; the per-minute figures shown are approximate equivalents derived from Soniox's published hourly rates.",
 };
 
@@ -221,7 +222,7 @@ async function renderPrices() {
         <p class="prices-note">${escapeHtml(t.contextNote)}</p>
         <p class="prices-note">${escapeHtml(t.openAiLongContextNote)}</p>
         <p class="prices-note">${escapeHtml(t.requestyNote)}</p>
-        <p class="prices-note">${escapeHtml(t.haikuLongContextNote)}</p>
+        <p class="prices-note">${escapeHtml(t.requestyDiscountNote)}</p>
       </div>
     </section>
     <section class="prices-section">

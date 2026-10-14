@@ -1196,23 +1196,19 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
   // Requesty (EU router) — published endpoint rates, USD per 1M tokens.
   // claude-opus-5-5: bedrock/claude-opus-5-5@eu-north-1 rates
   // claude-sonnet-5-5: vertex/claude-sonnet-5-5@eu rates (EU regional pricing)
-  // claude-haiku-5-5: bedrock/claude-haiku-5-5@eu-north-1; higher tier above 100K input
+  // claude-haiku-5-5: bedrock/claude-haiku-5-5@eu-north-1 rates
   // gpt-6-luna / gpt-6.1-sol: Azure Sweden Central rates from Requesty's model cards
   // gpt-5.5:         azure/gpt-5.5@swedencentral rates
   // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
   // gpt-5.6-*:       Azure Sweden Central rates from Requesty's model cards
-  // gemini-3.8-flash: vertex/gemini-3.8-flash@eu discounted endpoint rates
+  // gemini-4-argon / gemini-3.8-flash: discounted Vertex EU endpoint rates
   // deepseek-v4-pro-0813: tensorx/deepseek-v4-pro-0813 rates
   // deepseek-v4.1-flash: sference/deepseek-v4.1-flash rates
   // kimi-k3:          nebius/kimi-k3 rates
   const REQUESTY_USD_PER_MTOK = {
     "claude-opus-5-5": { input: 4.4, output: 22.0 },
     "claude-sonnet-5-5": { input: 2.2, output: 11.0 },
-    "claude-haiku-5-5": {
-      short: { input: 0.11, output: 0.55 },
-      long: { input: 0.55, output: 2.75 },
-      longContextThreshold: 100_000,
-    },
+    "claude-haiku-5-5": { input: 0.11, output: 0.55 },
     "gpt-6.1-sol": { input: 2.4, output: 12.0 },
     "gpt-6-luna": { input: 0.12, output: 0.6 },
     "gpt-5.5": { input: 5.0, output: 30.0 },
@@ -1220,6 +1216,7 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
     "gpt-5.6-luna": { input: 0.22, output: 1.32 },
     "gpt-5.6-terra": { input: 2.2, output: 13.2 },
     "gpt-5.6-sol": { input: 4.4, output: 22.0 },
+    "gemini-4-argon": { input: 2.2, output: 11.0 },
     "gemini-3.8-flash": { input: 0.825, output: 4.125 },
     "deepseek-v4-pro-0813": { input: 1.75, output: 3.5 },
     "deepseek-v4.1-flash": { input: 0.5, output: 1.5 },
@@ -5538,13 +5535,14 @@ const LANGUAGES = [
   ['tr','Turkish'],['uk','Ukrainian'],['ur','Urdu'],['vi','Vietnamese'],['cy','Welsh'],
 ];
 const LANGUAGE_CODES = new Set(LANGUAGES.map(([code]) => code));
+const TRANSLATOR_SILENCE_TIMEOUT_MS = 30_000;
 const TEXT = {
-  en: { tooltip:"Switch this workspace to translator mode for conversations in two languages. Choose your languages and press Start once. Soniox realtime displays speech and translations in two panels. The workspace remembers its mode and language choices. Stop recording and click “Back to notes” to switch back.", title:'Translator', back:'Back to notes', your:'Your language', patient:'Patient’s language', search:'Search languages…', clear:'Clear conversation', reset:'Reset connection', resetFailed:'Could not reset the translation connection.', context:'Terminology / context', contextHint:'Optional background or medication names. Used for this conversation only; not included in workspace exports.', hint:'Press Start once and take turns speaking. Each panel shows original speech and translations in its selected language.', original:'Original', translation:'Translation', empty:'The conversation will appear here.', noMatch:'No matching languages', choose:'Select two different languages from the suggestions.', busy:'Stop or abort recording and generation before changing mode.', starting:'Connecting…', recording:'Listening…', paused:'Paused', resetting:'Resetting translation connection…', stopping:'Finishing translation…', stopped:'Translation finished.', aborted:'Recording aborted.', idle:'Ready. Choose two languages and press Start.', start:'Start', pause:'Pause', resume:'Resume', stop:'Stop', abort:'Abort', timer:'Recording', loading:'Loading Soniox realtime…' },
-  no: { tooltip:"Bytt dette Workspace-et til oversettermodus for samtaler på to språk. Velg språkene deres og trykk Start én gang. Soniox realtime viser tale og oversettelser i to felt. Workspace-et husker modus og språkvalg. Stopp opptaket og klikk «Tilbake til notater» for å bytte tilbake.", title:'Oversetter', back:'Tilbake til notater', your:'Ditt språk', patient:'Pasientens språk', search:'Søk etter språk…', clear:'Tøm samtalen', reset:'Nullstill tilkobling', resetFailed:'Kunne ikke nullstille oversettertilkoblingen.', context:'Terminologi / kontekst', contextHint:'Valgfri bakgrunn eller legemiddelnavn. Brukes bare i denne samtalen og tas ikke med i Workspace-eksport.', hint:'Trykk Start én gang og snakk etter tur. Hvert felt viser original tale og oversettelser på valgt språk.', original:'Original', translation:'Oversettelse', empty:'Samtalen vises her.', noMatch:'Ingen språk funnet', choose:'Velg to forskjellige språk fra forslagene.', busy:'Stopp eller avbryt opptak og generering før du bytter modus.', starting:'Kobler til…', recording:'Lytter…', paused:'Pauset', resetting:'Nullstiller oversettertilkoblingen…', stopping:'Fullfører oversettelsen…', stopped:'Oversettelsen er ferdig.', aborted:'Opptaket er avbrutt.', idle:'Klar. Velg to språk og trykk Start.', start:'Start', pause:'Pause', resume:'Fortsett', stop:'Stopp', abort:'Avbryt', timer:'Opptak', loading:'Laster Soniox realtime…' },
-  sv: { tooltip:"Byt detta Workspace till översättarläge för samtal på två språk. Välj era språk och tryck Start en gång. Soniox realtime visar tal och översättningar i två paneler. Workspace kommer ihåg läget och språkvalen. Stoppa inspelningen och klicka på ”Tillbaka till anteckningar” för att byta tillbaka.", title:'Översättare', back:'Tillbaka till anteckningar', your:'Ditt språk', patient:'Patientens språk', search:'Sök språk…', clear:'Rensa samtalet', reset:'Återställ anslutningen', resetFailed:'Det gick inte att återställa översättningsanslutningen.', context:'Terminologi / kontext', contextHint:'Valfri bakgrund eller läkemedelsnamn. Används endast i samtalet; ingår inte i Workspace-export.', hint:'Tryck Start en gång och turas om att tala. Varje panel visar original och översättningar på valt språk.', original:'Original', translation:'Översättning', empty:'Samtalet visas här.', noMatch:'Inga matchande språk', choose:'Välj två olika språk från förslagen.', busy:'Stoppa eller avbryt inspelning och generering innan du byter läge.', starting:'Ansluter…', recording:'Lyssnar…', paused:'Pausad', resetting:'Återställer översättningsanslutningen…', stopping:'Slutför översättningen…', stopped:'Översättningen är klar.', aborted:'Inspelningen avbröts.', idle:'Redo. Välj två språk och tryck Start.', start:'Start', pause:'Paus', resume:'Fortsätt', stop:'Stopp', abort:'Avbryt', timer:'Inspelning', loading:'Laddar Soniox realtime…' },
-  de: { tooltip:"Wechseln Sie diesen Workspace in den Übersetzermodus für Gespräche in zwei Sprachen. Wählen Sie Ihre Sprachen und drücken Sie einmal Start. Soniox realtime zeigt Gesprochenes und Übersetzungen in zwei Feldern. Der Workspace merkt sich den Modus und die Sprachauswahl. Stoppen Sie die Aufnahme und klicken Sie auf „Zurück zu Notizen“, um zurückzuwechseln.", title:'Übersetzer', back:'Zurück zu Notizen', your:'Ihre Sprache', patient:'Sprache des Patienten', search:'Sprachen suchen…', clear:'Gespräch leeren', reset:'Verbindung zurücksetzen', resetFailed:'Die Übersetzungsverbindung konnte nicht zurückgesetzt werden.', context:'Terminologie / Kontext', contextHint:'Optionaler Hintergrund oder Medikamentennamen. Nur für dieses Gespräch; nicht im Workspace-Export enthalten.', hint:'Einmal Start drücken und abwechselnd sprechen. Jedes Feld zeigt Originaltext und Übersetzungen in der gewählten Sprache.', original:'Original', translation:'Übersetzung', empty:'Das Gespräch erscheint hier.', noMatch:'Keine passenden Sprachen', choose:'Wählen Sie zwei verschiedene Sprachen aus den Vorschlägen.', busy:'Aufnahme und Generierung vor dem Moduswechsel stoppen oder abbrechen.', starting:'Verbindung wird hergestellt…', recording:'Hört zu…', paused:'Pausiert', resetting:'Übersetzungsverbindung wird zurückgesetzt…', stopping:'Übersetzung wird abgeschlossen…', stopped:'Übersetzung abgeschlossen.', aborted:'Aufnahme abgebrochen.', idle:'Bereit. Zwei Sprachen wählen und Start drücken.', start:'Start', pause:'Pause', resume:'Fortsetzen', stop:'Stopp', abort:'Abbrechen', timer:'Aufnahme', loading:'Soniox realtime wird geladen…' },
-  fr: { tooltip:"Passez ce Workspace en mode traduction pour les conversations en deux langues. Choisissez vos langues et appuyez une fois sur Démarrer. Soniox realtime affiche les paroles et les traductions dans deux panneaux. Le Workspace mémorise le mode et les langues choisies. Arrêtez l’enregistrement et cliquez sur « Retour aux notes » pour revenir au mode habituel.", title:'Traducteur', back:'Retour aux notes', your:'Votre langue', patient:'Langue du patient', search:'Rechercher une langue…', clear:'Effacer la conversation', reset:'Réinitialiser la connexion', resetFailed:'Impossible de réinitialiser la connexion de traduction.', context:'Terminologie / contexte', contextHint:'Contexte ou noms de médicaments facultatifs. Utilisés uniquement pour cette conversation ; exclus des exports Workspace.', hint:'Appuyez une fois sur Démarrer et parlez à tour de rôle. Chaque panneau affiche les paroles originales et les traductions dans sa langue.', original:'Original', translation:'Traduction', empty:'La conversation apparaîtra ici.', noMatch:'Aucune langue correspondante', choose:'Sélectionnez deux langues différentes dans les suggestions.', busy:'Arrêtez ou annulez l’enregistrement et la génération avant de changer de mode.', starting:'Connexion…', recording:'Écoute…', paused:'En pause', resetting:'Réinitialisation de la connexion de traduction…', stopping:'Finalisation de la traduction…', stopped:'Traduction terminée.', aborted:'Enregistrement annulé.', idle:'Prêt. Choisissez deux langues et appuyez sur Démarrer.', start:'Démarrer', pause:'Pause', resume:'Reprendre', stop:'Arrêter', abort:'Annuler', timer:'Enregistrement', loading:'Chargement de Soniox realtime…' },
-  it: { tooltip:"Passa questo Workspace alla modalità traduttore per conversazioni in due lingue. Scegliete le vostre lingue e premi Avvia una volta. Soniox realtime mostra il parlato e le traduzioni in due pannelli. Il Workspace ricorda la modalità e le lingue scelte. Interrompi la registrazione e fai clic su “Torna alle note” per tornare alla modalità normale.", title:'Traduttore', back:'Torna alle note', your:'La tua lingua', patient:'Lingua del paziente', search:'Cerca lingue…', clear:'Cancella conversazione', reset:'Reimposta connessione', resetFailed:'Impossibile reimpostare la connessione di traduzione.', context:'Terminologia / contesto', contextHint:'Contesto o nomi di farmaci facoltativi. Usati solo per questa conversazione; esclusi dalle esportazioni Workspace.', hint:'Premi Avvia una volta e parlate a turno. Ogni pannello mostra il testo originale e le traduzioni nella lingua scelta.', original:'Originale', translation:'Traduzione', empty:'La conversazione apparirà qui.', noMatch:'Nessuna lingua trovata', choose:'Seleziona due lingue diverse dai suggerimenti.', busy:'Interrompi o annulla registrazione e generazione prima di cambiare modalità.', starting:'Connessione…', recording:'In ascolto…', paused:'In pausa', resetting:'Reimpostazione della connessione di traduzione…', stopping:'Completamento traduzione…', stopped:'Traduzione completata.', aborted:'Registrazione annullata.', idle:'Pronto. Scegli due lingue e premi Avvia.', start:'Avvia', pause:'Pausa', resume:'Riprendi', stop:'Interrompi', abort:'Annulla', timer:'Registrazione', loading:'Caricamento di Soniox realtime…' },
+  en: { tooltip:"Switch this workspace to translator mode for conversations in two languages. Choose your languages and press Start once. Soniox realtime displays speech and translations in two panels. The workspace remembers its mode and language choices. Stop recording and click “Back to notes” to switch back.", title:'Translator', back:'Back to notes', your:'Your language', patient:'Patient’s language', search:'Search languages…', clear:'Clear conversation', reset:'Reset connection', resetFailed:'Could not reset the translation connection.', context:'Terminology / context', contextHint:'Optional background or medication names. Used for this conversation only; not included in workspace exports.', hint:'Press Start once and take turns speaking. Each panel shows original speech and translations in its selected language.', original:'Original', translation:'Translation', empty:'The conversation will appear here.', noMatch:'No matching languages', choose:'Select two different languages from the suggestions.', busy:'Stop or abort recording and generation before changing mode.', starting:'Connecting…', recording:'Listening…', paused:'Paused', autoPaused:'Paused automatically after 30 seconds without detected speech.', resetting:'Resetting translation connection…', stopping:'Finishing translation…', stopped:'Translation finished.', aborted:'Recording aborted.', idle:'Ready. Choose two languages and press Start.', start:'Start', pause:'Pause', resume:'Resume', stop:'Stop', abort:'Abort', timer:'Recording', loading:'Loading Soniox realtime…' },
+  no: { tooltip:"Bytt dette Workspace-et til oversettermodus for samtaler på to språk. Velg språkene deres og trykk Start én gang. Soniox realtime viser tale og oversettelser i to felt. Workspace-et husker modus og språkvalg. Stopp opptaket og klikk «Tilbake til notater» for å bytte tilbake.", title:'Oversetter', back:'Tilbake til notater', your:'Ditt språk', patient:'Pasientens språk', search:'Søk etter språk…', clear:'Tøm samtalen', reset:'Nullstill tilkobling', resetFailed:'Kunne ikke nullstille oversettertilkoblingen.', context:'Terminologi / kontekst', contextHint:'Valgfri bakgrunn eller legemiddelnavn. Brukes bare i denne samtalen og tas ikke med i Workspace-eksport.', hint:'Trykk Start én gang og snakk etter tur. Hvert felt viser original tale og oversettelser på valgt språk.', original:'Original', translation:'Oversettelse', empty:'Samtalen vises her.', noMatch:'Ingen språk funnet', choose:'Velg to forskjellige språk fra forslagene.', busy:'Stopp eller avbryt opptak og generering før du bytter modus.', starting:'Kobler til…', recording:'Lytter…', paused:'Pauset', autoPaused:'Automatisk pauset etter 30 sekunder uten registrert tale.', resetting:'Nullstiller oversettertilkoblingen…', stopping:'Fullfører oversettelsen…', stopped:'Oversettelsen er ferdig.', aborted:'Opptaket er avbrutt.', idle:'Klar. Velg to språk og trykk Start.', start:'Start', pause:'Pause', resume:'Fortsett', stop:'Stopp', abort:'Avbryt', timer:'Opptak', loading:'Laster Soniox realtime…' },
+  sv: { tooltip:"Byt detta Workspace till översättarläge för samtal på två språk. Välj era språk och tryck Start en gång. Soniox realtime visar tal och översättningar i två paneler. Workspace kommer ihåg läget och språkvalen. Stoppa inspelningen och klicka på ”Tillbaka till anteckningar” för att byta tillbaka.", title:'Översättare', back:'Tillbaka till anteckningar', your:'Ditt språk', patient:'Patientens språk', search:'Sök språk…', clear:'Rensa samtalet', reset:'Återställ anslutningen', resetFailed:'Det gick inte att återställa översättningsanslutningen.', context:'Terminologi / kontext', contextHint:'Valfri bakgrund eller läkemedelsnamn. Används endast i samtalet; ingår inte i Workspace-export.', hint:'Tryck Start en gång och turas om att tala. Varje panel visar original och översättningar på valt språk.', original:'Original', translation:'Översättning', empty:'Samtalet visas här.', noMatch:'Inga matchande språk', choose:'Välj två olika språk från förslagen.', busy:'Stoppa eller avbryt inspelning och generering innan du byter läge.', starting:'Ansluter…', recording:'Lyssnar…', paused:'Pausad', autoPaused:'Pausades automatiskt efter 30 sekunder utan upptäckt tal.', resetting:'Återställer översättningsanslutningen…', stopping:'Slutför översättningen…', stopped:'Översättningen är klar.', aborted:'Inspelningen avbröts.', idle:'Redo. Välj två språk och tryck Start.', start:'Start', pause:'Paus', resume:'Fortsätt', stop:'Stopp', abort:'Avbryt', timer:'Inspelning', loading:'Laddar Soniox realtime…' },
+  de: { tooltip:"Wechseln Sie diesen Workspace in den Übersetzermodus für Gespräche in zwei Sprachen. Wählen Sie Ihre Sprachen und drücken Sie einmal Start. Soniox realtime zeigt Gesprochenes und Übersetzungen in zwei Feldern. Der Workspace merkt sich den Modus und die Sprachauswahl. Stoppen Sie die Aufnahme und klicken Sie auf „Zurück zu Notizen“, um zurückzuwechseln.", title:'Übersetzer', back:'Zurück zu Notizen', your:'Ihre Sprache', patient:'Sprache des Patienten', search:'Sprachen suchen…', clear:'Gespräch leeren', reset:'Verbindung zurücksetzen', resetFailed:'Die Übersetzungsverbindung konnte nicht zurückgesetzt werden.', context:'Terminologie / Kontext', contextHint:'Optionaler Hintergrund oder Medikamentennamen. Nur für dieses Gespräch; nicht im Workspace-Export enthalten.', hint:'Einmal Start drücken und abwechselnd sprechen. Jedes Feld zeigt Originaltext und Übersetzungen in der gewählten Sprache.', original:'Original', translation:'Übersetzung', empty:'Das Gespräch erscheint hier.', noMatch:'Keine passenden Sprachen', choose:'Wählen Sie zwei verschiedene Sprachen aus den Vorschlägen.', busy:'Aufnahme und Generierung vor dem Moduswechsel stoppen oder abbrechen.', starting:'Verbindung wird hergestellt…', recording:'Hört zu…', paused:'Pausiert', autoPaused:'Nach 30 Sekunden ohne erkannte Sprache automatisch pausiert.', resetting:'Übersetzungsverbindung wird zurückgesetzt…', stopping:'Übersetzung wird abgeschlossen…', stopped:'Übersetzung abgeschlossen.', aborted:'Aufnahme abgebrochen.', idle:'Bereit. Zwei Sprachen wählen und Start drücken.', start:'Start', pause:'Pause', resume:'Fortsetzen', stop:'Stopp', abort:'Abbrechen', timer:'Aufnahme', loading:'Soniox realtime wird geladen…' },
+  fr: { tooltip:"Passez ce Workspace en mode traduction pour les conversations en deux langues. Choisissez vos langues et appuyez une fois sur Démarrer. Soniox realtime affiche les paroles et les traductions dans deux panneaux. Le Workspace mémorise le mode et les langues choisies. Arrêtez l’enregistrement et cliquez sur « Retour aux notes » pour revenir au mode habituel.", title:'Traducteur', back:'Retour aux notes', your:'Votre langue', patient:'Langue du patient', search:'Rechercher une langue…', clear:'Effacer la conversation', reset:'Réinitialiser la connexion', resetFailed:'Impossible de réinitialiser la connexion de traduction.', context:'Terminologie / contexte', contextHint:'Contexte ou noms de médicaments facultatifs. Utilisés uniquement pour cette conversation ; exclus des exports Workspace.', hint:'Appuyez une fois sur Démarrer et parlez à tour de rôle. Chaque panneau affiche les paroles originales et les traductions dans sa langue.', original:'Original', translation:'Traduction', empty:'La conversation apparaîtra ici.', noMatch:'Aucune langue correspondante', choose:'Sélectionnez deux langues différentes dans les suggestions.', busy:'Arrêtez ou annulez l’enregistrement et la génération avant de changer de mode.', starting:'Connexion…', recording:'Écoute…', paused:'En pause', autoPaused:'Mise en pause automatique après 30 secondes sans parole détectée.', resetting:'Réinitialisation de la connexion de traduction…', stopping:'Finalisation de la traduction…', stopped:'Traduction terminée.', aborted:'Enregistrement annulé.', idle:'Prêt. Choisissez deux langues et appuyez sur Démarrer.', start:'Démarrer', pause:'Pause', resume:'Reprendre', stop:'Arrêter', abort:'Annuler', timer:'Enregistrement', loading:'Chargement de Soniox realtime…' },
+  it: { tooltip:"Passa questo Workspace alla modalità traduttore per conversazioni in due lingue. Scegliete le vostre lingue e premi Avvia una volta. Soniox realtime mostra il parlato e le traduzioni in due pannelli. Il Workspace ricorda la modalità e le lingue scelte. Interrompi la registrazione e fai clic su “Torna alle note” per tornare alla modalità normale.", title:'Traduttore', back:'Torna alle note', your:'La tua lingua', patient:'Lingua del paziente', search:'Cerca lingue…', clear:'Cancella conversazione', reset:'Reimposta connessione', resetFailed:'Impossibile reimpostare la connessione di traduzione.', context:'Terminologia / contesto', contextHint:'Contesto o nomi di farmaci facoltativi. Usati solo per questa conversazione; esclusi dalle esportazioni Workspace.', hint:'Premi Avvia una volta e parlate a turno. Ogni pannello mostra il testo originale e le traduzioni nella lingua scelta.', original:'Originale', translation:'Traduzione', empty:'La conversazione apparirà qui.', noMatch:'Nessuna lingua trovata', choose:'Seleziona due lingue diverse dai suggerimenti.', busy:'Interrompi o annulla registrazione e generazione prima di cambiare modalità.', starting:'Connessione…', recording:'In ascolto…', paused:'In pausa', autoPaused:'Messa in pausa automatica dopo 30 secondi senza parlato rilevato.', resetting:'Reimpostazione della connessione di traduzione…', stopping:'Completamento traduzione…', stopped:'Traduzione completata.', aborted:'Registrazione annullata.', idle:'Pronto. Scegli due lingue e premi Avvia.', start:'Avvia', pause:'Pausa', resume:'Riprendi', stop:'Interrompi', abort:'Annulla', timer:'Registrazione', loading:'Caricamento di Soniox realtime…' },
 };
 
 function sanitizeTranslatorConfig(value) {
@@ -5566,7 +5564,8 @@ function initTranslatorMode() {
   const home = document.createComment('Regular recording controls');
   controls.before(home);
   let settings = sanitizeTranslatorConfig();
-  let switching = false, resetting = false, disposed = false, renderFrame = 0, draftTimer = 0;
+  let switching = false, resetting = false, autoPausePending = false, pausedForSilence = false;
+  let disposed = false, renderFrame = 0, draftTimer = 0, silenceTimer = 0;
   let rows = [], interim = [], currentSegments = new Map();
   let phase = 'idle', elapsed = 0, started = 0, runtimeError = '';
   function reportError(message) {
@@ -5710,16 +5709,41 @@ function initTranslatorMode() {
   }
   function scheduleRender() { if (!renderFrame && !disposed) renderFrame = window.requestAnimationFrame(render); }
   function sessionEnded() { interim = []; currentSegments.clear(); scheduleRender(); draftChanged(); }
+  function clearSilenceTimer() {
+    if (!silenceTimer) return;
+    window.clearTimeout(silenceTimer); silenceTimer = 0;
+  }
+  function armSilenceTimer() {
+    clearSilenceTimer();
+    if (disposed || !settings.enabled || phase !== 'recording' || autoPausePending) return;
+    silenceTimer = window.setTimeout(() => {
+      silenceTimer = 0; void pauseAfterSilence();
+    }, TRANSLATOR_SILENCE_TIMEOUT_MS);
+  }
+  async function pauseAfterSilence() {
+    if (autoPausePending || disposed || !settings.enabled || phase !== 'recording') return;
+    autoPausePending = true;
+    try {
+      const result = await window.__app?.togglePauseResume?.();
+      if (result?.ok && result.state?.phase === 'paused') pausedForSilence = true;
+    } finally {
+      autoPausePending = false;
+      if (phase === 'recording') armSilenceTimer();
+      updateStatus();
+    }
+  }
   function receive(result) {
     if (!settings.enabled || disposed) return;
     interim = [];
     const pending = new Map();
+    let speechDetected = false;
     for (const token of result.tokens || []) {
       if (typeof token?.text !== 'string') continue;
       if (/^<[^>]+>$/.test(token.text.trim())) {
         if (token.is_final && ['<end>','<fin>'].includes(token.text.trim())) currentSegments.clear();
         continue;
       }
+      if (token.text.trim()) speechDetected = true;
       const kind = token.translation_status === 'translation' ? 'translation' : 'original';
       const languageCode = LANGUAGE_CODES.has(token.language) ? token.language : 'und';
       const key = `${languageCode}:${kind}:${token.source_language || ''}:${token.speaker || ''}`;
@@ -5734,6 +5758,7 @@ function initTranslatorMode() {
       }
     }
     interim = [...pending.values()];
+    if (speechDetected) armSilenceTimer();
     if (result.finished) sessionEnded();
     scheduleRender(); draftChanged();
   }
@@ -5750,6 +5775,7 @@ function initTranslatorMode() {
     const status = document.getElementById('statusMessage');
     if (runtimeError) status.textContent = runtimeError;
     else if (resetting) status.textContent = t.resetting;
+    else if (phase === 'paused' && pausedForSilence) status.textContent = t.autoPaused;
     else if (phase !== 'error') status.textContent = switching ? t.loading : t[phase] || t.idle;
     status.style.color = runtimeError || phase === 'error' ? '#b00020' : phase === 'recording' ? '#207344' : '#666';
     const seconds = Math.floor((elapsed + (started ? Date.now()-started : 0))/1000);
@@ -5789,6 +5815,7 @@ function initTranslatorMode() {
     if (enabled && changedMode) rememberRegularLabels();
     if (enabled && changedMode) settings.regularProvider = normalizeTranscribeProvider(options.regularProvider || document.getElementById('transcribeProvider').value);
     settings.enabled = Boolean(enabled);
+    if (!settings.enabled) { clearSilenceTimer(); pausedForSilence = false; }
     area.classList.toggle('translator-mode',settings.enabled);
     document.querySelector('.bottom-half').classList.toggle('translator-hidden',settings.enabled);
     view.hidden = !settings.enabled;
@@ -5878,18 +5905,25 @@ function initTranslatorMode() {
   },true);
   window.addEventListener('recording:lifecycle', event => {
     phase = event.detail.phase;
+    if (phase !== 'recording') clearSilenceTimer();
     if (phase === 'starting') {
       elapsed = 0; started = 0; runtimeError = '';
+      pausedForSilence = false;
       if (settings.enabled) {
         // Clear before connecting or asking for conference audio. Resume
         // publishes 'resuming', so it retains the current conversation.
         rows = []; interim = []; currentSegments.clear(); render(); draftChanged();
       }
     }
-    if (phase === 'recording' && !started) started = Date.now();
+    if (phase === 'recording') {
+      pausedForSilence = false;
+      if (!started) started = Date.now();
+      armSilenceTimer();
+    }
     if (['paused','stopping','stopped','aborted','error'].includes(phase)) {
       if (started) elapsed += Date.now()-started; started = 0;
     }
+    if (['stopped','aborted','error'].includes(phase)) pausedForSilence = false;
     if (['paused','stopped','aborted','error'].includes(phase)) sessionEnded();
     updateStatus();
   });
@@ -5905,7 +5939,7 @@ function initTranslatorMode() {
   },500);
   registerWorkspaceDisposer(({final}) => {
     if (!final) { sessionEnded(); return; }
-    disposed = true; window.clearInterval(timer); window.clearTimeout(draftTimer);
+    disposed = true; window.clearInterval(timer); window.clearTimeout(draftTimer); clearSilenceTimer();
     window.cancelAnimationFrame(renderFrame); rowNodes.forEach(nodes => nodes.clear()); interim = []; currentSegments.clear();
     // Retain final text until the frame's pagehide draft saver has run. The
     // closed frame then releases this data with the rest of its DOM.
@@ -7392,6 +7426,11 @@ const REQUESTY_VARIANTS = {
   "gpt-5.6-sol": {
     requestyModelId: "azure/gpt-5.6-sol@swedencentral",
     pricingModelId: "gpt-5.6-sol",
+    reasoningSelector: "dedicated"
+  },
+  "gemini-4-argon": {
+    requestyModelId: "vertex/gemini-4-argon@eu",
+    pricingModelId: "gemini-4-argon",
     reasoningSelector: "dedicated"
   },
   "gemini-3.8-flash": {
@@ -21451,6 +21490,7 @@ const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout
 //   - GPT-5.6 Luna     -> azure/gpt-5.6-luna@swedencentral   (Azure, Sweden Central)
 //   - GPT-5.6 Terra    -> azure/gpt-5.6-terra@swedencentral  (Azure, Sweden Central)
 //   - GPT-5.6 Sol      -> azure/gpt-5.6-sol@swedencentral    (Azure, Sweden Central)
+//   - Gemini 4 Argon   -> vertex/gemini-4-argon@eu            (Google Vertex AI, EU)
 //   - Gemini 3.8 Flash -> vertex/gemini-3.8-flash@eu          (Google Vertex AI, EU)
 //   - DeepSeek V4 Pro  -> tensorx/deepseek-v4-pro-0813         (TensorX, EU)
 //   - DeepSeek V4.1    -> sference/deepseek-v4.1-flash        (Sference, EU)
@@ -21574,6 +21614,14 @@ const VARIANTS = Object.freeze({
     pricingModelId: "gpt-5.6-sol",
     reasoningSelector: "dedicated"
   },
+  "gemini-4-argon": {
+    // Google Vertex AI EU deployment. Requesty currently applies a 50%
+    // endpoint discount. Low | medium | high are supported; the app defaults
+    // to low through provider-registry.js.
+    requestyModelId: "vertex/gemini-4-argon@eu",
+    pricingModelId: "gemini-4-argon",
+    reasoningSelector: "dedicated"
+  },
   "gemini-3.8-flash": {
     // Google Vertex AI EU deployment. The supported reasoning levels are
     // low | medium | high. The app intentionally defaults to low.
@@ -21629,8 +21677,8 @@ function resolveEffectiveMode() {
 }
 
 function resolveReasoningLevel(variantKey, variantConfig) {
-  // Claude Opus / Haiku 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna / GPT-6.1 Sol, Gemini 3.8
-  // Flash, DeepSeek, and Kimi K3 use the dedicated Requesty selector.
+  // Claude Opus / Haiku 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna / GPT-6.1 Sol,
+  // Gemini 4 Argon / 3.8 Flash, DeepSeek, and Kimi K3 use the dedicated selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
     return normalizeRequestyNanoReasoning(
@@ -21880,6 +21928,10 @@ function initRequestyGpt56Sol() {
   bindGenerateNoteButton(generateNote);
 }
 
+function initRequestyGemini4Argon() {
+  bindGenerateNoteButton(generateNote);
+}
+
 function initRequestyGemini38Flash() {
   bindGenerateNoteButton(generateNote);
 }
@@ -21906,6 +21958,7 @@ return Object.freeze(Object.defineProperties({}, {"initRequestyClaudeOpus55": { 
 "initRequestyGpt56Luna": { enumerable: true, get: () => initRequestyGpt56Luna },
 "initRequestyGpt56Terra": { enumerable: true, get: () => initRequestyGpt56Terra },
 "initRequestyGpt56Sol": { enumerable: true, get: () => initRequestyGpt56Sol },
+"initRequestyGemini4Argon": { enumerable: true, get: () => initRequestyGemini4Argon },
 "initRequestyGemini38Flash": { enumerable: true, get: () => initRequestyGemini38Flash },
 "initRequestyDeepSeekV4Pro": { enumerable: true, get: () => initRequestyDeepSeekV4Pro },
 "initRequestyDeepSeekV41Flash": { enumerable: true, get: () => initRequestyDeepSeekV41Flash },

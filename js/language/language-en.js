@@ -64,6 +64,7 @@ export const indexTranslations = {
     <li>GPT-5.6 Luna</li>
     <li>GPT-5.5</li>
     <li>GPT-5 Nano</li>
+    <li>Gemini 4 Argon</li>
     <li>Gemini 3.8 Flash</li>
     <li>DeepSeek V4 Pro</li>
     <li>DeepSeek V4.1 Flash</li>
@@ -87,7 +88,7 @@ export const indexTranslations = {
   <p><strong>Practical Requesty model guide</strong></p>
   <p>This is an opinionated guide for typical note-generation use rather than an objective medical benchmark:</p>
   <ul>
-    <li><strong>Maximum quality:</strong> Claude Opus 5.5 and GPT-5.6 Sol</li>
+    <li><strong>Maximum quality:</strong> Gemini 4 Argon, Claude Opus 5.5 and GPT-5.6 Sol</li>
     <li><strong>Strong general-purpose choices:</strong> Claude Sonnet 5.5, GPT-5.6 Terra, GPT-5.5 and DeepSeek V4 Pro</li>
     <li><strong>Faster/value-oriented choices:</strong> Claude Haiku 5.5, GPT-5.6 Luna, Gemini 3.8 Flash and DeepSeek V4.1 Flash</li>
     <li><strong>Lowest-cost summarisation and preprocessing:</strong> GPT-5 Nano</li>
@@ -96,6 +97,7 @@ export const indexTranslations = {
   <p>Claude Opus 5.5 supports Low, Medium and High reasoning in the app; the default is Low.</p>
   <p>Claude Haiku 5.5 supports Off, Low, Medium and High reasoning; the default is Medium. Off disables thinking.</p>
   <p>Haiku 5.5 uses AWS Bedrock through Requesty’s EU router, with Stockholm as the entry point. Inference can run in other EU regions. The model route has zero data retention and does not use your data for training. Enable Zero Data Retention in Requesty as described in the setup guide.</p>
+  <p>Gemini 4 Argon is served through Google Vertex AI in the EU. It supports Low, Medium and High reasoning, with Low as the default. The route has zero data retention, is not used for model training and currently has a 50% endpoint discount.</p>
   <p>GPT-6.1 Sol and GPT-6 Luna support None, Low, Medium and High reasoning in the app; when no reasoning choice is stored, the app defaults to Low.</p>
   <p>DeepSeek V4 Pro and DeepSeek V4.1 Flash support None, Low, High and Max reasoning; the app defaults to Low.</p>
   <p>
@@ -253,7 +255,7 @@ This gives access to high-quality transcription and a curated selection of newer
 - Mistral Voxtral Mini Transcribe<br><br>
 
 <strong>Note-generation providers in the app</strong><br>
-- Requesty: Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash and Kimi K3<br>
+- Requesty: Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Argon, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash and Kimi K3<br>
 - OpenAI: GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna and GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 and Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
@@ -359,7 +361,7 @@ priceModalText: `
   <ul>
     <li>Claude Opus 5.5: approximately 4.40 / 22.00 USD</li>
     <li>Claude Sonnet 5.5: approximately 2.20 / 11.00 USD</li>
-    <li>Claude Haiku 5.5: approximately 0.11 / 0.55 USD through 100K input tokens; 0.55 / 2.75 USD above 100K</li>
+    <li>Claude Haiku 5.5: approximately 0.11 / 0.55 USD</li>
     <li>GPT-6.1 Sol: approximately 2.40 / 12.00 USD</li>
     <li>GPT-6 Luna: approximately 0.12 / 0.60 USD</li>
     <li>GPT-5.6 Sol: approximately 4.40 / 22.00 USD</li>
@@ -367,6 +369,7 @@ priceModalText: `
     <li>GPT-5.6 Luna: approximately 0.22 / 1.32 USD</li>
     <li>GPT-5.5: approximately 5.00 / 30.00 USD</li>
     <li>GPT-5 Nano: approximately 0.055 / 0.44 USD</li>
+    <li>Gemini 4 Argon: approximately 2.20 / 11.00 USD (current 50% endpoint discount; list price 4.40 / 22.00 USD)</li>
     <li>Gemini 3.8 Flash: approximately 0.825 / 4.125 USD (current 50% endpoint discount)</li>
     <li>DeepSeek V4 Pro: approximately 1.75 / 3.50 USD (cached input: 0.44 USD)</li>
     <li>DeepSeek V4.1 Flash: approximately 0.50 / 1.50 USD (cached input: 0.05 USD)</li>
@@ -409,6 +412,7 @@ priceModalText: `
   <ul>
     <li><strong>Soniox transcription:</strong> approximately 0.026 USD.</li>
     <li><strong>GPT-5 Nano note:</strong> approximately 0.0003 USD at the example token count.</li>
+    <li><strong>Gemini 4 Argon note:</strong> approximately 0.010 USD.</li>
     <li><strong>Gemini 3.8 Flash note:</strong> approximately 0.004 USD.</li>
     <li><strong>Claude Sonnet 5.5 note:</strong> approximately 0.010 USD.</li>
     <li><strong>Claude Haiku 5.5 note:</strong> approximately 0.0005 USD.</li>
@@ -486,7 +490,7 @@ export const transcribeTranslations = {
     contextNote: "Context is the maximum published context window for the configured model or route.",
     openAiLongContextNote: "For direct OpenAI GPT-6 models, the lower price applies through 272K input tokens; the higher price applies above 272K.",
     requestyNote: "Requesty prices match the exact routes configured in this app. Any account-level Requesty markup is not included.",
-    haikuLongContextNote: "For Claude Haiku 5.5 through Requesty, the lower prices apply through 100K input tokens. Above 100K, the higher input and output prices apply to the entire request. Reasoning is included in billable output tokens.",
+    requestyDiscountNote: "Gemini 4 Argon is shown at Requesty's current 50% discounted EU endpoint rate ($4.40/$22.00 list price).",
     sttNote: "Speech-to-text prices are current public pay-as-you-go rates. Soniox is token-billed; the per-minute figures shown are approximate equivalents derived from Soniox's published hourly rates.",
   },
   backToHome: "Back to frontpage",

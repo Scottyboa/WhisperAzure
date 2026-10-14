@@ -14,6 +14,7 @@
 //   - GPT-5.6 Luna     -> azure/gpt-5.6-luna@swedencentral   (Azure, Sweden Central)
 //   - GPT-5.6 Terra    -> azure/gpt-5.6-terra@swedencentral  (Azure, Sweden Central)
 //   - GPT-5.6 Sol      -> azure/gpt-5.6-sol@swedencentral    (Azure, Sweden Central)
+//   - Gemini 4 Argon   -> vertex/gemini-4-argon@eu            (Google Vertex AI, EU)
 //   - Gemini 3.8 Flash -> vertex/gemini-3.8-flash@eu          (Google Vertex AI, EU)
 //   - DeepSeek V4 Pro  -> tensorx/deepseek-v4-pro-0813         (TensorX, EU)
 //   - DeepSeek V4.1    -> sference/deepseek-v4.1-flash        (Sference, EU)
@@ -141,6 +142,14 @@ const VARIANTS = Object.freeze({
     pricingModelId: "gpt-5.6-sol",
     reasoningSelector: "dedicated"
   },
+  "gemini-4-argon": {
+    // Google Vertex AI EU deployment. Requesty currently applies a 50%
+    // endpoint discount. Low | medium | high are supported; the app defaults
+    // to low through provider-registry.js.
+    requestyModelId: "vertex/gemini-4-argon@eu",
+    pricingModelId: "gemini-4-argon",
+    reasoningSelector: "dedicated"
+  },
   "gemini-3.8-flash": {
     // Google Vertex AI EU deployment. The supported reasoning levels are
     // low | medium | high. The app intentionally defaults to low.
@@ -196,8 +205,8 @@ function resolveEffectiveMode() {
 }
 
 function resolveReasoningLevel(variantKey, variantConfig) {
-  // Claude Opus / Haiku 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna / GPT-6.1 Sol, Gemini 3.8
-  // Flash, DeepSeek, and Kimi K3 use the dedicated Requesty selector.
+  // Claude Opus / Haiku 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna / GPT-6.1 Sol,
+  // Gemini 4 Argon / 3.8 Flash, DeepSeek, and Kimi K3 use the dedicated selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
     return normalizeRequestyNanoReasoning(
@@ -447,6 +456,10 @@ function initRequestyGpt56Sol() {
   bindGenerateNoteButton(generateNote);
 }
 
+function initRequestyGemini4Argon() {
+  bindGenerateNoteButton(generateNote);
+}
+
 function initRequestyGemini38Flash() {
   bindGenerateNoteButton(generateNote);
 }
@@ -474,6 +487,7 @@ export {
   initRequestyGpt56Luna,
   initRequestyGpt56Terra,
   initRequestyGpt56Sol,
+  initRequestyGemini4Argon,
   initRequestyGemini38Flash,
   initRequestyDeepSeekV4Pro,
   initRequestyDeepSeekV41Flash,
