@@ -170,6 +170,7 @@ import {
   // deepseek-v4-pro-0813: tensorx/deepseek-v4-pro-0813 rates
   // deepseek-v4.1-flash: sference/deepseek-v4.1-flash rates
   // kimi-k3:          nebius/kimi-k3 rates
+  // mistral-large-4:  mistral/mistral-large-4 discounted EU endpoint rates
   const REQUESTY_USD_PER_MTOK = {
     "claude-opus-5-5": { input: 4.4, output: 22.0 },
     "claude-sonnet-5-5": { input: 2.2, output: 11.0 },
@@ -186,6 +187,7 @@ import {
     "deepseek-v4-pro-0813": { input: 1.75, output: 3.5 },
     "deepseek-v4.1-flash": { input: 0.5, output: 1.5 },
     "kimi-k3": { input: 3.0, output: 15.0 },
+    "mistral-large-4": { input: 0.68, output: 2.09 },
   };
 
   // Static labels show Requesty's published provider/endpoint rates. Requesty

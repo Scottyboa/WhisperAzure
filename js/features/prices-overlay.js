@@ -19,6 +19,7 @@ const TEXT_PRICE_GROUPS = [
       { model: "DeepSeek V4 Pro", id: "tensorx/deepseek-v4-pro-0813", context: "1M", input: "$1.75", output: "$3.50" },
       { model: "DeepSeek V4.1 Flash", id: "sference/deepseek-v4.1-flash", context: "1M", input: "$0.50", output: "$1.50" },
       { model: "Kimi K3", id: "nebius/kimi-k3", context: "1M", input: "$3.00", output: "$15.00" },
+      { model: "Mistral Large 4 (50% off)", id: "mistral/mistral-large-4", context: "1M", input: "$0.68", output: "$2.09" },
     ],
   },
   {
@@ -94,7 +95,7 @@ const FALLBACK_I18N = {
   contextNote: "Context is the maximum published context window for the configured model or route.",
   openAiLongContextNote: "For direct OpenAI GPT-6 models, the lower price applies through 272K input tokens; the higher price applies above 272K.",
   requestyNote: "Requesty prices match the exact routes configured in this app. Any account-level Requesty markup is not included.",
-  requestyDiscountNote: "Gemini 4 Argon is shown at Requesty's current 50% discounted EU endpoint rate ($4.40/$22.00 list price).",
+  requestyDiscountNote: "Gemini 4 Argon and Mistral Large 4 are shown at Requesty's current 50% discounted EU endpoint rates (list prices $4.40/$22.00 and $1.36/$4.18, respectively).",
   sttNote: "Speech-to-text prices are current public pay-as-you-go rates. Soniox is token-billed; the per-minute figures shown are approximate equivalents derived from Soniox's published hourly rates.",
 };
 

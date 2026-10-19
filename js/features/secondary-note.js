@@ -162,6 +162,12 @@ const REQUESTY_VARIANTS = {
     requestyModelId: "nebius/kimi-k3",
     pricingModelId: "kimi-k3",
     reasoningSelector: "dedicated"
+  },
+  "mistral-large-4": {
+    requestyModelId: "mistral/mistral-large-4",
+    pricingModelId: "mistral-large-4",
+    reasoningSelector: "dedicated",
+    sendNoneReasoning: true
   }
 };
 

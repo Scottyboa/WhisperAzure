@@ -69,6 +69,7 @@ export const indexTranslations = {
     <li>DeepSeek V4 Pro</li>
     <li>DeepSeek V4.1 Flash</li>
     <li>Kimi K3</li>
+    <li>Mistral Large 4</li>
   </ul>
 
   <p><strong>Other supported providers</strong></p>
@@ -92,7 +93,7 @@ export const indexTranslations = {
     <li><strong>Strong general-purpose choices:</strong> Claude Sonnet 5.5, GPT-5.6 Terra, GPT-5.5 and DeepSeek V4 Pro</li>
     <li><strong>Faster/value-oriented choices:</strong> Claude Haiku 5.5, GPT-5.6 Luna, Gemini 3.8 Flash and DeepSeek V4.1 Flash</li>
     <li><strong>Lowest-cost summarisation and preprocessing:</strong> GPT-5 Nano</li>
-    <li><strong>Additional alternative:</strong> Kimi K3</li>
+    <li><strong>Additional alternatives:</strong> Kimi K3 and Mistral Large 4</li>
   </ul>
   <p>Claude Opus 5.5 supports Low, Medium and High reasoning in the app; the default is Low.</p>
   <p>Claude Haiku 5.5 supports Off, Low, Medium and High reasoning; the default is Medium. Off disables thinking.</p>
@@ -100,6 +101,7 @@ export const indexTranslations = {
   <p>Gemini 4 Argon is served through Google Vertex AI in the EU. It supports Low, Medium and High reasoning, with Low as the default. The route has zero data retention, is not used for model training and currently has a 50% endpoint discount.</p>
   <p>GPT-6.1 Sol and GPT-6 Luna support None, Low, Medium and High reasoning in the app; when no reasoning choice is stored, the app defaults to Low.</p>
   <p>DeepSeek V4 Pro and DeepSeek V4.1 Flash support None, Low, High and Max reasoning; the app defaults to Low.</p>
+  <p>Mistral Large 4 is served by Mistral AI in the EU through Requesty. It supports None and High reasoning in the app, with None as the default. The route has zero data retention, is not used for model training and currently has a 50% endpoint discount.</p>
   <p>
     For long source documents, a less expensive model such as GPT-5 Nano can first create a short summary for Supplementary Information.
     A stronger primary model can then generate the final note without receiving the full long document, which may substantially reduce cost.
@@ -255,7 +257,7 @@ This gives access to high-quality transcription and a curated selection of newer
 - Mistral Voxtral Mini Transcribe<br><br>
 
 <strong>Note-generation providers in the app</strong><br>
-- Requesty: Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Argon, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash and Kimi K3<br>
+- Requesty: Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Argon, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3 and Mistral Large 4<br>
 - OpenAI: GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna and GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 and Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
@@ -374,6 +376,7 @@ priceModalText: `
     <li>DeepSeek V4 Pro: approximately 1.75 / 3.50 USD (cached input: 0.44 USD)</li>
     <li>DeepSeek V4.1 Flash: approximately 0.50 / 1.50 USD (cached input: 0.05 USD)</li>
     <li>Kimi K3: approximately 3.00 / 15.00 USD</li>
+    <li>Mistral Large 4: approximately 0.68 / 2.09 USD (current 50% endpoint discount; list price 1.36 / 4.18 USD)</li>
   </ul>
   <p>
     These values mirror the estimates configured in the app and can change when Requesty or the upstream deployment changes its pricing.
@@ -490,7 +493,7 @@ export const transcribeTranslations = {
     contextNote: "Context is the maximum published context window for the configured model or route.",
     openAiLongContextNote: "For direct OpenAI GPT-6 models, the lower price applies through 272K input tokens; the higher price applies above 272K.",
     requestyNote: "Requesty prices match the exact routes configured in this app. Any account-level Requesty markup is not included.",
-    requestyDiscountNote: "Gemini 4 Argon is shown at Requesty's current 50% discounted EU endpoint rate ($4.40/$22.00 list price).",
+    requestyDiscountNote: "Gemini 4 Argon and Mistral Large 4 are shown at Requesty's current 50% discounted EU endpoint rates (list prices $4.40/$22.00 and $1.36/$4.18, respectively).",
     sttNote: "Speech-to-text prices are current public pay-as-you-go rates. Soniox is token-billed; the per-minute figures shown are approximate equivalents derived from Soniox's published hourly rates.",
   },
   backToHome: "Back to frontpage",

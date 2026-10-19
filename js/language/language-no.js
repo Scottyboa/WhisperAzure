@@ -70,6 +70,7 @@ export const indexTranslations = {
     <li>DeepSeek V4 Pro</li>
     <li>DeepSeek V4.1 Flash</li>
     <li>Kimi K3</li>
+    <li>Mistral Large 4</li>
   </ul>
 
   <p><strong>Andre støttede leverandører</strong></p>
@@ -93,7 +94,7 @@ export const indexTranslations = {
     <li><strong>Sterke allroundvalg:</strong> Claude Sonnet 5.5, GPT-5.6 Terra, GPT-5.5 og DeepSeek V4 Pro</li>
     <li><strong>Raskere og rimeligere valg:</strong> Claude Haiku 5.5, GPT-5.6 Luna, Gemini 3.8 Flash og DeepSeek V4.1 Flash</li>
     <li><strong>Billigst til sammendrag og forbehandling:</strong> GPT-5 Nano</li>
-    <li><strong>Ytterligere alternativ:</strong> Kimi K3</li>
+    <li><strong>Ytterligere alternativer:</strong> Kimi K3 og Mistral Large 4</li>
   </ul>
   <p>Claude Opus 5.5 støtter reasoning-nivåene Low, Medium og High i appen; standardvalget er Low.</p>
   <p>Claude Haiku 5.5 har reasoning-valgene Off, Low, Medium og High; standardvalget er Medium. Off slår av tenking.</p>
@@ -101,6 +102,7 @@ export const indexTranslations = {
   <p>Gemini 4 Argon leveres via Google Vertex AI i EU. Modellen støtter reasoning-nivåene Low, Medium og High, med Low som standardvalg. Ruten har zero data retention, brukes ikke til modelltrening og har for øyeblikket 50 % endepunktsrabatt.</p>
   <p>GPT-6.1 Sol og GPT-6 Luna støtter reasoning-nivåene None, Low, Medium og High i appen; når ingen tidligere reasoning-verdi er lagret, er standardvalget Low.</p>
   <p>DeepSeek V4 Pro og DeepSeek V4.1 Flash støtter reasoning-nivåene None, Low, High og Max; appens standardvalg er Low.</p>
+  <p>Mistral Large 4 leveres av Mistral AI i EU via Requesty. Modellen støtter reasoning-nivåene None og High i appen, med None som standardvalg. Ruten har zero data retention, brukes ikke til modelltrening og har for øyeblikket 50 % endepunktsrabatt.</p>
   <p>
     Ved svært lange kildedokumenter kan en rimelig modell som GPT-5 Nano først lage et kort sammendrag til Supplerende informasjon.
     En sterkere hovedmodell kan deretter lage sluttresultatet uten å motta hele dokumentet, noe som kan redusere kostnaden betydelig.
@@ -255,7 +257,7 @@ Dette gir tilgang til transkripsjon av høy kvalitet og et kuratert utvalg nyere
 - Mistral Voxtral Mini Transcribe<br><br>
 
 <strong>Leverandører for notatgenerering i appen</strong><br>
-- Requesty: Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Argon, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash og Kimi K3<br>
+- Requesty: Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Argon, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3 og Mistral Large 4<br>
 - OpenAI: GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna og GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 og Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
@@ -374,6 +376,7 @@ En API-nøkkel alene gjør ikke en tjeneste GDPR-kompatibel. Kontroller leverand
     <li>DeepSeek V4 Pro: omtrent 1,75 / 3,50 USD (bufret input: 0,44 USD)</li>
     <li>DeepSeek V4.1 Flash: omtrent 0,50 / 1,50 USD (bufret input: 0,05 USD)</li>
     <li>Kimi K3: omtrent 3,00 / 15,00 USD</li>
+    <li>Mistral Large 4: omtrent 0,68 / 2,09 USD (nåværende endepunktsrabatt på 50 %; listepris 1,36 / 4,18 USD)</li>
   </ul>
   <p>
     Verdiene gjenspeiler estimatene som er konfigurert i appen, og kan endres når Requesty eller den underliggende modellutrullingen endrer pris.
@@ -490,7 +493,7 @@ export const transcribeTranslations = {
     contextNote: "Kontekst er det maksimale publiserte kontekstvinduet for den konfigurerte modellen eller ruten.",
     openAiLongContextNote: "For direkte OpenAI GPT-6-modeller gjelder den laveste prisen til og med 272K input-tokens; den høyeste gjelder over 272K.",
     requestyNote: "Requesty-prisene gjelder de eksakte rutene som er konfigurert i appen. Eventuelt kontopåslag hos Requesty er ikke inkludert.",
-    requestyDiscountNote: "Gemini 4 Argon vises med Requestys nåværende 50 % rabatterte EU-endepunktspris (listepris 4,40/22,00 USD).",
+    requestyDiscountNote: "Gemini 4 Argon og Mistral Large 4 vises med Requestys nåværende 50 % rabatterte EU-endepunktspriser (listepriser henholdsvis 4,40/22,00 og 1,36/4,18 USD).",
     sttNote: "Tale-til-tekst-prisene er gjeldende offentlige pay-as-you-go-priser. Soniox faktureres etter tokens; minuttprisene som vises er omtrentlige ekvivalenter beregnet fra Soniox sine publiserte timepriser.",
   },
   backToHome: "Tilbake til forsiden",

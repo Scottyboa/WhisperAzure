@@ -1205,6 +1205,7 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
   // deepseek-v4-pro-0813: tensorx/deepseek-v4-pro-0813 rates
   // deepseek-v4.1-flash: sference/deepseek-v4.1-flash rates
   // kimi-k3:          nebius/kimi-k3 rates
+  // mistral-large-4:  mistral/mistral-large-4 discounted EU endpoint rates
   const REQUESTY_USD_PER_MTOK = {
     "claude-opus-5-5": { input: 4.4, output: 22.0 },
     "claude-sonnet-5-5": { input: 2.2, output: 11.0 },
@@ -1221,6 +1222,7 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
     "deepseek-v4-pro-0813": { input: 1.75, output: 3.5 },
     "deepseek-v4.1-flash": { input: 0.5, output: 1.5 },
     "kimi-k3": { input: 3.0, output: 15.0 },
+    "mistral-large-4": { input: 0.68, output: 2.09 },
   };
 
   // Static labels show Requesty's published provider/endpoint rates. Requesty
@@ -7454,6 +7456,12 @@ const REQUESTY_VARIANTS = {
     requestyModelId: "nebius/kimi-k3",
     pricingModelId: "kimi-k3",
     reasoningSelector: "dedicated"
+  },
+  "mistral-large-4": {
+    requestyModelId: "mistral/mistral-large-4",
+    pricingModelId: "mistral-large-4",
+    reasoningSelector: "dedicated",
+    sendNoneReasoning: true
   }
 };
 
@@ -21495,6 +21503,7 @@ const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout
 //   - DeepSeek V4 Pro  -> tensorx/deepseek-v4-pro-0813         (TensorX, EU)
 //   - DeepSeek V4.1    -> sference/deepseek-v4.1-flash        (Sference, EU)
 //   - Kimi K3          -> nebius/kimi-k3                      (Nebius, EU)
+//   - Mistral Large 4  -> mistral/mistral-large-4             (Mistral AI, EU)
 //
 // sessionStorage keys used:
 //   requesty_api_key   (set on the start page, index.html)
@@ -21650,6 +21659,14 @@ const VARIANTS = Object.freeze({
     requestyModelId: "nebius/kimi-k3",
     pricingModelId: "kimi-k3",
     reasoningSelector: "dedicated"
+  },
+  "mistral-large-4": {
+    // Pinned Mistral AI EU endpoint. Requesty currently applies a 50%
+    // endpoint discount. Reasoning is none | high and defaults to none.
+    requestyModelId: "mistral/mistral-large-4",
+    pricingModelId: "mistral-large-4",
+    reasoningSelector: "dedicated",
+    sendNoneReasoning: true
   }
 });
 
@@ -21678,7 +21695,7 @@ function resolveEffectiveMode() {
 
 function resolveReasoningLevel(variantKey, variantConfig) {
   // Claude Opus / Haiku 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna / GPT-6.1 Sol,
-  // Gemini 4 Argon / 3.8 Flash, DeepSeek, and Kimi K3 use the dedicated selector.
+  // Gemini 4 Argon / 3.8 Flash, DeepSeek, Kimi K3, and Mistral Large 4 use the dedicated selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
     return normalizeRequestyNanoReasoning(
@@ -21882,7 +21899,8 @@ async function generateNote() {
 //
 // All effective providers (requesty-claude / requesty-sonnet / requesty-haiku /
 // requesty-gpt6-* / requesty-gpt55 / requesty-nano / requesty-gpt56-* /
-// requesty-gemini38-flash / requesty-deepseek-* / requesty-kimi-k3)
+// requesty-gemini38-flash / requesty-deepseek-* / requesty-kimi-k3 /
+// requesty-mistral-large-4)
 // bind the same generate function; the active model is read from the
 // #requestyModel select / requesty_model session key at click time. Separate
 // exports are kept so the provider-registry entries stay explicit and
@@ -21948,6 +21966,10 @@ function initRequestyKimiK3() {
   bindGenerateNoteButton(generateNote);
 }
 
+function initRequestyMistralLarge4() {
+  bindGenerateNoteButton(generateNote);
+}
+
 return Object.freeze(Object.defineProperties({}, {"initRequestyClaudeOpus55": { enumerable: true, get: () => initRequestyClaudeOpus55 },
 "initRequestyClaudeSonnet55": { enumerable: true, get: () => initRequestyClaudeSonnet55 },
 "initRequestyClaudeHaiku55": { enumerable: true, get: () => initRequestyClaudeHaiku55 },
@@ -21962,7 +21984,8 @@ return Object.freeze(Object.defineProperties({}, {"initRequestyClaudeOpus55": { 
 "initRequestyGemini38Flash": { enumerable: true, get: () => initRequestyGemini38Flash },
 "initRequestyDeepSeekV4Pro": { enumerable: true, get: () => initRequestyDeepSeekV4Pro },
 "initRequestyDeepSeekV41Flash": { enumerable: true, get: () => initRequestyDeepSeekV41Flash },
-"initRequestyKimiK3": { enumerable: true, get: () => initRequestyKimiK3 }}));
+"initRequestyKimiK3": { enumerable: true, get: () => initRequestyKimiK3 },
+"initRequestyMistralLarge4": { enumerable: true, get: () => initRequestyMistralLarge4 }}));
 };
 
 factories["AWSBedrock.js"] = (context, load, loadAsync) => {

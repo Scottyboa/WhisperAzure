@@ -266,6 +266,15 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './requesty.js',
     initExportName: 'initRequestyKimiK3',
   },
+  'requesty-mistral-large-4': {
+    id: 'requesty-mistral-large-4',
+    label: 'Requesty Mistral Large 4',
+    uiProvider: 'requesty',
+    requestyModel: 'mistral-large-4',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyMistralLarge4',
+  },
 };
 
 const NOTE_UI_PROVIDER_OPTIONS = [
@@ -291,6 +300,7 @@ const REQUESTY_MODEL_OPTIONS = [
   { value: 'deepseek-v4-pro-0813', label: 'DeepSeek V4 Pro' },
   { value: 'deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash' },
   { value: 'kimi-k3', label: 'Kimi K3' },
+  { value: 'mistral-large-4', label: 'Mistral Large 4' },
 ];
 
 // Models with model-specific Requesty reasoning controls use the existing
@@ -300,6 +310,7 @@ const REQUESTY_MODEL_OPTIONS = [
 // to `low` and `max` to `high`, so those aliases are intentionally omitted.
 // Kimi K3 always reasons and accepts low | high | max. The upstream model
 // defaults to max when omitted, but the app intentionally defaults to low.
+// Mistral Large 4 uses its own none | high option set below.
 const REQUESTY_NANO_REASONING_OPTIONS = [
   { value: 'minimal', label: 'Minimal' },
   { value: 'low', label: 'Low' },
@@ -354,6 +365,13 @@ const REQUESTY_KIMI_K3_REASONING_OPTIONS = [
   { value: 'low', label: 'Low' },
   { value: 'high', label: 'High' },
   { value: 'max', label: 'Max' },
+];
+
+// Mistral Large 4 exposes reasoning disabled or at high effort on the
+// configured Requesty route. Keep reasoning disabled unless the user opts in.
+const REQUESTY_MISTRAL_LARGE4_REASONING_OPTIONS = [
+  { value: 'none', label: 'None' },
+  { value: 'high', label: 'High' },
 ];
 
 // DeepSeek V4 Pro and V4.1 Flash support thinking off plus three distinct
@@ -558,22 +576,25 @@ export function listRequestyNanoReasoningOptions(
       ? REQUESTY_OPUS55_REASONING_OPTIONS
       : normalizedModel === 'claude-haiku-5-5'
         ? REQUESTY_HAIKU55_REASONING_OPTIONS
-        : REQUESTY_DEEPSEEK_MODELS.has(normalizedModel)
-          ? REQUESTY_DEEPSEEK_REASONING_OPTIONS
-          : normalizedModel === 'kimi-k3'
-            ? REQUESTY_KIMI_K3_REASONING_OPTIONS
-            : normalizedModel === 'gemini-4-argon' || normalizedModel === 'gemini-3.8-flash'
-              ? REQUESTY_GEMINI_REASONING_OPTIONS
-              : REQUESTY_GPT6_MODELS.has(normalizedModel)
-                ? REQUESTY_GPT6_REASONING_OPTIONS
-                : REQUESTY_GPT56_MODELS.has(normalizedModel)
-                  ? REQUESTY_GPT56_REASONING_OPTIONS
-                  : REQUESTY_NANO_REASONING_OPTIONS;
+        : normalizedModel === 'mistral-large-4'
+          ? REQUESTY_MISTRAL_LARGE4_REASONING_OPTIONS
+          : REQUESTY_DEEPSEEK_MODELS.has(normalizedModel)
+            ? REQUESTY_DEEPSEEK_REASONING_OPTIONS
+            : normalizedModel === 'kimi-k3'
+              ? REQUESTY_KIMI_K3_REASONING_OPTIONS
+              : normalizedModel === 'gemini-4-argon' || normalizedModel === 'gemini-3.8-flash'
+                ? REQUESTY_GEMINI_REASONING_OPTIONS
+                : REQUESTY_GPT6_MODELS.has(normalizedModel)
+                  ? REQUESTY_GPT6_REASONING_OPTIONS
+                  : REQUESTY_GPT56_MODELS.has(normalizedModel)
+                    ? REQUESTY_GPT56_REASONING_OPTIONS
+                    : REQUESTY_NANO_REASONING_OPTIONS;
   return options.map((item) => ({ ...item }));
 }
 
 export function getDefaultRequestyReasoning(modelId = 'gpt-5-nano') {
   const normalizedModel = normalizeRequestyModel(modelId);
+  if (normalizedModel === 'mistral-large-4') return 'none';
   if (normalizedModel === 'claude-haiku-5-5') return 'medium';
   if (
     normalizedModel === 'claude-opus-5-5' ||
@@ -867,6 +888,7 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
       reqModel === 'gemini-3.8-flash' ||
       REQUESTY_DEEPSEEK_MODELS.has(reqModel) ||
       reqModel === 'kimi-k3' ||
+      reqModel === 'mistral-large-4' ||
       REQUESTY_GPT6_MODELS.has(reqModel) ||
       REQUESTY_GPT56_MODELS.has(reqModel));
 
@@ -875,8 +897,9 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   // (#gpt5Reasoning, None/Low/Medium/High). Claude Sonnet 5.5 maps
   // reasoning_effort to a thinking budget ("None" omits it), while GPT-5.5
   // uses the native OpenAI effort string. Claude Opus / Haiku 5.5, GPT-5 Nano,
-  // GPT-5.6, GPT-6 Luna / GPT-6.1 Sol, Gemini 4 Argon / 3.8 Flash, DeepSeek V4 Pro/V4.1 Flash
-  // and Kimi K3 use the dedicated Requesty selector because their valid
+  // GPT-5.6, GPT-6 Luna / GPT-6.1 Sol, Gemini 4 Argon / 3.8 Flash,
+  // DeepSeek V4 Pro/V4.1 Flash, Kimi K3 and Mistral Large 4 use the dedicated
+  // Requesty selector because their valid
   // option sets differ from the shared selector.
 
   return {
