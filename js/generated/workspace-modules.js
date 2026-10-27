@@ -1197,7 +1197,7 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
   // claude-opus-5-5: bedrock/claude-opus-5-5@eu-north-1 rates
   // claude-sonnet-5-5: vertex/claude-sonnet-5-5@eu rates (EU regional pricing)
   // claude-haiku-5-5: bedrock/claude-haiku-5-5@eu-north-1 rates
-  // gpt-6-luna / gpt-6.1-sol: Azure Sweden Central rates from Requesty's model cards
+  // gpt-6-luna / gpt-6.1-terra / gpt-6.1-sol: Azure Sweden Central rates from Requesty's model cards
   // gpt-5.5:         azure/gpt-5.5@swedencentral rates
   // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
   // gpt-5.6-*:       Azure Sweden Central rates from Requesty's model cards
@@ -1211,8 +1211,9 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
     "claude-sonnet-5-5": { input: 2.2, output: 11.0 },
     "claude-haiku-5-5": { input: 0.11, output: 0.55 },
     "gpt-6.1-sol": { input: 2.4, output: 12.0 },
+    "gpt-6.1-terra": { input: 1.2, output: 6.0 },
     "gpt-6-luna": { input: 0.12, output: 0.6 },
-    "gpt-5.5": { input: 5.0, output: 30.0 },
+    "gpt-5.5": { input: 5.5, output: 33.0 },
     "gpt-5-nano": { input: 0.055, output: 0.44 },
     "gpt-5.6-luna": { input: 0.22, output: 1.32 },
     "gpt-5.6-terra": { input: 2.2, output: 13.2 },
@@ -7403,6 +7404,12 @@ const REQUESTY_VARIANTS = {
   "gpt-6.1-sol": {
     requestyModelId: "azure/gpt-6.1-sol@swedencentral",
     pricingModelId: "gpt-6.1-sol",
+    reasoningSelector: "dedicated",
+    sendNoneReasoning: true
+  },
+  "gpt-6.1-terra": {
+    requestyModelId: "azure/gpt-6.1-terra@swedencentral",
+    pricingModelId: "gpt-6.1-terra",
     reasoningSelector: "dedicated",
     sendNoneReasoning: true
   },
@@ -21494,6 +21501,7 @@ const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout
 //   - Claude Opus 5.5  -> bedrock/claude-opus-5-5@eu-north-1 (AWS Bedrock, Stockholm)
 //   - GPT-6 Luna       -> azure/gpt-6-luna@swedencentral     (Azure, Sweden Central)
 //   - GPT-6.1 Sol      -> azure/gpt-6.1-sol@swedencentral    (Azure, Sweden Central)
+//   - GPT-6.1 Terra    -> azure/gpt-6.1-terra@swedencentral  (Azure, Sweden Central)
 //   - GPT-5.5          -> azure/gpt-5.5@swedencentral        (Azure, Sweden Central)
 //   - GPT-5.6 Luna     -> azure/gpt-5.6-luna@swedencentral   (Azure, Sweden Central)
 //   - GPT-5.6 Terra    -> azure/gpt-5.6-terra@swedencentral  (Azure, Sweden Central)
@@ -21592,6 +21600,14 @@ const VARIANTS = Object.freeze({
     // none | low | medium | high and defaults to low when no choice is stored.
     requestyModelId: "azure/gpt-6.1-sol@swedencentral",
     pricingModelId: "gpt-6.1-sol",
+    reasoningSelector: "dedicated",
+    sendNoneReasoning: true
+  },
+  "gpt-6.1-terra": {
+    // Azure OpenAI, Sweden Central (EU). The app intentionally exposes only
+    // none | low | medium | high and defaults to low when no choice is stored.
+    requestyModelId: "azure/gpt-6.1-terra@swedencentral",
+    pricingModelId: "gpt-6.1-terra",
     reasoningSelector: "dedicated",
     sendNoneReasoning: true
   },
@@ -21694,7 +21710,7 @@ function resolveEffectiveMode() {
 }
 
 function resolveReasoningLevel(variantKey, variantConfig) {
-  // Claude Opus / Haiku 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna / GPT-6.1 Sol,
+  // Claude Opus / Haiku 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna / GPT-6.1 Terra / GPT-6.1 Sol,
   // Gemini 4 Argon / 3.8 Flash, DeepSeek, Kimi K3, and Mistral Large 4 use the dedicated selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
@@ -21926,6 +21942,10 @@ function initRequestyGpt61Sol() {
   bindGenerateNoteButton(generateNote);
 }
 
+function initRequestyGpt61Terra() {
+  bindGenerateNoteButton(generateNote);
+}
+
 function initRequestyGpt55() {
   bindGenerateNoteButton(generateNote);
 }
@@ -21975,6 +21995,7 @@ return Object.freeze(Object.defineProperties({}, {"initRequestyClaudeOpus55": { 
 "initRequestyClaudeHaiku55": { enumerable: true, get: () => initRequestyClaudeHaiku55 },
 "initRequestyGpt6Luna": { enumerable: true, get: () => initRequestyGpt6Luna },
 "initRequestyGpt61Sol": { enumerable: true, get: () => initRequestyGpt61Sol },
+"initRequestyGpt61Terra": { enumerable: true, get: () => initRequestyGpt61Terra },
 "initRequestyGpt55": { enumerable: true, get: () => initRequestyGpt55 },
 "initRequestyGpt5Nano": { enumerable: true, get: () => initRequestyGpt5Nano },
 "initRequestyGpt56Luna": { enumerable: true, get: () => initRequestyGpt56Luna },

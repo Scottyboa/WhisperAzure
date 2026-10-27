@@ -162,7 +162,7 @@ import {
   // claude-opus-5-5: bedrock/claude-opus-5-5@eu-north-1 rates
   // claude-sonnet-5-5: vertex/claude-sonnet-5-5@eu rates (EU regional pricing)
   // claude-haiku-5-5: bedrock/claude-haiku-5-5@eu-north-1 rates
-  // gpt-6-luna / gpt-6.1-sol: Azure Sweden Central rates from Requesty's model cards
+  // gpt-6-luna / gpt-6.1-terra / gpt-6.1-sol: Azure Sweden Central rates from Requesty's model cards
   // gpt-5.5:         azure/gpt-5.5@swedencentral rates
   // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
   // gpt-5.6-*:       Azure Sweden Central rates from Requesty's model cards
@@ -176,8 +176,9 @@ import {
     "claude-sonnet-5-5": { input: 2.2, output: 11.0 },
     "claude-haiku-5-5": { input: 0.11, output: 0.55 },
     "gpt-6.1-sol": { input: 2.4, output: 12.0 },
+    "gpt-6.1-terra": { input: 1.2, output: 6.0 },
     "gpt-6-luna": { input: 0.12, output: 0.6 },
-    "gpt-5.5": { input: 5.0, output: 30.0 },
+    "gpt-5.5": { input: 5.5, output: 33.0 },
     "gpt-5-nano": { input: 0.055, output: 0.44 },
     "gpt-5.6-luna": { input: 0.22, output: 1.32 },
     "gpt-5.6-terra": { input: 2.2, output: 13.2 },

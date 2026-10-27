@@ -59,6 +59,7 @@ export const indexTranslations = {
     <li>Claude Sonnet 5.5</li>
     <li>Claude Haiku 5.5</li>
     <li>GPT-6.1 Sol</li>
+    <li>GPT-6.1 Terra</li>
     <li>GPT-6 Luna</li>
     <li>GPT-5.6 Sol</li>
     <li>GPT-5.6 Terra</li>
@@ -91,7 +92,7 @@ export const indexTranslations = {
   <p>Dette er en skjønnsmessig veiledning for vanlig notatgenerering, ikke en objektiv medisinsk benchmark:</p>
   <ul>
     <li><strong>Maksimal kvalitet:</strong> Gemini 4 Argon, Claude Opus 5.5 og GPT-5.6 Sol</li>
-    <li><strong>Sterke allroundvalg:</strong> Claude Sonnet 5.5, GPT-5.6 Terra, GPT-5.5 og DeepSeek V4 Pro</li>
+    <li><strong>Sterke allroundvalg:</strong> Claude Sonnet 5.5, GPT-6.1 Terra, GPT-5.6 Terra, GPT-5.5 og DeepSeek V4 Pro</li>
     <li><strong>Raskere og rimeligere valg:</strong> Claude Haiku 5.5, GPT-5.6 Luna, Gemini 3.8 Flash og DeepSeek V4.1 Flash</li>
     <li><strong>Billigst til sammendrag og forbehandling:</strong> GPT-5 Nano</li>
     <li><strong>Ytterligere alternativer:</strong> Kimi K3 og Mistral Large 4</li>
@@ -100,7 +101,8 @@ export const indexTranslations = {
   <p>Claude Haiku 5.5 har reasoning-valgene Off, Low, Medium og High; standardvalget er Medium. Off slår av tenking.</p>
   <p>Haiku 5.5 bruker AWS Bedrock via Requestys EU-ruter, med Stockholm som inngangsregion. Modellbehandlingen kan skje i andre EU-regioner. Modellruten har zero data retention og bruker ikke dataene dine til trening. Aktiver Zero Data Retention hos Requesty som beskrevet i oppsettsguiden.</p>
   <p>Gemini 4 Argon leveres via Google Vertex AI i EU. Modellen støtter reasoning-nivåene Low, Medium og High, med Low som standardvalg. Ruten har zero data retention, brukes ikke til modelltrening og har for øyeblikket 50 % endepunktsrabatt.</p>
-  <p>GPT-6.1 Sol og GPT-6 Luna støtter reasoning-nivåene None, Low, Medium og High i appen; når ingen tidligere reasoning-verdi er lagret, er standardvalget Low.</p>
+  <p>GPT-6.1 Sol, GPT-6.1 Terra og GPT-6 Luna støtter reasoning-nivåene None, Low, Medium og High i appen; når ingen tidligere reasoning-verdi er lagret, er standardvalget Low.</p>
+  <p>GPT-6.1 Terra leveres via Azure i Sweden Central. Modellruten har zero data retention, brukes ikke til modelltrening og behandler data i EU.</p>
   <p>DeepSeek V4 Pro og DeepSeek V4.1 Flash støtter reasoning-nivåene None, Low, High og Max; appens standardvalg er Low.</p>
   <p>Mistral Large 4 leveres av Mistral AI i EU via Requesty. Modellen støtter reasoning-nivåene None og High i appen, med None som standardvalg. Ruten har zero data retention, brukes ikke til modelltrening og har for øyeblikket 50 % endepunktsrabatt.</p>
   <p>
@@ -257,7 +259,7 @@ Dette gir tilgang til transkripsjon av høy kvalitet og et kuratert utvalg nyere
 - Mistral Voxtral Mini Transcribe<br><br>
 
 <strong>Leverandører for notatgenerering i appen</strong><br>
-- Requesty: Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Argon, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3 og Mistral Large 4<br>
+- Requesty: Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6.1 Terra, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Argon, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3 og Mistral Large 4<br>
 - OpenAI: GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna og GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 og Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
@@ -365,11 +367,12 @@ En API-nøkkel alene gjør ikke en tjeneste GDPR-kompatibel. Kontroller leverand
     <li>Claude Sonnet 5.5: omtrent 2,20 / 11,00 USD</li>
     <li>Claude Haiku 5.5: omtrent 0,11 / 0,55 USD</li>
     <li>GPT-6.1 Sol: omtrent 2,40 / 12,00 USD</li>
+    <li>GPT-6.1 Terra: omtrent 1,20 / 6,00 USD</li>
     <li>GPT-6 Luna: omtrent 0,12 / 0,60 USD</li>
     <li>GPT-5.6 Sol: omtrent 4,40 / 22,00 USD</li>
     <li>GPT-5.6 Terra: omtrent 2,20 / 13,20 USD</li>
     <li>GPT-5.6 Luna: omtrent 0,22 / 1,32 USD</li>
-    <li>GPT-5.5: omtrent 5,00 / 30,00 USD</li>
+    <li>GPT-5.5: omtrent 5,50 / 33,00 USD</li>
     <li>GPT-5 Nano: omtrent 0,055 / 0,44 USD</li>
     <li>Gemini 4 Argon: omtrent 2,20 / 11,00 USD (nåværende endepunktsrabatt på 50 %; listepris 4,40 / 22,00 USD)</li>
     <li>Gemini 3.8 Flash: omtrent 0,825 / 4,125 USD (nåværende endepunktsrabatt på 50 %)</li>

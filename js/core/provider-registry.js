@@ -176,6 +176,15 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './requesty.js',
     initExportName: 'initRequestyGpt61Sol',
   },
+  'requesty-gpt61-terra': {
+    id: 'requesty-gpt61-terra',
+    label: 'Requesty GPT-6.1 Terra',
+    uiProvider: 'requesty',
+    requestyModel: 'gpt-6.1-terra',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyGpt61Terra',
+  },
   'requesty-gpt55': {
     id: 'requesty-gpt55',
     label: 'Requesty GPT-5.5',
@@ -289,6 +298,7 @@ const REQUESTY_MODEL_OPTIONS = [
   { value: 'claude-sonnet-5-5', label: 'Claude Sonnet 5.5' },
   { value: 'claude-haiku-5-5', label: 'Claude Haiku 5.5' },
   { value: 'gpt-6.1-sol', label: 'GPT-6.1 Sol' },
+  { value: 'gpt-6.1-terra', label: 'GPT-6.1 Terra' },
   { value: 'gpt-6-luna', label: 'GPT-6 Luna' },
   { value: 'gpt-5.6-sol', label: 'GPT-5.6 Sol' },
   { value: 'gpt-5.6-terra', label: 'GPT-5.6 Terra' },
@@ -336,9 +346,9 @@ const REQUESTY_HAIKU55_REASONING_OPTIONS = [
   { value: 'high', label: 'High' },
 ];
 
-// GPT-6 Luna / GPT-6.1 Sol support a wider upstream reasoning range, but the Requesty
-// UI intentionally exposes only the four levels requested by the app:
-// none | low | medium | high. Low is the app default for these two models.
+// GPT-6 Luna, GPT-6.1 Terra and GPT-6.1 Sol support a wider upstream reasoning
+// range, but the Requesty UI intentionally exposes only the four levels requested
+// by the app: none | low | medium | high. Low is the app default for these models.
 const REQUESTY_GPT6_REASONING_OPTIONS = [
   { value: 'none', label: 'None' },
   { value: 'low', label: 'Low' },
@@ -393,6 +403,7 @@ const REQUESTY_DEEPSEEK_MODELS = new Set([
 const REQUESTY_GPT6_MODELS = new Set([
   'gpt-6-luna',
   'gpt-6.1-sol',
+  'gpt-6.1-terra',
 ]);
 
 const REQUESTY_GPT56_MODELS = new Set([
@@ -897,7 +908,7 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   // (#gpt5Reasoning, None/Low/Medium/High). Claude Sonnet 5.5 maps
   // reasoning_effort to a thinking budget ("None" omits it), while GPT-5.5
   // uses the native OpenAI effort string. Claude Opus / Haiku 5.5, GPT-5 Nano,
-  // GPT-5.6, GPT-6 Luna / GPT-6.1 Sol, Gemini 4 Argon / 3.8 Flash,
+  // GPT-5.6, GPT-6 Luna / GPT-6.1 Terra / GPT-6.1 Sol, Gemini 4 Argon / 3.8 Flash,
   // DeepSeek V4 Pro/V4.1 Flash, Kimi K3 and Mistral Large 4 use the dedicated
   // Requesty selector because their valid
   // option sets differ from the shared selector.

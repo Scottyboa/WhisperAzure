@@ -38,7 +38,7 @@ export const indexTranslations = {
   <p>Requesty bietet über einen API-Schlüssel Modelle mehrerer Entwickler. Die App beschränkt die Auswahl bewusst auf bestimmte Bereitstellungen, die für Verarbeitung in der EU, keine Nutzung zum Modelltraining und geeignete Aufbewahrungseinstellungen vorgesehen sind.</p>
   <ul>
     <li>Claude Opus 5.5</li><li>Claude Sonnet 5.5</li>
-    <li>Claude Haiku 5.5</li><li>GPT-6.1 Sol</li><li>GPT-6 Luna</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 4 Argon</li><li>Gemini 3.8 Flash</li><li>DeepSeek V4 Pro</li><li>DeepSeek V4.1 Flash</li><li>Kimi K3</li><li>Mistral Large 4</li>
+    <li>Claude Haiku 5.5</li><li>GPT-6.1 Sol</li><li>GPT-6.1 Terra</li><li>GPT-6 Luna</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 4 Argon</li><li>Gemini 3.8 Flash</li><li>DeepSeek V4 Pro</li><li>DeepSeek V4.1 Flash</li><li>Kimi K3</li><li>Mistral Large 4</li>
   </ul>
   <p><strong>Weitere unterstützte Anbieter</strong></p>
   <ul>
@@ -51,7 +51,7 @@ export const indexTranslations = {
   <p><strong>Praktischer Requesty-Modellleitfaden</strong></p>
   <ul>
     <li><strong>Maximale Qualität:</strong> Gemini 4 Argon, Claude Opus 5.5 und GPT-5.6 Sol</li>
-    <li><strong>Starke Allround-Modelle:</strong> Claude Sonnet 5.5, GPT-5.6 Terra, GPT-5.5 und DeepSeek V4 Pro</li>
+    <li><strong>Starke Allround-Modelle:</strong> Claude Sonnet 5.5, GPT-6.1 Terra, GPT-5.6 Terra, GPT-5.5 und DeepSeek V4 Pro</li>
     <li><strong>Schnell und preisorientiert:</strong> Claude Haiku 5.5, GPT-5.6 Luna, Gemini 3.8 Flash und DeepSeek V4.1 Flash</li>
     <li><strong>Günstigste Zusammenfassung/Vorverarbeitung:</strong> GPT-5 Nano</li>
     <li><strong>Weitere Alternativen:</strong> Kimi K3 und Mistral Large 4</li>
@@ -60,7 +60,8 @@ export const indexTranslations = {
   <p>Claude Haiku 5.5 bietet die Reasoning-Stufen Off, Low, Medium und High; die Standardeinstellung ist Medium. Off deaktiviert das Denken.</p>
   <p>Haiku 5.5 nutzt AWS Bedrock über Requestys EU-Router mit Stockholm als Eingangsregion. Die Modellverarbeitung kann in anderen EU-Regionen erfolgen. Die Modellroute hat Zero Data Retention und verwendet Ihre Daten nicht zum Training. Aktivieren Sie Zero Data Retention bei Requesty wie in der Einrichtungsanleitung beschrieben.</p>
   <p>Gemini 4 Argon wird über Google Vertex AI in der EU bereitgestellt. Das Modell unterstützt die Reasoning-Stufen Low, Medium und High; standardmäßig wird Low verwendet. Die Route hat Zero Data Retention, wird nicht für Modelltraining genutzt und ist derzeit am Endpunkt um 50 % rabattiert.</p>
-  <p>GPT-6.1 Sol und GPT-6 Luna unterstützen in der App die Reasoning-Stufen None, Low, Medium und High; wenn keine frühere Auswahl gespeichert ist, verwendet die App Low.</p>
+  <p>GPT-6.1 Sol, GPT-6.1 Terra und GPT-6 Luna unterstützen in der App die Reasoning-Stufen None, Low, Medium und High; wenn keine frühere Auswahl gespeichert ist, verwendet die App Low.</p>
+  <p>GPT-6.1 Terra wird über Azure in Sweden Central bereitgestellt. Die Modellroute hat Zero Data Retention, wird nicht für Modelltraining genutzt und verarbeitet Daten in der EU.</p>
   <p>DeepSeek V4 Pro und DeepSeek V4.1 Flash unterstützen die Reasoning-Stufen None, Low, High und Max; die App verwendet standardmäßig Low.</p>
   <p>Mistral Large 4 wird von Mistral AI in der EU über Requesty bereitgestellt. In der App stehen None und High zur Verfügung; standardmäßig ist None gewählt. Die Route hat Zero Data Retention, wird nicht für Modelltraining genutzt und ist derzeit am Endpunkt um 50 % rabattiert.</p>
   <p>Bei langen Dokumenten kann zuerst ein günstiges Modell wie GPT-5 Nano eine kurze Zusammenfassung für Zusatzinformationen erstellen. Das stärkere Hauptmodell erhält dann nicht das vollständige Dokument, wodurch die Kosten deutlich sinken können.</p>
@@ -188,7 +189,7 @@ Die einfachste Empfehlung für neue Nutzer:<br>
 2. <strong>Requesty</strong> für Notizerstellung.<br><br>
 
 <strong>STT-Optionen:</strong> Soniox Batch, Soniox Batch mit Sprecherkennzeichnung, Soniox Echtzeit, OpenAI gpt-4o-transcribe und Mistral Voxtral Mini.<br><br>
-<strong>Notizanbieter:</strong> Requesty (Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Argon, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3, Mistral Large 4), OpenAI (GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna und GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) und Mistral Large.<br><br>
+<strong>Notizanbieter:</strong> Requesty (Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6.1 Terra, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Argon, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3, Mistral Large 4), OpenAI (GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna und GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) und Mistral Large.<br><br>
 
 <hr><br>
 <strong>Soniox — empfohlene STT-Einrichtung</strong><br>
@@ -242,9 +243,9 @@ Ein API-Schlüssel macht einen Dienst nicht automatisch DSGVO-konform. Prüfen S
   <ul>
     <li>Claude Opus 5.5: ca. 4,40 / 22,00 USD</li><li>Claude Sonnet 5.5: ca. 2,20 / 11,00 USD</li>
     <li>Claude Haiku 5.5: ca. 0,11 / 0,55 USD</li>
-    <li>GPT-6.1 Sol: ca. 2,40 / 12,00 USD</li><li>GPT-6 Luna: ca. 0,12 / 0,60 USD</li>
+    <li>GPT-6.1 Sol: ca. 2,40 / 12,00 USD</li><li>GPT-6.1 Terra: ca. 1,20 / 6,00 USD</li><li>GPT-6 Luna: ca. 0,12 / 0,60 USD</li>
     <li>GPT-5.6 Sol: ca. 4,40 / 22,00 USD</li><li>GPT-5.6 Terra: ca. 2,20 / 13,20 USD</li>
-    <li>GPT-5.6 Luna: ca. 0,22 / 1,32 USD</li><li>GPT-5.5: ca. 5,00 / 30,00 USD</li>
+    <li>GPT-5.6 Luna: ca. 0,22 / 1,32 USD</li><li>GPT-5.5: ca. 5,50 / 33,00 USD</li>
     <li>GPT-5 Nano: ca. 0,055 / 0,44 USD</li><li>Gemini 4 Argon: ca. 2,20 / 11,00 USD (derzeit 50 % Endpunkt-Rabatt; Listenpreis 4,40 / 22,00 USD)</li><li>Gemini 3.8 Flash: ca. 0,825 / 4,125 USD (derzeit 50 % Endpunkt-Rabatt)</li><li>DeepSeek V4 Pro: ca. 1,75 / 3,50 USD (Cache-Input: 0,44 USD)</li><li>DeepSeek V4.1 Flash: ca. 0,50 / 1,50 USD (Cache-Input: 0,05 USD)</li><li>Kimi K3: ca. 3,00 / 15,00 USD</li><li>Mistral Large 4: ca. 0,68 / 2,09 USD (derzeit 50 % Endpunkt-Rabatt; Listenpreis 1,36 / 4,18 USD)</li>
   </ul>
   <p>Diese Werte entsprechen den aktuellen App-Schätzungen und können sich mit Requesty oder der Upstream-Bereitstellung ändern. Prüfen Sie den Modellpreis und Requestys Nutzungsbericht.</p>
