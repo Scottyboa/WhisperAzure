@@ -57,8 +57,8 @@ const STT_PRICE_GROUPS = [
   {
     provider: "Soniox",
     rows: [
-      { model: "Soniox", id: "stt-async-v5", billingType: "token", priceType: "minute", price: "$0.0017", approximate: true },
-      { model: "Soniox Realtime", id: "stt-rt-v5", billingType: "token", priceType: "minute", price: "$0.002", approximate: true },
+      { model: "Soniox", id: "stt-async-v6", billingType: "token", priceType: "minute", price: "$0.0017", approximate: true },
+      { model: "Soniox Realtime", id: "stt-rt-v6", billingType: "token", priceType: "minute", price: "$0.002", approximate: true },
     ],
   },
   {

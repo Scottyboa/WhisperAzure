@@ -18909,12 +18909,12 @@ const SONIOX_CONTEXT_TEXT =
 const DEFAULT_LANGUAGE_HINTS = ['no', 'en'];
 
 // ── Realtime constants ──────────────────────────────────────────────────────
-const SONIOX_RT_MODEL = 'stt-rt-v5';
+const SONIOX_RT_MODEL = 'stt-rt-v6';
 const SONIOX_RT_SAMPLE_RATE = 16000;
 const SONIOX_RT_NUM_CHANNELS = 1;
 
 // ── Async constants ─────────────────────────────────────────────────────────
-const SONIOX_ASYNC_MODEL = 'stt-async-v5';
+const SONIOX_ASYNC_MODEL = 'stt-async-v6';
 // Plain mode flushes chunks every ~90s of accumulated speech. Diarized
 // mode uses a deliberately huge value (~2h) so chunks are only ever
 // flushed by Pause/Stop — speaker IDs are local to a chunk, so flushing
