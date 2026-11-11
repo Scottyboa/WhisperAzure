@@ -315,7 +315,7 @@ const REQUESTY_MODEL_OPTIONS = [
   { value: 'gpt-5.5', label: 'GPT-5.5' },
   { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
   { value: 'gemini-4-argon', label: 'Gemini 4 Argon' },
-  { value: 'gemini-4-carbon', label: 'Gemini 4 Carbon (EU)' },
+  { value: 'gemini-4-carbon', label: 'Gemini 4 Carbon' },
   { value: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash' },
   { value: 'deepseek-v4-pro-0813', label: 'DeepSeek V4 Pro' },
   { value: 'deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash' },
