@@ -58,7 +58,7 @@ export const indexTranslations = {
   <p>Claude Haiku 5.5 har reasoning-valen Off, Low, Medium och High; standardvalet är Medium. Off stänger av tänkandet.</p>
   <p>Haiku 5.5 använder AWS Bedrock via Requestys EU-router, med Stockholm som ingångsregion. Modellbearbetningen kan ske i andra EU-regioner. Modellrutten har zero data retention och använder inte dina data för träning. Aktivera Zero Data Retention hos Requesty enligt installationsguiden.</p>
   <p>Gemini 4 Argon levereras via Google Vertex AI i EU. Modellen stöder reasoning-nivåerna Low, Medium och High, med Low som standardval. Rutten har zero data retention, används inte för modellträning och har för närvarande 50 % rabatt på slutpunkten.</p>
-  <p>Gemini 4 Carbon (EU) är utvecklad för mer krävande resonemangsuppgifter. Appen använder en fast EU-rutt via Requesty till Google Vertex AI. Modellen stöder Low, Medium och High, med Medium som standard.</p>
+  <p>Gemini 4 Carbon (EU) är utvecklad för mer krävande resonemangsuppgifter. Appen använder en fast EU-rutt via Requesty till Google Vertex AI. Modellen stöder Low, Medium och High, med Low som standard.</p>
   <p>GPT-6.1 Sol, GPT-6.1 Terra och GPT-6 Luna stöder reasoning-nivåerna None, Low, Medium och High i appen; om inget tidigare reasoning-val finns sparat är standardvalet Low.</p>
   <p>GPT-6.1 Terra levereras via Azure i Sweden Central. Modellrutten har zero data retention, används inte för modellträning och behandlar data i EU.</p>
   <p>DeepSeek V4 Pro och DeepSeek V4.1 Flash stöder reasoning-nivåerna None, Low, High och Max; appens standardval är Low.</p>

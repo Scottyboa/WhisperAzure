@@ -101,7 +101,7 @@ export const indexTranslations = {
   <p>Claude Haiku 5.5 supports Off, Low, Medium and High reasoning; the default is Medium. Off disables thinking.</p>
   <p>Haiku 5.5 uses AWS Bedrock through Requesty’s EU router, with Stockholm as the entry point. Inference can run in other EU regions. The model route has zero data retention and does not use your data for training. Enable Zero Data Retention in Requesty as described in the setup guide.</p>
   <p>Gemini 4 Argon is served through Google Vertex AI in the EU. It supports Low, Medium and High reasoning, with Low as the default. The route has zero data retention, is not used for model training and currently has a 50% endpoint discount.</p>
-  <p>Gemini 4 Carbon (EU) is designed for more demanding reasoning tasks. The app pins it to Google Vertex AI in the EU through Requesty. It supports Low, Medium and High reasoning, with Medium as the default.</p>
+  <p>Gemini 4 Carbon (EU) is designed for more demanding reasoning tasks. The app pins it to Google Vertex AI in the EU through Requesty. It supports Low, Medium and High reasoning, with Low as the default.</p>
   <p>GPT-6.1 Sol, GPT-6.1 Terra and GPT-6 Luna support None, Low, Medium and High reasoning in the app; when no reasoning choice is stored, the app defaults to Low.</p>
   <p>GPT-6.1 Terra is served through Azure in Sweden Central. The model route has zero data retention, is not used for model training and processes data in the EU.</p>
   <p>DeepSeek V4 Pro and DeepSeek V4.1 Flash support None, Low, High and Max reasoning; the app defaults to Low.</p>

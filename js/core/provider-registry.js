@@ -375,8 +375,7 @@ const REQUESTY_GPT56_REASONING_OPTIONS = [
 
 const REQUESTY_GEMINI_MODELS = new Set(['gemini-4-argon', 'gemini-4-carbon', 'gemini-3.8-flash']);
 
-// These Gemini models support low | medium | high. Carbon keeps Google's
-// medium default; Argon and Flash continue to default to low in the app.
+// These Gemini models support low | medium | high and default to low in the app.
 const REQUESTY_GEMINI_REASONING_OPTIONS = [
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
@@ -618,7 +617,7 @@ export function listRequestyNanoReasoningOptions(
 export function getDefaultRequestyReasoning(modelId = 'gpt-5-nano') {
   const normalizedModel = normalizeRequestyModel(modelId);
   if (normalizedModel === 'mistral-large-4') return 'none';
-  if (normalizedModel === 'claude-haiku-5-5' || normalizedModel === 'gemini-4-carbon') return 'medium';
+  if (normalizedModel === 'claude-haiku-5-5') return 'medium';
   if (
     normalizedModel === 'claude-opus-5-5' ||
     REQUESTY_DEEPSEEK_MODELS.has(normalizedModel)
