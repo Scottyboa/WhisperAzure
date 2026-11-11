@@ -36,7 +36,7 @@ export const indexTranslations = {
   <p>Requesty ger tillgång till modeller från flera utvecklare genom en enda API-nyckel. Valen i appen är avsiktligt begränsade till utvalda driftsättningar som är avsedda för behandling inom EU, utan återanvändning för modellträning och med lämpliga inställningar för lagring.</p>
   <ul>
     <li>Claude Opus 5.5</li><li>Claude Sonnet 5.5</li>
-    <li>Claude Haiku 5.5</li><li>GPT-6.1 Sol</li><li>GPT-6.1 Terra</li><li>GPT-6 Luna</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 4 Argon</li><li>Gemini 3.8 Flash</li><li>DeepSeek V4 Pro</li><li>DeepSeek V4.1 Flash</li><li>Kimi K3</li><li>Mistral Large 4</li>
+    <li>Claude Haiku 5.5</li><li>GPT-6.1 Sol</li><li>GPT-6.1 Terra</li><li>GPT-6 Luna</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 4 Argon</li><li>Gemini 4 Carbon (EU)</li><li>Gemini 3.8 Flash</li><li>DeepSeek V4 Pro</li><li>DeepSeek V4.1 Flash</li><li>Kimi K3</li><li>Mistral Large 4</li>
   </ul>
   <p><strong>Andra leverantörer som stöds</strong></p>
   <ul>
@@ -58,6 +58,7 @@ export const indexTranslations = {
   <p>Claude Haiku 5.5 har reasoning-valen Off, Low, Medium och High; standardvalet är Medium. Off stänger av tänkandet.</p>
   <p>Haiku 5.5 använder AWS Bedrock via Requestys EU-router, med Stockholm som ingångsregion. Modellbearbetningen kan ske i andra EU-regioner. Modellrutten har zero data retention och använder inte dina data för träning. Aktivera Zero Data Retention hos Requesty enligt installationsguiden.</p>
   <p>Gemini 4 Argon levereras via Google Vertex AI i EU. Modellen stöder reasoning-nivåerna Low, Medium och High, med Low som standardval. Rutten har zero data retention, används inte för modellträning och har för närvarande 50 % rabatt på slutpunkten.</p>
+  <p>Gemini 4 Carbon (EU) är utvecklad för mer krävande resonemangsuppgifter. Appen använder en fast EU-rutt via Requesty till Google Vertex AI. Modellen stöder Low, Medium och High, med Medium som standard.</p>
   <p>GPT-6.1 Sol, GPT-6.1 Terra och GPT-6 Luna stöder reasoning-nivåerna None, Low, Medium och High i appen; om inget tidigare reasoning-val finns sparat är standardvalet Low.</p>
   <p>GPT-6.1 Terra levereras via Azure i Sweden Central. Modellrutten har zero data retention, används inte för modellträning och behandlar data i EU.</p>
   <p>DeepSeek V4 Pro och DeepSeek V4.1 Flash stöder reasoning-nivåerna None, Low, High och Max; appens standardval är Low.</p>
@@ -189,7 +190,7 @@ Den enklaste rekommenderade konfigurationen för nya användare är:<br>
 2. <strong>Requesty</strong> för anteckningsgenerering.<br><br>
 
 <strong>STT-alternativ:</strong> Soniox batch, Soniox batch med talaretiketter, Soniox realtid, OpenAI gpt-4o-transcribe och Mistral Voxtral Mini Transcribe.<br><br>
-<strong>Anteckningsleverantörer:</strong> Requesty (Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6.1 Terra, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Argon, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3 och Mistral Large 4), OpenAI (GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna och GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) och Mistral Large.<br><br>
+<strong>Anteckningsleverantörer:</strong> Requesty (Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6.1 Terra, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Argon, Gemini 4 Carbon (EU), Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3 och Mistral Large 4), OpenAI (GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna och GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) och Mistral Large.<br><br>
 
 <hr><br>
 <strong>Soniox — rekommenderad STT-konfiguration</strong><br>
@@ -257,6 +258,7 @@ En API-nyckel gör inte en tjänst automatiskt GDPR-kompatibel. Kontrollera DPA,
     <li>GPT-5.5: cirka 5,50 / 33,00 USD</li>
     <li>GPT-5 Nano: cirka 0,055 / 0,44 USD</li>
     <li>Gemini 4 Argon: cirka 2,20 / 11,00 USD (nuvarande 50 % rabatt på slutpunkten; listpris 4,40 / 22,00 USD)</li>
+    <li>Gemini 4 Carbon (EU): cirka 2,20 / 11,00 USD (nuvarande 50 % rabatt på slutpunkten; listpris 4,40 / 22,00 USD)</li>
     <li>Gemini 3.8 Flash: cirka 0,825 / 4,125 USD (nuvarande 50 % rabatt på slutpunkten)</li>
     <li>DeepSeek V4 Pro: cirka 1,75 / 3,50 USD (cachad input: 0,44 USD)</li>
     <li>DeepSeek V4.1 Flash: cirka 0,50 / 1,50 USD (cachad input: 0,05 USD)</li>
@@ -336,7 +338,7 @@ export const transcribeTranslations = {
     contextNote: "Kontext är det maximala publicerade kontextfönstret för den konfigurerade modellen eller routen.",
     openAiLongContextNote: "För direkta OpenAI GPT-6-modeller gäller det lägre priset till och med 272K input-token; det högre gäller över 272K.",
     requestyNote: "Requesty-priserna gäller de exakta router som är konfigurerade i appen. Eventuellt kontopåslag hos Requesty ingår inte.",
-    requestyDiscountNote: "Gemini 4 Argon och Mistral Large 4 visas med Requestys nuvarande 50 % rabatterade EU-slutpunktspriser (listpriser 4,40/22,00 respektive 1,36/4,18 USD).",
+    requestyDiscountNote: "Gemini 4 Argon, Gemini 4 Carbon och Mistral Large 4 visas med Requestys EU-slutpunktspriser med 50 % rabatt. Listpris: 4,40/22,00 USD för varje Gemini-modell och 1,36/4,18 USD för Mistral Large 4.",
     sttNote: "Tal-till-text-priserna är aktuella offentliga pay-as-you-go-priser. Soniox debiteras per token; minutpriserna som visas är ungefärliga motsvarigheter beräknade från Soniox publicerade timpriser.",
   },
   backToHome: "Tillbaka till startsidan",

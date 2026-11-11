@@ -212,6 +212,15 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './requesty.js',
     initExportName: 'initRequestyGemini4Argon',
   },
+  'requesty-gemini4-carbon': {
+    id: 'requesty-gemini4-carbon',
+    label: 'Requesty Gemini 4 Carbon (EU)',
+    uiProvider: 'requesty',
+    requestyModel: 'gemini-4-carbon',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyGemini4Carbon',
+  },
   'requesty-gpt56-luna': {
     id: 'requesty-gpt56-luna',
     label: 'Requesty GPT-5.6 Luna',
@@ -306,6 +315,7 @@ const REQUESTY_MODEL_OPTIONS = [
   { value: 'gpt-5.5', label: 'GPT-5.5' },
   { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
   { value: 'gemini-4-argon', label: 'Gemini 4 Argon' },
+  { value: 'gemini-4-carbon', label: 'Gemini 4 Carbon (EU)' },
   { value: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash' },
   { value: 'deepseek-v4-pro-0813', label: 'DeepSeek V4 Pro' },
   { value: 'deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash' },
@@ -363,8 +373,10 @@ const REQUESTY_GPT56_REASONING_OPTIONS = [
   { value: 'xhigh', label: 'X-high' },
 ];
 
-// Gemini 4 Argon and Gemini 3.8 Flash support low | medium | high. The app
-// intentionally defaults both models to low.
+const REQUESTY_GEMINI_MODELS = new Set(['gemini-4-argon', 'gemini-4-carbon', 'gemini-3.8-flash']);
+
+// These Gemini models support low | medium | high. Carbon keeps Google's
+// medium default; Argon and Flash continue to default to low in the app.
 const REQUESTY_GEMINI_REASONING_OPTIONS = [
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
@@ -593,7 +605,7 @@ export function listRequestyNanoReasoningOptions(
             ? REQUESTY_DEEPSEEK_REASONING_OPTIONS
             : normalizedModel === 'kimi-k3'
               ? REQUESTY_KIMI_K3_REASONING_OPTIONS
-              : normalizedModel === 'gemini-4-argon' || normalizedModel === 'gemini-3.8-flash'
+              : REQUESTY_GEMINI_MODELS.has(normalizedModel)
                 ? REQUESTY_GEMINI_REASONING_OPTIONS
                 : REQUESTY_GPT6_MODELS.has(normalizedModel)
                   ? REQUESTY_GPT6_REASONING_OPTIONS
@@ -606,14 +618,13 @@ export function listRequestyNanoReasoningOptions(
 export function getDefaultRequestyReasoning(modelId = 'gpt-5-nano') {
   const normalizedModel = normalizeRequestyModel(modelId);
   if (normalizedModel === 'mistral-large-4') return 'none';
-  if (normalizedModel === 'claude-haiku-5-5') return 'medium';
+  if (normalizedModel === 'claude-haiku-5-5' || normalizedModel === 'gemini-4-carbon') return 'medium';
   if (
     normalizedModel === 'claude-opus-5-5' ||
     REQUESTY_DEEPSEEK_MODELS.has(normalizedModel)
   ) return 'low';
   return REQUESTY_GPT6_MODELS.has(normalizedModel) ||
-    normalizedModel === 'gemini-4-argon' ||
-    normalizedModel === 'gemini-3.8-flash' ||
+    REQUESTY_GEMINI_MODELS.has(normalizedModel) ||
     normalizedModel === 'kimi-k3'
     ? 'low'
     : DEFAULTS.requestyNanoReasoning;
@@ -895,8 +906,7 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
     (reqModel === 'claude-opus-5-5' ||
       reqModel === 'claude-haiku-5-5' ||
       reqModel === 'gpt-5-nano' ||
-      reqModel === 'gemini-4-argon' ||
-      reqModel === 'gemini-3.8-flash' ||
+      REQUESTY_GEMINI_MODELS.has(reqModel) ||
       REQUESTY_DEEPSEEK_MODELS.has(reqModel) ||
       reqModel === 'kimi-k3' ||
       reqModel === 'mistral-large-4' ||
@@ -908,7 +918,7 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   // (#gpt5Reasoning, None/Low/Medium/High). Claude Sonnet 5.5 maps
   // reasoning_effort to a thinking budget ("None" omits it), while GPT-5.5
   // uses the native OpenAI effort string. Claude Opus / Haiku 5.5, GPT-5 Nano,
-  // GPT-5.6, GPT-6 Luna / GPT-6.1 Terra / GPT-6.1 Sol, Gemini 4 Argon / 3.8 Flash,
+  // GPT-5.6, GPT-6 Luna / GPT-6.1 Terra / GPT-6.1 Sol, Gemini 4 Argon / Carbon / 3.8 Flash,
   // DeepSeek V4 Pro/V4.1 Flash, Kimi K3 and Mistral Large 4 use the dedicated
   // Requesty selector because their valid
   // option sets differ from the shared selector.

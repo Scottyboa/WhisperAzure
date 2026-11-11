@@ -166,7 +166,7 @@ import {
   // gpt-5.5:         azure/gpt-5.5@swedencentral rates
   // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
   // gpt-5.6-*:       Azure Sweden Central rates from Requesty's model cards
-  // gemini-4-argon / gemini-3.8-flash: discounted Vertex EU endpoint rates
+  // gemini-4-argon / gemini-4-carbon / gemini-3.8-flash: discounted Vertex EU endpoint rates
   // deepseek-v4-pro-0813: tensorx/deepseek-v4-pro-0813 rates
   // deepseek-v4.1-flash: sference/deepseek-v4.1-flash rates
   // kimi-k3:          nebius/kimi-k3 rates
@@ -184,6 +184,7 @@ import {
     "gpt-5.6-terra": { input: 2.2, output: 13.2 },
     "gpt-5.6-sol": { input: 4.4, output: 22.0 },
     "gemini-4-argon": { input: 2.2, output: 11.0 },
+    "gemini-4-carbon": { input: 2.2, output: 11.0 },
     "gemini-3.8-flash": { input: 0.825, output: 4.125 },
     "deepseek-v4-pro-0813": { input: 1.75, output: 3.5 },
     "deepseek-v4.1-flash": { input: 0.5, output: 1.5 },

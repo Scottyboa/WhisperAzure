@@ -16,6 +16,7 @@ const TEXT_PRICE_GROUPS = [
       { model: "GPT-5.5", id: "azure/gpt-5.5@swedencentral", context: "1.1M", input: "$5.50", output: "$33.00" },
       { model: "GPT-5 Nano", id: "azure/gpt-5-nano@swedencentral", context: "200K", input: "$0.055", output: "$0.44" },
       { model: "Gemini 4 Argon (50% off)", id: "vertex/gemini-4-argon@eu", context: "1M", input: "$2.20", output: "$11.00" },
+      { model: "Gemini 4 Carbon (EU, 50% off)", id: "vertex/gemini-4-carbon@eu", context: "1M", input: "$2.20", output: "$11.00" },
       { model: "Gemini 3.8 Flash", id: "vertex/gemini-3.8-flash@eu", context: "1M", input: "$0.825", output: "$4.125" },
       { model: "DeepSeek V4 Pro", id: "tensorx/deepseek-v4-pro-0813", context: "1M", input: "$1.75", output: "$3.50" },
       { model: "DeepSeek V4.1 Flash", id: "sference/deepseek-v4.1-flash", context: "1M", input: "$0.50", output: "$1.50" },
@@ -96,7 +97,7 @@ const FALLBACK_I18N = {
   contextNote: "Context is the maximum published context window for the configured model or route.",
   openAiLongContextNote: "For direct OpenAI GPT-6 models, the lower price applies through 272K input tokens; the higher price applies above 272K.",
   requestyNote: "Requesty prices match the exact routes configured in this app. Any account-level Requesty markup is not included.",
-  requestyDiscountNote: "Gemini 4 Argon and Mistral Large 4 are shown at Requesty's current 50% discounted EU endpoint rates (list prices $4.40/$22.00 and $1.36/$4.18, respectively).",
+  requestyDiscountNote: "Gemini 4 Argon, Gemini 4 Carbon and Mistral Large 4 are shown at Requesty's 50% discounted EU endpoint rates. List prices: $4.40/$22.00 for each Gemini model and $1.36/$4.18 for Mistral Large 4.",
   sttNote: "Speech-to-text prices are current public pay-as-you-go rates. Soniox is token-billed; the per-minute figures shown are approximate equivalents derived from Soniox's published hourly rates.",
 };
 
