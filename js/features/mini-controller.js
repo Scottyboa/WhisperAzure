@@ -483,6 +483,17 @@ function tMini(key) {
       fr: 'Prompt',
       it: 'Prompt',
     },
+    copyPrompt: {
+      en: 'Copy prompt',
+      no: 'Kopier prompt',
+      nb: 'Kopier prompt',
+      nn: 'Kopier prompt',
+      sv: 'Kopiera prompt',
+      da: 'Kopiér prompt',
+      de: 'Prompt kopieren',
+      fr: 'Copier le prompt',
+      it: 'Copia prompt',
+    },
     usePrompt: {
       en: 'Use prompt',
       no: 'Bruk prompt',
@@ -1381,6 +1392,28 @@ function ensureHubChannel() {
       return;
     }
 
+    // A separate request type keeps older tabs from treating a prompt
+    // request as a request for their transcript.
+    if (type === 'mini-hub-prompt-request') {
+      const tabId = getOrCreateLocalTabId();
+      if (String(data?.targetTabId || '') !== tabId) return;
+      const requestId = String(data?.requestId || '').trim();
+      const presetId = String(data?.presetId || '').trim();
+      const promptSlot = String(data?.promptSlot || '').trim();
+      if (!requestId || !promptSlot) return;
+
+      postHubMessage({
+        type: 'mini-hub-content-response',
+        requestId,
+        tabId,
+        kind: 'prompt',
+        presetId,
+        text: getLocalMiniContentText('prompt', presetId, promptSlot),
+        at: Date.now(),
+      });
+      return;
+    }
+
     if (type === 'mini-hub-content-response') {
       const requestId = String(data?.requestId || '').trim();
       if (!requestId) return;
@@ -1931,6 +1964,7 @@ function syncPromptDropdown(snapshot) {
   }
 
   select.disabled = options.length === 0;
+  setDisabled('miniCopyPromptButton', select.disabled || !select.value);
 }
 
 function updateSelectedHubSnapshot(mutator) {
@@ -2464,6 +2498,12 @@ function updateMiniPanelUi() {
   setText('miniAutoCopyLabel', tMini('autoCopy'));
   setText('miniPromptLabel', tMini('prompt'));
   setText('miniUsePromptLabel', tMini('usePrompt'));
+  const copyPromptButton = $('miniCopyPromptButton');
+  if (copyPromptButton) {
+    const label = tMini('copyPrompt');
+    copyPromptButton.title = label;
+    copyPromptButton.setAttribute('aria-label', label);
+  }
   setText('miniNoteModelLabel', 'Note model');
 
   setChecked('miniAutoGenerateToggle', !!state.autoGenerateEnabled);
@@ -2583,15 +2623,23 @@ function dispatchFocusSelectedTab() {
   return true;
 }
 
-function getLocalMiniContentText(kind, presetId = '') {
+function getLocalMiniContentText(kind, presetId = '', promptSlot = '') {
   const normalizedKind = normalizeLower(kind, 'transcript');
+  if (normalizedKind === 'prompt') {
+    if (!promptSlot) return '';
+    const manager = window.__workspacePresets;
+    if (manager?.getContent) return manager.getContent('prompt', presetId, promptSlot);
+    if (presetId || document.getElementById('promptSlot')?.value !== promptSlot) return '';
+    return String(window.__getVisibleCustomPromptValue?.() ??
+      document.getElementById('customPrompt')?.value ?? '');
+  }
   const workspaceContent = window.__workspacePresets?.getContent?.(normalizedKind, presetId);
   if (typeof workspaceContent === 'string') return workspaceContent;
   const fieldId = normalizedKind === 'note' ? 'generatedNote' : 'transcription';
   return String(document.getElementById(fieldId)?.value || '');
 }
 
-function requestHubTabContent(targetTabId, kind, presetId = '') {
+function requestHubTabContent(targetTabId, kind, presetId = '', promptSlot = '') {
   const channel = ensureHubChannel();
   const normalizedTargetTabId = String(targetTabId || '').trim();
   const normalizedKind = normalizeLower(kind, 'transcript');
@@ -2620,28 +2668,31 @@ function requestHubTabContent(targetTabId, kind, presetId = '') {
     });
 
     postHubMessage({
-      type: 'mini-hub-content-request',
+      type: normalizedKind === 'prompt' ? 'mini-hub-prompt-request' : 'mini-hub-content-request',
       requestId,
       targetTabId: normalizedTargetTabId,
       kind: normalizedKind,
       presetId: normalizedPresetId,
+      ...(normalizedKind === 'prompt' ? { promptSlot } : {}),
       at: Date.now(),
     });
   });
 }
 
-function getSelectedHubContentText(kind) {
+function getSelectedHubContentText(kind, promptSlot = '') {
   const targetTabId = ensureSelectedHubTab();
-  const presetId = getHighlightedWorkspacePresetId();
+  const presetId = kind === 'prompt'
+    ? String(getSelectedHubSnapshot()?.workspacePresets?.activePresetId || '').trim()
+    : getHighlightedWorkspacePresetId();
   if (!targetTabId) {
     return Promise.resolve('');
   }
 
   if (targetTabId === getOrCreateLocalTabId()) {
-    return Promise.resolve(getLocalMiniContentText(kind, presetId));
+    return Promise.resolve(getLocalMiniContentText(kind, presetId, promptSlot));
   }
 
-  return requestHubTabContent(targetTabId, kind, presetId);
+  return requestHubTabContent(targetTabId, kind, presetId, promptSlot);
 }
 
 async function writeMiniPanelTextToClipboard(text) {
@@ -2706,7 +2757,8 @@ function syncMiniPanelCopyFeedback(kind) {
 
 async function copySelectedHubContent(kind) {
   const normalizedKind = normalizeLower(kind, 'transcript');
-  const text = await getSelectedHubContentText(normalizedKind);
+  const promptSlot = normalizedKind === 'prompt' ? String($('miniPromptSelect')?.value || '') : '';
+  const text = await getSelectedHubContentText(normalizedKind, promptSlot);
   if (!String(text || '').trim()) {
     syncMiniPanelCopyFeedback('copyFailed');
     return false;
@@ -2723,6 +2775,7 @@ function bindMiniPanelEvents() {
   const pauseButton = $('miniPauseButton');
   const copyTranscriptButton = $('miniCopyTranscriptButton');
   const copyNoteButton = $('miniCopyNoteButton');
+  const copyPromptButton = $('miniCopyPromptButton');
   const abortButton = $('miniAbortButton');
   const closeButton = $('miniCloseButton');
   const focusTabButton = $('miniFocusTabButton');
@@ -2745,7 +2798,7 @@ function bindMiniPanelEvents() {
   // click. Their actual enabled/disabled rules remain owned by the snapshot.
   [
     startButton, stopButton, pauseButton, abortButton,
-    copyTranscriptButton, copyNoteButton, $('miniGenerateNoteButton'),
+    copyTranscriptButton, copyNoteButton, copyPromptButton, $('miniGenerateNoteButton'),
   ].forEach(stabilizeMiniControlPointerGesture);
   [
     autoGenerateToggle, autoCopyModeSelect, usePromptToggle, promptSelect,
@@ -2791,6 +2844,12 @@ function bindMiniPanelEvents() {
   if (copyNoteButton) {
     copyNoteButton.addEventListener('click', () => {
       void copySelectedHubContent('note');
+    });
+  }
+
+  if (copyPromptButton) {
+    copyPromptButton.addEventListener('click', () => {
+      void copySelectedHubContent('prompt');
     });
   }
 
@@ -4050,6 +4109,42 @@ function renderMiniPanelDocument(targetWindow) {
       min-width: 0;
     }
 
+    .prompt-copy-dot {
+      display: inline-grid;
+      place-items: center;
+      flex: 0 0 16px;
+      width: 16px;
+      height: 24px;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .prompt-copy-dot::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #969ca5;
+    }
+
+    .prompt-copy-dot:hover:not(:disabled)::before,
+    .prompt-copy-dot:focus-visible::before {
+      background: #d0d4da;
+    }
+
+    .prompt-copy-dot:focus-visible {
+      outline: 1px solid var(--muted);
+      outline-offset: -1px;
+    }
+
+    .prompt-copy-dot:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+
     .prompt-label {
       font-size: 10px;
       font-weight: 700;
@@ -4219,6 +4314,7 @@ function renderMiniPanelDocument(targetWindow) {
             <input id="miniUsePromptToggle" type="checkbox" />
             <span id="miniUsePromptLabel">Use prompt</span>
           </label>
+          <button id="miniCopyPromptButton" class="prompt-copy-dot" type="button" title="Copy prompt" aria-label="Copy prompt" disabled></button>
         </div>
       </div>
 

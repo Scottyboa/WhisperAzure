@@ -468,8 +468,20 @@ function initFrameRuntime() {
       const fn = window.__app?.[String(actionName || "")];
       return typeof fn === "function" ? fn(...args) : false;
     },
-    getContent(kind) {
-      const idForKind = String(kind || "").toLowerCase() === "note" ? "generatedNote" : "transcription";
+    getContent(kind, promptSlot = "") {
+      const normalizedKind = String(kind || "").toLowerCase();
+      if (normalizedKind === "prompt") {
+        const select = document.getElementById("promptSlot");
+        const slot = String(promptSlot || "").trim();
+        if (!slot || !Array.from(select?.options || []).some(option => option.value === slot)) return "";
+
+        // The panel may have just changed slots and not yet received its ack.
+        // Read the requested slot without changing the workspace selection.
+        if (select.value !== slot) return PromptManager.getPrompt(slot);
+        return String(window.__getVisibleCustomPromptValue?.() ??
+          document.getElementById("customPrompt")?.value ?? PromptManager.getPrompt(slot));
+      }
+      const idForKind = normalizedKind === "note" ? "generatedNote" : "transcription";
       return String(document.getElementById(idForKind)?.value || "");
     },
     dispose(options = {}) {
@@ -748,8 +760,13 @@ function initTopLevelManager() {
     restoreHistoryEntry(entry, target = "current") {
       return restoreHistoryEntry(entry, target);
     },
-    getContent(kind, presetId = activeId) {
+    getContent(kind, presetId = activeId, promptSlot = "") {
       const requestedId = String(presetId || activeId);
+      if (kind === "prompt") {
+        const runtime = runtimes.get(requestedId);
+        if (!runtime?.ready || runtime.disposing || runtime.disposed) return "";
+        return runtime.win?.__workspacePresetBridge?.getContent(kind, promptSlot) || "";
+      }
       const runtime = runtimes.get(requestedId) || runtimes.get(activeId);
       return runtime?.win?.__workspacePresetBridge?.getContent(kind) || "";
     },
