@@ -221,6 +221,15 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './requesty.js',
     initExportName: 'initRequestyGemini4Carbon',
   },
+  'requesty-gemini4-hydrogen': {
+    id: 'requesty-gemini4-hydrogen',
+    label: 'Requesty Gemini 4 Hydrogen',
+    uiProvider: 'requesty',
+    requestyModel: 'gemini-4-hydrogen',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyGemini4Hydrogen',
+  },
   'requesty-gpt56-luna': {
     id: 'requesty-gpt56-luna',
     label: 'Requesty GPT-5.6 Luna',
@@ -314,8 +323,9 @@ const REQUESTY_MODEL_OPTIONS = [
   { value: 'gpt-5.6-luna', label: 'GPT-5.6 Luna' },
   { value: 'gpt-5.5', label: 'GPT-5.5' },
   { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
-  { value: 'gemini-4-argon', label: 'Gemini 4 Argon' },
   { value: 'gemini-4-carbon', label: 'Gemini 4 Carbon' },
+  { value: 'gemini-4-argon', label: 'Gemini 4 Argon' },
+  { value: 'gemini-4-hydrogen', label: 'Gemini 4 Hydrogen' },
   { value: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash' },
   { value: 'deepseek-v4-pro-0813', label: 'DeepSeek V4 Pro' },
   { value: 'deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash' },
@@ -373,9 +383,9 @@ const REQUESTY_GPT56_REASONING_OPTIONS = [
   { value: 'xhigh', label: 'X-high' },
 ];
 
-const REQUESTY_GEMINI_MODELS = new Set(['gemini-4-argon', 'gemini-4-carbon', 'gemini-3.8-flash']);
+const REQUESTY_GEMINI_MODELS = new Set(['gemini-4-carbon', 'gemini-4-argon', 'gemini-4-hydrogen', 'gemini-3.8-flash']);
 
-// These Gemini models support low | medium | high and default to low in the app.
+// The app exposes low | medium | high for these Gemini models, defaulting to low.
 const REQUESTY_GEMINI_REASONING_OPTIONS = [
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
@@ -917,7 +927,7 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   // (#gpt5Reasoning, None/Low/Medium/High). Claude Sonnet 5.5 maps
   // reasoning_effort to a thinking budget ("None" omits it), while GPT-5.5
   // uses the native OpenAI effort string. Claude Opus / Haiku 5.5, GPT-5 Nano,
-  // GPT-5.6, GPT-6 Luna / GPT-6.1 Terra / GPT-6.1 Sol, Gemini 4 Argon / Carbon / 3.8 Flash,
+  // GPT-5.6, GPT-6 Luna / GPT-6.1 Terra / GPT-6.1 Sol, Gemini 4 Carbon / Argon / Hydrogen and 3.8 Flash,
   // DeepSeek V4 Pro/V4.1 Flash, Kimi K3 and Mistral Large 4 use the dedicated
   // Requesty selector because their valid
   // option sets differ from the shared selector.

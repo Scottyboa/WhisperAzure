@@ -152,6 +152,11 @@ const REQUESTY_VARIANTS = {
     pricingModelId: "gemini-4-carbon",
     reasoningSelector: "dedicated"
   },
+  "gemini-4-hydrogen": {
+    requestyModelId: "vertex/gemini-4-hydrogen@eu",
+    pricingModelId: "gemini-4-hydrogen",
+    reasoningSelector: "dedicated"
+  },
   "gemini-3.8-flash": {
     requestyModelId: "vertex/gemini-3.8-flash@eu",
     pricingModelId: "gemini-3.8-flash",

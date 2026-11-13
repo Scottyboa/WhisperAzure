@@ -1202,6 +1202,7 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
   // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
   // gpt-5.6-*:       Azure Sweden Central rates from Requesty's model cards
   // gemini-4-argon / gemini-4-carbon / gemini-3.8-flash: discounted Vertex EU endpoint rates
+  // gemini-4-hydrogen: Requesty's Vertex EU endpoint rates
   // deepseek-v4-pro-0813: tensorx/deepseek-v4-pro-0813 rates
   // deepseek-v4.1-flash: sference/deepseek-v4.1-flash rates
   // kimi-k3:          nebius/kimi-k3 rates
@@ -1220,6 +1221,7 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
     "gpt-5.6-sol": { input: 4.4, output: 22.0 },
     "gemini-4-argon": { input: 2.2, output: 11.0 },
     "gemini-4-carbon": { input: 2.2, output: 11.0 },
+    "gemini-4-hydrogen": { input: 1.65, output: 8.25 },
     "gemini-3.8-flash": { input: 0.825, output: 4.125 },
     "deepseek-v4-pro-0813": { input: 1.75, output: 3.5 },
     "deepseek-v4.1-flash": { input: 0.5, output: 1.5 },
@@ -7446,6 +7448,11 @@ const REQUESTY_VARIANTS = {
   "gemini-4-carbon": {
     requestyModelId: "vertex/gemini-4-carbon@eu",
     pricingModelId: "gemini-4-carbon",
+    reasoningSelector: "dedicated"
+  },
+  "gemini-4-hydrogen": {
+    requestyModelId: "vertex/gemini-4-hydrogen@eu",
+    pricingModelId: "gemini-4-hydrogen",
     reasoningSelector: "dedicated"
   },
   "gemini-3.8-flash": {
@@ -21514,6 +21521,7 @@ const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout
 //   - GPT-5.6 Sol      -> azure/gpt-5.6-sol@swedencentral    (Azure, Sweden Central)
 //   - Gemini 4 Argon   -> vertex/gemini-4-argon@eu            (Google Vertex AI, EU)
 //   - Gemini 4 Carbon  -> vertex/gemini-4-carbon@eu           (Google Vertex AI, EU)
+//   - Gemini 4 Hydrogen -> vertex/gemini-4-hydrogen@eu        (Google Vertex AI, EU)
 //   - Gemini 3.8 Flash -> vertex/gemini-3.8-flash@eu          (Google Vertex AI, EU)
 //   - DeepSeek V4 Pro  -> tensorx/deepseek-v4-pro-0813         (TensorX, EU)
 //   - DeepSeek V4.1    -> sference/deepseek-v4.1-flash        (Sference, EU)
@@ -21659,6 +21667,11 @@ const VARIANTS = Object.freeze({
     pricingModelId: "gemini-4-carbon",
     reasoningSelector: "dedicated"
   },
+  "gemini-4-hydrogen": {
+    requestyModelId: "vertex/gemini-4-hydrogen@eu",
+    pricingModelId: "gemini-4-hydrogen",
+    reasoningSelector: "dedicated"
+  },
   "gemini-3.8-flash": {
     // Google Vertex AI EU deployment. The supported reasoning levels are
     // low | medium | high. The app intentionally defaults to low.
@@ -21723,7 +21736,8 @@ function resolveEffectiveMode() {
 
 function resolveReasoningLevel(variantKey, variantConfig) {
   // Claude Opus / Haiku 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna / GPT-6.1 Terra / GPT-6.1 Sol,
-  // Gemini 4 Argon / Carbon / 3.8 Flash, DeepSeek, Kimi K3, and Mistral Large 4 use the dedicated selector.
+  // Gemini 4 Carbon / Argon / Hydrogen, Gemini 3.8 Flash, DeepSeek, Kimi K3,
+  // and Mistral Large 4 use the dedicated selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
     return normalizeRequestyNanoReasoning(
@@ -21986,6 +22000,10 @@ function initRequestyGemini4Carbon() {
   bindGenerateNoteButton(generateNote);
 }
 
+function initRequestyGemini4Hydrogen() {
+  bindGenerateNoteButton(generateNote);
+}
+
 function initRequestyGemini38Flash() {
   bindGenerateNoteButton(generateNote);
 }
@@ -22019,6 +22037,7 @@ return Object.freeze(Object.defineProperties({}, {"initRequestyClaudeOpus55": { 
 "initRequestyGpt56Sol": { enumerable: true, get: () => initRequestyGpt56Sol },
 "initRequestyGemini4Argon": { enumerable: true, get: () => initRequestyGemini4Argon },
 "initRequestyGemini4Carbon": { enumerable: true, get: () => initRequestyGemini4Carbon },
+"initRequestyGemini4Hydrogen": { enumerable: true, get: () => initRequestyGemini4Hydrogen },
 "initRequestyGemini38Flash": { enumerable: true, get: () => initRequestyGemini38Flash },
 "initRequestyDeepSeekV4Pro": { enumerable: true, get: () => initRequestyDeepSeekV4Pro },
 "initRequestyDeepSeekV41Flash": { enumerable: true, get: () => initRequestyDeepSeekV41Flash },

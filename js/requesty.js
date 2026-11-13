@@ -17,6 +17,7 @@
 //   - GPT-5.6 Sol      -> azure/gpt-5.6-sol@swedencentral    (Azure, Sweden Central)
 //   - Gemini 4 Argon   -> vertex/gemini-4-argon@eu            (Google Vertex AI, EU)
 //   - Gemini 4 Carbon  -> vertex/gemini-4-carbon@eu           (Google Vertex AI, EU)
+//   - Gemini 4 Hydrogen -> vertex/gemini-4-hydrogen@eu        (Google Vertex AI, EU)
 //   - Gemini 3.8 Flash -> vertex/gemini-3.8-flash@eu          (Google Vertex AI, EU)
 //   - DeepSeek V4 Pro  -> tensorx/deepseek-v4-pro-0813         (TensorX, EU)
 //   - DeepSeek V4.1    -> sference/deepseek-v4.1-flash        (Sference, EU)
@@ -166,6 +167,11 @@ const VARIANTS = Object.freeze({
     pricingModelId: "gemini-4-carbon",
     reasoningSelector: "dedicated"
   },
+  "gemini-4-hydrogen": {
+    requestyModelId: "vertex/gemini-4-hydrogen@eu",
+    pricingModelId: "gemini-4-hydrogen",
+    reasoningSelector: "dedicated"
+  },
   "gemini-3.8-flash": {
     // Google Vertex AI EU deployment. The supported reasoning levels are
     // low | medium | high. The app intentionally defaults to low.
@@ -230,7 +236,8 @@ function resolveEffectiveMode() {
 
 function resolveReasoningLevel(variantKey, variantConfig) {
   // Claude Opus / Haiku 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna / GPT-6.1 Terra / GPT-6.1 Sol,
-  // Gemini 4 Argon / Carbon / 3.8 Flash, DeepSeek, Kimi K3, and Mistral Large 4 use the dedicated selector.
+  // Gemini 4 Carbon / Argon / Hydrogen, Gemini 3.8 Flash, DeepSeek, Kimi K3,
+  // and Mistral Large 4 use the dedicated selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
     return normalizeRequestyNanoReasoning(
@@ -493,6 +500,10 @@ function initRequestyGemini4Carbon() {
   bindGenerateNoteButton(generateNote);
 }
 
+function initRequestyGemini4Hydrogen() {
+  bindGenerateNoteButton(generateNote);
+}
+
 function initRequestyGemini38Flash() {
   bindGenerateNoteButton(generateNote);
 }
@@ -527,6 +538,7 @@ export {
   initRequestyGpt56Sol,
   initRequestyGemini4Argon,
   initRequestyGemini4Carbon,
+  initRequestyGemini4Hydrogen,
   initRequestyGemini38Flash,
   initRequestyDeepSeekV4Pro,
   initRequestyDeepSeekV41Flash,
