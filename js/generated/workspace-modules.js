@@ -1197,7 +1197,7 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
   // claude-opus-5-5: bedrock/claude-opus-5-5@eu-north-1 rates
   // claude-sonnet-5-5: vertex/claude-sonnet-5-5@eu rates (EU regional pricing)
   // claude-haiku-5-5: bedrock/claude-haiku-5-5@eu-north-1 rates
-  // gpt-6-luna / gpt-6.1-terra / gpt-6.1-sol: Azure Sweden Central rates from Requesty's model cards
+  // gpt-6-luna / gpt-6.1-terra / gpt-6.2-sol: Azure Sweden Central rates from Requesty's model cards
   // gpt-5.5:         azure/gpt-5.5@swedencentral rates
   // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
   // gpt-5.6-*:       Azure Sweden Central rates from Requesty's model cards
@@ -1211,7 +1211,8 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
     "claude-opus-5-5": { input: 4.4, output: 22.0 },
     "claude-sonnet-5-5": { input: 2.2, output: 11.0 },
     "claude-haiku-5-5": { input: 0.11, output: 0.55 },
-    "gpt-6.1-sol": { input: 2.4, output: 12.0 },
+    "gpt-6.1-sol": { input: 2.4, output: 12.0 }, // Historical Requesty usage only.
+    "gpt-6.2-sol": { input: 2.4, output: 12.0 },
     "gpt-6.1-terra": { input: 1.2, output: 6.0 },
     "gpt-6-luna": { input: 0.12, output: 0.6 },
     "gpt-5.5": { input: 5.5, output: 33.0 },
@@ -5398,6 +5399,7 @@ const listOpenAiModelOptions = shared0["listOpenAiModelOptions"];
 const listOpenAiReasoningOptions = shared0["listOpenAiReasoningOptions"];
 const listRequestyModelOptions = shared0["listRequestyModelOptions"];
 const listRequestyNanoReasoningOptions = shared0["listRequestyNanoReasoningOptions"];
+const normalizeRequestyModel = shared0["normalizeRequestyModel"];
 const listSharedRequestyReasoningOptions = shared0["listSharedRequestyReasoningOptions"];
 
 // Generator-local, Workspace-local settings. The legacy scalar keys remain
@@ -5428,11 +5430,17 @@ function sanitizeModelReasoningPreferences(preferences) {
   if (!preferences || typeof preferences !== 'object' || Array.isArray(preferences)) return safe;
   for (const [key, value] of Object.entries(preferences)) {
     const [provider, model, extra] = key.split(':');
-    const upgradingSol = provider === 'openai' && model === 'gpt-6-sol';
-    const spec = extra === undefined ? modelSpec(provider, upgradingSol ? normalizeOpenAiModel(model) : model) : null;
+    const upgradingOpenAiSol = provider === 'openai' && model === 'gpt-6-sol';
+    const upgradingRequestySol = provider === 'requesty' && (model === 'gpt-6-sol' || model === 'gpt-6.1-sol');
+    const targetModel = upgradingOpenAiSol ? normalizeOpenAiModel(model)
+      : upgradingRequestySol ? normalizeRequestyModel(model) : model;
+    const spec = extra === undefined ? modelSpec(provider, targetModel) : null;
     if (!spec) continue;
     // A saved choice for the new model takes precedence over its predecessor.
+    const upgradingSol = upgradingOpenAiSol || upgradingRequestySol;
     if (upgradingSol && Object.prototype.hasOwnProperty.call(preferences, spec.key)) continue;
+    if (upgradingRequestySol && model === 'gpt-6-sol' &&
+        Object.prototype.hasOwnProperty.call(preferences, 'requesty:gpt-6.1-sol')) continue;
     if (spec.options.some((option) => option.value === value)) safe[spec.key] = value;
     else if (upgradingSol && value === 'none') safe[spec.key] = spec.fallback;
   }
@@ -7404,11 +7412,10 @@ const REQUESTY_VARIANTS = {
     reasoningSelector: "dedicated",
     sendNoneReasoning: true
   },
-  "gpt-6.1-sol": {
-    requestyModelId: "azure/gpt-6.1-sol@swedencentral",
-    pricingModelId: "gpt-6.1-sol",
-    reasoningSelector: "dedicated",
-    sendNoneReasoning: true
+  "gpt-6.2-sol": {
+    requestyModelId: "azure/gpt-6.2-sol@swedencentral",
+    pricingModelId: "gpt-6.2-sol",
+    reasoningSelector: "dedicated"
   },
   "gpt-6.1-terra": {
     requestyModelId: "azure/gpt-6.1-terra@swedencentral",
@@ -21513,7 +21520,7 @@ const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout
 //   - Claude Haiku 5.5 -> bedrock/claude-haiku-5-5@eu-north-1 (AWS Bedrock, EU)
 //   - Claude Opus 5.5  -> bedrock/claude-opus-5-5@eu-north-1 (AWS Bedrock, Stockholm)
 //   - GPT-6 Luna       -> azure/gpt-6-luna@swedencentral     (Azure, Sweden Central)
-//   - GPT-6.1 Sol      -> azure/gpt-6.1-sol@swedencentral    (Azure, Sweden Central)
+//   - GPT-6.2 Sol      -> azure/gpt-6.2-sol@swedencentral    (Azure, Sweden Central)
 //   - GPT-6.1 Terra    -> azure/gpt-6.1-terra@swedencentral  (Azure, Sweden Central)
 //   - GPT-5.5          -> azure/gpt-5.5@swedencentral        (Azure, Sweden Central)
 //   - GPT-5.6 Luna     -> azure/gpt-5.6-luna@swedencentral   (Azure, Sweden Central)
@@ -21610,13 +21617,11 @@ const VARIANTS = Object.freeze({
     reasoningSelector: "dedicated",
     sendNoneReasoning: true
   },
-  "gpt-6.1-sol": {
-    // Azure OpenAI, Sweden Central (EU). The app intentionally exposes only
-    // none | low | medium | high and defaults to low when no choice is stored.
-    requestyModelId: "azure/gpt-6.1-sol@swedencentral",
-    pricingModelId: "gpt-6.1-sol",
-    reasoningSelector: "dedicated",
-    sendNoneReasoning: true
+  "gpt-6.2-sol": {
+    // Azure OpenAI, Sweden Central (EU). Reasoning cannot be set to none.
+    requestyModelId: "azure/gpt-6.2-sol@swedencentral",
+    pricingModelId: "gpt-6.2-sol",
+    reasoningSelector: "dedicated"
   },
   "gpt-6.1-terra": {
     // Azure OpenAI, Sweden Central (EU). The app intentionally exposes only
@@ -21735,7 +21740,7 @@ function resolveEffectiveMode() {
 }
 
 function resolveReasoningLevel(variantKey, variantConfig) {
-  // Claude Opus / Haiku 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna / GPT-6.1 Terra / GPT-6.1 Sol,
+  // Claude Opus / Haiku 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna / GPT-6.1 Terra / GPT-6.2 Sol,
   // Gemini 4 Carbon / Argon / Hydrogen, Gemini 3.8 Flash, DeepSeek, Kimi K3,
   // and Mistral Large 4 use the dedicated selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
@@ -21964,7 +21969,7 @@ function initRequestyGpt6Luna() {
   bindGenerateNoteButton(generateNote);
 }
 
-function initRequestyGpt61Sol() {
+function initRequestyGpt62Sol() {
   bindGenerateNoteButton(generateNote);
 }
 
@@ -22028,7 +22033,7 @@ return Object.freeze(Object.defineProperties({}, {"initRequestyClaudeOpus55": { 
 "initRequestyClaudeSonnet55": { enumerable: true, get: () => initRequestyClaudeSonnet55 },
 "initRequestyClaudeHaiku55": { enumerable: true, get: () => initRequestyClaudeHaiku55 },
 "initRequestyGpt6Luna": { enumerable: true, get: () => initRequestyGpt6Luna },
-"initRequestyGpt61Sol": { enumerable: true, get: () => initRequestyGpt61Sol },
+"initRequestyGpt62Sol": { enumerable: true, get: () => initRequestyGpt62Sol },
 "initRequestyGpt61Terra": { enumerable: true, get: () => initRequestyGpt61Terra },
 "initRequestyGpt55": { enumerable: true, get: () => initRequestyGpt55 },
 "initRequestyGpt5Nano": { enumerable: true, get: () => initRequestyGpt5Nano },

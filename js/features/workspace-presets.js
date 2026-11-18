@@ -1,4 +1,4 @@
-import { normalizeOpenAiModel } from '../core/provider-registry.js';
+import { normalizeOpenAiModel, normalizeRequestyModel, normalizeRequestyNanoReasoning } from '../core/provider-registry.js';
 import { sanitizeTranslatorConfig } from './translator-mode.js';
 import { PromptManager } from "../promptManager.js";
 import { PromptCloudBackup } from "./prompt-cloud-backup.js";
@@ -254,8 +254,16 @@ async function applyConfig(win, doc, config = {}) {
     if (!Object.prototype.hasOwnProperty.call(values, id)) return;
     const el = doc.getElementById(id);
     if (!el || !("value" in el)) return;
-    const next = ["openaiModel", "secondaryOpenaiModel"].includes(id)
-      ? normalizeOpenAiModel(values[id]) : String(values[id] ?? "");
+    let next = String(values[id] ?? "");
+    if (id === "openaiModel" || id === "secondaryOpenaiModel") {
+      next = normalizeOpenAiModel(next);
+    } else if (id === "requestyModel" || id === "secondaryRequestyModel") {
+      next = normalizeRequestyModel(next);
+    } else if (id === "requestyNanoReasoning" || id === "secondaryNanoReasoning") {
+      const modelId = id === "requestyNanoReasoning" ? "requestyModel" : "secondaryRequestyModel";
+      const model = normalizeRequestyModel(values[modelId] ?? doc.getElementById(modelId)?.value);
+      if (model === "gpt-6.2-sol") next = normalizeRequestyNanoReasoning(next, model);
+    }
     // Retain the on/off value in exports for older app versions, and accept
     // existing exports made while Speaker Labels was a dropdown.
     if (id === "sonioxSpeakerLabels" && el.type === "checkbox") {

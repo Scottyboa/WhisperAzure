@@ -7,6 +7,7 @@ import {
   listOpenAiReasoningOptions,
   listRequestyModelOptions,
   listRequestyNanoReasoningOptions,
+  normalizeRequestyModel,
   listSharedRequestyReasoningOptions,
 } from './provider-registry.js';
 
@@ -38,11 +39,17 @@ export function sanitizeModelReasoningPreferences(preferences) {
   if (!preferences || typeof preferences !== 'object' || Array.isArray(preferences)) return safe;
   for (const [key, value] of Object.entries(preferences)) {
     const [provider, model, extra] = key.split(':');
-    const upgradingSol = provider === 'openai' && model === 'gpt-6-sol';
-    const spec = extra === undefined ? modelSpec(provider, upgradingSol ? normalizeOpenAiModel(model) : model) : null;
+    const upgradingOpenAiSol = provider === 'openai' && model === 'gpt-6-sol';
+    const upgradingRequestySol = provider === 'requesty' && (model === 'gpt-6-sol' || model === 'gpt-6.1-sol');
+    const targetModel = upgradingOpenAiSol ? normalizeOpenAiModel(model)
+      : upgradingRequestySol ? normalizeRequestyModel(model) : model;
+    const spec = extra === undefined ? modelSpec(provider, targetModel) : null;
     if (!spec) continue;
     // A saved choice for the new model takes precedence over its predecessor.
+    const upgradingSol = upgradingOpenAiSol || upgradingRequestySol;
     if (upgradingSol && Object.prototype.hasOwnProperty.call(preferences, spec.key)) continue;
+    if (upgradingRequestySol && model === 'gpt-6-sol' &&
+        Object.prototype.hasOwnProperty.call(preferences, 'requesty:gpt-6.1-sol')) continue;
     if (spec.options.some((option) => option.value === value)) safe[spec.key] = value;
     else if (upgradingSol && value === 'none') safe[spec.key] = spec.fallback;
   }

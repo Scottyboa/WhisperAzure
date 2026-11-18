@@ -58,7 +58,7 @@ export const indexTranslations = {
     <li>Claude Opus 5.5</li>
     <li>Claude Sonnet 5.5</li>
     <li>Claude Haiku 5.5</li>
-    <li>GPT-6.1 Sol</li>
+    <li>GPT-6.2 Sol</li>
     <li>GPT-6.1 Terra</li>
     <li>GPT-6 Luna</li>
     <li>GPT-5.6 Sol</li>
@@ -105,7 +105,7 @@ export const indexTranslations = {
   <p>Gemini 4 Argon leveres via Google Vertex AI i EU. Modellen støtter reasoning-nivåene Low, Medium og High, med Low som standardvalg. Ruten har zero data retention, brukes ikke til modelltrening og har for øyeblikket 50 % endepunktsrabatt.</p>
   <p>Gemini 4 Carbon (EU) er utviklet for mer krevende resonneringsoppgaver. Appen bruker en fast EU-rute via Requesty til Google Vertex AI. Modellen støtter Low, Medium og High, med Low som standard.</p>
   <p>Gemini 4 Hydrogen leveres via Requesty til et fast Google Vertex AI-endepunkt i EU. Appen tilbyr reasoning-nivåene Low, Medium og High, med Low som standard.</p>
-  <p>GPT-6.1 Sol, GPT-6.1 Terra og GPT-6 Luna støtter reasoning-nivåene None, Low, Medium og High i appen; når ingen tidligere reasoning-verdi er lagret, er standardvalget Low.</p>
+  <p>GPT-6.2 Sol via Requesty kjører på Azure i Sweden Central og støtter reasoning-nivåene Low, Medium og High. GPT-6.1 Terra og GPT-6 Luna tilbyr også None. Appen bruker Low som standard for disse modellene.</p>
   <p>GPT-6.1 Terra leveres via Azure i Sweden Central. Modellruten har zero data retention, brukes ikke til modelltrening og behandler data i EU.</p>
   <p>DeepSeek V4 Pro og DeepSeek V4.1 Flash støtter reasoning-nivåene None, Low, High og Max; appens standardvalg er Low.</p>
   <p>Mistral Large 4 leveres av Mistral AI i EU via Requesty. Modellen støtter reasoning-nivåene None og High i appen, med None som standardvalg. Ruten har zero data retention, brukes ikke til modelltrening og har for øyeblikket 50 % endepunktsrabatt.</p>
@@ -263,7 +263,7 @@ Dette gir tilgang til transkripsjon av høy kvalitet og et kuratert utvalg nyere
 - Mistral Voxtral Mini Transcribe<br><br>
 
 <strong>Leverandører for notatgenerering i appen</strong><br>
-- Requesty: Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6.1 Terra, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Carbon (EU), Gemini 4 Argon, Gemini 4 Hydrogen, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3 og Mistral Large 4<br>
+- Requesty: Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.2 Sol, GPT-6.1 Terra, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Carbon (EU), Gemini 4 Argon, Gemini 4 Hydrogen, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3 og Mistral Large 4<br>
 - OpenAI: GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna og GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 og Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
@@ -370,7 +370,7 @@ En API-nøkkel alene gjør ikke en tjeneste GDPR-kompatibel. Kontroller leverand
     <li>Claude Opus 5.5: omtrent 4,40 / 22,00 USD</li>
     <li>Claude Sonnet 5.5: omtrent 2,20 / 11,00 USD</li>
     <li>Claude Haiku 5.5: omtrent 0,11 / 0,55 USD</li>
-    <li>GPT-6.1 Sol: omtrent 2,40 / 12,00 USD</li>
+    <li>GPT-6.2 Sol: omtrent 2,40 / 12,00 USD</li>
     <li>GPT-6.1 Terra: omtrent 1,20 / 6,00 USD</li>
     <li>GPT-6 Luna: omtrent 0,12 / 0,60 USD</li>
     <li>GPT-5.6 Sol: omtrent 4,40 / 22,00 USD</li>

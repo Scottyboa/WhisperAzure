@@ -167,14 +167,14 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './requesty.js',
     initExportName: 'initRequestyGpt6Luna',
   },
-  'requesty-gpt61-sol': {
-    id: 'requesty-gpt61-sol',
-    label: 'Requesty GPT-6.1 Sol',
+  'requesty-gpt62-sol': {
+    id: 'requesty-gpt62-sol',
+    label: 'Requesty GPT-6.2 Sol',
     uiProvider: 'requesty',
-    requestyModel: 'gpt-6.1-sol',
+    requestyModel: 'gpt-6.2-sol',
     mode: DEFAULTS.noteMode,
     modulePath: './requesty.js',
-    initExportName: 'initRequestyGpt61Sol',
+    initExportName: 'initRequestyGpt62Sol',
   },
   'requesty-gpt61-terra': {
     id: 'requesty-gpt61-terra',
@@ -315,7 +315,7 @@ const REQUESTY_MODEL_OPTIONS = [
   { value: 'claude-opus-5-5', label: 'Claude Opus 5.5' },
   { value: 'claude-sonnet-5-5', label: 'Claude Sonnet 5.5' },
   { value: 'claude-haiku-5-5', label: 'Claude Haiku 5.5' },
-  { value: 'gpt-6.1-sol', label: 'GPT-6.1 Sol' },
+  { value: 'gpt-6.2-sol', label: 'GPT-6.2 Sol' },
   { value: 'gpt-6.1-terra', label: 'GPT-6.1 Terra' },
   { value: 'gpt-6-luna', label: 'GPT-6 Luna' },
   { value: 'gpt-5.6-sol', label: 'GPT-5.6 Sol' },
@@ -366,9 +366,8 @@ const REQUESTY_HAIKU55_REASONING_OPTIONS = [
   { value: 'high', label: 'High' },
 ];
 
-// GPT-6 Luna, GPT-6.1 Terra and GPT-6.1 Sol support a wider upstream reasoning
-// range, but the Requesty UI intentionally exposes only the four levels requested
-// by the app: none | low | medium | high. Low is the app default for these models.
+// The app exposes none | low | medium | high for GPT-6 Luna and GPT-6.1
+// Terra. GPT-6.2 Sol requires reasoning, so only low | medium | high apply.
 const REQUESTY_GPT6_REASONING_OPTIONS = [
   { value: 'none', label: 'None' },
   { value: 'low', label: 'Low' },
@@ -423,7 +422,7 @@ const REQUESTY_DEEPSEEK_MODELS = new Set([
 
 const REQUESTY_GPT6_MODELS = new Set([
   'gpt-6-luna',
-  'gpt-6.1-sol',
+  'gpt-6.2-sol',
   'gpt-6.1-terra',
 ]);
 
@@ -592,7 +591,7 @@ export function normalizeRequestyModel(value) {
   // Backward compatibility: migrate retired model selections.
   if (raw === 'claude-opus-5') return 'claude-opus-5-5';
   if (raw === 'claude-sonnet-5') return 'claude-sonnet-5-5';
-  if (raw === 'gpt-6-sol') return 'gpt-6.1-sol';
+  if (raw === 'gpt-6-sol' || raw === 'gpt-6.1-sol') return 'gpt-6.2-sol';
   if (raw === 'gemini-3.7-flash') return 'gemini-3.8-flash';
   return REQUESTY_MODEL_OPTIONS.some((item) => item.value === raw)
     ? raw
@@ -621,7 +620,8 @@ export function listRequestyNanoReasoningOptions(
                   : REQUESTY_GPT56_MODELS.has(normalizedModel)
                     ? REQUESTY_GPT56_REASONING_OPTIONS
                     : REQUESTY_NANO_REASONING_OPTIONS;
-  return options.map((item) => ({ ...item }));
+  return options.filter((item) => normalizedModel !== 'gpt-6.2-sol' || item.value !== 'none')
+    .map((item) => ({ ...item }));
 }
 
 export function getDefaultRequestyReasoning(modelId = 'gpt-5-nano') {
@@ -721,7 +721,7 @@ export function normalizeNoteEffectiveProvider(value) {
   // Migrate effective-provider ids saved before Gemini 3.8 replaced 3.7.
   if (raw === 'requesty-gemini37-flash') return 'requesty-gemini38-flash';
   // Existing workspaces keep Requesty selected when Sol is upgraded.
-  if (raw === 'requesty-gpt6-sol') return 'requesty-gpt61-sol';
+  if (raw === 'requesty-gpt6-sol' || raw === 'requesty-gpt61-sol') return 'requesty-gpt62-sol';
   // Retired direct OpenAI providers remain OpenAI and migrate to GPT-5.6 Sol.
   if (
     raw === 'openai' || raw === 'gpt4' || raw === 'gpt5' ||
@@ -927,7 +927,7 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   // (#gpt5Reasoning, None/Low/Medium/High). Claude Sonnet 5.5 maps
   // reasoning_effort to a thinking budget ("None" omits it), while GPT-5.5
   // uses the native OpenAI effort string. Claude Opus / Haiku 5.5, GPT-5 Nano,
-  // GPT-5.6, GPT-6 Luna / GPT-6.1 Terra / GPT-6.1 Sol, Gemini 4 Carbon / Argon / Hydrogen and 3.8 Flash,
+  // GPT-5.6, GPT-6 Luna / GPT-6.1 Terra / GPT-6.2 Sol, Gemini 4 Carbon / Argon / Hydrogen and 3.8 Flash,
   // DeepSeek V4 Pro/V4.1 Flash, Kimi K3 and Mistral Large 4 use the dedicated
   // Requesty selector because their valid
   // option sets differ from the shared selector.

@@ -106,11 +106,10 @@ const REQUESTY_VARIANTS = {
     reasoningSelector: "dedicated",
     sendNoneReasoning: true
   },
-  "gpt-6.1-sol": {
-    requestyModelId: "azure/gpt-6.1-sol@swedencentral",
-    pricingModelId: "gpt-6.1-sol",
-    reasoningSelector: "dedicated",
-    sendNoneReasoning: true
+  "gpt-6.2-sol": {
+    requestyModelId: "azure/gpt-6.2-sol@swedencentral",
+    pricingModelId: "gpt-6.2-sol",
+    reasoningSelector: "dedicated"
   },
   "gpt-6.1-terra": {
     requestyModelId: "azure/gpt-6.1-terra@swedencentral",

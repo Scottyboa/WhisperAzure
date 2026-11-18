@@ -7,7 +7,7 @@ const TEXT_PRICE_GROUPS = [
       { model: "Claude Opus 5.5", id: "bedrock/claude-opus-5-5@eu-north-1", context: "1M", input: "$4.40", output: "$22.00" },
       { model: "Claude Sonnet 5.5", id: "vertex/claude-sonnet-5-5@eu", context: "1M", input: "$2.20", output: "$11.00" },
       { model: "Claude Haiku 5.5", id: "bedrock/claude-haiku-5-5@eu-north-1", context: "1M", input: "$0.11", output: "$0.55" },
-      { model: "GPT-6.1 Sol", id: "azure/gpt-6.1-sol@swedencentral", context: "1.1M", input: "$2.40", output: "$12.00" },
+      { model: "GPT-6.2 Sol", id: "azure/gpt-6.2-sol@swedencentral", context: "1.1M", input: "$2.40", output: "$12.00" },
       { model: "GPT-6.1 Terra", id: "azure/gpt-6.1-terra@swedencentral", context: "1.1M", input: "$1.20", output: "$6.00" },
       { model: "GPT-6 Luna", id: "azure/gpt-6-luna@swedencentral", context: "1.1M", input: "$0.12", output: "$0.60" },
       { model: "GPT-5.6 Sol", id: "azure/gpt-5.6-sol@swedencentral", context: "1.1M", input: "$4.40", output: "$22.00" },

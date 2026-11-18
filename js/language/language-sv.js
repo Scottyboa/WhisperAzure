@@ -36,7 +36,7 @@ export const indexTranslations = {
   <p>Requesty ger tillgång till modeller från flera utvecklare genom en enda API-nyckel. Valen i appen är avsiktligt begränsade till utvalda driftsättningar som är avsedda för behandling inom EU, utan återanvändning för modellträning och med lämpliga inställningar för lagring.</p>
   <ul>
     <li>Claude Opus 5.5</li><li>Claude Sonnet 5.5</li>
-    <li>Claude Haiku 5.5</li><li>GPT-6.1 Sol</li><li>GPT-6.1 Terra</li><li>GPT-6 Luna</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 4 Carbon (EU)</li><li>Gemini 4 Argon</li><li>Gemini 4 Hydrogen</li><li>Gemini 3.8 Flash</li><li>DeepSeek V4 Pro</li><li>DeepSeek V4.1 Flash</li><li>Kimi K3</li><li>Mistral Large 4</li>
+    <li>Claude Haiku 5.5</li><li>GPT-6.2 Sol</li><li>GPT-6.1 Terra</li><li>GPT-6 Luna</li><li>GPT-5.6 Sol</li><li>GPT-5.6 Terra</li><li>GPT-5.6 Luna</li><li>GPT-5.5</li><li>GPT-5 Nano</li><li>Gemini 4 Carbon (EU)</li><li>Gemini 4 Argon</li><li>Gemini 4 Hydrogen</li><li>Gemini 3.8 Flash</li><li>DeepSeek V4 Pro</li><li>DeepSeek V4.1 Flash</li><li>Kimi K3</li><li>Mistral Large 4</li>
   </ul>
   <p><strong>Andra leverantörer som stöds</strong></p>
   <ul>
@@ -60,7 +60,7 @@ export const indexTranslations = {
   <p>Gemini 4 Argon levereras via Google Vertex AI i EU. Modellen stöder reasoning-nivåerna Low, Medium och High, med Low som standardval. Rutten har zero data retention, används inte för modellträning och har för närvarande 50 % rabatt på slutpunkten.</p>
   <p>Gemini 4 Carbon (EU) är utvecklad för mer krävande resonemangsuppgifter. Appen använder en fast EU-rutt via Requesty till Google Vertex AI. Modellen stöder Low, Medium och High, med Low som standard.</p>
   <p>Gemini 4 Hydrogen körs via Requesty på en fast Google Vertex AI-slutpunkt i EU. Appen erbjuder resonemangsnivåerna Low, Medium och High, med Low som standard.</p>
-  <p>GPT-6.1 Sol, GPT-6.1 Terra och GPT-6 Luna stöder reasoning-nivåerna None, Low, Medium och High i appen; om inget tidigare reasoning-val finns sparat är standardvalet Low.</p>
+  <p>GPT-6.2 Sol via Requesty körs på Azure i Sweden Central och stöder resonemangsnivåerna Low, Medium och High. GPT-6.1 Terra och GPT-6 Luna erbjuder även None. Appen använder Low som standard för dessa modeller.</p>
   <p>GPT-6.1 Terra levereras via Azure i Sweden Central. Modellrutten har zero data retention, används inte för modellträning och behandlar data i EU.</p>
   <p>DeepSeek V4 Pro och DeepSeek V4.1 Flash stöder reasoning-nivåerna None, Low, High och Max; appens standardval är Low.</p>
   <p>Mistral Large 4 levereras av Mistral AI i EU via Requesty. Appen erbjuder None och High, med None som standard. Rutten har zero data retention, används inte för modellträning och har för närvarande 50 % rabatt på slutpunkten.</p>
@@ -191,7 +191,7 @@ Den enklaste rekommenderade konfigurationen för nya användare är:<br>
 2. <strong>Requesty</strong> för anteckningsgenerering.<br><br>
 
 <strong>STT-alternativ:</strong> Soniox batch, Soniox batch med talaretiketter, Soniox realtid, OpenAI gpt-4o-transcribe och Mistral Voxtral Mini Transcribe.<br><br>
-<strong>Anteckningsleverantörer:</strong> Requesty (Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.1 Sol, GPT-6.1 Terra, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Carbon (EU), Gemini 4 Argon, Gemini 4 Hydrogen, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3 och Mistral Large 4), OpenAI (GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna och GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) och Mistral Large.<br><br>
+<strong>Anteckningsleverantörer:</strong> Requesty (Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.2 Sol, GPT-6.1 Terra, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Carbon (EU), Gemini 4 Argon, Gemini 4 Hydrogen, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3 och Mistral Large 4), OpenAI (GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol/Terra/Luna och GPT-5 Nano), AWS Bedrock (Claude Haiku/Sonnet/Opus) och Mistral Large.<br><br>
 
 <hr><br>
 <strong>Soniox — rekommenderad STT-konfiguration</strong><br>
@@ -250,7 +250,7 @@ En API-nyckel gör inte en tjänst automatiskt GDPR-kompatibel. Kontrollera DPA,
     <li>Claude Opus 5.5: cirka 4,40 / 22,00 USD</li>
     <li>Claude Sonnet 5.5: cirka 2,20 / 11,00 USD</li>
     <li>Claude Haiku 5.5: cirka 0,11 / 0,55 USD</li>
-    <li>GPT-6.1 Sol: cirka 2,40 / 12,00 USD</li>
+    <li>GPT-6.2 Sol: cirka 2,40 / 12,00 USD</li>
     <li>GPT-6.1 Terra: cirka 1,20 / 6,00 USD</li>
     <li>GPT-6 Luna: cirka 0,12 / 0,60 USD</li>
     <li>GPT-5.6 Sol: cirka 4,40 / 22,00 USD</li>
