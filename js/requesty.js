@@ -15,6 +15,7 @@
 //   - GPT-5.6 Luna     -> azure/gpt-5.6-luna@swedencentral   (Azure, Sweden Central)
 //   - GPT-5.6 Terra    -> azure/gpt-5.6-terra@swedencentral  (Azure, Sweden Central)
 //   - GPT-5.6 Sol      -> azure/gpt-5.6-sol@swedencentral    (Azure, Sweden Central)
+//   - Gemini 4 Neon    -> vertex/gemini-4-neon@eu             (Google Vertex AI, EU)
 //   - Gemini 4 Argon   -> vertex/gemini-4-argon@eu            (Google Vertex AI, EU)
 //   - Gemini 4 Carbon  -> vertex/gemini-4-carbon@eu           (Google Vertex AI, EU)
 //   - Gemini 4 Hydrogen -> vertex/gemini-4-hydrogen@eu        (Google Vertex AI, EU)
@@ -152,6 +153,11 @@ const VARIANTS = Object.freeze({
     pricingModelId: "gpt-5.6-sol",
     reasoningSelector: "dedicated"
   },
+  "gemini-4-neon": {
+    requestyModelId: "vertex/gemini-4-neon@eu",
+    pricingModelId: "gemini-4-neon",
+    reasoningSelector: "dedicated"
+  },
   "gemini-4-argon": {
     // Google Vertex AI EU deployment. Requesty currently applies a 50%
     // endpoint discount. Low | medium | high are supported; the app defaults
@@ -234,7 +240,7 @@ function resolveEffectiveMode() {
 
 function resolveReasoningLevel(variantKey, variantConfig) {
   // Claude Opus / Haiku 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna / GPT-6.1 Terra / GPT-6.2 Sol,
-  // Gemini 4 Carbon / Argon / Hydrogen, Gemini 3.8 Flash, DeepSeek, Kimi K3,
+  // Gemini 4 Carbon / Neon / Argon / Hydrogen, Gemini 3.8 Flash, DeepSeek, Kimi K3,
   // and Mistral Large 4 use the dedicated selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
@@ -490,6 +496,10 @@ function initRequestyGpt56Sol() {
   bindGenerateNoteButton(generateNote);
 }
 
+function initRequestyGemini4Neon() {
+  bindGenerateNoteButton(generateNote);
+}
+
 function initRequestyGemini4Argon() {
   bindGenerateNoteButton(generateNote);
 }
@@ -534,6 +544,7 @@ export {
   initRequestyGpt56Luna,
   initRequestyGpt56Terra,
   initRequestyGpt56Sol,
+  initRequestyGemini4Neon,
   initRequestyGemini4Argon,
   initRequestyGemini4Carbon,
   initRequestyGemini4Hydrogen,

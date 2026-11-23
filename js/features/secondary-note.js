@@ -141,6 +141,11 @@ const REQUESTY_VARIANTS = {
     pricingModelId: "gpt-5.6-sol",
     reasoningSelector: "dedicated"
   },
+  "gemini-4-neon": {
+    requestyModelId: "vertex/gemini-4-neon@eu",
+    pricingModelId: "gemini-4-neon",
+    reasoningSelector: "dedicated"
+  },
   "gemini-4-argon": {
     requestyModelId: "vertex/gemini-4-argon@eu",
     pricingModelId: "gemini-4-argon",

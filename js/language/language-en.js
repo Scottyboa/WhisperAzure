@@ -66,6 +66,7 @@ export const indexTranslations = {
     <li>GPT-5.5</li>
     <li>GPT-5 Nano</li>
     <li>Gemini 4 Carbon (EU)</li>
+    <li>Gemini 4 Neon</li>
     <li>Gemini 4 Argon</li>
     <li>Gemini 4 Hydrogen</li>
     <li>Gemini 3.8 Flash</li>
@@ -101,6 +102,7 @@ export const indexTranslations = {
   <p>Claude Opus 5.5 supports Low, Medium and High reasoning in the app; the default is Low.</p>
   <p>Claude Haiku 5.5 supports Off, Low, Medium and High reasoning; the default is Medium. Off disables thinking.</p>
   <p>Haiku 5.5 uses AWS Bedrock through Requesty’s EU router, with Stockholm as the entry point. Inference can run in other EU regions. The model route has zero data retention and does not use your data for training. Enable Zero Data Retention in Requesty as described in the setup guide.</p>
+  <p>Gemini 4 Neon runs through Requesty on a fixed Google Vertex AI endpoint in the EU. The app offers Low, Medium and High reasoning, with Low as the default.</p>
   <p>Gemini 4 Argon is served through Google Vertex AI in the EU. It supports Low, Medium and High reasoning, with Low as the default. The route has zero data retention, is not used for model training and currently has a 50% endpoint discount.</p>
   <p>Gemini 4 Carbon (EU) is designed for more demanding reasoning tasks. The app pins it to Google Vertex AI in the EU through Requesty. It supports Low, Medium and High reasoning, with Low as the default.</p>
   <p>Gemini 4 Hydrogen runs through Requesty on a fixed Google Vertex AI endpoint in the EU. The app offers Low, Medium and High reasoning, with Low as the default.</p>
@@ -263,7 +265,7 @@ This gives access to high-quality transcription and a curated selection of newer
 - Mistral Voxtral Mini Transcribe<br><br>
 
 <strong>Note-generation providers in the app</strong><br>
-- Requesty: Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.2 Sol, GPT-6.1 Terra, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Carbon (EU), Gemini 4 Argon, Gemini 4 Hydrogen, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3 and Mistral Large 4<br>
+- Requesty: Claude Opus 5.5, Claude Sonnet 5.5, Claude Haiku 5.5, GPT-6.2 Sol, GPT-6.1 Terra, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-5.5, GPT-5 Nano, Gemini 4 Carbon (EU), Gemini 4 Neon, Gemini 4 Argon, Gemini 4 Hydrogen, Gemini 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4.1 Flash, Kimi K3 and Mistral Large 4<br>
 - OpenAI: GPT-6.1 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna and GPT-5 Nano<br>
 - AWS Bedrock: Claude Haiku 4.5, Claude Sonnet 4.5/4.6 and Claude Opus 4.5/4.6/4.7<br>
 - Mistral: Mistral Large<br><br>
@@ -379,6 +381,7 @@ priceModalText: `
     <li>GPT-5.5: approximately 5.50 / 33.00 USD</li>
     <li>GPT-5 Nano: approximately 0.055 / 0.44 USD</li>
     <li>Gemini 4 Carbon (EU): approximately 2.20 / 11.00 USD (current 50% endpoint discount; list price 4.40 / 22.00 USD)</li>
+    <li>Gemini 4 Neon: approximately 3.30 / 16.50 USD</li>
     <li>Gemini 4 Argon: approximately 2.20 / 11.00 USD (current 50% endpoint discount; list price 4.40 / 22.00 USD)</li>
     <li>Gemini 4 Hydrogen: approximately 1.65 / 8.25 USD</li>
     <li>Gemini 3.8 Flash: approximately 0.825 / 4.125 USD (current 50% endpoint discount)</li>

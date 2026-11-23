@@ -203,6 +203,15 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './requesty.js',
     initExportName: 'initRequestyGpt5Nano',
   },
+  'requesty-gemini4-neon': {
+    id: 'requesty-gemini4-neon',
+    label: 'Requesty Gemini 4 Neon',
+    uiProvider: 'requesty',
+    requestyModel: 'gemini-4-neon',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyGemini4Neon',
+  },
   'requesty-gemini4-argon': {
     id: 'requesty-gemini4-argon',
     label: 'Requesty Gemini 4 Argon',
@@ -324,6 +333,7 @@ const REQUESTY_MODEL_OPTIONS = [
   { value: 'gpt-5.5', label: 'GPT-5.5' },
   { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
   { value: 'gemini-4-carbon', label: 'Gemini 4 Carbon' },
+  { value: 'gemini-4-neon', label: 'Gemini 4 Neon' },
   { value: 'gemini-4-argon', label: 'Gemini 4 Argon' },
   { value: 'gemini-4-hydrogen', label: 'Gemini 4 Hydrogen' },
   { value: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash' },
@@ -382,7 +392,7 @@ const REQUESTY_GPT56_REASONING_OPTIONS = [
   { value: 'xhigh', label: 'X-high' },
 ];
 
-const REQUESTY_GEMINI_MODELS = new Set(['gemini-4-carbon', 'gemini-4-argon', 'gemini-4-hydrogen', 'gemini-3.8-flash']);
+const REQUESTY_GEMINI_MODELS = new Set(['gemini-4-carbon', 'gemini-4-neon', 'gemini-4-argon', 'gemini-4-hydrogen', 'gemini-3.8-flash']);
 
 // The app exposes low | medium | high for these Gemini models, defaulting to low.
 const REQUESTY_GEMINI_REASONING_OPTIONS = [
@@ -927,7 +937,7 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   // (#gpt5Reasoning, None/Low/Medium/High). Claude Sonnet 5.5 maps
   // reasoning_effort to a thinking budget ("None" omits it), while GPT-5.5
   // uses the native OpenAI effort string. Claude Opus / Haiku 5.5, GPT-5 Nano,
-  // GPT-5.6, GPT-6 Luna / GPT-6.1 Terra / GPT-6.2 Sol, Gemini 4 Carbon / Argon / Hydrogen and 3.8 Flash,
+  // GPT-5.6, GPT-6 Luna / GPT-6.1 Terra / GPT-6.2 Sol, Gemini 4 Carbon / Neon / Argon / Hydrogen and 3.8 Flash,
   // DeepSeek V4 Pro/V4.1 Flash, Kimi K3 and Mistral Large 4 use the dedicated
   // Requesty selector because their valid
   // option sets differ from the shared selector.

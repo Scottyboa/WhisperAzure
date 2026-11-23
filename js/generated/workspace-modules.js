@@ -1202,7 +1202,7 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
   // gpt-5-nano:      azure/gpt-5-nano@swedencentral rates
   // gpt-5.6-*:       Azure Sweden Central rates from Requesty's model cards
   // gemini-4-argon / gemini-4-carbon / gemini-3.8-flash: discounted Vertex EU endpoint rates
-  // gemini-4-hydrogen: Requesty's Vertex EU endpoint rates
+  // gemini-4-hydrogen / gemini-4-neon: Requesty's Vertex EU endpoint rates
   // deepseek-v4-pro-0813: tensorx/deepseek-v4-pro-0813 rates
   // deepseek-v4.1-flash: sference/deepseek-v4.1-flash rates
   // kimi-k3:          nebius/kimi-k3 rates
@@ -1220,6 +1220,7 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
     "gpt-5.6-luna": { input: 0.22, output: 1.32 },
     "gpt-5.6-terra": { input: 2.2, output: 13.2 },
     "gpt-5.6-sol": { input: 4.4, output: 22.0 },
+    "gemini-4-neon": { input: 3.3, output: 16.5 },
     "gemini-4-argon": { input: 2.2, output: 11.0 },
     "gemini-4-carbon": { input: 2.2, output: 11.0 },
     "gemini-4-hydrogen": { input: 1.65, output: 8.25 },
@@ -7445,6 +7446,11 @@ const REQUESTY_VARIANTS = {
   "gpt-5.6-sol": {
     requestyModelId: "azure/gpt-5.6-sol@swedencentral",
     pricingModelId: "gpt-5.6-sol",
+    reasoningSelector: "dedicated"
+  },
+  "gemini-4-neon": {
+    requestyModelId: "vertex/gemini-4-neon@eu",
+    pricingModelId: "gemini-4-neon",
     reasoningSelector: "dedicated"
   },
   "gemini-4-argon": {
@@ -21526,6 +21532,7 @@ const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout
 //   - GPT-5.6 Luna     -> azure/gpt-5.6-luna@swedencentral   (Azure, Sweden Central)
 //   - GPT-5.6 Terra    -> azure/gpt-5.6-terra@swedencentral  (Azure, Sweden Central)
 //   - GPT-5.6 Sol      -> azure/gpt-5.6-sol@swedencentral    (Azure, Sweden Central)
+//   - Gemini 4 Neon    -> vertex/gemini-4-neon@eu             (Google Vertex AI, EU)
 //   - Gemini 4 Argon   -> vertex/gemini-4-argon@eu            (Google Vertex AI, EU)
 //   - Gemini 4 Carbon  -> vertex/gemini-4-carbon@eu           (Google Vertex AI, EU)
 //   - Gemini 4 Hydrogen -> vertex/gemini-4-hydrogen@eu        (Google Vertex AI, EU)
@@ -21659,6 +21666,11 @@ const VARIANTS = Object.freeze({
     pricingModelId: "gpt-5.6-sol",
     reasoningSelector: "dedicated"
   },
+  "gemini-4-neon": {
+    requestyModelId: "vertex/gemini-4-neon@eu",
+    pricingModelId: "gemini-4-neon",
+    reasoningSelector: "dedicated"
+  },
   "gemini-4-argon": {
     // Google Vertex AI EU deployment. Requesty currently applies a 50%
     // endpoint discount. Low | medium | high are supported; the app defaults
@@ -21741,7 +21753,7 @@ function resolveEffectiveMode() {
 
 function resolveReasoningLevel(variantKey, variantConfig) {
   // Claude Opus / Haiku 5.5, GPT-5 Nano, GPT-5.6, GPT-6 Luna / GPT-6.1 Terra / GPT-6.2 Sol,
-  // Gemini 4 Carbon / Argon / Hydrogen, Gemini 3.8 Flash, DeepSeek, Kimi K3,
+  // Gemini 4 Carbon / Neon / Argon / Hydrogen, Gemini 3.8 Flash, DeepSeek, Kimi K3,
   // and Mistral Large 4 use the dedicated selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
@@ -21997,6 +22009,10 @@ function initRequestyGpt56Sol() {
   bindGenerateNoteButton(generateNote);
 }
 
+function initRequestyGemini4Neon() {
+  bindGenerateNoteButton(generateNote);
+}
+
 function initRequestyGemini4Argon() {
   bindGenerateNoteButton(generateNote);
 }
@@ -22040,6 +22056,7 @@ return Object.freeze(Object.defineProperties({}, {"initRequestyClaudeOpus55": { 
 "initRequestyGpt56Luna": { enumerable: true, get: () => initRequestyGpt56Luna },
 "initRequestyGpt56Terra": { enumerable: true, get: () => initRequestyGpt56Terra },
 "initRequestyGpt56Sol": { enumerable: true, get: () => initRequestyGpt56Sol },
+"initRequestyGemini4Neon": { enumerable: true, get: () => initRequestyGemini4Neon },
 "initRequestyGemini4Argon": { enumerable: true, get: () => initRequestyGemini4Argon },
 "initRequestyGemini4Carbon": { enumerable: true, get: () => initRequestyGemini4Carbon },
 "initRequestyGemini4Hydrogen": { enumerable: true, get: () => initRequestyGemini4Hydrogen },
