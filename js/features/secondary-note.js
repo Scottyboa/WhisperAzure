@@ -178,6 +178,11 @@ const REQUESTY_VARIANTS = {
     reasoningSelector: "dedicated",
     sendNoneReasoning: true
   },
+  "glm-5.3-flash": {
+    requestyModelId: "sference/glm-5.3-flash",
+    pricingModelId: "glm-5.3-flash",
+    reasoningSelector: "provider-default"
+  },
   "kimi-k3": {
     requestyModelId: "nebius/kimi-k3",
     pricingModelId: "kimi-k3",
@@ -943,9 +948,11 @@ async function generateRequesty({ selections, sourceText, promptText, outputFiel
   const streaming = selections.mode !== "non-streaming";
 
   const reasoningLevel =
-    variantConfig.reasoningSelector === "dedicated"
-      ? selections.requestyNanoReasoning
-      : selections.openaiReasoning;
+    variantConfig.reasoningSelector === "provider-default"
+      ? null
+      : variantConfig.reasoningSelector === "dedicated"
+        ? selections.requestyNanoReasoning
+        : selections.openaiReasoning;
 
   const requestBody = {
     model: variantConfig.requestyModelId,

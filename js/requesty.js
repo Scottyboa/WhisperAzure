@@ -22,6 +22,7 @@
 //   - Gemini 3.8 Flash -> vertex/gemini-3.8-flash@eu          (Google Vertex AI, EU)
 //   - DeepSeek V4 Pro  -> tensorx/deepseek-v4-pro-0813         (TensorX, EU)
 //   - DeepSeek V4.1    -> sference/deepseek-v4.1-flash        (Sference, EU)
+//   - GLM-5.3 Flash   -> sference/glm-5.3-flash              (Sference, EU)
 //   - Kimi K3          -> nebius/kimi-k3                      (Nebius, EU)
 //   - Mistral Large 4  -> mistral/mistral-large-4             (Mistral AI, EU)
 //
@@ -198,6 +199,11 @@ const VARIANTS = Object.freeze({
     reasoningSelector: "dedicated",
     sendNoneReasoning: true
   },
+  "glm-5.3-flash": {
+    requestyModelId: "sference/glm-5.3-flash",
+    pricingModelId: "glm-5.3-flash",
+    reasoningSelector: "provider-default"
+  },
   "kimi-k3": {
     // Nebius's EU-hosted endpoint. Kimi K3 always reasons and supports
     // reasoning_effort low | high | max. The app defaults to low.
@@ -243,6 +249,7 @@ function resolveReasoningLevel(variantKey, variantConfig) {
   // Gemini 4 Carbon / Neon / Argon / Hydrogen, Gemini 3.8 Flash, DeepSeek, Kimi K3,
   // and Mistral Large 4 use the dedicated selector.
   // Its options are hydrated for the selected model by provider-persistence.js.
+  if (variantConfig?.reasoningSelector === "provider-default") return null;
   if (variantConfig && variantConfig.reasoningSelector === "dedicated") {
     return normalizeRequestyNanoReasoning(
       getSelectValue("requestyNanoReasoning", getDefaultRequestyReasoning(variantKey)),
@@ -524,6 +531,10 @@ function initRequestyDeepSeekV41Flash() {
   bindGenerateNoteButton(generateNote);
 }
 
+function initRequestyGlm53Flash() {
+  bindGenerateNoteButton(generateNote);
+}
+
 function initRequestyKimiK3() {
   bindGenerateNoteButton(generateNote);
 }
@@ -551,6 +562,7 @@ export {
   initRequestyGemini38Flash,
   initRequestyDeepSeekV4Pro,
   initRequestyDeepSeekV41Flash,
+  initRequestyGlm53Flash,
   initRequestyKimiK3,
   initRequestyMistralLarge4
 };

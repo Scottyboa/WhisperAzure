@@ -293,6 +293,15 @@ const NOTE_PROVIDER_REGISTRY = {
     modulePath: './requesty.js',
     initExportName: 'initRequestyDeepSeekV41Flash',
   },
+  'requesty-glm-5-3-flash': {
+    id: 'requesty-glm-5-3-flash',
+    label: 'Requesty GLM-5.3 Flash',
+    uiProvider: 'requesty',
+    requestyModel: 'glm-5.3-flash',
+    mode: DEFAULTS.noteMode,
+    modulePath: './requesty.js',
+    initExportName: 'initRequestyGlm53Flash',
+  },
   'requesty-kimi-k3': {
     id: 'requesty-kimi-k3',
     label: 'Requesty Kimi K3',
@@ -339,6 +348,7 @@ const REQUESTY_MODEL_OPTIONS = [
   { value: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash' },
   { value: 'deepseek-v4-pro-0813', label: 'DeepSeek V4 Pro' },
   { value: 'deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash' },
+  { value: 'glm-5.3-flash', label: 'GLM-5.3 Flash' },
   { value: 'kimi-k3', label: 'Kimi K3' },
   { value: 'mistral-large-4', label: 'Mistral Large 4' },
 ];
@@ -945,7 +955,8 @@ export function getNoteUiVisibility({ provider, openaiModel, requestyModel } = {
   return {
     showOpenAi: isOpenAi,
     showOpenAiMode: isOpenAi || isRequesty,
-    showOpenAiReasoning: isOpenAi || (isRequesty && !usesDedicatedRequestyReasoning),
+    // GLM-5.3 Flash uses the pinned provider's default reasoning behavior.
+    showOpenAiReasoning: isOpenAi || (isRequesty && !usesDedicatedRequestyReasoning && reqModel !== 'glm-5.3-flash'),
     showRequestyNanoReasoning: usesDedicatedRequestyReasoning,
     showBedrock: uiProvider === 'aws-bedrock',
     showRequesty: isRequesty,

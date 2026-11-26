@@ -22,6 +22,7 @@ const TEXT_PRICE_GROUPS = [
       { model: "Gemini 3.8 Flash", id: "vertex/gemini-3.8-flash@eu", context: "1M", input: "$0.825", output: "$4.125" },
       { model: "DeepSeek V4 Pro", id: "tensorx/deepseek-v4-pro-0813", context: "1M", input: "$1.75", output: "$3.50" },
       { model: "DeepSeek V4.1 Flash", id: "sference/deepseek-v4.1-flash", context: "1M", input: "$0.50", output: "$1.50" },
+      { model: "GLM-5.3 Flash", id: "sference/glm-5.3-flash", context: "1M", input: "$0.20", output: "$0.60" },
       { model: "Kimi K3", id: "nebius/kimi-k3", context: "1M", input: "$3.00", output: "$15.00" },
       { model: "Mistral Large 4 (50% off)", id: "mistral/mistral-large-4", context: "1M", input: "$0.68", output: "$2.09" },
     ],
