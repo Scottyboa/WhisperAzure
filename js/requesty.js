@@ -22,7 +22,7 @@
 //   - Gemini 3.8 Flash -> vertex/gemini-3.8-flash@eu          (Google Vertex AI, EU)
 //   - DeepSeek V4 Pro  -> tensorx/deepseek-v4-pro-0813         (TensorX, EU)
 //   - DeepSeek V4.1    -> sference/deepseek-v4.1-flash        (Sference, EU)
-//   - GLM-5.3 Flash   -> sference/glm-5.3-flash              (Sference, EU)
+//   - GLM-5.3 Flash   -> melious/glm-5.3-flash               (Melious, EU)
 //   - Kimi K3          -> nebius/kimi-k3                      (Nebius, EU)
 //   - Mistral Large 4  -> mistral/mistral-large-4             (Mistral AI, EU)
 //
@@ -200,7 +200,7 @@ const VARIANTS = Object.freeze({
     sendNoneReasoning: true
   },
   "glm-5.3-flash": {
-    requestyModelId: "sference/glm-5.3-flash",
+    requestyModelId: "melious/glm-5.3-flash",
     pricingModelId: "glm-5.3-flash",
     reasoningSelector: "provider-default"
   },

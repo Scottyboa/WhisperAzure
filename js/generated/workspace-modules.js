@@ -1205,7 +1205,7 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
   // gemini-4-hydrogen / gemini-4-neon: Requesty's Vertex EU endpoint rates
   // deepseek-v4-pro-0813: tensorx/deepseek-v4-pro-0813 rates
   // deepseek-v4.1-flash: sference/deepseek-v4.1-flash rates
-  // glm-5.3-flash: sference/glm-5.3-flash rates
+  // glm-5.3-flash: melious/glm-5.3-flash rates
   // kimi-k3:          nebius/kimi-k3 rates
   // mistral-large-4:  mistral/mistral-large-4 discounted EU endpoint rates
   const REQUESTY_USD_PER_MTOK = {
@@ -1228,7 +1228,7 @@ const resolveRequestyEffectiveProvider = shared0["resolveRequestyEffectiveProvid
     "gemini-3.8-flash": { input: 0.825, output: 4.125 },
     "deepseek-v4-pro-0813": { input: 1.75, output: 3.5 },
     "deepseek-v4.1-flash": { input: 0.5, output: 1.5 },
-    "glm-5.3-flash": { input: 0.20, output: 0.60 },
+    "glm-5.3-flash": { input: 0.12, output: 0.46 },
     "kimi-k3": { input: 3.0, output: 15.0 },
     "mistral-large-4": { input: 0.68, output: 2.09 },
   };
@@ -7488,7 +7488,7 @@ const REQUESTY_VARIANTS = {
     sendNoneReasoning: true
   },
   "glm-5.3-flash": {
-    requestyModelId: "sference/glm-5.3-flash",
+    requestyModelId: "melious/glm-5.3-flash",
     pricingModelId: "glm-5.3-flash",
     reasoningSelector: "provider-default"
   },
@@ -21548,7 +21548,7 @@ const { window, document, sessionStorage, localStorage, setTimeout, clearTimeout
 //   - Gemini 3.8 Flash -> vertex/gemini-3.8-flash@eu          (Google Vertex AI, EU)
 //   - DeepSeek V4 Pro  -> tensorx/deepseek-v4-pro-0813         (TensorX, EU)
 //   - DeepSeek V4.1    -> sference/deepseek-v4.1-flash        (Sference, EU)
-//   - GLM-5.3 Flash   -> sference/glm-5.3-flash              (Sference, EU)
+//   - GLM-5.3 Flash   -> melious/glm-5.3-flash               (Melious, EU)
 //   - Kimi K3          -> nebius/kimi-k3                      (Nebius, EU)
 //   - Mistral Large 4  -> mistral/mistral-large-4             (Mistral AI, EU)
 //
@@ -21722,7 +21722,7 @@ const VARIANTS = Object.freeze({
     sendNoneReasoning: true
   },
   "glm-5.3-flash": {
-    requestyModelId: "sference/glm-5.3-flash",
+    requestyModelId: "melious/glm-5.3-flash",
     pricingModelId: "glm-5.3-flash",
     reasoningSelector: "provider-default"
   },

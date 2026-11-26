@@ -179,7 +179,7 @@ const REQUESTY_VARIANTS = {
     sendNoneReasoning: true
   },
   "glm-5.3-flash": {
-    requestyModelId: "sference/glm-5.3-flash",
+    requestyModelId: "melious/glm-5.3-flash",
     pricingModelId: "glm-5.3-flash",
     reasoningSelector: "provider-default"
   },
